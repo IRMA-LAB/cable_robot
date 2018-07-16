@@ -83,7 +83,7 @@ void ActuatorPvtInterface33::on_ImportDataButton_clicked()
 
 }
 
-void ActuatorPvtInterface33::on_StartButton_toggled(bool checked)
+void ActuatorPvtInterface33::on_StartButton_toggled(bool /*checked*/)
 {
 
 }
