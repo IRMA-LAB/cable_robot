@@ -30,3 +30,10 @@
 *.exe
 *.out
 *.app
+
+# Custom settings
+/cable_robot.pro.user
+/cable_robot.creator.user
+
+# Build folders
+build
