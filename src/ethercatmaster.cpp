@@ -238,13 +238,3 @@ void EthercatMaster::Start()
         }
     }
 }
-
-void EthercatMaster::LoopFunction()
-{
-
-}
-
-void EthercatMaster::StartUpFunction()
-{
-
-}

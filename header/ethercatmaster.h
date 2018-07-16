@@ -105,8 +105,8 @@ public:
     int numberOfSlaves; // master utility
 
     void Start(); // the only thing you need to callnin the main
-    virtual void StartUpFunction(); // Function to overload in our master, it gets called before the cyclical task begins
-    virtual void LoopFunction(); // Function to overload in our master, it gets called every cycle
+    virtual void StartUpFunction() {} // Function to overload in our master, it gets called before the cyclical task begins
+    virtual void LoopFunction() {} // Function to overload in our master, it gets called every cycle
 };
 
 #endif // ETHERCATMASTER_H
