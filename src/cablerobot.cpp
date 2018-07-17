@@ -7,44 +7,44 @@ void CableRobot::CalibrationFun() {}
 void CableRobot::HomingFun()
 {
 
-  for (int i = 0; i < numberOfActuators; i++)
+  for (int i = 0; i < kNumActuators; i++)
   {
-    int flag = servoMotor[i].HasEnableRequestBeenProcessed();
+    int flag = servo_motor_[i].HasEnableRequestBeenProcessed();
     if (flag < 2)
     {
       emit SendEnableRequestProcessed(flag, i);
       if (flag == 1)
       {
-        robotGloballyEnabled += 1;
-        cout << static_cast<int>(robotGloballyEnabled) << endl;
+        robot_globally_enabled_ += 1;
+        std::cout << static_cast<int>(robot_globally_enabled_) << std::endl;
       }
       else
       {
       }
     }
-    else if (servoMotor[i].HasClearFaultRequestBeenProcessed())
+    else if (servo_motor_[i].HasClearFaultRequestBeenProcessed())
     {
-      servoMotor[i].Enable();
+      servo_motor_[i].Enable();
       emit SendClearFaultRequestProcessed(i);
     }
-    else if (servoMotor[i].FaultPresent())
+    else if (servo_motor_[i].FaultPresent())
     {
-      servoMotor[i].FaultReset();
-      robotGloballyEnabled -= 1;
+      servo_motor_[i].FaultReset();
+      robot_globally_enabled_ -= 1;
       emit SendFaultPresentAdvice(i);
     }
-    servoMotor[i].UpdateState();
+    servo_motor_[i].UpdateState();
   }
-  if (robotGloballyEnabled < numberOfActuators)
+  if (robot_globally_enabled_ < kNumActuators)
   {
-    homingState = idleHoming;
-    homingStateFlags = nullStateHoming;
-    internalDelayCounter = 0;
-    homingProcessFinished = 0;
-    homingStage = 0;
+    homing_state_ = IDLE_HOMING;
+    homing_state_flags_ = NULL_STATE_HOMING;
+    internal_delay_counter_ = 0;
+    homing_process_finished_ = 0;
+    homing_stage_ = 0;
   }
-  (this->*homingStateManager[homingState])();
-  (this->*homingStateMachine[homingState])();
+  (this->*homing_state_manager_[homing_state_])();
+  (this->*homing_state_machine_[homing_state_])();
 }
 
 void CableRobot::Robot66ManualFun() {}
@@ -53,42 +53,42 @@ void CableRobot::Robot66DemoFun() {}
 
 void CableRobot::Robot33ActuatorPvtFun()
 {
-  for (int i = 0; i < numberOfActuators; i++)
+  for (int i = 0; i < kNumActuators; i++)
   {
-    int flag = servoMotor[i].HasEnableRequestBeenProcessed();
+    int flag = servo_motor_[i].HasEnableRequestBeenProcessed();
     if (flag < 2)
     {
       emit SendEnableRequestProcessed(flag, i);
       if (flag == 1)
       {
-        robotGloballyEnabled += 1;
-        cout << static_cast<int>(robotGloballyEnabled) << endl;
+        robot_globally_enabled_ += 1;
+        std::cout << static_cast<int>(robot_globally_enabled_) << std::endl;
       }
       else
       {
       }
     }
-    else if (servoMotor[i].HasClearFaultRequestBeenProcessed())
+    else if (servo_motor_[i].HasClearFaultRequestBeenProcessed())
     {
-      servoMotor[i].Enable();
+      servo_motor_[i].Enable();
       emit SendClearFaultRequestProcessed(i);
     }
-    else if (servoMotor[i].FaultPresent())
+    else if (servo_motor_[i].FaultPresent())
     {
-      servoMotor[i].FaultReset();
-      robotGloballyEnabled -= 1;
+      servo_motor_[i].FaultReset();
+      robot_globally_enabled_ -= 1;
       emit SendFaultPresentAdvice(i);
     }
-    servoMotor[i].UpdateState();
+    servo_motor_[i].UpdateState();
   }
-  if (robotGloballyEnabled < numberOfActuators)
+  if (robot_globally_enabled_ < kNumActuators)
   {
-    actuatorPvt33State = idleActuatorPvt33;
-    actuatorPvt33StateFlags = nullStateActuatorPvt33;
-    internalDelayCounter = 0;
+    actuator_pvt33state_ = IDLE_ACTUATOR_PVT33;
+    actuator_pvt33state_flags_ = NULL_STATE_ACTUATOR_PVT33;
+    internal_delay_counter_ = 0;
   }
-  (this->*actuatorPvt33StateManager[actuatorPvt33State])();
-  (this->*actuatorPvt33StateMachine[actuatorPvt33State])();
+  (this->*actuator_pvt33state_manager_[actuator_pvt33state_])();
+  (this->*actuator_pvt33state_machine_[actuator_pvt33state_])();
 }
 
 void CableRobot::Robot33AutomaticFun() {}
@@ -97,195 +97,196 @@ void CableRobot::Robot33ManualFun() {}
 
 void CableRobot::IdleTransition()
 {
-  if (stateFlags == idle)
+  if (state_flags_ == IDLE)
   {
-    stateFlags = nullState;
-    emit SendRobotRequestProcessed(state);
-    cout << "Changing robot state to " << state << endl;
+    state_flags_ = NULL_STATE;
+    emit SendRobotRequestProcessed(state_);
+    std::cout << "Changing robot state to " << state_ << std::endl;
   }
-  else if (stateFlags != nullState)
+  else if (state_flags_ != NULL_STATE)
   {
-    state = stateFlags;
-    homingState = idleHoming;
-    homingStateFlags = idleHoming;
-    actuatorPvt33State = idleActuatorPvt33;
-    actuatorPvt33StateFlags = idleActuatorPvt33;
-    actuatorPvt33ProcessFinished = 0;
-    internalDelayCounter = 0;
-    enablePvt = 0;
-    pvtCounter = 0;
+    state_ = state_flags_;
+    homing_state_ = IDLE_HOMING;
+    homing_state_flags_ = IDLE_HOMING;
+    actuator_pvt33state_ = IDLE_ACTUATOR_PVT33;
+    actuator_pvt33state_flags_ = IDLE_ACTUATOR_PVT33;
+    actuator_pvt33process_finished_ = 0;
+    internal_delay_counter_ = 0;
+    enable_pvt_ = 0;
+    pvt_counter_ = 0;
   }
 }
 
 void CableRobot::CalibrationTransition()
 {
-  if (stateFlags == calibration)
+  if (state_flags_ == CALIBRATION)
   {
-    stateFlags = nullState;
-    emit SendRobotRequestProcessed(state);
-    cout << "Changing robot state to " << state << endl;
+    state_flags_ = NULL_STATE;
+    emit SendRobotRequestProcessed(state_);
+    std::cout << "Changing robot state to " << state_ << std::endl;
   }
-  else if (stateFlags != nullState)
+  else if (state_flags_ != NULL_STATE)
   {
-    state = stateFlags;
+    state_ = state_flags_;
   }
 }
 
 void CableRobot::HomingTransition()
 {
-  if (stateFlags == homing)
+  if (state_flags_ == HOMING)
   {
-    stateFlags = nullState;
-    internalDelayCounter = 0;
-    emit SendRobotRequestProcessed(state);
-    cout << "Changing robot state to " << state << endl;
+    state_flags_ = NULL_STATE;
+    internal_delay_counter_ = 0;
+    emit SendRobotRequestProcessed(state_);
+    std::cout << "Changing robot state to " << state_ << std::endl;
   }
-  else if (stateFlags != nullState)
+  else if (state_flags_ != NULL_STATE)
   {
-    state = stateFlags;
-    robotGloballyEnabled = 0;
+    state_ = state_flags_;
+    robot_globally_enabled_ = 0;
   }
 }
 
 void CableRobot::Robot66ManualTransition()
 {
-  if (stateFlags == robot66Manual)
+  if (state_flags_ == ROBOT66MANUAL)
   {
-    stateFlags = nullState;
-    emit SendRobotRequestProcessed(state);
-    cout << "Changing robot state to " << state << endl;
+    state_flags_ = NULL_STATE;
+    emit SendRobotRequestProcessed(state_);
+    std::cout << "Changing robot state to " << state_ << std::endl;
   }
-  else if (stateFlags != nullState)
+  else if (state_flags_ != NULL_STATE)
   {
-    state = stateFlags;
+    state_ = state_flags_;
   }
 }
 
 void CableRobot::Robot66DemoTransition()
 {
-  if (stateFlags == robot66Demo)
+  if (state_flags_ == ROBOT66DEMO)
   {
-    stateFlags = nullState;
-    emit SendRobotRequestProcessed(state);
-    cout << "Changing robot state to " << state << endl;
+    state_flags_ = NULL_STATE;
+    emit SendRobotRequestProcessed(state_);
+    std::cout << "Changing robot state to " << state_ << std::endl;
   }
-  else if (stateFlags != nullState)
+  else if (state_flags_ != NULL_STATE)
   {
-    state = stateFlags;
+    state_ = state_flags_;
   }
 }
 
 void CableRobot::Robot33ActuatorPvtTransition()
 {
-  if (stateFlags == robot33ActuatorPvt)
+  if (state_flags_ == ROBOT33ACTUATOR_PVT)
   {
-    stateFlags = nullState;
-    internalDelayCounter = 0;
-    emit SendRobotRequestProcessed(state);
-    cout << "Changing robot state to " << state << endl;
+    state_flags_ = NULL_STATE;
+    internal_delay_counter_ = 0;
+    emit SendRobotRequestProcessed(state_);
+    std::cout << "Changing robot state to " << state_ << std::endl;
   }
-  else if (stateFlags != nullState)
+  else if (state_flags_ != NULL_STATE)
   {
-    state = stateFlags;
-    robotGloballyEnabled = 0;
+    state_ = state_flags_;
+    robot_globally_enabled_ = 0;
   }
 }
 
 void CableRobot::Robot33AutomaticTransition()
 {
-  if (stateFlags == robot33Automatic)
+  if (state_flags_ == ROBOT33AUTOMATIC)
   {
-    stateFlags = nullState;
-    emit SendRobotRequestProcessed(state);
-    cout << "Changing robot state to " << state << endl;
+    state_flags_ = NULL_STATE;
+    emit SendRobotRequestProcessed(state_);
+    std::cout << "Changing robot state to " << state_ << std::endl;
   }
-  else if (stateFlags != nullState)
+  else if (state_flags_ != NULL_STATE)
   {
-    state = stateFlags;
+    state_ = state_flags_;
   }
 }
 
 void CableRobot::Robot33ManualTransition()
 {
-  if (stateFlags == robot33Manual)
+  if (state_flags_ == ROBOT33MANUAL)
   {
-    stateFlags = nullState;
-    emit SendRobotRequestProcessed(state);
-    cout << "Changing robot state to " << state << endl;
+    state_flags_ = NULL_STATE;
+    emit SendRobotRequestProcessed(state_);
+    std::cout << "Changing robot state to " << state_ << std::endl;
   }
-  else if (stateFlags != nullState)
+  else if (state_flags_ != NULL_STATE)
   {
-    state = stateFlags;
+    state_ = state_flags_;
   }
 }
 
 void CableRobot::IdleHomingFun()
 {
-  if (robotGloballyEnabled >= numberOfActuators && !homingProcessFinished)
+  if (robot_globally_enabled_ >= kNumActuators && !homing_process_finished_)
   {
-    if (internalDelayCounter < homingDelay)
+    if (internal_delay_counter_ < kHomingDelay)
     {
-      internalDelayCounter++;
+      internal_delay_counter_++;
     }
     else
     {
-      homingStateFlags = switchToTensionMode;
-      internalDelayCounter = 0;
+      homing_state_flags_ = SWITCH2TENSION_MODE;
+      internal_delay_counter_ = 0;
     }
   }
 }
 
 void CableRobot::SwitchToTensionMode()
 {
-  if (robotGloballyEnabled >= numberOfActuators)
+  if (robot_globally_enabled_ >= kNumActuators)
   {
     uint8_t flagCompleted = 0;
-    if (homingFlag == 0)
+    if (homing_flag_ == 0)
     {
-      for (int i = 0; i < numberOfActuators; i++)
+      for (int i = 0; i < kNumActuators; i++)
       {
-        if (servoMotor[i].servoMotorOperationState != GoldSoloWhistleDrive::cyclicTorque)
+        if (servo_motor_[i].servo_motor_operation_state_ !=
+            GoldSoloWhistleDrive::cyclicTorque)
         {
-          servoMotor[i].SetTargetDefaults();
-          servoMotor[i].ChangeOperationMode(GoldSoloWhistleDrive::cyclicTorque);
+          servo_motor_[i].SetTargetDefaults();
+          servo_motor_[i].ChangeOperationMode(GoldSoloWhistleDrive::cyclicTorque);
         }
         else
           flagCompleted++;
       }
-      if (flagCompleted == numberOfActuators)
+      if (flagCompleted == kNumActuators)
       {
-        homingStateFlags = goToCenter;
+        homing_state_flags_ = GO2CENTER;
         emit SendHomingControl(1);
-        cout << "here" << endl;
-        internalDelayCounter = 0;
-        homingStage = 0;
-        homingActuator = 0;
+        std::cout << "here" << std::endl;
+        internal_delay_counter_ = 0;
+        homing_stage_ = 0;
+        homing_actuator_ = 0;
       }
     }
     else
     {
-      for (int i = 0; i < numberOfActuators; i++)
+      for (int i = 0; i < kNumActuators; i++)
       {
-        if (servoMotor[i].servoMotorOperationState !=
+        if (servo_motor_[i].servo_motor_operation_state_ !=
             GoldSoloWhistleDrive::cyclicPosition)
         {
-          servoMotor[i].SetTargetDefaults();
-          servoMotor[i].ChangeOperationMode(GoldSoloWhistleDrive::cyclicPosition);
+          servo_motor_[i].SetTargetDefaults();
+          servo_motor_[i].ChangeOperationMode(GoldSoloWhistleDrive::cyclicPosition);
         }
         else
           flagCompleted++;
       }
-      if (flagCompleted == numberOfActuators)
+      if (flagCompleted == kNumActuators)
       {
-        homingStateFlags = goingHome;
-        for (int i = 0; i < numberOfActuators; i += 2)
+        homing_state_flags_ = GOING_HOME;
+        for (int i = 0; i < kNumActuators; i += 2)
         {
-          servoMotor[i].SetPoly7GoHomeParameters(goHomeTime);
+          servo_motor_[i].SetPoly7GoHomeParameters(kGoHomeTime);
         }
         emit SendHomingControl(0);
-        cout << "here going home" << endl;
-        internalDelayCounter = 0;
-        homingActuator = 0;
+        std::cout << "here going home" << std::endl;
+        internal_delay_counter_ = 0;
+        homing_actuator_ = 0;
       }
     }
   }
@@ -293,29 +294,29 @@ void CableRobot::SwitchToTensionMode()
 
 void CableRobot::GoToCenter()
 {
-  internalDelayCounter++;
-  if (internalDelayCounter > 30)
+  internal_delay_counter_++;
+  if (internal_delay_counter_ > 30)
   {
-    internalDelayCounter = 0;
-    for (int i = 0; i < numberOfActuators; i += 2)
-      servoMotor[i].SetMaxTorque();
+    internal_delay_counter_ = 0;
+    for (int i = 0; i < kNumActuators; i += 2)
+      servo_motor_[i].SetMaxTorque();
   }
-  if (homingFlag)
+  if (homing_flag_)
   {
-    cout << "here2" << endl;
-    homingStateFlags = switchActuatedCable;
-    for (int i = 0; i < numberOfActuators; i += 2)
-      servoMotor[i].SetStartingWinchParameter();
-    internalDelayCounter = 0;
-    homingActuator -= 2;
+    std::cout << "here2" << std::endl;
+    homing_state_flags_ = SWITCH_ACTUATED_CABLE;
+    for (int i = 0; i < kNumActuators; i += 2)
+      servo_motor_[i].SetStartingWinchParameter();
+    internal_delay_counter_ = 0;
+    homing_actuator_ -= 2;
     // Send Start Values
-    homingData[0] = servoMotor[0].cableLength;
-    homingData[1] = servoMotor[2].cableLength;
-    homingData[2] = servoMotor[4].cableLength;
-    homingData[3] = servoMotor[0].pulleyAngle;
-    homingData[4] = servoMotor[2].pulleyAngle;
-    homingData[5] = servoMotor[4].pulleyAngle;
-    SendMeasurement(homingData);
+    homing_data_[0] = servo_motor_[0].cable_len_;
+    homing_data_[1] = servo_motor_[2].cable_len_;
+    homing_data_[2] = servo_motor_[4].cable_len_;
+    homing_data_[3] = servo_motor_[0].pulley_angle_;
+    homing_data_[4] = servo_motor_[2].pulley_angle_;
+    homing_data_[5] = servo_motor_[4].pulley_angle_;
+    SendMeasurement(homing_data_);
   }
 }
 
@@ -323,49 +324,50 @@ void CableRobot::SwitchActuatedCable()
 {
   static uint8_t modIndex = 99;
 
-  if (homingFlag && internalDelayCounter == 0)
+  if (homing_flag_ && internal_delay_counter_ == 0)
   {
-    homingActuator += 2;
-    internalDelayCounter++;
-    if (homingActuator < numberOfActuators)
+    homing_actuator_ += 2;
+    internal_delay_counter_++;
+    if (homing_actuator_ < kNumActuators)
     {
-      servoMotor[homingActuator].SetTargetDefaults();
-      for (int i = 0; i < numberOfActuators; i += 2)
+      servo_motor_[homing_actuator_].SetTargetDefaults();
+      for (int i = 0; i < kNumActuators; i += 2)
       {
-        if (i != homingActuator)
+        if (i != homing_actuator_)
         {
-          if (servoMotor[i].servoMotorOperationState !=
+          if (servo_motor_[i].servo_motor_operation_state_ !=
               GoldSoloWhistleDrive::cyclicTorque)
           {
-            servoMotor[i].ChangeOperationMode(GoldSoloWhistleDrive::cyclicTorque);
+            servo_motor_[i].ChangeOperationMode(GoldSoloWhistleDrive::cyclicTorque);
             modIndex = static_cast<uint8_t>(i);
           }
         }
         else
         {
-          servoMotor[i].ChangeOperationMode(GoldSoloWhistleDrive::cyclicPosition);
+          servo_motor_[i].ChangeOperationMode(GoldSoloWhistleDrive::cyclicPosition);
         }
-        servoMotor[i].SetTargetDefaults();
+        servo_motor_[i].SetTargetDefaults();
       }
     }
     else
     {
-      homingStateFlags = switchToTensionMode;
-      homingActuator = 0;
-      cout << "here" << endl;
-      internalDelayCounter = 0;
+      homing_state_flags_ = SWITCH2TENSION_MODE;
+      homing_actuator_ = 0;
+      std::cout << "here" << std::endl;
+      internal_delay_counter_ = 0;
     }
   }
-  else if (homingFlag && homingActuator <= numberOfActuators)
+  else if (homing_flag_ && homing_actuator_ <= kNumActuators)
   {
     uint8_t flag = 1;
-    for (int i = 0; i < numberOfActuators; i += 2)
+    for (int i = 0; i < kNumActuators; i += 2)
     {
-      if (i == homingActuator &&
-          servoMotor[i].servoMotorOperationState == GoldSoloWhistleDrive::cyclicPosition)
+      if (i == homing_actuator_ &&
+          servo_motor_[i].servo_motor_operation_state_ ==
+            GoldSoloWhistleDrive::cyclicPosition)
         flag *= 1;
-      else if (i != homingActuator &&
-               servoMotor[i].servoMotorOperationState ==
+      else if (i != homing_actuator_ &&
+               servo_motor_[i].servo_motor_operation_state_ ==
                  GoldSoloWhistleDrive::cyclicTorque)
         flag *= 1;
       else
@@ -373,224 +375,224 @@ void CableRobot::SwitchActuatedCable()
     }
     if (flag)
     {
-      homingStateFlags = moveAway;
-      servoMotor[homingActuator].SetPoly7IncrementalParameters(-incrementalHomingLength,
-                                                               transitionTime);
-      internalDelayCounter = 0;
-      measurementStage = 0;
+      homing_state_flags_ = MOVE_AWAY;
+      servo_motor_[homing_actuator_].SetPoly7IncrementalParameters(
+        -kIncrementalHomingLength, kTransitionTime);
+      internal_delay_counter_ = 0;
+      meas_stage_ = 0;
     }
   }
 }
 
 void CableRobot::MoveAway()
 {
-  if (homingFlag)
+  if (homing_flag_)
   {
-    internalDelayCounter++;
-    double timeInSeconds = (static_cast<double>(internalDelayCounter)) / 1000.0;
-    if (timeInSeconds <= transitionTime)
-      servoMotor[homingActuator].MovePoly7Incremental(timeInSeconds);
+    internal_delay_counter_++;
+    double timeInSeconds = (static_cast<double>(internal_delay_counter_)) / 1000.0;
+    if (timeInSeconds <= kTransitionTime)
+      servo_motor_[homing_actuator_].MovePoly7Incremental(timeInSeconds);
     else
     {
-      homingStateFlags = waitForMeasurement;
+      homing_state_flags_ = WAIT_FOR_MEAS;
     }
   }
 }
 
 void CableRobot::WaitForMeasurement()
 {
-  cout << servoMotor[0].pulleyAngle << '\t' << servoMotor[2].pulleyAngle << '\t'
-       << servoMotor[4].pulleyAngle << endl;
-  if (homingFlag && measurementFlag)
+  std::cout << servo_motor_[0].pulley_angle_ << '\t' << servo_motor_[2].pulley_angle_
+            << '\t' << servo_motor_[4].pulley_angle_ << std::endl;
+  if (homing_flag_ && meas_flag_)
   {
     // Send Measurement To non RT Thread
-    homingData[0] = servoMotor[0].cableLength;
-    homingData[1] = servoMotor[2].cableLength;
-    homingData[2] = servoMotor[4].cableLength;
-    homingData[3] = servoMotor[0].pulleyAngle;
-    homingData[4] = servoMotor[2].pulleyAngle;
-    homingData[5] = servoMotor[4].pulleyAngle;
-    SendMeasurement(homingData);
-    measurementFlag = 0;
-    measurementStage++;
-    if (measurementStage < 1)
+    homing_data_[0] = servo_motor_[0].cable_len_;
+    homing_data_[1] = servo_motor_[2].cable_len_;
+    homing_data_[2] = servo_motor_[4].cable_len_;
+    homing_data_[3] = servo_motor_[0].pulley_angle_;
+    homing_data_[4] = servo_motor_[2].pulley_angle_;
+    homing_data_[5] = servo_motor_[4].pulley_angle_;
+    SendMeasurement(homing_data_);
+    meas_flag_ = 0;
+    meas_stage_++;
+    if (meas_stage_ < 1)
     {
-      servoMotor[homingActuator].SetPoly7IncrementalParameters(-incrementalHomingLength,
-                                                               transitionTime);
-      internalDelayCounter = 0;
-      homingStateFlags = moveAway;
+      servo_motor_[homing_actuator_].SetPoly7IncrementalParameters(
+        -kIncrementalHomingLength, kTransitionTime);
+      internal_delay_counter_ = 0;
+      homing_state_flags_ = MOVE_AWAY;
     }
-    else if (measurementStage < 2)
+    else if (meas_stage_ < 2)
     {
-      homingStateFlags = moveCentral;
-      servoMotor[homingActuator].SetPoly7IncrementalParameters(incrementalHomingLength,
-                                                               transitionTime);
-      internalDelayCounter = 0;
+      homing_state_flags_ = MOVE_CENTRAL;
+      servo_motor_[homing_actuator_].SetPoly7IncrementalParameters(
+        kIncrementalHomingLength, kTransitionTime);
+      internal_delay_counter_ = 0;
     }
     else
     {
-      homingStateFlags = switchActuatedCable;
-      internalDelayCounter = 0;
+      homing_state_flags_ = SWITCH_ACTUATED_CABLE;
+      internal_delay_counter_ = 0;
     }
   }
 }
 
 void CableRobot::MoveCentral()
 {
-  if (homingFlag)
+  if (homing_flag_)
   {
-    internalDelayCounter++;
-    double timeInSeconds = (static_cast<double>(internalDelayCounter)) / 1000.0;
-    if (timeInSeconds <= transitionTime)
-      servoMotor[homingActuator].MovePoly7Incremental(timeInSeconds);
+    internal_delay_counter_++;
+    double timeInSeconds = (static_cast<double>(internal_delay_counter_)) / 1000.0;
+    if (timeInSeconds <= kTransitionTime)
+      servo_motor_[homing_actuator_].MovePoly7Incremental(timeInSeconds);
     else
     {
-      homingStateFlags = waitForMeasurement;
+      homing_state_flags_ = WAIT_FOR_MEAS;
     }
   }
 }
 
 void CableRobot::GoingHome()
 {
-  internalDelayCounter++;
-  homingFlag = 0;
-  double timeInSeconds = (static_cast<double>(internalDelayCounter)) / 1000.0;
-  if (timeInSeconds <= goHomeTime)
-    for (int i = 0; i < numberOfActuators; i += 2)
-      servoMotor[i].MovePoly7Incremental(timeInSeconds);
+  internal_delay_counter_++;
+  homing_flag_ = 0;
+  double timeInSeconds = (static_cast<double>(internal_delay_counter_)) / 1000.0;
+  if (timeInSeconds <= kGoHomeTime)
+    for (int i = 0; i < kNumActuators; i += 2)
+      servo_motor_[i].MovePoly7Incremental(timeInSeconds);
   else
   {
-    homingStateFlags = idleHoming;
-    homingProcessFinished = 1;
+    homing_state_flags_ = IDLE_HOMING;
+    homing_process_finished_ = 1;
   }
 }
 
 void CableRobot::SwitchToTensionModeTransition()
 {
-  if (homingStateFlags == switchToTensionMode)
+  if (homing_state_flags_ == SWITCH2TENSION_MODE)
   {
-    homingStateFlags = nullStateHoming;
-    cout << "Changing homing state to " << homingState << endl;
+    homing_state_flags_ = NULL_STATE_HOMING;
+    std::cout << "Changing homing state to " << homing_state_ << std::endl;
   }
-  else if (homingStateFlags != nullStateHoming)
+  else if (homing_state_flags_ != NULL_STATE_HOMING)
   {
-    homingState = homingStateFlags;
-    internalDelayCounter = 0;
+    homing_state_ = homing_state_flags_;
+    internal_delay_counter_ = 0;
   }
 }
 
 void CableRobot::GoToCenterTransition()
 {
-  if (homingStateFlags == goToCenter)
+  if (homing_state_flags_ == GO2CENTER)
   {
-    homingStateFlags = nullStateHoming;
-    cout << "Changing homing state to " << homingState << endl;
+    homing_state_flags_ = NULL_STATE_HOMING;
+    std::cout << "Changing homing state to " << homing_state_ << std::endl;
   }
-  else if (homingStateFlags != nullStateHoming)
+  else if (homing_state_flags_ != NULL_STATE_HOMING)
   {
-    homingState = homingStateFlags;
-    internalDelayCounter = 0;
+    homing_state_ = homing_state_flags_;
+    internal_delay_counter_ = 0;
   }
 }
 
 void CableRobot::MoveAwayTransition()
 {
-  if (homingStateFlags == moveAway)
+  if (homing_state_flags_ == MOVE_AWAY)
   {
-    homingStateFlags = nullStateHoming;
-    cout << "Changing homing state to " << homingState << endl;
+    homing_state_flags_ = NULL_STATE_HOMING;
+    std::cout << "Changing homing state to " << homing_state_ << std::endl;
   }
-  else if (homingStateFlags != nullStateHoming)
+  else if (homing_state_flags_ != NULL_STATE_HOMING)
   {
-    homingState = homingStateFlags;
-    internalDelayCounter = 0;
+    homing_state_ = homing_state_flags_;
+    internal_delay_counter_ = 0;
   }
 }
 
 void CableRobot::WaitForMeasurementTransition()
 {
-  if (homingStateFlags == waitForMeasurement)
+  if (homing_state_flags_ == WAIT_FOR_MEAS)
   {
-    homingStateFlags = nullStateHoming;
-    cout << "Changing homing state to " << homingState << endl;
+    homing_state_flags_ = NULL_STATE_HOMING;
+    std::cout << "Changing homing state to " << homing_state_ << std::endl;
   }
-  else if (homingStateFlags != nullStateHoming)
+  else if (homing_state_flags_ != NULL_STATE_HOMING)
   {
-    homingState = homingStateFlags;
-    internalDelayCounter = 0;
+    homing_state_ = homing_state_flags_;
+    internal_delay_counter_ = 0;
   }
 }
 
 void CableRobot::MoveCentralTransition()
 {
-  if (homingStateFlags == moveCentral)
+  if (homing_state_flags_ == MOVE_CENTRAL)
   {
-    homingStateFlags = nullStateHoming;
-    cout << "Changing homing state to " << homingState << endl;
+    homing_state_flags_ = NULL_STATE_HOMING;
+    std::cout << "Changing homing state to " << homing_state_ << std::endl;
   }
-  else if (homingStateFlags != nullStateHoming)
+  else if (homing_state_flags_ != NULL_STATE_HOMING)
   {
-    homingState = homingStateFlags;
-    internalDelayCounter = 0;
+    homing_state_ = homing_state_flags_;
+    internal_delay_counter_ = 0;
   }
 }
 
 void CableRobot::SwitchActuatedCableTransition()
 {
-  if (homingStateFlags == switchActuatedCable)
+  if (homing_state_flags_ == SWITCH_ACTUATED_CABLE)
   {
-    homingStateFlags = nullStateHoming;
-    cout << "Changing homing state to " << homingState << endl;
+    homing_state_flags_ = NULL_STATE_HOMING;
+    std::cout << "Changing homing state to " << homing_state_ << std::endl;
   }
-  else if (homingStateFlags != nullStateHoming)
+  else if (homing_state_flags_ != NULL_STATE_HOMING)
   {
-    homingState = homingStateFlags;
-    internalDelayCounter = 0;
+    homing_state_ = homing_state_flags_;
+    internal_delay_counter_ = 0;
   }
 }
 
 void CableRobot::IdleFunHomingTransition()
 {
-  if (homingStateFlags == idleHoming)
+  if (homing_state_flags_ == IDLE_HOMING)
   {
-    homingStateFlags = nullStateHoming;
-    cout << "Changing homing state to " << homingState << endl;
+    homing_state_flags_ = NULL_STATE_HOMING;
+    std::cout << "Changing homing state to " << homing_state_ << std::endl;
   }
-  else if (homingStateFlags != nullStateHoming)
+  else if (homing_state_flags_ != NULL_STATE_HOMING)
   {
-    homingState = homingStateFlags;
+    homing_state_ = homing_state_flags_;
   }
 }
 
 void CableRobot::GoingHomeTransition()
 {
-  if (homingStateFlags == goingHome)
+  if (homing_state_flags_ == GOING_HOME)
   {
-    homingStateFlags = nullStateHoming;
-    cout << "Changing homing state to " << homingState << endl;
+    homing_state_flags_ = NULL_STATE_HOMING;
+    std::cout << "Changing homing state to " << homing_state_ << std::endl;
   }
-  else if (homingStateFlags != nullStateHoming)
+  else if (homing_state_flags_ != NULL_STATE_HOMING)
   {
-    homingState = homingStateFlags;
-    internalDelayCounter = 0;
+    homing_state_ = homing_state_flags_;
+    internal_delay_counter_ = 0;
   }
 }
 
 void CableRobot::IdleActuatorPvt33Fun()
 {
-  if (robotGloballyEnabled >= numberOfActuators && !actuatorPvt33ProcessFinished)
+  if (robot_globally_enabled_ >= kNumActuators && !actuator_pvt33process_finished_)
   {
-    if (internalDelayCounter < homingDelay)
+    if (internal_delay_counter_ < kHomingDelay)
     {
-      internalDelayCounter++;
+      internal_delay_counter_++;
     }
     else
     {
-      actuatorPvt33StateFlags = switchToPositionMode;
-      internalDelayCounter = 0;
+      actuator_pvt33state_flags_ = SWITCH2POSITION_MODE;
+      internal_delay_counter_ = 0;
     }
   }
-  if (actuatorPvt33ProcessFinished)
+  if (actuator_pvt33process_finished_)
   {
     // emit
     // SendData(servoMotor[0].pulleyAngle,servoMotor[1].pulleyAngle,servoMotor[2].pulleyAngle);
@@ -599,50 +601,51 @@ void CableRobot::IdleActuatorPvt33Fun()
 
 void CableRobot::SwitchToPositionMode()
 {
-  if (robotGloballyEnabled >= numberOfActuators)
+  if (robot_globally_enabled_ >= kNumActuators)
   {
     uint8_t flagCompleted = 0;
-    for (int i = 0; i < numberOfActuators; i++)
+    for (int i = 0; i < kNumActuators; i++)
     {
-      if (servoMotor[i].servoMotorOperationState != GoldSoloWhistleDrive::cyclicPosition)
+      if (servo_motor_[i].servo_motor_operation_state_ !=
+          GoldSoloWhistleDrive::cyclicPosition)
       {
-        servoMotor[i].SetTargetDefaults();
-        servoMotor[i].ChangeOperationMode(GoldSoloWhistleDrive::cyclicPosition);
+        servo_motor_[i].SetTargetDefaults();
+        servo_motor_[i].ChangeOperationMode(GoldSoloWhistleDrive::cyclicPosition);
       }
       else
         flagCompleted++;
     }
-    if (flagCompleted == numberOfActuators)
+    if (flagCompleted == kNumActuators)
     {
-      enablePvt = 1;
-      actuatorPvt33StateFlags = moveActuatorPvt33;
+      enable_pvt_ = 1;
+      actuator_pvt33state_flags_ = MOVE_ACTUATOR_PVT33;
       emit SendActuatorPvt33Control(1);
-      cout << "going to move..." << endl;
+      std::cout << "going to move..." << std::endl;
     }
   }
 }
 
 void CableRobot::MoveActuatorPvt33()
 {
-  if (enablePvt && robotGloballyEnabled >= numberOfActuators)
+  if (enable_pvt_ && robot_globally_enabled_ >= kNumActuators)
   {
-    if (pvtCounter < numberOfPvt33Data)
+    if (pvt_counter_ < num_pvt33data_)
     {
-      pvtCounter++;
-      emit SendData(servoMotor[0].pulleyAngle, servoMotor[2].pulleyAngle,
-                    servoMotor[4].pulleyAngle);
-      for (int i = 0; i < numberOfActuators; i += 2)
+      pvt_counter_++;
+      emit SendData(servo_motor_[0].pulley_angle_, servo_motor_[2].pulley_angle_,
+                    servo_motor_[4].pulley_angle_);
+      for (int i = 0; i < kNumActuators; i += 2)
       {
-        servoMotor[i].SetPosition(*pointerToPvt33Data[i / 2]);
-        pointerToPvt33Data[i / 2]++;
+        servo_motor_[i].SetPosition(*ptr2pvt33data_[i / 2]);
+        ptr2pvt33data_[i / 2]++;
       }
     }
     else
     {
       emit SendActuatorPvt33Control(2);
-      actuatorPvt33StateFlags = goingHomePvt33;
-      for (int i = 0; i < numberOfActuators; i += 2)
-        servoMotor[i].SetPoly7GoStartParameters(goHomeTime);
+      actuator_pvt33state_flags_ = GOING_HOME_PVT33;
+      for (int i = 0; i < kNumActuators; i += 2)
+        servo_motor_[i].SetPoly7GoStartParameters(kGoHomeTime);
     }
   }
   else
@@ -653,170 +656,169 @@ void CableRobot::MoveActuatorPvt33()
 
 void CableRobot::GoingHomePvt33()
 {
-  if (robotGloballyEnabled >= numberOfActuators)
+  if (robot_globally_enabled_ >= kNumActuators)
   {
-    internalDelayCounter++;
-    double timeInSeconds = (static_cast<double>(internalDelayCounter)) / 1000.0;
-    if (timeInSeconds <= goHomeTime)
-      for (int i = 0; i < numberOfActuators; i += 2)
-        servoMotor[i].MovePoly7Incremental(timeInSeconds);
+    internal_delay_counter_++;
+    double timeInSeconds = (static_cast<double>(internal_delay_counter_)) / 1000.0;
+    if (timeInSeconds <= kGoHomeTime)
+      for (int i = 0; i < kNumActuators; i += 2)
+        servo_motor_[i].MovePoly7Incremental(timeInSeconds);
     else
     {
-      actuatorPvt33StateFlags = idleActuatorPvt33;
-      actuatorPvt33ProcessFinished = 1;
-      enablePvt = 0;
+      actuator_pvt33state_flags_ = IDLE_ACTUATOR_PVT33;
+      actuator_pvt33process_finished_ = 1;
+      enable_pvt_ = 0;
     }
   }
 }
 
 void CableRobot::IdleActuatorPvt33Transition()
 {
-  if (actuatorPvt33StateFlags == idleActuatorPvt33)
+  if (actuator_pvt33state_flags_ == IDLE_ACTUATOR_PVT33)
   {
-    actuatorPvt33StateFlags = nullStateActuatorPvt33;
-    cout << "Changing actuatorPvt33 state to " << actuatorPvt33State << endl;
+    actuator_pvt33state_flags_ = NULL_STATE_ACTUATOR_PVT33;
+    std::cout << "Changing actuatorPvt33 state to " << actuator_pvt33state_ << std::endl;
   }
-  else if (actuatorPvt33StateFlags != nullStateActuatorPvt33)
+  else if (actuator_pvt33state_flags_ != NULL_STATE_ACTUATOR_PVT33)
   {
-    actuatorPvt33State = actuatorPvt33StateFlags;
-    internalDelayCounter = 0;
+    actuator_pvt33state_ = actuator_pvt33state_flags_;
+    internal_delay_counter_ = 0;
   }
 }
 
 void CableRobot::SwitchToPositionModeTransition()
 {
-  if (actuatorPvt33StateFlags == switchToPositionMode)
+  if (actuator_pvt33state_flags_ == SWITCH2POSITION_MODE)
   {
-    actuatorPvt33StateFlags = nullStateActuatorPvt33;
-    cout << "Changing actuatorPvt33 state to " << actuatorPvt33State << endl;
+    actuator_pvt33state_flags_ = NULL_STATE_ACTUATOR_PVT33;
+    std::cout << "Changing actuatorPvt33 state to " << actuator_pvt33state_ << std::endl;
   }
-  else if (actuatorPvt33StateFlags != nullStateActuatorPvt33)
+  else if (actuator_pvt33state_flags_ != NULL_STATE_ACTUATOR_PVT33)
   {
-    actuatorPvt33State = actuatorPvt33StateFlags;
-    internalDelayCounter = 0;
+    actuator_pvt33state_ = actuator_pvt33state_flags_;
+    internal_delay_counter_ = 0;
   }
 }
 
 void CableRobot::MoveActuatorPvt33Transition()
 {
-  if (actuatorPvt33StateFlags == moveActuatorPvt33)
+  if (actuator_pvt33state_flags_ == MOVE_ACTUATOR_PVT33)
   {
-    actuatorPvt33StateFlags = nullStateActuatorPvt33;
-    cout << "Changing actuatorPvt33 state to " << actuatorPvt33State << endl;
+    actuator_pvt33state_flags_ = NULL_STATE_ACTUATOR_PVT33;
+    std::cout << "Changing actuatorPvt33 state to " << actuator_pvt33state_ << std::endl;
   }
-  else if (actuatorPvt33StateFlags != nullStateActuatorPvt33)
+  else if (actuator_pvt33state_flags_ != NULL_STATE_ACTUATOR_PVT33)
   {
-    actuatorPvt33State = actuatorPvt33StateFlags;
-    internalDelayCounter = 0;
+    actuator_pvt33state_ = actuator_pvt33state_flags_;
+    internal_delay_counter_ = 0;
   }
 }
 
 void CableRobot::GoingHomePvt33Transition()
 {
-  if (actuatorPvt33StateFlags == goingHomePvt33)
+  if (actuator_pvt33state_flags_ == GOING_HOME_PVT33)
   {
-    actuatorPvt33StateFlags = nullStateActuatorPvt33;
-    cout << "Changing actuatorPvt33 state to " << actuatorPvt33State << endl;
+    actuator_pvt33state_flags_ = NULL_STATE_ACTUATOR_PVT33;
+    std::cout << "Changing actuatorPvt33 state to " << actuator_pvt33state_ << std::endl;
   }
-  else if (actuatorPvt33StateFlags != nullStateActuatorPvt33)
+  else if (actuator_pvt33state_flags_ != NULL_STATE_ACTUATOR_PVT33)
   {
-    actuatorPvt33State = actuatorPvt33StateFlags;
-    internalDelayCounter = 0;
+    actuator_pvt33state_ = actuator_pvt33state_flags_;
+    internal_delay_counter_ = 0;
   }
 }
 
-CableRobot::CableRobot(QObject* parent, GoldSoloWhistleDrive* theDrives) : QObject(parent)
+CableRobot::CableRobot(QObject* parent, GoldSoloWhistleDrive* drives) : QObject(parent)
 {
-  for (int i = 0; i < numberOfActuators; i++)
+  for (int i = 0; i < kNumActuators; i++)
   {
-    servoMotor[i].AssignDrive(&theDrives[i]);
+    servo_motor_[i].AssignDrive(&drives[i]);
   }
 
-  state = idle;
-  stateFlags = nullState;
-  homingData.resize(6);
+  state_ = IDLE;
+  state_flags_ = NULL_STATE;
+  homing_data_.resize(6);
 }
 
 void CableRobot::StandardLoopFunction()
 {
-  (this->*stateManager[state])();
-  (this->*stateMachine[state])();
+  (this->*state_manager_[state_])();
+  (this->*state_machine_[state_])();
 }
 
 void CableRobot::UserLoopFunction()
 {
-  (this->*stateManager[state])();
-  (this->*stateMachine[state])();
+  (this->*state_manager_[state_])();
+  (this->*state_machine_[state_])();
 }
 
 void CableRobot::CollectRobotRequest(int state)
 {
-  stateFlags = CableRobot::RobotState(state);
+  state_flags_ = CableRobot::RobotState(state);
 }
 
 void CableRobot::CollectEnableRequest(int enable)
 {
-  robotGloballyEnabled = 0;
-  for (int i = 0; i < numberOfActuators; i++)
+  robot_globally_enabled_ = 0;
+  for (int i = 0; i < kNumActuators; i++)
   {
     if (enable)
     {
-      if (servoMotor[i].servoMotorState != GoldSoloWhistleDrive::operationEnabled)
-        servoMotor[i].Enable();
+      if (servo_motor_[i].servo_motor_state_ != GoldSoloWhistleDrive::operationEnabled)
+        servo_motor_[i].Enable();
     }
     else
     {
-      servoMotor[i].Disable();
+      servo_motor_[i].Disable();
     }
   }
 }
 
 void CableRobot::CollectClearFaultRequest()
 {
-  for (int i = 0; i < numberOfActuators; i++)
+  for (int i = 0; i < kNumActuators; i++)
   {
-    if (servoMotor[i].servoMotorState == GoldSoloWhistleDrive::fault)
-      servoMotor[i].FaultReset();
+    if (servo_motor_[i].servo_motor_state_ == GoldSoloWhistleDrive::fault)
+      servo_motor_[i].FaultReset();
   }
 }
 
 void CableRobot::CollectHomingProcessControl(int state)
 {
-  homingFlag = static_cast<uint8_t>(state);
+  homing_flag_ = static_cast<uint8_t>(state);
 }
 
-void CableRobot::CollectMeasurementRequest() { measurementFlag = 1; }
+void CableRobot::CollectMeasurementRequest() { meas_flag_ = 1; }
 
-void CableRobot::CollectHomingData(QVector<double> theData)
+void CableRobot::CollectHomingData(QVector<double> data)
 {
-  for (int i = 0; i < numberOfActuators; i += 2)
+  for (int i = 0; i < kNumActuators; i += 2)
   {
-    servoMotor[i].SetHomeWinchParameters(theData[i / 2],
-                                         theData[i / 2 + numberOfActuators / 2],
-                                         theData[i / 2 + numberOfActuators]);
-    servoMotor[i].SetPoly7GoStartParameters(goHomeTime);
+    servo_motor_[i].SetHomeWinchParameters(data[i / 2], data[i / 2 + kNumActuators / 2],
+                                           data[i / 2 + kNumActuators]);
+    servo_motor_[i].SetPoly7GoStartParameters(kGoHomeTime);
   }
-  homingStateFlags = goingHome;
-  cout << "going to start position" << endl;
-  internalDelayCounter = 0;
+  homing_state_flags_ = GOING_HOME;
+  std::cout << "going to start position" << std::endl;
+  internal_delay_counter_ = 0;
 }
 
 void CableRobot::CollectDataPointers(int n, double* p1, double* p2, double* p3)
 {
-  numberOfPvt33Data = n;
-  pointerToPvt33Data[0] = p1;
-  pointerToPvt33Data[1] = p2;
-  pointerToPvt33Data[2] = p3;
-  actuatorPvt33ProcessFinished = 0;
-  internalDelayCounter = 0;
-  enablePvt = 0;
-  pvtCounter = 0;
+  num_pvt33data_ = n;
+  ptr2pvt33data_[0] = p1;
+  ptr2pvt33data_[1] = p2;
+  ptr2pvt33data_[2] = p3;
+  actuator_pvt33process_finished_ = 0;
+  internal_delay_counter_ = 0;
+  enable_pvt_ = 0;
+  pvt_counter_ = 0;
 }
 
 void CableRobot::CollectActuatorPvt33Control(int /*state*/)
 {
-  enablePvt = 1;
-  pvtCounter = 0;
+  enable_pvt_ = 1;
+  pvt_counter_ = 0;
 }
 
 void CableRobot::CollectStartRequest() {}

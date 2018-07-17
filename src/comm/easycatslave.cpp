@@ -1,6 +1,6 @@
 #include "easycatslave.h"
 
-EasyCatSlave::EasyCatSlave(uint8_t thisSlavePosition)
+EasyCatSlave::EasyCatSlave(uint8_t slave_position)
 {
   /* It is FUNDAMENTAL that the constructor has this form. There are several
    * other ways we can program
@@ -15,64 +15,64 @@ EasyCatSlave::EasyCatSlave(uint8_t thisSlavePosition)
   */
 
   // From here, it must be edited by the user
-  alias = EasyCatAlias;
-  position = thisSlavePosition;
-  vendor_id = EasyCatVendor_id;
-  product_code = EasyCatProduct_code;
-  numberOfDomainEntries = EasyCatDomainEntries;
+  alias_ = kEasyCatAlias_;
+  position_ = slave_position;
+  vendor_id_ = kEasyCatVendorID_;
+  product_code_ = kEasyCatProductCode_;
+  num_domain_entries_ = kEasyCatDomainEntries_;
 
-  domainRegisters[0] = {alias, position, vendor_id, product_code, 0x0005, 0x01,
-                        &offsetOut.slaveStatus, NULL};
-  domainRegisters[1] = {alias, position, vendor_id, product_code, 0x0005, 0x02,
-                        &offsetOut.controlWord, NULL};
-  domainRegisters[2] = {alias, position, vendor_id, product_code, 0x0005, 0x03,
-                        &offsetOut.ledFrequency, NULL};
-  domainRegisters[3] = {alias, position, vendor_id, product_code, 0x0006, 0x01,
-                        &offsetIn.slaveState, NULL};
-  domainRegisters[4] = {alias, position, vendor_id, product_code, 0x0006, 0x02,
-                        &offsetIn.numberOfCalls, NULL};
-  domainRegisters[5] = {alias, position, vendor_id, product_code, 0x0006, 0x03,
-                        &offsetIn.cycleCounter, NULL};
+  domain_registers_[0] = {alias_, position_, vendor_id_, product_code_, 0x0005, 0x01,
+                          &offset_out_.slave_status, NULL};
+  domain_registers_[1] = {alias_, position_, vendor_id_, product_code_, 0x0005, 0x02,
+                          &offset_out_.control_word, NULL};
+  domain_registers_[2] = {alias_, position_, vendor_id_, product_code_, 0x0005, 0x03,
+                          &offset_out_.led_frequency, NULL};
+  domain_registers_[3] = {alias_, position_, vendor_id_, product_code_, 0x0006, 0x01,
+                          &offset_in_.slave_state, NULL};
+  domain_registers_[4] = {alias_, position_, vendor_id_, product_code_, 0x0006, 0x02,
+                          &offset_in_.num_calls, NULL};
+  domain_registers_[5] = {alias_, position_, vendor_id_, product_code_, 0x0006, 0x03,
+                          &offset_in_.cycle_counter, NULL};
 
-  domainRegistersPointer = domainRegisters;
-  slavePdoEntriesPointer = slavePdoEntries;
-  slavePdosPointer = slavePdos;
-  slaveSyncsPointer = slaveSyncs;
+  domain_registers_ptr_ = domain_registers_;
+  slave_pdo_entries_ptr_ = slave_pdo_entries_;
+  slave_pdos_ptr_ = slave_pdos_;
+  slave_sync_ptr_ = slave_syncs_;
   // and stop here, the rest is additional
 
-  internalState = idle;
-  slaveFlags = idle;
-  outputPdos.slaveStatus = operational;
+  internal_state_ = idle;
+  slave_flags_ = idle;
+  output_pdos_.slave_status = kOperational_;
 }
 
 EasyCatSlave::~EasyCatSlave()
 {
-  outputPdos.slaveStatus = notOperational;
-  EC_WRITE_U8(domainDataPointer + offsetOut.slaveStatus, outputPdos.slaveStatus);
+  output_pdos_.slave_status = kNotOperational_;
+  EC_WRITE_U8(domain_data_ptr_ + offset_out_.slave_status, output_pdos_.slave_status);
 }
 
-void EasyCatSlave::IdleFun() { outputPdos.controlWord = idle; }
+void EasyCatSlave::IdleFun() { output_pdos_.control_word = idle; }
 
 void EasyCatSlave::UpdateSlaveFun()
 {
-  outputPdos.controlWord = updateSlave;
-  temp = inputPdos.numberOfCalls;
+  output_pdos_.control_word = updateSlave;
+  temp_ = input_pdos_.num_calls;
 }
 
 void EasyCatSlave::IdleTransition()
 {
-  if (slaveFlags == updateSlave && inputPdos.slaveState == idle)
+  if (slave_flags_ == updateSlave && input_pdos_.slave_state == idle)
   {
-    slaveFlags = idle;
-    internalState = updateSlave;
+    slave_flags_ = idle;
+    internal_state_ = updateSlave;
   }
 }
 
 void EasyCatSlave::UpdateSlaveTransition()
 {
-  if (inputPdos.numberOfCalls > temp)
+  if (input_pdos_.num_calls > temp_)
   {
-    internalState = idle;
+    internal_state_ = idle;
   }
 }
 
@@ -84,22 +84,22 @@ void EasyCatSlave::LoopFunction()
    * check if the state change is feasible. If so, it changes the state
    * State Machine executes the code associated with the current state
   */
-  (this->*stateManager[internalState])();
-  (this->*stateMachine[internalState])();
+  (this->*state_manager_[internal_state_])();
+  (this->*state_machine_[internal_state_])();
 }
 
 void EasyCatSlave::ReadInputs()
 {
   // This is the way we can read the Pdos, according to ecrt.h
-  inputPdos.slaveState = EC_READ_U8(domainDataPointer + offsetIn.slaveState);
-  inputPdos.numberOfCalls = EC_READ_U8(domainDataPointer + offsetIn.numberOfCalls);
-  inputPdos.cycleCounter = EC_READ_U8(domainDataPointer + offsetIn.cycleCounter);
+  input_pdos_.slave_state = EC_READ_U8(domain_data_ptr_ + offset_in_.slave_state);
+  input_pdos_.num_calls = EC_READ_U8(domain_data_ptr_ + offset_in_.num_calls);
+  input_pdos_.cycle_counter = EC_READ_U8(domain_data_ptr_ + offset_in_.cycle_counter);
 }
 
 void EasyCatSlave::WriteOutputs()
 {
   // This is the way we can write the Pdos, according to ecrt.h
-  EC_WRITE_U8(domainDataPointer + offsetOut.slaveStatus, outputPdos.slaveStatus);
-  EC_WRITE_U8(domainDataPointer + offsetOut.controlWord, outputPdos.controlWord);
-  EC_WRITE_U8(domainDataPointer + offsetOut.ledFrequency, outputPdos.ledFrequency);
+  EC_WRITE_U8(domain_data_ptr_ + offset_out_.slave_status, output_pdos_.slave_status);
+  EC_WRITE_U8(domain_data_ptr_ + offset_out_.control_word, output_pdos_.control_word);
+  EC_WRITE_U8(domain_data_ptr_ + offset_out_.led_frequency, output_pdos_.led_frequency);
 }

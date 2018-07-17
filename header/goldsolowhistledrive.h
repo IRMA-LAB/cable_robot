@@ -4,76 +4,64 @@
 #include <bitset>
 #include <iostream>
 #include "ethercatslave.h"
+#include "common.h"
 
 class GoldSoloWhistleDrive : public EthercatSlave
 {
 private:
-  constexpr static uint8_t GoldSoloWhistleDomainEntries = 12;
-  constexpr static uint8_t GoldSoloWhistleAlias = 0;
-  constexpr static uint32_t GoldSoloWhistleVendor_id = 0x0000009a;
-  constexpr static uint32_t GoldSoloWhistleProduct_code = 0x00030924;
-  constexpr static uint8_t numberOfGoldSoloWhistleStates = 7;
-  constexpr static uint16_t controlWordIndex = 0x6040;
-  constexpr static uint8_t controlWordSubIndex = 0x00;
-  constexpr static uint16_t homingMethodIndex = 0x6098;
-  constexpr static uint8_t homingMethodSubIndex = 0x00;
-  constexpr static uint16_t modesOfOperationIndex = 0x6060;
-  constexpr static uint8_t modesOfOperationSubIndex = 0x00;
-  constexpr static uint16_t targetTorqueIndex = 0x6071;
-  constexpr static uint8_t targetTorqueSubIndex = 0x00;
-  constexpr static uint16_t targetPositionIndex = 0x607a;
-  constexpr static uint8_t targetPositionSubIndex = 0x00;
-  constexpr static uint16_t targetVelocityIndex = 0x60FF;
-  constexpr static uint8_t targetVelocitySubIndex = 0x00;
-  constexpr static uint16_t statusWordIndex = 0x6041;
-  constexpr static uint8_t statusWordSubIndex = 0x00;
-  constexpr static uint16_t modesOfOperationDisplayIndex = 0x6061;
-  constexpr static uint8_t modesOfOperationDisplaySubIndex = 0x00;
-  constexpr static uint16_t positionActualValueIndex = 0x6064;
-  constexpr static uint8_t positionActualValueSubIndex = 0x00;
-  constexpr static uint16_t velocityActualValueIndex = 0x606C;
-  constexpr static uint8_t velocityActualValueSubIndex = 0x00;
-  constexpr static uint16_t torqueActualValueIndex = 0x6077;
-  constexpr static uint8_t torqueActualValueSubIndex = 0x00;
-  constexpr static uint16_t digitalInputsIndex = 0x60FD;
-  constexpr static uint8_t digitalInputsSubIndex = 0x00;
-  constexpr static uint16_t auxiliaryPositionActualValueIndex = 0x20A0;
-  constexpr static uint8_t auxiliaryPositionActualValueSubIndex = 0x00;
-  constexpr static uint8_t set = 1;
-  constexpr static uint8_t reset = 0;
-  constexpr static uint8_t offStatusBit = 6;
-  constexpr static uint8_t onStatusBit = 5;
-  constexpr static uint8_t readyToSwitchOnStatusBit = 0;
-  constexpr static uint8_t switchOnStatusBit = 1;
-  constexpr static uint8_t enabledStatusBit = 2;
-  constexpr static uint8_t faultStatusBit = 3;
-  constexpr static uint8_t switchOnControlBit = 0;
-  constexpr static uint8_t enableVoltageControlBit = 1;
-  constexpr static uint8_t quickStopControlBit = 2;
-  constexpr static uint8_t enableControlBit = 3;
-  constexpr static uint8_t faultResetControlBit = 7;
-  constexpr static uint8_t homingOnPositionMethod = 35;
-  constexpr static uint8_t numberOfSupportedOperations = 3;
+  constexpr static uint8_t kGoldSoloWhistleDomainEntries_ = 12;
+  constexpr static uint8_t kGoldSoloWhistleAlias_ = 0;
+  constexpr static uint32_t kGoldSoloWhistleVendorID_ = 0x0000009a;
+  constexpr static uint32_t kGoldSoloWhistleProductCode_ = 0x00030924;
+  constexpr static uint8_t kNumGoldSoloWhistleStates_ = 7;
+  constexpr static uint16_t kControlWordIndex_ = 0x6040;
+  constexpr static uint8_t kControlWordSubIndex_ = 0x00;
+  constexpr static uint16_t kHomingMethodIndex_ = 0x6098;
+  constexpr static uint8_t kHomingMethodSubIndex_ = 0x00;
+  constexpr static uint16_t kModesOfOperationIndex_ = 0x6060;
+  constexpr static uint8_t kModesOfOperationSubIndex_ = 0x00;
+  constexpr static uint16_t kTargetTorqueIndex_ = 0x6071;
+  constexpr static uint8_t kTargetTorqueSubIndex_ = 0x00;
+  constexpr static uint16_t kTargetPositionIndex_ = 0x607a;
+  constexpr static uint8_t kTargetPositionSubIndex_ = 0x00;
+  constexpr static uint16_t kTargetVelocityIndex_ = 0x60FF;
+  constexpr static uint8_t kTargetVelocitySubIndex_ = 0x00;
+  constexpr static uint16_t kStatusWordIndex_ = 0x6041;
+  constexpr static uint8_t kStatusWordSubIndex_ = 0x00;
+  constexpr static uint16_t kModesOfOperationDisplayIndex_ = 0x6061;
+  constexpr static uint8_t kModesOfOperationDisplaySubIndex_ = 0x00;
+  constexpr static uint16_t kPositionActualValueIndex_ = 0x6064;
+  constexpr static uint8_t kPositionActualValueSubIndex_ = 0x00;
+  constexpr static uint16_t kVelocityActualValueIndex_ = 0x606C;
+  constexpr static uint8_t kVelocityActualValueSubIndex_ = 0x00;
+  constexpr static uint16_t kTorqueActualValueIndex_ = 0x6077;
+  constexpr static uint8_t kTorqueActualValueSubIndex_ = 0x00;
+  constexpr static uint16_t kDigitalInputsIndex_ = 0x60FD;
+  constexpr static uint8_t kDigitalInputsSubIndex_ = 0x00;
+  constexpr static uint16_t kAuxiliaryPositionActualValueIndex_ = 0x20A0;
+  constexpr static uint8_t kAuxiliaryPositionActualValueSubIndex_ = 0x00;
+  constexpr static uint8_t kHomingOnPositionMethod_ = 35;
+  constexpr static uint8_t kNumSupportedOperations_ = 3;
 
   struct OffsetOut
   { // Useful ethercat struct
-    unsigned int controlWord;
-    unsigned int modesOfOperation;
-    unsigned int targetTorque;
-    unsigned int targetPosition;
-    unsigned int targetVelocity;
-  } offsetOut;
+    unsigned int control_word;
+    unsigned int modes_of_operation;
+    unsigned int target_torque;
+    unsigned int target_position;
+    unsigned int target_velocity;
+  } offset_out_;
 
   struct OffsetIn
   { // Useful ethercat struct
-    unsigned int statusWord;
-    unsigned int modesOfOperationDisplay;
-    unsigned int positionActualValue;
-    unsigned int velocityActualValue;
-    unsigned int torqueActualValue;
-    unsigned int digitalInputs;
-    unsigned int auxiliaryPositionActualValue;
-  } offsetIn;
+    unsigned int status_word;
+    unsigned int modes_of_operation_display;
+    unsigned int position_actual_value;
+    unsigned int velocity_actual_value;
+    unsigned int torque_actual_value;
+    unsigned int digital_inputs;
+    unsigned int auxiliary_position_actual_value;
+  } offset_in_;
 
   typedef void (GoldSoloWhistleDrive::*
                   StateFunction)(); // Easyway to implement state machine
@@ -108,8 +96,10 @@ private:
 public:
   GoldSoloWhistleDrive(uint8_t thisSlavePosition);
   ~GoldSoloWhistleDrive() {}
-  constexpr static uint8_t GoldSoloWhistleDomainInputs = 7;
-  constexpr static uint8_t GoldSoloWhistleDomainOutputs = 5;
+
+  constexpr static uint8_t kGoldSoloWhistleDomainInputs_ = 7;
+  constexpr static uint8_t kGoldSoloWhistleDomainOutputs_ = 5;
+
   enum GoldSoloWhistleDriveState
   {
     switchOnDisabled,
@@ -120,10 +110,10 @@ public:
     faultReactionActive, // To be implemented, reaction to a specific fault
     fault,
     nullState // usefull null flag
-  } state,
-    stateFlags; // state machine utilities
+  } state_,
+     state_flags_; // state machine utilities
   // State machine function array
-  StateFunction stateMachine[numberOfGoldSoloWhistleStates] = {
+  StateFunction state_machine_[kNumGoldSoloWhistleStates_] = {
     &GoldSoloWhistleDrive::SwitchOnDisabledFun,
     &GoldSoloWhistleDrive::ReadyToSwitchOnFun,
     &GoldSoloWhistleDrive::SwitchOnFun,
@@ -132,7 +122,7 @@ public:
     &GoldSoloWhistleDrive::FaultReactionActiveFun,
     &GoldSoloWhistleDrive::FaultFun};
   // State machine transition function array
-  StateFunction stateManager[numberOfGoldSoloWhistleStates] = {
+  StateFunction state_manager_[kNumGoldSoloWhistleStates_] = {
     &GoldSoloWhistleDrive::SwitchOnDisabledTransitions,
     &GoldSoloWhistleDrive::ReadyToSwitchOnTransitions,
     &GoldSoloWhistleDrive::SwitchOnTransitions,
@@ -142,48 +132,48 @@ public:
     &GoldSoloWhistleDrive::FaultTransitions};
 
   ec_pdo_entry_reg_t
-    domainRegisters[GoldSoloWhistleDomainEntries]; // ethercat utilities
-  ec_pdo_entry_info_t slavePdoEntries[GoldSoloWhistleDomainEntries] =
+    domain_registers_[kGoldSoloWhistleDomainEntries_]; // ethercat utilities
+  ec_pdo_entry_info_t slave_pdo_entries_[kGoldSoloWhistleDomainEntries_] =
     { // ethercat utilities, can be retrieved in the xml config file provided by
       // the vendor
-     {controlWordIndex, controlWordSubIndex,
+     {kControlWordIndex_, kControlWordSubIndex_,
       16}, // Start of RxPdo mapping (Outputs)
-     {modesOfOperationIndex, modesOfOperationSubIndex, 8},
-     {targetTorqueIndex, targetTorqueSubIndex, 16},
-     {targetPositionIndex, targetPositionSubIndex, 32},
-     {targetVelocityIndex, targetVelocitySubIndex, 32},
-     {statusWordIndex, statusWordSubIndex,
+     {kModesOfOperationIndex_, kModesOfOperationSubIndex_, 8},
+     {kTargetTorqueIndex_, kTargetTorqueSubIndex_, 16},
+     {kTargetPositionIndex_, kTargetPositionSubIndex_, 32},
+     {kTargetVelocityIndex_, kTargetVelocitySubIndex_, 32},
+     {kStatusWordIndex_, kStatusWordSubIndex_,
       16}, // Start of TxPdo mapping (Inputs)
-     {modesOfOperationDisplayIndex, modesOfOperationDisplaySubIndex, 8},
-     {positionActualValueIndex, positionActualValueSubIndex, 32},
-     {velocityActualValueIndex, velocityActualValueSubIndex, 32},
-     {torqueActualValueIndex, torqueActualValueSubIndex, 16},
-     {digitalInputsIndex, digitalInputsSubIndex, 32},
-     {auxiliaryPositionActualValueIndex, auxiliaryPositionActualValueSubIndex,
+     {kModesOfOperationDisplayIndex_, kModesOfOperationDisplaySubIndex_, 8},
+     {kPositionActualValueIndex_, kPositionActualValueSubIndex_, 32},
+     {kVelocityActualValueIndex_, kVelocityActualValueSubIndex_, 32},
+     {kTorqueActualValueIndex_, kTorqueActualValueSubIndex_, 16},
+     {kDigitalInputsIndex_, kDigitalInputsSubIndex_, 32},
+     {kAuxiliaryPositionActualValueIndex_, kAuxiliaryPositionActualValueSubIndex_,
       32}};
 
-  ec_pdo_info_t slavePdos[2] = {
+  ec_pdo_info_t slave_pdos_[2] = {
     // ethercat utilities, can be retrieved in the xml config file provided by
     // the vendor
-    {0x1607, 5, slavePdoEntries + 0}, /* Outputs */
-    {0x1a07, 7, slavePdoEntries + 5}, /* Inputs */
+    {0x1607, 5, slave_pdo_entries_ + 0}, /* Outputs */
+    {0x1a07, 7, slave_pdo_entries_ + 5}, /* Inputs */
   };
 
-  ec_sync_info_t slaveSyncs[5] = {
+  ec_sync_info_t slave_syncs_[5] = {
     {0, EC_DIR_OUTPUT, 0, NULL, EC_WD_DISABLE},
     {1, EC_DIR_INPUT, 0, NULL, EC_WD_DISABLE},
-    {2, EC_DIR_OUTPUT, 1, slavePdos + 0, EC_WD_ENABLE},
-    {3, EC_DIR_INPUT, 1, slavePdos + 1, EC_WD_DISABLE},
+    {2, EC_DIR_OUTPUT, 1, slave_pdos_ + 0, EC_WD_ENABLE},
+    {3, EC_DIR_INPUT, 1, slave_pdos_ + 1, EC_WD_DISABLE},
     {0xff, EC_DIR_INVALID, 0, 0x00, EC_WD_DEFAULT}};
 
   struct OutputPdos
   { // this is a simple way to store the pdos output values
-    std::bitset<16> controlWord;
-    signed char modesOfOperation;
-    short TargetTorque;
-    int TargetPosition;
-    int TargetVelocity;
-  } outputPdos;
+    std::bitset<16> control_word;
+    signed char modes_of_operation;
+    short target_torque;
+    int target_position;
+    int target_velocity;
+  } output_pdos_;
 
   enum InputPdosElements
   {
@@ -215,12 +205,12 @@ public:
   } operationState,
     operationStateFlags;
 
-  StateFunction operationStateMachine[numberOfSupportedOperations] = {
+  StateFunction operationStateMachine[kNumSupportedOperations_] = {
     &GoldSoloWhistleDrive::CyclicPositionFun,
     &GoldSoloWhistleDrive::CyclicVelocityFun,
     &GoldSoloWhistleDrive::CyclicTorqueFun};
   // State machine transition function array
-  StateFunction operationStateManager[numberOfSupportedOperations] = {
+  StateFunction operationStateManager[kNumSupportedOperations_] = {
     &GoldSoloWhistleDrive::CyclicPositionTransition,
     &GoldSoloWhistleDrive::CyclicVelocityTransition,
     &GoldSoloWhistleDrive::CyclicTorqueTransition};

@@ -12,21 +12,22 @@ class CableRobotMaster : public QObject, public EthercatMaster
 {
   Q_OBJECT
 private:
-  constexpr static uint8_t slavesNumber = 7; // Some easycat master specific infos
+  // Some easycat master specific infos
+  constexpr static uint8_t kSlavesNum_ = 7;
   // constexpr static uint8_t slavesNumber = 2;
-  constexpr static uint8_t EasyCatNumber = 1;
-  constexpr static uint8_t GoldSoloWhistleNumber = 6;
-  constexpr static uint8_t numberOfMasterStates = 5;
+  constexpr static uint8_t kEasyCatNum_ = 1;
+  constexpr static uint8_t kGoldSoloWhistleNum_ = 6;
+  constexpr static uint8_t kMasterStatesNum_ = 5;
 
-  ServoMotor* theServoMotor = NULL;
+  ServoMotor* servo_motor_ = NULL;
 
-  typedef void (
-    CableRobotMaster::*StateFunction)(); // Easy way to implement state machine
-  StateFunction stateMachine[numberOfMasterStates] = {
+  // Easy way to implement state machine
+  typedef void (CableRobotMaster::*StateFunction)();
+  StateFunction state_machine_[kMasterStatesNum_] = {
     &CableRobotMaster::IdleFun, &CableRobotMaster::ActuatorControlFun,
     &CableRobotMaster::EasyCatControlFun, &CableRobotMaster::StandardRobotOperationFun,
     &CableRobotMaster::UserRobotOperationFun};
-  StateFunction stateManager[numberOfMasterStates] = {
+  StateFunction state_manager_[kMasterStatesNum_] = {
     &CableRobotMaster::IdleTransition, &CableRobotMaster::ActuatorControlTransition,
     &CableRobotMaster::EasyCatControlTransition,
     &CableRobotMaster::StandardRobotOperationTransition,
@@ -49,14 +50,14 @@ public:
   virtual ~CableRobotMaster() {}
   enum MasterState
   {
-    idle,
-    actuatorControl,
-    easyCatControl,
-    standardRobotOperation,
-    userRobotOperation,
-    nullState
-  } stateFlags,
-    state;
+    IDLE,
+    ACTUATOR_CTRL,
+    EASYCAT_CTRL,
+    STD_ROBOT_OPERATION,
+    USER_ROBOT_OPERATION,
+    NULL_STATE
+  } state_flags_,
+    state_;
 
   /* The next 2 array are fundamental. The first one contains all the slaves
    * of a specified type (easycat, in this case), and for each kind of ethercat
@@ -66,27 +67,27 @@ public:
    * class can deal with everything ethercat related, without the user having to worry
    * about it
   */
-  EasyCatSlave easyCatSlave[EasyCatNumber] = {
+  EasyCatSlave easycat_slave_[kEasyCatNum_] = {
     {EasyCatSlave(0)},
   };
-  GoldSoloWhistleDrive goldSoloWhistleSlave[GoldSoloWhistleNumber] = {
+  GoldSoloWhistleDrive gold_solo_whistle_slave_[kGoldSoloWhistleNum_] = {
     {GoldSoloWhistleDrive(1)},
     {GoldSoloWhistleDrive(2)},
     {GoldSoloWhistleDrive(3)},
     {GoldSoloWhistleDrive(4)},
     {GoldSoloWhistleDrive(5)},
     {GoldSoloWhistleDrive(6)}};
-  EthercatSlave* etherCatSlave[slavesNumber] = {{&easyCatSlave[0]},
-                                                {&goldSoloWhistleSlave[0]},
-                                                {&goldSoloWhistleSlave[1]},
-                                                {&goldSoloWhistleSlave[2]},
-                                                {&goldSoloWhistleSlave[3]},
-                                                {&goldSoloWhistleSlave[4]},
-                                                {&goldSoloWhistleSlave[5]}};
+  EthercatSlave* etherCatSlave_[kSlavesNum_] = {{&easycat_slave_[0]},
+                                                  {&gold_solo_whistle_slave_[0]},
+                                                  {&gold_solo_whistle_slave_[1]},
+                                                  {&gold_solo_whistle_slave_[2]},
+                                                  {&gold_solo_whistle_slave_[3]},
+                                                  {&gold_solo_whistle_slave_[4]},
+                                                  {&gold_solo_whistle_slave_[5]}};
   //    EthercatSlave *etherCatSlave[slavesNumber] = {{&easyCatSlave[0]},
   //                                                  {&easyCatSlave[1]}};
 
-  CableRobot cableRobot;
+  CableRobot cable_robot_;
 
   virtual void StartUpFunction(); // overloaded master ethercat functions, we
                                   // have to overload them
@@ -104,11 +105,11 @@ signals:
 
 public slots:
   void CollectMasterRequest(int state);
-  void CollectMotorNumber(int theNumber);
+  void CollectMotorNumber(int motor_num);
   void CollectEnableRequest(int enable);
   void CollectClearFaultRequest();
-  void CollectOperationModeChangeRequest(int theOperation);
-  void CollectCommandUpdateRequest(int theCommand, int theState);
+  void CollectOperationModeChangeRequest(int target_op_mode);
+  void CollectCommandUpdateRequest(int cmd, int state);
 };
 
 #endif // CABLEROBOTMASTER_H

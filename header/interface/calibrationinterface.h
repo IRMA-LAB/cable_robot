@@ -16,14 +16,14 @@ class CalibrationInterface : public QWidget
   Q_OBJECT
 
 public:
-  explicit CalibrationInterface(QWidget* parent = 0, CableRobotMaster* theMaster = 0);
+  explicit CalibrationInterface(QWidget* parent = 0, CableRobotMaster* master = 0);
   ~CalibrationInterface();
 
 signals:
   void GoBackIdle(int);
 
 private:
-  CableRobotMaster* cableRobotMaster;
+  CableRobotMaster* cable_robot_master_;
   Ui::CalibrationInterface* ui;
 
   virtual void closeEvent(QCloseEvent* event);

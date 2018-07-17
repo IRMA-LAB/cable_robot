@@ -16,14 +16,14 @@ class ManualInterface33 : public QWidget
   Q_OBJECT
 
 public:
-  explicit ManualInterface33(QWidget* parent = 0, CableRobotMaster* theMaster = 0);
+  explicit ManualInterface33(QWidget* parent = 0, CableRobotMaster* master = 0);
   ~ManualInterface33();
 
 signals:
   void GoBackIdle(int);
 
 private:
-  CableRobotMaster* cableRobotMaster;
+  CableRobotMaster* cable_robot_master_;
   Ui::ManualInterface33* ui;
 
   virtual void closeEvent(QCloseEvent* event);

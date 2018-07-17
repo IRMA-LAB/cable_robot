@@ -1,25 +1,25 @@
 #include "cablerobotinterface.h"
 #include "ui_cablerobotinterface.h"
 
-CableRobotInterface::CableRobotInterface(QWidget* parent, CableRobotMaster* theMaster)
-  : QWidget(parent), cableRobotMaster(theMaster), ui(new Ui::CableRobotInterface)
+CableRobotInterface::CableRobotInterface(QWidget* parent, CableRobotMaster* master)
+  : QWidget(parent), cable_robot_master_(master), ui(new Ui::CableRobotInterface)
 {
   ui->setupUi(this);
   ui->StandardModesBlock->setDisabled(true);
   ui->UserModesBlock->setDisabled(true);
 
-  connect(cableRobotMaster, &CableRobotMaster::SendStartUp, this,
+  connect(cable_robot_master_, &CableRobotMaster::SendStartUp, this,
           &CableRobotInterface::CollectStartUp);
-  connect(cableRobotMaster, &CableRobotMaster::SendMasterRequestProcessed, this,
+  connect(cable_robot_master_, &CableRobotMaster::SendMasterRequestProcessed, this,
           &CableRobotInterface::CollectMasterRequestProcessed);
-  connect(&cableRobotMaster->cableRobot, &CableRobot::SendRobotRequestProcessed, this,
+  connect(&cable_robot_master_->cable_robot_, &CableRobot::SendRobotRequestProcessed, this,
           &CableRobotInterface::CollectRobotRequestProcessed);
 
-  connect(this, &CableRobotInterface::SendMasterRequest, cableRobotMaster,
+  connect(this, &CableRobotInterface::SendMasterRequest, cable_robot_master_,
           &CableRobotMaster::CollectMasterRequest);
-  connect(this, &CableRobotInterface::SendMotorNumber, cableRobotMaster,
+  connect(this, &CableRobotInterface::SendMotorNumber, cable_robot_master_,
           &CableRobotMaster::CollectMotorNumber);
-  connect(this, &CableRobotInterface::SendRobotRequest, &cableRobotMaster->cableRobot,
+  connect(this, &CableRobotInterface::SendRobotRequest, &cable_robot_master_->cable_robot_,
           &CableRobot::CollectRobotRequest);
 }
 
@@ -28,63 +28,63 @@ CableRobotInterface::~CableRobotInterface() { delete ui; }
 void CableRobotInterface::on_ActuatorControlButton_clicked()
 {
   emit SendMotorNumber(ui->MotorSpinBox->value());
-  emit SendMasterRequest(CableRobotMaster::actuatorControl);
+  emit SendMasterRequest(CableRobotMaster::ACTUATOR_CTRL);
 }
 
 void CableRobotInterface::on_EasyCatButton_clicked()
 {
-  emit SendMasterRequest(CableRobotMaster::easyCatControl);
+  emit SendMasterRequest(CableRobotMaster::EASYCAT_CTRL);
 }
 
 void CableRobotInterface::on_StandardRobotButton_toggled(bool checked)
 {
   if (checked)
-    emit SendMasterRequest(CableRobotMaster::standardRobotOperation);
+    emit SendMasterRequest(CableRobotMaster::STD_ROBOT_OPERATION);
   else
-    emit SendMasterRequest(CableRobotMaster::idle);
+    emit SendMasterRequest(CableRobotMaster::IDLE);
 }
 
 void CableRobotInterface::on_UserRobotButton_toggled(bool checked)
 {
   if (checked)
-    emit SendMasterRequest(CableRobotMaster::userRobotOperation);
+    emit SendMasterRequest(CableRobotMaster::USER_ROBOT_OPERATION);
   else
-    emit SendMasterRequest(CableRobotMaster::idle);
+    emit SendMasterRequest(CableRobotMaster::IDLE);
 }
 
 void CableRobotInterface::on_CalibrationButton_clicked()
 {
-  emit SendRobotRequest(CableRobot::calibration);
+  emit SendRobotRequest(CableRobot::CALIBRATION);
 }
 
 void CableRobotInterface::on_HomingButton_clicked()
 {
-  emit SendRobotRequest(CableRobot::homing);
+  emit SendRobotRequest(CableRobot::HOMING);
 }
 
 void CableRobotInterface::on_Robot66ManualButton_clicked()
 {
-  emit SendRobotRequest(CableRobot::robot66Manual);
+  emit SendRobotRequest(CableRobot::ROBOT66MANUAL);
 }
 
 void CableRobotInterface::on_Robot66DemoButton_clicked()
 {
-  emit SendRobotRequest(CableRobot::robot66Demo);
+  emit SendRobotRequest(CableRobot::ROBOT66DEMO);
 }
 
 void CableRobotInterface::on_Robot33ActuatorPvtButton_clicked()
 {
-  emit SendRobotRequest(CableRobot::robot33ActuatorPvt);
+  emit SendRobotRequest(CableRobot::ROBOT33ACTUATOR_PVT);
 }
 
 void CableRobotInterface::on_Robot33AutomaticButton_clicked()
 {
-  emit SendRobotRequest(CableRobot::robot33Automatic);
+  emit SendRobotRequest(CableRobot::ROBOT33AUTOMATIC);
 }
 
 void CableRobotInterface::on_Robot33ManualButton_clicked()
 {
-  emit SendRobotRequest(CableRobot::robot33Manual);
+  emit SendRobotRequest(CableRobot::ROBOT33MANUAL);
 }
 
 void CableRobotInterface::CollectStartUp()
@@ -96,24 +96,24 @@ void CableRobotInterface::CollectMasterRequestProcessed(int state)
 {
   switch (state)
   {
-  case CableRobotMaster::actuatorControl:
+  case CableRobotMaster::ACTUATOR_CTRL:
   {
     ActuatorInterface* actuatorInterface =
-      new ActuatorInterface(nullptr, cableRobotMaster);
+      new ActuatorInterface(nullptr, cable_robot_master_);
     actuatorInterface->show();
     ui->StandardModesBlock->setDisabled(true);
     ui->UserModesBlock->setDisabled(true);
     this->setDisabled(true);
     break;
   }
-  case CableRobotMaster::easyCatControl:
+  case CableRobotMaster::EASYCAT_CTRL:
   {
     ui->StandardModesBlock->setDisabled(true);
     ui->UserModesBlock->setDisabled(true);
     // this->hide();
     break;
   }
-  case CableRobotMaster::standardRobotOperation:
+  case CableRobotMaster::STD_ROBOT_OPERATION:
   {
     ui->StandardModesBlock->setEnabled(true);
     ui->UserModesBlock->setDisabled(true);
@@ -123,7 +123,7 @@ void CableRobotInterface::CollectMasterRequestProcessed(int state)
     ui->MotorSpinBox->setDisabled(true);
     break;
   }
-  case CableRobotMaster::userRobotOperation:
+  case CableRobotMaster::USER_ROBOT_OPERATION:
   {
     ui->UserModesBlock->setEnabled(true);
     ui->StandardModesBlock->setDisabled(true);
@@ -152,50 +152,50 @@ void CableRobotInterface::CollectRobotRequestProcessed(int state)
 {
   switch (state)
   {
-  case CableRobot::calibration:
+  case CableRobot::CALIBRATION:
   {
     CalibrationInterface* calirationInterface =
-      new CalibrationInterface(nullptr, cableRobotMaster);
+      new CalibrationInterface(nullptr, cable_robot_master_);
     calirationInterface->show();
     break;
   }
-  case CableRobot::homing:
+  case CableRobot::HOMING:
   {
-    HomingInterface* homingInterface = new HomingInterface(nullptr, cableRobotMaster);
+    HomingInterface* homingInterface = new HomingInterface(nullptr, cable_robot_master_);
     homingInterface->show();
     this->setDisabled(true);
     break;
   }
-  case CableRobot::robot33ActuatorPvt:
+  case CableRobot::ROBOT33ACTUATOR_PVT:
   {
     ActuatorPvtInterface33* actuatorPvtInterface33 =
-      new ActuatorPvtInterface33(nullptr, cableRobotMaster);
+      new ActuatorPvtInterface33(nullptr, cable_robot_master_);
     actuatorPvtInterface33->show();
     break;
   }
-  case CableRobot::robot33Automatic:
+  case CableRobot::ROBOT33AUTOMATIC:
   {
-    DemoInterface33* demoInterface33 = new DemoInterface33(nullptr, cableRobotMaster);
+    DemoInterface33* demoInterface33 = new DemoInterface33(nullptr, cable_robot_master_);
     demoInterface33->show();
     break;
   }
-  case CableRobot::robot33Manual:
+  case CableRobot::ROBOT33MANUAL:
   {
     ManualInterface33* manualInterface33 =
-      new ManualInterface33(nullptr, cableRobotMaster);
+      new ManualInterface33(nullptr, cable_robot_master_);
     manualInterface33->show();
     break;
   }
-  case CableRobot::robot66Manual:
+  case CableRobot::ROBOT66MANUAL:
   {
     ManualInterface66* manualInterface66 =
-      new ManualInterface66(nullptr, cableRobotMaster);
+      new ManualInterface66(nullptr, cable_robot_master_);
     manualInterface66->show();
     break;
   }
-  case CableRobot::robot66Demo:
+  case CableRobot::ROBOT66DEMO:
   {
-    DemoInterface66* demoInterface66 = new DemoInterface66(nullptr, cableRobotMaster);
+    DemoInterface66* demoInterface66 = new DemoInterface66(nullptr, cable_robot_master_);
     demoInterface66->show();
     break;
   }

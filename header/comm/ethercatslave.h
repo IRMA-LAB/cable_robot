@@ -15,28 +15,28 @@ public:
   EthercatSlave() {}
   virtual ~EthercatSlave() = 0;
 
-  uint8_t numberOfDomainEntries; // Ethercat utility
-  uint16_t alias;                // Ethercat utility
-  uint16_t position;             // Ethercat utility
-  uint32_t vendor_id;            // Ethercat utility
-  uint32_t product_code;         // Ethercat utility
-  uint8_t id;                    // Ethercat utility
+  uint8_t num_domain_entries_; // Ethercat utility
+  uint16_t alias_;                // Ethercat utility
+  uint16_t position_;             // Ethercat utility
+  uint32_t vendor_id_;            // Ethercat utility
+  uint32_t product_code_;         // Ethercat utility
+  uint8_t id_;                    // Ethercat utility
 
-  ec_pdo_entry_reg_t* domainRegistersPointer;  // Ethercat utility
-  ec_pdo_entry_info_t* slavePdoEntriesPointer; // Ethercat utility
-  ec_pdo_info_t* slavePdosPointer;             // Ethercat utility
-  ec_sync_info_t* slaveSyncsPointer;           // Ethercat utility
+  ec_pdo_entry_reg_t* domain_registers_ptr_;  // Ethercat utility
+  ec_pdo_entry_info_t* slave_pdo_entries_ptr_; // Ethercat utility
+  ec_pdo_info_t* slave_pdos_ptr_;             // Ethercat utility
+  ec_sync_info_t* slave_sync_ptr_;           // Ethercat utility
 
-  uint8_t* domainDataPointer; // Ethercat utility
+  uint8_t* domain_data_ptr_; // Ethercat utility
 
   // Function to overload in the slave, it gets called before the cyclical task
   // begins
-  virtual void Init(uint8_t* domainDataPointerExt);
+  virtual void Init(uint8_t* domain_data_ptr_ext);
   virtual void LoopFunction() = 0; // slave main function
   virtual void ReadInputs() = 0;   // to specify what to read
   virtual void WriteOutputs() = 0; // to specify what to write
 
-  virtual int SdoRequests(ec_sdo_request_t* sdoPointer, ec_slave_config_t* configPointer);
+  virtual int SdoRequests(ec_sdo_request_t* sdo_ptr, ec_slave_config_t* config_ptr);
 };
 
 #endif // ETHERCATSLAVE_H

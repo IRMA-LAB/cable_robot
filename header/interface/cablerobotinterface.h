@@ -24,7 +24,7 @@ class CableRobotInterface : public QWidget
 
 private:
 public:
-  explicit CableRobotInterface(QWidget* parent = 0, CableRobotMaster* theMaster = 0);
+  explicit CableRobotInterface(QWidget* parent = 0, CableRobotMaster* master = 0);
   ~CableRobotInterface();
 
 private slots:
@@ -50,7 +50,7 @@ public slots:
   void CollectRobotRequestProcessed(int state);
 
 private:
-  CableRobotMaster* cableRobotMaster;
+  CableRobotMaster* cable_robot_master_;
   Ui::CableRobotInterface* ui;
 };
 

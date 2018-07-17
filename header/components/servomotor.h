@@ -8,68 +8,69 @@
 class ServoMotor
 {
 private:
-  GoldSoloWhistleDrive* thisDrive = NULL;
-  Winch thisWinch;
-  constexpr static uint8_t set = 1;
-  constexpr static uint8_t reset = 0;
-  constexpr static short maxTorque = 400;
-  double stopCounts = 0.0;
-  double startCounts = 0.0;
-  double endTime = 1.0;
-  int homeMotorCounts = 0;
-  int homePulleyCounts = 0;
-  int startMotorCounts = 0;
-  int startPulleyCounts = 0;
-  uint8_t poly7Flag = 0;
+  GoldSoloWhistleDrive* drive_ = NULL;
+  Winch winch_;
 
-  double poly7Coeff[4] = {35.0, -84.0, 70.0, -20.0};
+  constexpr static uint8_t kSet_ = 1;
+  constexpr static uint8_t kReset_ = 0;
+  constexpr static short kMaxTorque_ = 400;
+
+  double stop_counts_ = 0.0;
+  double start_counts_ = 0.0;
+  double end_time_ = 1.0;
+  int home_motor_counts_ = 0;
+  int home_pulley_counts_ = 0;
+  int start_motor_counts_ = 0;
+  int start_pulley_counts_ = 0;
+  uint8_t poly7_flag_ = 0;
+  double poly7_coeff_[4] = {35.0, -84.0, 70.0, -20.0};
 
 public:
   enum TypeOfMotions
   {
-    PositionMovePlus,
-    PositionMoveMinus,
-    PositionMicroMovePlus,
-    PositionMicroMoveMinus,
-    TorquePlus,
-    TorqueMinus,
-    SpeedPlus,
-    SpeedMinus
-  } typeOfMotion;
-  uint8_t motionStatus = reset;
-  GoldSoloWhistleDrive::InputPdos* servoMotorInputPdos = NULL;
-  GoldSoloWhistleDrive::GoldSoloWhistleDriveState servoMotorState;
-  GoldSoloWhistleDrive::GoldSoloWhistleOperationState servoMotorOperationState;
+    POS_MOVE_UP,
+    POS_MOVE_DOWN,
+    POS_MICRO_MOVE_UP,
+    POS_MICRO_MOVE_DOWN,
+    TORQUE_UP,
+    TORQUE_DOWN,
+    SPEED_UP,
+    SPEED_DOWN
+  } type_of_motion_;
+  uint8_t motion_status_ = kReset_;
+  GoldSoloWhistleDrive::InputPdos* servo_motor_input_pdos_ = NULL;
+  GoldSoloWhistleDrive::GoldSoloWhistleDriveState servo_motor_state_;
+  GoldSoloWhistleDrive::GoldSoloWhistleOperationState servo_motor_operation_state_;
 
   ServoMotor() {}
-  int updateIndex = 0;
-  int upCounter = 0;
-  int downCounter = 10000;
-  double cableHomeLength = 0.0;
-  double cableLength = 0.0;
-  double cableEffectiveHomeLength = 0.0;
-  double pulleyHomeAngle = 0.0;
-  double pulleyAngle = 0.0;
-  double motorTorque = 0.0;
+  int update_idx_ = 0;
+  int up_counter_ = 0;
+  int down_counter_ = 10000;
+  double cable_home_len_ = 0.0;
+  double cable_len_ = 0.0;
+  double cable_effective_home_len_ = 0.0;
+  double pulley_home_angle_ = 0.0;
+  double pulley_angle_ = 0.0;
+  double motor_torque_ = 0.0;
 
-  void AssignDrive(GoldSoloWhistleDrive* theDrive);
+  void AssignDrive(GoldSoloWhistleDrive* new_drive);
   void UpdateState();
   void LoopFunction();
   void Enable();
   void Disable();
   void FaultReset();
-  void ChangeOperationMode(int theMode);
-  void SetCommand(int theCommand, int theState);
+  void ChangeOperationMode(int target_op_mode);
+  void SetCommand(int cmd, int state);
 
   inline int HasEnableRequestBeenProcessed()
   {
-    if (thisDrive->state == GoldSoloWhistleDrive::operationEnabled &&
-        servoMotorState == GoldSoloWhistleDrive::switchOn)
+    if (drive_->state_ == GoldSoloWhistleDrive::operationEnabled &&
+        servo_motor_state_ == GoldSoloWhistleDrive::switchOn)
     {
       return 1;
     }
-    else if (thisDrive->state == GoldSoloWhistleDrive::switchOnDisabled &&
-             servoMotorState == GoldSoloWhistleDrive::operationEnabled)
+    else if (drive_->state_ == GoldSoloWhistleDrive::switchOnDisabled &&
+             servo_motor_state_ == GoldSoloWhistleDrive::operationEnabled)
     {
       return 0;
     }
@@ -78,8 +79,8 @@ public:
   }
   inline int FaultPresent()
   {
-    if (thisDrive->state == GoldSoloWhistleDrive::fault &&
-        servoMotorState != GoldSoloWhistleDrive::fault)
+    if (drive_->state_ == GoldSoloWhistleDrive::fault &&
+        servo_motor_state_ != GoldSoloWhistleDrive::fault)
     {
       return 1;
     }
@@ -88,8 +89,8 @@ public:
   }
   inline int HasClearFaultRequestBeenProcessed()
   {
-    if (thisDrive->state == GoldSoloWhistleDrive::switchOnDisabled &&
-        servoMotorState == GoldSoloWhistleDrive::fault)
+    if (drive_->state_ == GoldSoloWhistleDrive::switchOnDisabled &&
+        servo_motor_state_ == GoldSoloWhistleDrive::fault)
     {
       return 1;
     }
@@ -98,10 +99,10 @@ public:
   }
   inline int HasOperationModeChangeRequestBeenProcessed()
   {
-    if (thisDrive->operationState != servoMotorOperationState &&
-        thisDrive->operationState != GoldSoloWhistleDrive::nullOperation)
+    if (drive_->operationState != servo_motor_operation_state_ &&
+        drive_->operationState != GoldSoloWhistleDrive::nullOperation)
     {
-      servoMotorOperationState = thisDrive->operationState;
+      servo_motor_operation_state_ = drive_->operationState;
       return 1;
     }
     else
@@ -110,14 +111,14 @@ public:
 
   void SetTargetDefaults();
   void SetStartingWinchParameter();
-  void SetHomeWinchParameters(double theCable, double thePulley, double theCable2);
+  void SetHomeWinchParameters(double cable_len, double pulley_angle, double cable_len_true);
   void SetMaxTorque();
-  void SetTorque(short theTorque);
-  void SetPosition(double thePosition);
-  void SetSpeed(int theVelocity);
-  void SetPoly7IncrementalParameters(double endLength, double endT);
-  void SetPoly7GoHomeParameters(double endT);
-  void SetPoly7GoStartParameters(double endT);
+  void SetTorque(short torque);
+  void SetPosition(double position);
+  void SetSpeed(int velocity);
+  void SetPoly7IncrementalParameters(double end_length, double end_t);
+  void SetPoly7GoHomeParameters(double end_t);
+  void SetPoly7GoStartParameters(double end_t);
   void MovePoly7Incremental(double t);
 };
 

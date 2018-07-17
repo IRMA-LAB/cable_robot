@@ -16,14 +16,14 @@ class DemoInterface33 : public QWidget
   Q_OBJECT
 
 public:
-  explicit DemoInterface33(QWidget* parent = 0, CableRobotMaster* theMaster = 0);
+  explicit DemoInterface33(QWidget* parent = 0, CableRobotMaster* master = 0);
   ~DemoInterface33();
 
 signals:
   void GoBackIdle(int);
 
 private:
-  CableRobotMaster* cableRobotMaster;
+  CableRobotMaster* cable_robot_master_;
   Ui::DemoInterface33* ui;
 
   virtual void closeEvent(QCloseEvent* event);

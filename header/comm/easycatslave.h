@@ -8,31 +8,29 @@
 class EasyCatSlave : public EthercatSlave
 {
 private:
-  constexpr static uint8_t EasyCatDomainEntries = 6; // Easycat Slave specific info.
-  constexpr static uint8_t EasyCatAlias = 0;
-  constexpr static uint32_t EasyCatVendor_id = 0x0000079a;
-  constexpr static uint32_t EasyCatProduct_code = 0x00defede;
-  constexpr static uint8_t numberOfEasyCatStates =
-    2; // Number of state of easycat state machine, according to how we
-       // programmed it
-  constexpr static uint8_t operational = 1;
-  constexpr static uint8_t notOperational = 0;
+  constexpr static uint8_t kEasyCatDomainEntries_ = 6; // Easycat Slave specific info.
+  constexpr static uint8_t kEasyCatAlias_ = 0;
+  constexpr static uint32_t kEasyCatVendorID_ = 0x0000079a;
+  constexpr static uint32_t kEasyCatProductCode_ = 0x00defede;
+  constexpr static uint8_t kNumEasyCatStates_ = 2;
+  constexpr static uint8_t kOperational_ = 1;
+  constexpr static uint8_t kNotOperational_ = 0;
 
-  uint8_t temp;
+  uint8_t temp_;
 
   struct OffsetIn
   { // Useful ethercat struct
-    unsigned int slaveState;
-    unsigned int numberOfCalls;
-    unsigned int cycleCounter;
-  } offsetIn;
+    unsigned int slave_state;
+    unsigned int num_calls;
+    unsigned int cycle_counter;
+  } offset_in_;
 
   struct OffsetOut
   { // Useful ethercat struct
-    unsigned int slaveStatus;
-    unsigned int controlWord;
-    unsigned int ledFrequency;
-  } offsetOut;
+    unsigned int slave_status;
+    unsigned int control_word;
+    unsigned int led_frequency;
+  } offset_out_;
 
   typedef void (EasyCatSlave::*StateFunction)(); // Easyway to implement state machine
 
@@ -42,25 +40,24 @@ private:
   void UpdateSlaveTransition();
 
 public:
-  EasyCatSlave(uint8_t thisSlavePosition);
+  EasyCatSlave(uint8_t slave_position);
   ~EasyCatSlave();
   enum EasyCatState
   {
     idle = 0,
     updateSlave = 1,
-  } internalState,
-    slaveFlags; // state machine utilities
+  } internal_state_,
+    slave_flags_; // state machine utilities
   // State machine function array
-  StateFunction stateMachine[numberOfEasyCatStates] = {&EasyCatSlave::IdleFun,
+  StateFunction state_machine_[kNumEasyCatStates_] = {&EasyCatSlave::IdleFun,
                                                        &EasyCatSlave::UpdateSlaveFun};
   // State machine transition function array
-  StateFunction stateManager[numberOfEasyCatStates] = {
+  StateFunction state_manager_[kNumEasyCatStates_] = {
     &EasyCatSlave::IdleTransition, &EasyCatSlave::UpdateSlaveTransition};
 
-  ec_pdo_entry_reg_t domainRegisters[EasyCatDomainEntries]; // ethercat utilities
-  ec_pdo_entry_info_t slavePdoEntries[6] = {
-    // ethercat utilities, can be retrieved in the xml config file provided by
-    // the vendor
+  ec_pdo_entry_reg_t domain_registers_[kEasyCatDomainEntries_]; // ethercat utilities
+  ec_pdo_entry_info_t slave_pdo_entries_[6] = {
+    // ethercat utilities, can be retrieved in the xml config file provided by the vendor
     {0x0005, 0x01, 8}, /* Byte0 */
     {0x0005, 0x02, 8}, /* Byte1 */
     {0x0005, 0x03, 8}, /* Byte2 */
@@ -69,18 +66,17 @@ public:
     {0x0006, 0x03, 8}, /* Byte2 */
   };
 
-  ec_pdo_info_t slavePdos[2] = {
-    // ethercat utilities, can be retrieved in the xml config file provided by
-    // the vendor
-    {0x1600, 3, slavePdoEntries + 0}, /* Outputs */
-    {0x1a00, 3, slavePdoEntries + 3}, /* Inputs */
+  ec_pdo_info_t slave_pdos_[2] = {
+    // ethercat utilities, can be retrieved in the xml config file provided by the vendor
+    {0x1600, 3, slave_pdo_entries_ + 0}, /* Outputs */
+    {0x1a00, 3, slave_pdo_entries_ + 3}, /* Inputs */
   };
 
-  ec_sync_info_t slaveSyncs[3] = {
+  ec_sync_info_t slave_syncs_[3] = {
     // ethercat utilities, can be retrieved in the xml config file provided by
     // the vendor
-    {0, EC_DIR_OUTPUT, 1, slavePdos + 0, EC_WD_ENABLE},
-    {1, EC_DIR_INPUT, 1, slavePdos + 1, EC_WD_DISABLE},
+    {0, EC_DIR_OUTPUT, 1, slave_pdos_ + 0, EC_WD_ENABLE},
+    {1, EC_DIR_INPUT, 1, slave_pdos_ + 1, EC_WD_DISABLE},
     {0xff, static_cast<ec_direction_t>(0), 0, NULL,
      static_cast<ec_watchdog_mode_t>(
        0)} // this line has been modified so that the compiler
@@ -92,17 +88,17 @@ public:
 
   struct InputPdos
   { // this is a simple way to store the pdos input values
-    uint8_t slaveState;
-    uint8_t numberOfCalls;
-    uint8_t cycleCounter;
-  } inputPdos;
+    uint8_t slave_state;
+    uint8_t num_calls;
+    uint8_t cycle_counter;
+  } input_pdos_;
 
   struct OutputPdos
   { // this is a simple way to store the pdos output values
-    uint8_t slaveStatus;
-    uint8_t controlWord;
-    uint8_t ledFrequency;
-  } outputPdos;
+    uint8_t slave_status;
+    uint8_t control_word;
+    uint8_t led_frequency;
+  } output_pdos_;
 
   virtual void LoopFunction(); // The function we are overloading from the base class
   virtual void ReadInputs();

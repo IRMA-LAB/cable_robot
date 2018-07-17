@@ -33,8 +33,8 @@
 
 struct PeriodInfo
 {
-  struct timespec nextPeriod;
-  long periodNs;
+  struct timespec next_period;
+  long period_nsec;
 };
 
 class EthercatMaster
@@ -53,8 +53,8 @@ private:
   void CheckMasterState();                          // ethercat utility
   void CheckConfigState();                          // ethercat utility
   void GetDomainElements(ec_pdo_entry_reg_t* regs); // ethercat utility
-  void SetSchedulerParameters(uint8_t threadCpu,
-                              uint8_t threadPriority); // real time processing utility
+  void SetSchedulerParameters(uint8_t thread_cpu,
+                              uint8_t thread_priority); // real time processing utility
   uint8_t FlagManagement();                            // real time process management
   uint8_t InitProtocol();                              // ethercat utility
 
@@ -63,50 +63,51 @@ public:
   virtual ~EthercatMaster() = 0;
 
   // constexpr static members of a class can be viewed as #define replacement
-  // #definines have the problem to live outside the
-  constexpr static uint32_t preAllocationSize =
+  // #defines have the problem to live outside the
+  constexpr static uint32_t kPreAllocationSize_ =
     100 * 1024 * 1024; /* 100MB pagefault free buffer */
-  constexpr static uint32_t thisStackSize = 10 * 1024 * 1024; // 10 Mb
+  constexpr static uint32_t kThisStackSize_ = 10 * 1024 * 1024; // 10 Mb
   constexpr static long nSecondsInMillis = 1000000;
   constexpr static long long nSecondsInSeconds = 1000000000;
-  constexpr static uint8_t validate = 1;
-  constexpr static uint8_t notValidate = 0;
-  constexpr static uint8_t masterOperational = 8;
-  constexpr static uint8_t slaveOperational = 8;
-  constexpr static uint8_t domainOperational = 2;
-  constexpr static uint8_t operationalState = 1;
-  constexpr static uint8_t notOperationalState = 0;
+  constexpr static uint8_t kValidate_ = 1;
+  constexpr static uint8_t kNotValidate_ = 0;
+  constexpr static uint8_t kMasterOperational = 8;
+  constexpr static uint8_t kSlaveOperational = 8;
+  constexpr static uint8_t kDomainOperational = 2;
+  constexpr static uint8_t kOperationalState = 1;
+  constexpr static uint8_t kNotOperationalState = 0;
+
   // Variables related to our project, must be gived as input
   class MasterData
   {
   public:
-    uint8_t guiCpuId = 0;
-    uint8_t rtCpuId = 1;
-    uint8_t guiPriority = 60;
-    uint8_t rtPriority = 98;
-    long nSecondsCycleTime = 1000000;
-  } masterData;                             // Default Values
-  ec_master_t* masterPointer = NULL;        // ethercat utility
-  ec_master_state_t masterState = {};       // ethercat utility
-  ec_domain_t* domainPointer = NULL;        // ethercat utility
-  ec_domain_state_t domainState = {};       // ethercat utility
-  ec_slave_config_t* configPointer = NULL;  // ethercat utility
-  ec_slave_config_state_t configState = {}; // ethercat utility
-  ec_sdo_request_t* sdoPointer = NULL;      // ethercat utility
-  uint8_t* domainDataPointer = NULL;        // ethercat utility
+    uint8_t gui_cpu_id = 0;
+    uint8_t rt_cpu_id = 1;
+    uint8_t gui_priority = 60;
+    uint8_t rt_priority = 98;
+    long cycle_cime_nsec = 1000000;
+  } master_data_;                             // Default Values
+  ec_master_t* master_ptr_ = NULL;        // ethercat utility
+  ec_master_state_t master_state_ = {};       // ethercat utility
+  ec_domain_t* domain_ptr_ = NULL;        // ethercat utility
+  ec_domain_state_t domain_state_ = {};       // ethercat utility
+  ec_slave_config_t* config_ptr_ = NULL;  // ethercat utility
+  ec_slave_config_state_t config_state_ = {}; // ethercat utility
+  ec_sdo_request_t* sdo_ptr_ = NULL;      // ethercat utility
+  uint8_t* domain_data_ptr_ = NULL;        // ethercat utility
 
   struct EthercatFlags
   {
-    uint8_t domainState;
-    uint8_t masterState;
-    uint8_t configState;
-    uint8_t notSync;
-  } flags; // ethercat utility
+    uint8_t domain_state;
+    uint8_t master_state;
+    uint8_t config_state;
+    uint8_t not_sync;
+  } flags_; // ethercat utility
 
-  pthread_mutex_t rtMutex = PTHREAD_MUTEX_INITIALIZER; // real time process utility
-  EthercatSlave** slave;                               // master utility
-  uint8_t domainElementsNumber = 0;                    // master utility
-  int numberOfSlaves;                                  // master utility
+  pthread_mutex_t rt_mutex_ = PTHREAD_MUTEX_INITIALIZER; // real time process utility
+  EthercatSlave** slave_;                               // master utility
+  uint8_t num_domain_elements_ = 0;                    // master utility
+  int num_slaves_;                                  // master utility
 
   void Start();                       // the only thing you need to callnin the main
   virtual void StartUpFunction() = 0; // called before the cycle begins

@@ -2,46 +2,46 @@
 
 void GoldSoloWhistleDrive::DetermineState()
 {
-  if (inputPdos.statusWord[offStatusBit] == set)
+  if (inputPdos.statusWord[offStatusBit] == SET)
   { // drive idle
-    state = switchOnDisabled;
+    state_ = switchOnDisabled;
   }
   else
   {
-    if (inputPdos.statusWord[onStatusBit] == set)
+    if (inputPdos.statusWord[onStatusBit] == SET)
     { // drive operational or in operational progress
-      if (inputPdos.statusWord[switchOnStatusBit] == reset)
+      if (inputPdos.statusWord[switchOnStatusBit] == RESET)
       {
-        state = readyToSwitchOn;
+        state_ = readyToSwitchOn;
       }
       else
       {
-        if (inputPdos.statusWord[enabledStatusBit] == reset)
+        if (inputPdos.statusWord[enabledStatusBit] == RESET)
         {
-          state = switchOn;
+          state_ = switchOn;
         }
         else
         {
-          state = operationEnabled;
+          state_ = operationEnabled;
           DetermineOperationState();
         }
       }
     }
     else
     { // drive in a stop or fault
-      if (inputPdos.statusWord[faultStatusBit] == reset)
+      if (inputPdos.statusWord[faultStatusBit] == RESET)
       { // drive in quick stop
-        state = quickStopActive;
+        state_ = quickStopActive;
       }
       else
       { // drive in fault
-        if (inputPdos.statusWord[enabledStatusBit] == set)
+        if (inputPdos.statusWord[enabledStatusBit] == SET)
         {
-          state = faultReactionActive;
+          state_ = faultReactionActive;
         }
         else
         {
-          state = fault;
+          state_ = fault;
         }
       }
     }
@@ -88,26 +88,26 @@ void GoldSoloWhistleDrive::FaultFun() {}
 
 void GoldSoloWhistleDrive::SwitchOnDisabledTransitions()
 {
-  switch (stateFlags)
+  switch (state_flags_)
   {
   case switchOnDisabled:
   { // We previously asked for a state change: it occurred
-    std::cout << "Drive " << position << " Status Word: " << inputPdos.statusWord
+    std::cout << "Drive " << position_ << " Status Word: " << inputPdos.statusWord
               << std::endl;
-    std::cout << "Drive " << position << " Idle." << std::endl;
-    stateFlags = nullState;
+    std::cout << "Drive " << position_ << " Idle." << std::endl;
+    state_flags_ = nullState;
     break;
   }
   case readyToSwitchOn:
   { // We are starting the enabling sequence, transition 2
-    std::cout << "Drive " << position << " Status Word: " << inputPdos.statusWord
+    std::cout << "Drive " << position_ << " Status Word: " << inputPdos.statusWord
               << std::endl;
-    std::cout << "Drive " << position << " requesting Ready To Switch On." << std::endl;
-    outputPdos.controlWord[switchOnControlBit] = reset;
-    outputPdos.controlWord[enableVoltageControlBit] = set;
-    outputPdos.controlWord[quickStopControlBit] = set;
-    outputPdos.controlWord[enableControlBit] = reset;
-    outputPdos.controlWord[faultResetControlBit] = reset;
+    std::cout << "Drive " << position_ << " requesting Ready To Switch On." << std::endl;
+    output_pdos_.control_word[switchOnControlBit] = RESET;
+    output_pdos_.control_word[enableVoltageControlBit] = SET;
+    output_pdos_.control_word[quickStopControlBit] = SET;
+    output_pdos_.control_word[enableControlBit] = RESET;
+    output_pdos_.control_word[faultResetControlBit] = RESET;
     break;
   }
   default:
@@ -117,17 +117,17 @@ void GoldSoloWhistleDrive::SwitchOnDisabledTransitions()
 
 void GoldSoloWhistleDrive::ReadyToSwitchOnTransitions()
 {
-  switch (stateFlags)
+  switch (state_flags_)
   {
   case readyToSwitchOn:
   { // We previously asked for a feasible state change, now we ask for another
-    std::cout << "Drive " << position << " Status Word: " << inputPdos.statusWord
+    std::cout << "Drive " << position_ << " Status Word: " << inputPdos.statusWord
               << std::endl;
-    std::cout << "Drive " << position << " Ready To Switch On." << std::endl;
-    outputPdos.controlWord[switchOnControlBit] = set;
-    stateFlags = switchOn;
-    outputPdos.modesOfOperation = cyclicPosition;
-    outputPdos.TargetPosition = inputPdos.positionActualValue;
+    std::cout << "Drive " << position_ << " Ready To Switch On." << std::endl;
+    output_pdos_.control_word[switchOnControlBit] = SET;
+    state_flags_ = switchOn;
+    output_pdos_.modes_of_operation = cyclicPosition;
+    output_pdos_.target_position = inputPdos.positionActualValue;
     break;
   }
   default:
@@ -137,18 +137,18 @@ void GoldSoloWhistleDrive::ReadyToSwitchOnTransitions()
 
 void GoldSoloWhistleDrive::SwitchOnTransitions()
 {
-  switch (stateFlags)
+  switch (state_flags_)
   {
   case switchOn:
   { // We previously asked for a feasible state change, now we ask for another
-    std::cout << "Drive " << position << " Status Word: " << inputPdos.statusWord
+    std::cout << "Drive " << position_ << " Status Word: " << inputPdos.statusWord
               << std::endl;
-    std::cout << "Drive " << position << " Switch On." << std::endl;
+    std::cout << "Drive " << position_ << " Switch On." << std::endl;
     // outputPdos.TargetPosition = inputPdos.positionActualValue;
     // outputPdos.TargetTorque = inputPdos.torqueActualValue;
     // outputPdos.TargetVelocity = inputPdos.velocityActualValue;
-    outputPdos.controlWord[enableControlBit] = set;
-    stateFlags = operationEnabled;
+    output_pdos_.control_word[enableControlBit] = SET;
+    state_flags_ = operationEnabled;
     break;
   }
   default:
@@ -158,23 +158,23 @@ void GoldSoloWhistleDrive::SwitchOnTransitions()
 
 void GoldSoloWhistleDrive::OperationEnabledTransitions()
 {
-  switch (stateFlags)
+  switch (state_flags_)
   {
   case operationEnabled:
   { // We previously asked for a state change: it occurred
-    std::cout << "Drive " << position << " Status Word: " << inputPdos.statusWord
+    std::cout << "Drive " << position_ << " Status Word: " << inputPdos.statusWord
               << std::endl;
-    std::cout << "Drive " << position << "  Enabled." << std::endl;
-    stateFlags = nullState;
+    std::cout << "Drive " << position_ << "  Enabled." << std::endl;
+    state_flags_ = nullState;
     (this->*operationStateManager[operationState - operationOffset])();
     break;
   }
   case switchOnDisabled:
   { // We want to disable the drive
-    std::cout << "Drive " << position << " Status Word: " << inputPdos.statusWord
+    std::cout << "Drive " << position_ << " Status Word: " << inputPdos.statusWord
               << std::endl;
-    std::cout << "Drive " << position << " going Idle" << std::endl;
-    outputPdos.controlWord.reset();
+    std::cout << "Drive " << position_ << " going Idle" << std::endl;
+    output_pdos_.control_word.reset();
     break;
   }
   default:
@@ -187,38 +187,38 @@ void GoldSoloWhistleDrive::OperationEnabledTransitions()
 
 void GoldSoloWhistleDrive::QuickStopActiveTransitions()
 {
-  stateFlags = nullState; // We shouldn't be here..
+  state_flags_ = nullState; // We shouldn't be here..
 }
 
 void GoldSoloWhistleDrive::FaultReactionActiveTransitions()
 {
-  stateFlags = nullState; // We shouldn't be here..
+  state_flags_ = nullState; // We shouldn't be here..
 }
 
 void GoldSoloWhistleDrive::FaultTransitions()
 {
-  switch (stateFlags)
+  switch (state_flags_)
   {
   case switchOnDisabled:
   { // we are requesting a fault reset
-    std::cout << "Drive " << position << " Status Word: " << inputPdos.statusWord
+    std::cout << "Drive " << position_ << " Status Word: " << inputPdos.statusWord
               << std::endl;
-    std::cout << "Drive " << position << " requesting Fault Reset: going Idle"
+    std::cout << "Drive " << position_ << " requesting Fault Reset: going Idle"
               << std::endl;
-    outputPdos.controlWord.reset();
-    outputPdos.controlWord[faultResetControlBit] = set;
+    output_pdos_.control_word.reset();
+    output_pdos_.control_word[faultResetControlBit] = SET;
     break;
   }
   case nullState:
     break;
   default:
   {
-    std::cout << "Drive " << position << " Status Word: " << inputPdos.statusWord
+    std::cout << "Drive " << position_ << " Status Word: " << inputPdos.statusWord
               << std::endl;
-    std::cout << "Drive " << position
-              << " encountered an error asking for state change code: " << stateFlags
+    std::cout << "Drive " << position_
+              << " encountered an error asking for state change code: " << state_flags_
               << std::endl;
-    stateFlags = nullState;
+    state_flags_ = nullState;
     break;
   }
   }
@@ -241,14 +241,14 @@ void GoldSoloWhistleDrive::CyclicPositionTransition()
   }
   case cyclicVelocity:
   {
-    outputPdos.modesOfOperation = cyclicVelocity;
-    outputPdos.TargetVelocity = inputPdos.velocityActualValue;
+    output_pdos_.modes_of_operation = cyclicVelocity;
+    output_pdos_.target_velocity = inputPdos.velocityActualValue;
     break;
   }
   case cyclicTorque:
   {
-    outputPdos.modesOfOperation = cyclicTorque;
-    outputPdos.TargetTorque = inputPdos.torqueActualValue;
+    output_pdos_.modes_of_operation = cyclicTorque;
+    output_pdos_.target_torque = inputPdos.torqueActualValue;
     break;
   }
   default:
@@ -262,8 +262,8 @@ void GoldSoloWhistleDrive::CyclicVelocityTransition()
   {
   case cyclicPosition:
   {
-    outputPdos.modesOfOperation = cyclicPosition;
-    outputPdos.TargetPosition = inputPdos.positionActualValue;
+    output_pdos_.modes_of_operation = cyclicPosition;
+    output_pdos_.target_position = inputPdos.positionActualValue;
     break;
   }
   case cyclicVelocity:
@@ -273,8 +273,8 @@ void GoldSoloWhistleDrive::CyclicVelocityTransition()
   }
   case cyclicTorque:
   {
-    outputPdos.modesOfOperation = cyclicTorque;
-    outputPdos.TargetTorque = inputPdos.torqueActualValue;
+    output_pdos_.modes_of_operation = cyclicTorque;
+    output_pdos_.target_torque = inputPdos.torqueActualValue;
     break;
   }
   default:
@@ -288,14 +288,14 @@ void GoldSoloWhistleDrive::CyclicTorqueTransition()
   {
   case cyclicPosition:
   {
-    outputPdos.modesOfOperation = cyclicPosition;
-    outputPdos.TargetPosition = inputPdos.positionActualValue;
+    output_pdos_.modes_of_operation = cyclicPosition;
+    output_pdos_.target_position = inputPdos.positionActualValue;
     break;
   }
   case cyclicVelocity:
   {
-    outputPdos.modesOfOperation = cyclicVelocity;
-    outputPdos.TargetVelocity = inputPdos.velocityActualValue;
+    output_pdos_.modes_of_operation = cyclicVelocity;
+    output_pdos_.target_velocity = inputPdos.velocityActualValue;
     break;
   }
   case cyclicTorque:
@@ -323,49 +323,49 @@ GoldSoloWhistleDrive::GoldSoloWhistleDrive(uint8_t thisSlavePosition)
   */
 
   // From here, it must be edited by the user
-  alias = GoldSoloWhistleAlias;
-  position = thisSlavePosition;
-  vendor_id = GoldSoloWhistleVendor_id;
-  product_code = GoldSoloWhistleProduct_code;
-  numberOfDomainEntries = GoldSoloWhistleDomainEntries;
+  alias_ = kGoldSoloWhistleAlias_;
+  position_ = thisSlavePosition;
+  vendor_id_ = kGoldSoloWhistleVendorID_;
+  product_code_ = kGoldSoloWhistleProductCode_;
+  num_domain_entries_ = kGoldSoloWhistleDomainEntries_;
 
-  domainRegisters[0] = {alias, position, vendor_id, product_code, controlWordIndex,
-                        controlWordSubIndex, &offsetOut.controlWord, NULL};
-  domainRegisters[1] = {alias, position, vendor_id, product_code, modesOfOperationIndex,
-                        modesOfOperationSubIndex, &offsetOut.modesOfOperation, NULL};
-  domainRegisters[2] = {alias, position, vendor_id, product_code, targetTorqueIndex,
-                        targetTorqueSubIndex, &offsetOut.targetTorque, NULL};
-  domainRegisters[3] = {alias, position, vendor_id, product_code, targetPositionIndex,
-                        targetPositionSubIndex, &offsetOut.targetPosition, NULL};
-  domainRegisters[4] = {alias, position, vendor_id, product_code, targetVelocityIndex,
-                        targetVelocitySubIndex, &offsetOut.targetVelocity, NULL};
-  domainRegisters[5] = {alias, position, vendor_id, product_code, statusWordIndex,
-                        statusWordSubIndex, &offsetIn.statusWord, NULL};
-  domainRegisters[6] = {alias, position, vendor_id, product_code,
-                        modesOfOperationDisplayIndex, modesOfOperationDisplaySubIndex,
-                        &offsetIn.modesOfOperationDisplay, NULL};
-  domainRegisters[7] = {alias, position, vendor_id, product_code,
-                        positionActualValueIndex, positionActualValueSubIndex,
-                        &offsetIn.positionActualValue, NULL};
-  domainRegisters[8] = {alias, position, vendor_id, product_code,
-                        velocityActualValueIndex, velocityActualValueSubIndex,
-                        &offsetIn.velocityActualValue, NULL};
-  domainRegisters[9] = {alias, position, vendor_id, product_code, torqueActualValueIndex,
-                        torqueActualValueSubIndex, &offsetIn.torqueActualValue, NULL};
-  domainRegisters[10] = {alias, position, vendor_id, product_code, digitalInputsIndex,
-                         digitalInputsSubIndex, &offsetIn.digitalInputs, NULL};
-  domainRegisters[11] = {
-    alias, position, vendor_id, product_code, auxiliaryPositionActualValueIndex,
-    auxiliaryPositionActualValueSubIndex, &offsetIn.auxiliaryPositionActualValue, NULL};
+  domain_registers_[0] = {alias_, position_, vendor_id_, product_code_, kControlWordIndex_,
+                        kControlWordSubIndex_, &offset_out_.control_word, NULL};
+  domain_registers_[1] = {alias_, position_, vendor_id_, product_code_, kModesOfOperationIndex_,
+                        kModesOfOperationSubIndex_, &offset_out_.modes_of_operation, NULL};
+  domain_registers_[2] = {alias_, position_, vendor_id_, product_code_, kTargetTorqueIndex_,
+                        kTargetTorqueSubIndex_, &offset_out_.target_torque, NULL};
+  domain_registers_[3] = {alias_, position_, vendor_id_, product_code_, kTargetPositionIndex_,
+                        kTargetPositionSubIndex_, &offset_out_.target_position, NULL};
+  domain_registers_[4] = {alias_, position_, vendor_id_, product_code_, kTargetVelocityIndex_,
+                        kTargetVelocitySubIndex_, &offset_out_.target_velocity, NULL};
+  domain_registers_[5] = {alias_, position_, vendor_id_, product_code_, kStatusWordIndex_,
+                        kStatusWordSubIndex_, &offset_in_.status_word, NULL};
+  domain_registers_[6] = {alias_, position_, vendor_id_, product_code_,
+                        kModesOfOperationDisplayIndex_, kModesOfOperationDisplaySubIndex_,
+                        &offset_in_.modes_of_operation_display, NULL};
+  domain_registers_[7] = {alias_, position_, vendor_id_, product_code_,
+                        kPositionActualValueIndex_, kPositionActualValueSubIndex_,
+                        &offset_in_.position_actual_value, NULL};
+  domain_registers_[8] = {alias_, position_, vendor_id_, product_code_,
+                        kVelocityActualValueIndex_, kVelocityActualValueSubIndex_,
+                        &offset_in_.velocity_actual_value, NULL};
+  domain_registers_[9] = {alias_, position_, vendor_id_, product_code_, kTorqueActualValueIndex_,
+                        kTorqueActualValueSubIndex_, &offset_in_.torque_actual_value, NULL};
+  domain_registers_[10] = {alias_, position_, vendor_id_, product_code_, kDigitalInputsIndex_,
+                         kDigitalInputsSubIndex_, &offset_in_.digital_inputs, NULL};
+  domain_registers_[11] = {
+    alias_, position_, vendor_id_, product_code_, kAuxiliaryPositionActualValueIndex_,
+    kAuxiliaryPositionActualValueSubIndex_, &offset_in_.auxiliary_position_actual_value, NULL};
 
-  domainRegistersPointer = domainRegisters;
-  slavePdoEntriesPointer = slavePdoEntries;
-  slavePdosPointer = slavePdos;
-  slaveSyncsPointer = slaveSyncs;
+  domain_registers_ptr_ = domain_registers_;
+  slave_pdo_entries_ptr_ = slave_pdo_entries_;
+  slave_pdos_ptr_ = slave_pdos_;
+  slave_sync_ptr_ = slave_syncs_;
   // and stop here, the rest is additional
 
-  stateFlags = nullState;
-  state = switchOnDisabled;
+  state_flags_ = nullState;
+  state_ = switchOnDisabled;
   operationStateFlags = nullOperation;
   operationState = cyclicPosition;
 }
@@ -376,17 +376,17 @@ void GoldSoloWhistleDrive::SetTargetDefaults()
   {
   case cyclicPosition:
   {
-    outputPdos.TargetPosition = inputPdos.positionActualValue;
+    output_pdos_.target_position = inputPdos.positionActualValue;
     break;
   }
   case cyclicVelocity:
   {
-    outputPdos.TargetVelocity = inputPdos.velocityActualValue;
+    output_pdos_.target_velocity = inputPdos.velocityActualValue;
     break;
   }
   case cyclicTorque:
   {
-    outputPdos.TargetTorque = inputPdos.torqueActualValue;
+    output_pdos_.target_torque = inputPdos.torqueActualValue;
     break;
   }
   default:
@@ -398,58 +398,58 @@ int GoldSoloWhistleDrive::SdoRequests(ec_sdo_request_t* sdoPointer,
                                       ec_slave_config_t* configPointer)
 {
   if (!(sdoPointer =
-          ecrt_slave_config_create_sdo_request(configPointer, modesOfOperationIndex,
-                                               modesOfOperationSubIndex, cyclicPosition)))
+          ecrt_slave_config_create_sdo_request(configPointer, kModesOfOperationIndex_,
+                                               kModesOfOperationSubIndex_, cyclicPosition)))
   {
     std::cout << "Failed to create SDO request." << std::endl;
     return 1;
   }
   ecrt_sdo_request_timeout(sdoPointer, 500);
-  ecrt_slave_config_sdo8(configPointer, modesOfOperationIndex, modesOfOperationSubIndex,
+  ecrt_slave_config_sdo8(configPointer, kModesOfOperationIndex_, kModesOfOperationSubIndex_,
                          cyclicPosition);
   if (!(sdoPointer = ecrt_slave_config_create_sdo_request(
-          configPointer, homingMethodIndex, homingMethodSubIndex,
-          homingOnPositionMethod)))
+          configPointer, kHomingMethodIndex_, kHomingMethodSubIndex_,
+          kHomingOnPositionMethod_)))
   {
     std::cout << "Failed to create SDO request." << std::endl;
     return 1;
   }
   ecrt_sdo_request_timeout(sdoPointer, 500);
-  ecrt_slave_config_sdo8(configPointer, homingMethodIndex, homingMethodSubIndex,
-                         homingOnPositionMethod);
+  ecrt_slave_config_sdo8(configPointer, kHomingMethodIndex_, kHomingMethodSubIndex_,
+                         kHomingOnPositionMethod_);
   return 0;
 }
 
-void GoldSoloWhistleDrive::LoopFunction() { (this->*stateMachine[state])(); }
+void GoldSoloWhistleDrive::LoopFunction() { (this->*state_machine_[state_])(); }
 
 void GoldSoloWhistleDrive::ReadInputs()
 {
-  inputPdos.statusWord = EC_READ_U16(domainDataPointer + offsetIn.statusWord);
+  inputPdos.statusWord = EC_READ_U16(domain_data_ptr_ + offset_in_.status_word);
   inputPdos.modesOfOperationDisplay =
-    EC_READ_S8(domainDataPointer + offsetIn.modesOfOperationDisplay);
+    EC_READ_S8(domain_data_ptr_ + offset_in_.modes_of_operation_display);
   DetermineState();
   inputPdos.positionActualValue =
-    EC_READ_S32(domainDataPointer + offsetIn.positionActualValue);
+    EC_READ_S32(domain_data_ptr_ + offset_in_.position_actual_value);
   inputPdos.velocityActualValue =
-    EC_READ_S32(domainDataPointer + offsetIn.velocityActualValue);
+    EC_READ_S32(domain_data_ptr_ + offset_in_.velocity_actual_value);
   inputPdos.torqueActualValue =
-    EC_READ_S16(domainDataPointer + offsetIn.torqueActualValue);
-  inputPdos.digitalInputs = EC_READ_U32(domainDataPointer + offsetIn.digitalInputs);
+    EC_READ_S16(domain_data_ptr_ + offset_in_.torque_actual_value);
+  inputPdos.digitalInputs = EC_READ_U32(domain_data_ptr_ + offset_in_.digital_inputs);
   inputPdos.auxiliaryPositionActualValue =
-    EC_READ_S32(domainDataPointer + offsetIn.auxiliaryPositionActualValue);
-  (this->*stateManager[state])();
+    EC_READ_S32(domain_data_ptr_ + offset_in_.auxiliary_position_actual_value);
+  (this->*state_manager_[state_])();
 }
 
 void GoldSoloWhistleDrive::WriteOutputs()
 {
-  EC_WRITE_U16(domainDataPointer + offsetOut.controlWord,
-               static_cast<unsigned short>(outputPdos.controlWord.to_ulong()));
-  EC_WRITE_S8(domainDataPointer + offsetOut.modesOfOperation,
-              outputPdos.modesOfOperation);
-  if (state == operationEnabled || state == switchOn)
+  EC_WRITE_U16(domain_data_ptr_ + offset_out_.control_word,
+               static_cast<unsigned short>(output_pdos_.control_word.to_ulong()));
+  EC_WRITE_S8(domain_data_ptr_ + offset_out_.modes_of_operation,
+              output_pdos_.modes_of_operation);
+  if (state_ == operationEnabled || state_ == switchOn)
   {
-    EC_WRITE_S32(domainDataPointer + offsetOut.targetPosition, outputPdos.TargetPosition);
-    EC_WRITE_S32(domainDataPointer + offsetOut.targetVelocity, outputPdos.TargetVelocity);
-    EC_WRITE_S16(domainDataPointer + offsetOut.targetTorque, outputPdos.TargetTorque);
+    EC_WRITE_S32(domain_data_ptr_ + offset_out_.target_position, output_pdos_.target_position);
+    EC_WRITE_S32(domain_data_ptr_ + offset_out_.target_velocity, output_pdos_.target_velocity);
+    EC_WRITE_S16(domain_data_ptr_ + offset_out_.target_torque, output_pdos_.target_torque);
   }
 }

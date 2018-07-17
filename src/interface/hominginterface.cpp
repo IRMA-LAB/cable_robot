@@ -1,46 +1,46 @@
 #include "hominginterface.h"
 #include "ui_hominginterface.h"
 
-HomingInterface::HomingInterface(QWidget* parent, CableRobotMaster* theMaster)
-  : QWidget(parent), cableRobotMaster(theMaster), ui(new Ui::HomingInterface)
+HomingInterface::HomingInterface(QWidget* parent, CableRobotMaster* master)
+  : QWidget(parent), cable_robot_master_(master), ui(new Ui::HomingInterface)
 {
   ui->setupUi(this);
-  cableRobot = &cableRobotMaster->cableRobot;
+  cable_robot_ = &cable_robot_master_->cable_robot_;
   ui->MainProcessControlBox->setDisabled(true);
   ui->HomingStartButton->setDisabled(true);
   ui->InternaHomingButton->setDisabled(true);
   // ui->LoadExtenalHomingButton->setDisabled(true);
   ui->HomingStopSaveButton->setDisabled(true);
 
-  connect(this, &HomingInterface::GoBackIdle, cableRobot,
+  connect(this, &HomingInterface::GoBackIdle, cable_robot_,
           &CableRobot::CollectRobotRequest);
-  connect(this, &HomingInterface::SendClearFaultRequest, cableRobot,
+  connect(this, &HomingInterface::SendClearFaultRequest, cable_robot_,
           &CableRobot::CollectClearFaultRequest);
-  connect(this, &HomingInterface::SendEnableRequest, cableRobot,
+  connect(this, &HomingInterface::SendEnableRequest, cable_robot_,
           &CableRobot::CollectEnableRequest);
-  connect(this, &HomingInterface::SendHomingProcessControl, cableRobot,
+  connect(this, &HomingInterface::SendHomingProcessControl, cable_robot_,
           &CableRobot::CollectHomingProcessControl);
-  connect(this, &HomingInterface::SendMeasurementRequest, cableRobot,
+  connect(this, &HomingInterface::SendMeasurementRequest, cable_robot_,
           &CableRobot::CollectMeasurementRequest);
-  connect(this, &HomingInterface::SendHomingData, cableRobot,
+  connect(this, &HomingInterface::SendHomingData, cable_robot_,
           &CableRobot::CollectHomingData);
 
-  connect(cableRobot, &CableRobot::SendClearFaultRequestProcessed, this,
+  connect(cable_robot_, &CableRobot::SendClearFaultRequestProcessed, this,
           &HomingInterface::CollectClearFaultRequestProcessed);
-  connect(cableRobot, &CableRobot::SendEnableRequestProcessed, this,
+  connect(cable_robot_, &CableRobot::SendEnableRequestProcessed, this,
           &HomingInterface::CollectEnableCommandProcessed);
-  connect(cableRobot, &CableRobot::SendFaultPresentAdvice, this,
+  connect(cable_robot_, &CableRobot::SendFaultPresentAdvice, this,
           &HomingInterface::CollectFaultPresentAdvice);
-  connect(cableRobot, &CableRobot::SendHomingControl, this,
+  connect(cable_robot_, &CableRobot::SendHomingControl, this,
           &HomingInterface::CollectHomingControl);
-  connect(cableRobot, &CableRobot::SendMeasurement, this,
+  connect(cable_robot_, &CableRobot::SendMeasurement, this,
           &HomingInterface::CollectMeasurements);
   ui->RobotLogBrowser->append("Welcome to the Homing Panel!\n\nPlease enable "
                               "the Robot or clear previous faults before "
                               "starting!\n");
   QDir::setCurrent("/home/labpc/Desktop");
-  dataFile.setFileName("homingDataFile.txt");
-  if (dataFile.open(QIODevice::WriteOnly))
+  data_file_.setFileName("homingDataFile.txt");
+  if (data_file_.open(QIODevice::WriteOnly))
   {
     ui->RobotLogBrowser->append(
       "Homing data file successfully created in /home/labpc/Desktop");
@@ -51,7 +51,7 @@ HomingInterface::~HomingInterface() { delete ui; }
 
 void HomingInterface::closeEvent(QCloseEvent* event)
 {
-  emit GoBackIdle(CableRobot::idle);
+  emit GoBackIdle(CableRobot::IDLE);
   event->accept();
   delete this;
 }
@@ -71,21 +71,21 @@ void HomingInterface::on_HomingAcquireDataButton_clicked()
   emit SendMeasurementRequest();
 }
 
-void HomingInterface::on_HomingStopSaveButton_clicked() { dataFile.close(); }
+void HomingInterface::on_HomingStopSaveButton_clicked() { data_file_.close(); }
 
 void HomingInterface::on_InternaHomingButton_clicked() {}
 
 void HomingInterface::on_LoadExtenalHomingButton_clicked()
 {
-  if (dataFile.isOpen())
-    dataFile.close();
+  if (data_file_.isOpen())
+    data_file_.close();
   QDir::setCurrent("/home/labpc/Desktop");
-  dataFile.setFileName("homingResultFile.txt");
-  if (dataFile.open(QIODevice::ReadOnly))
+  data_file_.setFileName("homingResultFile.txt");
+  if (data_file_.open(QIODevice::ReadOnly))
   {
     ui->RobotLogBrowser->append("Loading homing data...\n");
   }
-  QTextStream in(&dataFile);
+  QTextStream in(&data_file_);
   QVector<double> homingData;
   while (!in.atEnd())
   {
@@ -93,7 +93,7 @@ void HomingInterface::on_LoadExtenalHomingButton_clicked()
     homingData.push_back(line.toDouble());
   }
 
-  dataFile.close();
+  data_file_.close();
   emit SendHomingData(homingData);
 }
 
@@ -103,17 +103,17 @@ void HomingInterface::CollectFaultPresentAdvice(int theMotor)
                               " in fault, please reset.");
 }
 
-void HomingInterface::CollectEnableCommandProcessed(int status, int theMotor)
+void HomingInterface::CollectEnableCommandProcessed(int status, int motor)
 {
-  if (status == set)
-    ui->RobotLogBrowser->append("Motor " + QString::number(theMotor) + " enabled.");
-  if (status == reset)
-    ui->RobotLogBrowser->append("Motor " + QString::number(theMotor) + " disabled.");
+  if (status == SET)
+    ui->RobotLogBrowser->append("Motor " + QString::number(motor) + " enabled.");
+  if (status == RESET)
+    ui->RobotLogBrowser->append("Motor " + QString::number(motor) + " disabled.");
 }
 
-void HomingInterface::CollectClearFaultRequestProcessed(int theMotor)
+void HomingInterface::CollectClearFaultRequestProcessed(int motor)
 {
-  ui->RobotLogBrowser->append("Motor " + QString::number(theMotor) + " fault cleared.");
+  ui->RobotLogBrowser->append("Motor " + QString::number(motor) + " fault cleared.");
 }
 
 void HomingInterface::CollectHomingControl(int state)
@@ -137,7 +137,7 @@ void HomingInterface::CollectHomingControl(int state)
 
 void HomingInterface::CollectMeasurements(QVector<double> measurements)
 {
-  QTextStream out(&dataFile);
+  QTextStream out(&data_file_);
   for (int i = 0; i < measurements.size(); i++)
   {
     out << measurements[i] << "\t";
@@ -152,11 +152,11 @@ void HomingInterface::on_HomingStartButton_toggled(bool checked)
   if (checked)
   {
     ui->MainProcessControlBox->setEnabled(true);
-    emit SendHomingProcessControl(set);
+    emit SendHomingProcessControl(SET);
   }
   else
   {
     ui->MainProcessControlBox->setDisabled(true);
-    emit SendHomingProcessControl(reset);
+    emit SendHomingProcessControl(RESET);
   }
 }

@@ -10,6 +10,7 @@
 #include <QTextStream>
 
 #include "cablerobotmaster.h" //User declaration
+#include "common.h"
 
 namespace Ui
 {
@@ -20,12 +21,10 @@ class ActuatorPvtInterface33 : public QWidget
 {
   Q_OBJECT
 private:
-  constexpr static uint8_t set = 1;
-  constexpr static uint8_t reset = 0;
-  QFile dataFile;
+  QFile data_file_;
 
 public:
-  explicit ActuatorPvtInterface33(QWidget* parent = 0, CableRobotMaster* theMaster = 0);
+  explicit ActuatorPvtInterface33(QWidget* parent = 0, CableRobotMaster* master = 0);
   ~ActuatorPvtInterface33();
 
 signals:
@@ -47,16 +46,16 @@ private slots:
 
 public slots:
   void CollectFaultPresentAdvice(int theMotor);
-  void CollectEnableCommandProcessed(int status, int theMotor);
-  void CollectClearFaultRequestProcessed(int theMotor);
+  void CollectEnableCommandProcessed(int status, int motor);
+  void CollectClearFaultRequestProcessed(int motor);
   void CollectActuatorPvt33Control(int state);
   void CollectData(double s0, double s1, double s2);
 
 private:
-  CableRobotMaster* cableRobotMaster;
-  QVector<double> pulleyAnglesOut[3];
-  QVector<double> cableLengthIn[3];
-  CableRobot* cableRobot;
+  CableRobotMaster* cable_robot_master_;
+  QVector<double> pulley_angles_out_[3];
+  QVector<double> cable_len_in_[3];
+  CableRobot* cable_robot_;
   Ui::ActuatorPvtInterface33* ui;
 
   virtual void closeEvent(QCloseEvent* event);

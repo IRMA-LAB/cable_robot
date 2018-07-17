@@ -7,6 +7,7 @@
 
 #include "cablerobotmaster.h" //User declaration
 //#include "servomotor.h"
+#include "common.h"
 
 namespace Ui
 {
@@ -16,12 +17,9 @@ class ActuatorInterface;
 class ActuatorInterface : public QWidget
 {
   Q_OBJECT
-private:
-  constexpr static uint8_t set = 1;
-  constexpr static uint8_t reset = 0;
 
 public:
-  explicit ActuatorInterface(QWidget* parent = 0, CableRobotMaster* theMaster = 0);
+  explicit ActuatorInterface(QWidget* parent = 0, CableRobotMaster* master = 0);
   ~ActuatorInterface();
 
 signals:
@@ -58,14 +56,14 @@ public slots:
   void CollectFaultPresentAdvice();
   void CollectEnableCommandProcessed(int status);
   void CollectClearFaultRequestProcessed();
-  void CollectOperationModeChangeRequestProcessed(int modeOfOperation);
+  void CollectOperationModeChangeRequestProcessed(int op_mode);
   void CollectCommandUpdateRequestProcessed(int command, int status);
-  void CollectGuiData(GoldSoloWhistleDrive::InputPdos* thePdos, int n);
+  void CollectGuiData(GoldSoloWhistleDrive::InputPdos* pdos, int n);
 
 private:
-  CableRobotMaster* cableRobotMaster;
+  CableRobotMaster* cable_robot_master_;
   Ui::ActuatorInterface* ui;
-  array<QTableWidgetItem, GoldSoloWhistleDrive::GoldSoloWhistleDomainInputs> inputItems;
+  std::array<QTableWidgetItem, GoldSoloWhistleDrive::kGoldSoloWhistleDomainInputs_> input_items_;
 
   virtual void closeEvent(QCloseEvent* event);
 };

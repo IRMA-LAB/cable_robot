@@ -1,68 +1,68 @@
 #include "servomotor.h"
 
-void ServoMotor::AssignDrive(GoldSoloWhistleDrive* theDrive)
+void ServoMotor::AssignDrive(GoldSoloWhistleDrive* new_drive)
 {
-  thisDrive = theDrive;
-  servoMotorInputPdos = &thisDrive->inputPdos;
-  servoMotorState = thisDrive->state;
-  servoMotorOperationState = thisDrive->operationState;
-  homeMotorCounts = 0;
-  homePulleyCounts = 0;
-  cableHomeLength = 0.0;
-  pulleyHomeAngle = 0.0;
-  cableEffectiveHomeLength = 0.0;
+  drive_ = new_drive;
+  servo_motor_input_pdos_ = &drive_->inputPdos;
+  servo_motor_state_ = drive_->state_;
+  servo_motor_operation_state_ = drive_->operationState;
+  home_motor_counts_ = 0;
+  home_pulley_counts_ = 0;
+  cable_home_len_ = 0.0;
+  pulley_home_angle_ = 0.0;
+  cable_effective_home_len_ = 0.0;
 }
 
 void ServoMotor::UpdateState()
 {
-  servoMotorState = thisDrive->state;
-  servoMotorOperationState = thisDrive->operationState;
-  cableLength = cableHomeLength +
-                thisWinch.FromCountsToLength(thisDrive->inputPdos.positionActualValue -
-                                             homeMotorCounts);
-  pulleyAngle = pulleyHomeAngle +
-                thisWinch.FromCountsToPulleyAngleRad(
-                  thisDrive->inputPdos.auxiliaryPositionActualValue - homePulleyCounts);
+  servo_motor_state_ = drive_->state_;
+  servo_motor_operation_state_ = drive_->operationState;
+  cable_len_ =
+    cable_home_len_ +
+    winch_.FromCountsToLength(drive_->inputPdos.positionActualValue - home_motor_counts_);
+  pulley_angle_ = pulley_home_angle_ +
+                  winch_.FromCountsToPulleyAngleRad(
+                    drive_->inputPdos.auxiliaryPositionActualValue - home_pulley_counts_);
 }
 
 void ServoMotor::LoopFunction()
 {
-  if (servoMotorState == GoldSoloWhistleDrive::operationEnabled)
+  if (servo_motor_state_ == GoldSoloWhistleDrive::operationEnabled)
   {
-    switch (servoMotorOperationState)
+    switch (servo_motor_operation_state_)
     {
     case GoldSoloWhistleDrive::cyclicPosition:
     {
-      if (motionStatus == set)
+      if (motion_status_ == kSet_)
       {
-        if (upCounter >= 10000)
-          upCounter = 10000;
-        if (downCounter <= 0)
-          downCounter = 0;
-        switch (typeOfMotion)
+        if (up_counter_ >= 10000)
+          up_counter_ = 10000;
+        if (down_counter_ <= 0)
+          down_counter_ = 0;
+        switch (type_of_motion_)
         {
-        case PositionMovePlus:
+        case POS_MOVE_UP:
         {
-          thisDrive->outputPdos.TargetPosition +=
-            thisWinch.FromLengthToCounts(static_cast<double>(upCounter) * 0.0000001);
+          drive_->output_pdos_.target_position +=
+            winch_.FromLengthToCounts(static_cast<double>(up_counter_) * 0.0000001);
           break;
         }
-        case PositionMoveMinus:
+        case POS_MOVE_DOWN:
         {
-          thisDrive->outputPdos.TargetPosition -=
-            thisWinch.FromLengthToCounts(static_cast<double>(upCounter) * 0.0000001);
+          drive_->output_pdos_.target_position -=
+            winch_.FromLengthToCounts(static_cast<double>(up_counter_) * 0.0000001);
           break;
         }
-        case PositionMicroMovePlus:
+        case POS_MICRO_MOVE_UP:
         {
-          thisDrive->outputPdos.TargetPosition +=
-            thisWinch.FromLengthToCounts(static_cast<double>(upCounter) * 0.000000001);
+          drive_->output_pdos_.target_position +=
+            winch_.FromLengthToCounts(static_cast<double>(up_counter_) * 0.000000001);
           break;
         }
-        case PositionMicroMoveMinus:
+        case POS_MICRO_MOVE_DOWN:
         {
-          thisDrive->outputPdos.TargetPosition -=
-            thisWinch.FromLengthToCounts(static_cast<double>(upCounter) * 0.000000001);
+          drive_->output_pdos_.target_position -=
+            winch_.FromLengthToCounts(static_cast<double>(up_counter_) * 0.000000001);
           break;
         }
         default:
@@ -71,31 +71,29 @@ void ServoMotor::LoopFunction()
       }
       else
       {
-        if (thisDrive->inputPdos.torqueActualValue > 10)
-          thisDrive->outputPdos.TargetPosition -= static_cast<int>(
-            ceil(abs(static_cast<double>(thisDrive->inputPdos.velocityActualValue)) *
-                 0.00005));
-        if (thisDrive->inputPdos.torqueActualValue < -10)
-          thisDrive->outputPdos.TargetPosition += static_cast<int>(
-            ceil(abs(static_cast<double>(thisDrive->inputPdos.velocityActualValue)) *
-                 0.00005));
+        if (drive_->inputPdos.torqueActualValue > 10)
+          drive_->output_pdos_.target_position -= static_cast<int>(ceil(
+            abs(static_cast<double>(drive_->inputPdos.velocityActualValue)) * 0.00005));
+        if (drive_->inputPdos.torqueActualValue < -10)
+          drive_->output_pdos_.target_position += static_cast<int>(ceil(
+            abs(static_cast<double>(drive_->inputPdos.velocityActualValue)) * 0.00005));
       }
       break;
     }
     case GoldSoloWhistleDrive::cyclicVelocity:
     {
-      if (motionStatus == set)
+      if (motion_status_ == kSet_)
       {
-        switch (typeOfMotion)
+        switch (type_of_motion_)
         {
-        case SpeedPlus:
+        case SPEED_UP:
         {
-          thisDrive->outputPdos.TargetVelocity += 1000;
+          drive_->output_pdos_.target_velocity += 1000;
           break;
         }
-        case SpeedMinus:
+        case SPEED_DOWN:
         {
-          thisDrive->outputPdos.TargetVelocity -= 1000;
+          drive_->output_pdos_.target_velocity -= 1000;
           break;
         }
         default:
@@ -104,32 +102,30 @@ void ServoMotor::LoopFunction()
       }
       else
       {
-        if (thisDrive->inputPdos.velocityActualValue > 2000)
-          thisDrive->outputPdos.TargetVelocity -=
-            thisDrive->outputPdos.TargetVelocity / 100;
-        else if (thisDrive->inputPdos.velocityActualValue < -2000)
-          thisDrive->outputPdos.TargetVelocity +=
-            -thisDrive->outputPdos.TargetVelocity / 100;
+        if (drive_->inputPdos.velocityActualValue > 2000)
+          drive_->output_pdos_.target_velocity -= drive_->output_pdos_.target_velocity / 100;
+        else if (drive_->inputPdos.velocityActualValue < -2000)
+          drive_->output_pdos_.target_velocity += -drive_->output_pdos_.target_velocity / 100;
       }
       break;
     }
     case GoldSoloWhistleDrive::cyclicTorque:
     {
-      if (upCounter > 30)
+      if (up_counter_ > 30)
       {
-        upCounter = 0;
-        if (motionStatus == set)
+        up_counter_ = 0;
+        if (motion_status_ == kSet_)
         {
-          switch (typeOfMotion)
+          switch (type_of_motion_)
           {
-          case TorquePlus:
+          case TORQUE_UP:
           {
-            thisDrive->outputPdos.TargetTorque += 1;
+            drive_->output_pdos_.target_torque += 1;
             break;
           }
-          case TorqueMinus:
+          case TORQUE_DOWN:
           {
-            thisDrive->outputPdos.TargetTorque -= 1;
+            drive_->output_pdos_.target_torque -= 1;
             break;
           }
           default:
@@ -138,11 +134,10 @@ void ServoMotor::LoopFunction()
         }
         else
         {
-          if (thisDrive->inputPdos.torqueActualValue > 10)
-            thisDrive->outputPdos.TargetTorque -= thisDrive->outputPdos.TargetTorque / 10;
-          else if (thisDrive->inputPdos.torqueActualValue < -10)
-            thisDrive->outputPdos.TargetTorque +=
-              -thisDrive->outputPdos.TargetTorque / 10;
+          if (drive_->inputPdos.torqueActualValue > 10)
+            drive_->output_pdos_.target_torque -= drive_->output_pdos_.target_torque / 10;
+          else if (drive_->inputPdos.torqueActualValue < -10)
+            drive_->output_pdos_.target_torque += -drive_->output_pdos_.target_torque / 10;
         }
       }
       break;
@@ -151,140 +146,137 @@ void ServoMotor::LoopFunction()
       break;
     }
   }
-  upCounter++;
-  downCounter--;
+  up_counter_++;
+  down_counter_--;
 }
 
-void ServoMotor::Enable()
-{
-  thisDrive->stateFlags = GoldSoloWhistleDrive::readyToSwitchOn;
-}
+void ServoMotor::Enable() { drive_->state_flags_ = GoldSoloWhistleDrive::readyToSwitchOn; }
 
 void ServoMotor::Disable()
 {
-  thisDrive->stateFlags = GoldSoloWhistleDrive::switchOnDisabled;
+  drive_->state_flags_ = GoldSoloWhistleDrive::switchOnDisabled;
 }
 
 void ServoMotor::FaultReset()
 {
-  thisDrive->stateFlags = GoldSoloWhistleDrive::switchOnDisabled;
+  drive_->state_flags_ = GoldSoloWhistleDrive::switchOnDisabled;
 }
 
-void ServoMotor::ChangeOperationMode(int theMode)
+void ServoMotor::ChangeOperationMode(int target_op_mode)
 {
-  upCounter = 0;
-  downCounter = 10000;
-  thisDrive->operationStateFlags =
-    static_cast<GoldSoloWhistleDrive::GoldSoloWhistleOperationState>(theMode);
+  up_counter_ = 0;
+  down_counter_ = 10000;
+  drive_->operationStateFlags =
+    static_cast<GoldSoloWhistleDrive::GoldSoloWhistleOperationState>(target_op_mode);
 }
 
-void ServoMotor::SetCommand(int theCommand, int theState)
+void ServoMotor::SetCommand(int cmd, int state)
 {
-  upCounter = 0;
-  downCounter = 10000;
-  typeOfMotion = static_cast<TypeOfMotions>(theCommand);
-  motionStatus = static_cast<uint8_t>(theState);
+  up_counter_ = 0;
+  down_counter_ = 10000;
+  type_of_motion_ = static_cast<TypeOfMotions>(cmd);
+  motion_status_ = static_cast<uint8_t>(state);
 }
 
 void ServoMotor::SetTargetDefaults()
 {
-  thisDrive->outputPdos.TargetTorque = thisDrive->inputPdos.torqueActualValue;
-  thisDrive->outputPdos.TargetPosition = thisDrive->inputPdos.positionActualValue;
-  thisDrive->outputPdos.TargetVelocity = thisDrive->inputPdos.velocityActualValue;
+  drive_->output_pdos_.target_torque = drive_->inputPdos.torqueActualValue;
+  drive_->output_pdos_.target_position = drive_->inputPdos.positionActualValue;
+  drive_->output_pdos_.target_velocity = drive_->inputPdos.velocityActualValue;
 }
 
 void ServoMotor::SetStartingWinchParameter()
 {
-  homeMotorCounts = thisDrive->inputPdos.positionActualValue;
-  homePulleyCounts = thisDrive->inputPdos.auxiliaryPositionActualValue;
-  cableHomeLength = 0.0;
-  pulleyHomeAngle = 0.0;
-  cableLength = 0.0;
-  pulleyAngle = 0.0;
+  home_motor_counts_ = drive_->inputPdos.positionActualValue;
+  home_pulley_counts_ = drive_->inputPdos.auxiliaryPositionActualValue;
+  cable_home_len_ = 0.0;
+  pulley_home_angle_ = 0.0;
+  cable_len_ = 0.0;
+  pulley_angle_ = 0.0;
 }
 
-void ServoMotor::SetHomeWinchParameters(double theCable, double thePulley,
-                                        double theCable2)
+void ServoMotor::SetHomeWinchParameters(double cable_len, double pulley_angle,
+                                        double cable_len_true)
 {
-  cableHomeLength = theCable;
-  pulleyHomeAngle = thePulley;
-  cableEffectiveHomeLength = theCable2;
-  startMotorCounts =
-    homeMotorCounts +
-    thisWinch.FromLengthToCounts(cableEffectiveHomeLength - cableHomeLength);
+  cable_home_len_ = cable_len;
+  pulley_home_angle_ = pulley_angle;
+  cable_effective_home_len_ = cable_len_true;
+  start_motor_counts_ =
+    home_motor_counts_ +
+    winch_.FromLengthToCounts(cable_effective_home_len_ - cable_home_len_);
 }
 
 void ServoMotor::SetMaxTorque()
 {
-  if (abs(thisDrive->inputPdos.torqueActualValue) < maxTorque)
-    thisDrive->outputPdos.TargetTorque--;
+  if (abs(drive_->inputPdos.torqueActualValue) < kMaxTorque_)
+    drive_->output_pdos_.target_torque--;
 }
 
-void ServoMotor::SetTorque(short theTorque)
+void ServoMotor::SetTorque(short torque)
 {
-  thisDrive->outputPdos.TargetTorque = theTorque;
+  drive_->output_pdos_.target_torque = torque;
 }
 
-void ServoMotor::SetPosition(double thePosition)
+void ServoMotor::SetPosition(double position)
 {
-  thisDrive->outputPdos.TargetPosition =
-    startMotorCounts + thisWinch.FromLengthToCounts(thePosition);
+  drive_->output_pdos_.target_position =
+    start_motor_counts_ + winch_.FromLengthToCounts(position);
   // thisDrive->outputPdos.TargetPosition = startMotorCounts;
 }
 
-void ServoMotor::SetSpeed(int theVelocity)
+void ServoMotor::SetSpeed(int velocity)
 {
-  thisDrive->outputPdos.TargetVelocity = theVelocity;
+  drive_->output_pdos_.target_velocity = velocity;
 }
 
-void ServoMotor::SetPoly7IncrementalParameters(double endLength, double endT)
+void ServoMotor::SetPoly7IncrementalParameters(double end_length, double end_t)
 {
-  if (endT >= 0.0)
+  if (end_t >= 0.0)
   {
-    startCounts = static_cast<double>(thisDrive->inputPdos.positionActualValue);
-    stopCounts =
-      startCounts + static_cast<double>(thisWinch.FromLengthToCounts(endLength));
-    endTime = endT;
-    poly7Flag = 1;
+    start_counts_ = static_cast<double>(drive_->inputPdos.positionActualValue);
+    stop_counts_ =
+      start_counts_ + static_cast<double>(winch_.FromLengthToCounts(end_length));
+    end_time_ = end_t;
+    poly7_flag_ = 1;
   }
 }
 
-void ServoMotor::SetPoly7GoHomeParameters(double endT)
+void ServoMotor::SetPoly7GoHomeParameters(double end_t)
 {
-  if (endT >= 0.0)
+  if (end_t >= 0.0)
   {
-    startCounts = static_cast<double>(thisDrive->inputPdos.positionActualValue);
-    stopCounts = static_cast<double>(homeMotorCounts);
-    endTime = endT;
-    poly7Flag = 1;
+    start_counts_ = static_cast<double>(drive_->inputPdos.positionActualValue);
+    stop_counts_ = static_cast<double>(home_motor_counts_);
+    end_time_ = end_t;
+    poly7_flag_ = 1;
   }
 }
 
-void ServoMotor::SetPoly7GoStartParameters(double endT)
+void ServoMotor::SetPoly7GoStartParameters(double end_t)
 {
-  if (endT >= 0.0)
+  if (end_t >= 0.0)
   {
-    startCounts = static_cast<double>(thisDrive->inputPdos.positionActualValue);
-    stopCounts = static_cast<double>(startMotorCounts);
-    endTime = endT;
-    poly7Flag = 1;
+    start_counts_ = static_cast<double>(drive_->inputPdos.positionActualValue);
+    stop_counts_ = static_cast<double>(start_motor_counts_);
+    end_time_ = end_t;
+    poly7_flag_ = 1;
   }
 }
 
 void ServoMotor::MovePoly7Incremental(double t)
 {
-  double normalizedTime = t / endTime;
-  if (normalizedTime <= 1.0 && poly7Flag)
+  double normalizedTime = t / end_time_;
+  if (normalizedTime <= 1.0 && poly7_flag_)
   {
-    thisDrive->outputPdos.TargetPosition = static_cast<int>(
-      startCounts +
-      (stopCounts - startCounts) * (poly7Coeff[0] * pow(normalizedTime, 4.0) +
-                                    poly7Coeff[1] * pow(normalizedTime, 5.0) +
-                                    poly7Coeff[2] * pow(normalizedTime, 6.0) +
-                                    poly7Coeff[3] * pow(normalizedTime, 7.0)));
+    drive_->output_pdos_.target_position = static_cast<int>(
+      start_counts_ +
+      (stop_counts_ - start_counts_) * (poly7_coeff_[0] * pow(normalizedTime, 4.0) +
+                                        poly7_coeff_[1] * pow(normalizedTime, 5.0) +
+                                        poly7_coeff_[2] * pow(normalizedTime, 6.0) +
+                                        poly7_coeff_[3] * pow(normalizedTime, 7.0)));
   }
   else
   {
-    poly7Flag = 0;
+    poly7_flag_ = 0;
   }
 }
