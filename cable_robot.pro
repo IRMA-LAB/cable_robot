@@ -1,45 +1,47 @@
 HEADERS = \
-   $$PWD/header/interface/actuatorinterface.h \
-   $$PWD/header/interface/actuatorpvtinterface33.h \
-   $$PWD/header/interface/cablerobotinterface.h \
-   $$PWD/header/interface/calibrationinterface.h \
-   $$PWD/header/interface/demointerface33.h \
-   $$PWD/header/interface/demointerface66.h \
-   $$PWD/header/interface/hominginterface.h \
-   $$PWD/header/interface/manualinterface33.h \
-   $$PWD/header/interface/manualinterface66.h \
-   $$PWD/header/cablerobot.h \
-   $$PWD/header/cablerobotmaster.h \
-   $$PWD/header/easycatslave.h \
-   $$PWD/header/ethercatmaster.h \
-   $$PWD/header/ethercatslave.h \
-   $$PWD/header/goldsolowhistledrive.h \
-   $$PWD/header/servomotor.h \
-   $$PWD/header/winch.h
+    header/comm/cablerobotmaster.h \
+    header/comm/easycatslave.h \
+    header/comm/ethercatmaster.h \
+    header/comm/ethercatslave.h \
+    header/components/servomotor.h \
+    header/components/winch.h \
+    header/interface/actuatorinterface.h \
+    header/interface/actuatorpvtinterface33.h \
+    header/interface/cablerobotinterface.h \
+    header/interface/calibrationinterface.h \
+    header/interface/demointerface33.h \
+    header/interface/demointerface66.h \
+    header/interface/hominginterface.h \
+    header/interface/manualinterface33.h \
+    header/interface/manualinterface66.h \
+    header/cablerobot.h \
+    header/goldsolowhistledrive.h
 
 SOURCES = \
-   $$PWD/src/interface/actuatorinterface.cpp \
-   $$PWD/src/interface/actuatorpvtinterface33.cpp \
-   $$PWD/src/interface/cablerobotinterface.cpp \
-   $$PWD/src/interface/calibrationinterface.cpp \
-   $$PWD/src/interface/demointerface33.cpp \
-   $$PWD/src/interface/demointerface66.cpp \
-   $$PWD/src/interface/hominginterface.cpp \
-   $$PWD/src/interface/manualinterface33.cpp \
-   $$PWD/src/interface/manualinterface66.cpp \
-   $$PWD/src/cablerobot.cpp \
-   $$PWD/src/cablerobotmaster.cpp \
-   $$PWD/src/easycatslave.cpp \
-   $$PWD/src/ethercatmaster.cpp \
-   $$PWD/src/goldsolowhistledrive.cpp \
-   $$PWD/src/main.cpp \
-   $$PWD/src/servomotor.cpp \
-    src/ethercatslave.cpp \
-    src/winch.cpp
+    src/comm/cablerobotmaster.cpp \
+    src/comm/easycatslave.cpp \
+    src/comm/ethercatmaster.cpp \
+    src/comm/ethercatslave.cpp \
+    src/components/servomotor.cpp \
+    src/components/winch.cpp \
+    src/interface/actuatorinterface.cpp \
+    src/interface/actuatorpvtinterface33.cpp \
+    src/interface/cablerobotinterface.cpp \
+    src/interface/calibrationinterface.cpp \
+    src/interface/demointerface33.cpp \
+    src/interface/demointerface66.cpp \
+    src/interface/hominginterface.cpp \
+    src/interface/manualinterface33.cpp \
+    src/interface/manualinterface66.cpp \
+    src/cablerobot.cpp \
+    src/goldsolowhistledrive.cpp \
+    src/main.cpp
 
 INCLUDEPATH = \
     $$PWD/header \
-    $$PWD/header/interface
+    $$PWD/header/interface \
+    $$PWD/header/comm \
+    $$PWD/header/components
 
 FORMS += \
    $$PWD/gui/actuatorinterface.ui \
