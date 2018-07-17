@@ -15,7 +15,8 @@ HEADERS = \
     header/interface/manualinterface33.h \
     header/interface/manualinterface66.h \
     header/cablerobot.h \
-    header/goldsolowhistledrive.h
+    header/goldsolowhistledrive.h \
+    header/common.h
 
 SOURCES = \
     src/comm/cablerobotmaster.cpp \
