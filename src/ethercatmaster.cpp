@@ -269,13 +269,15 @@ EthercatMaster::EthercatMaster()
                        // it in the static functions
 }
 
+EthercatMaster::~EthercatMaster() {}
+
 void EthercatMaster::Start()
 {
 
   pthread_t threadRt;
   pthread_attr_t threadAttributes;
 
-  ConfigureMemoryLocks(); // Call immediately
+  ConfigureMemoryLocks();               // Call immediately
   LockProcessMemory(preAllocationSize); // Call immediately
 
   /* init to default values */

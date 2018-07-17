@@ -64,6 +64,8 @@ private:
 
 public:
   EthercatMaster();
+  virtual ~EthercatMaster() = 0;
+
   // constexpr static members of a class can be viewed as #define replacement
   // #definines have the problem to live outside the
   constexpr static uint32_t preAllocationSize =
@@ -112,11 +114,8 @@ public:
   int numberOfSlaves;               // master utility
 
   void Start(); // the only thing you need to callnin the main
-  virtual void StartUpFunction() {} // Function to overload in our master, it
-                                    // gets called before the cyclical task
-                                    // begins
-  virtual void LoopFunction() {} // Function to overload in our master, it gets
-                                 // called every cycle
+  virtual void StartUpFunction() = 0; // called before the cycle begins
+  virtual void LoopFunction() = 0;    // called every cycle
 };
 
 #endif // ETHERCATMASTER_H

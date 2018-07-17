@@ -49,7 +49,7 @@ private:
 
 public:
   explicit CableRobotMaster(QObject* parent = nullptr);
-  ~CableRobotMaster() {}
+  virtual ~CableRobotMaster() {}
   enum MasterState
   {
     idle,
