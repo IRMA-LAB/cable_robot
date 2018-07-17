@@ -16,7 +16,7 @@ void CableRobot::HomingFun()
       if (flag == 1)
       {
         robotGloballyEnabled += 1;
-        cout << (int)robotGloballyEnabled << endl;
+        cout << static_cast<int>(robotGloballyEnabled) << endl;
       }
       else
       {
@@ -62,7 +62,7 @@ void CableRobot::Robot33ActuatorPvtFun()
       if (flag == 1)
       {
         robotGloballyEnabled += 1;
-        cout << (int)robotGloballyEnabled << endl;
+        cout << static_cast<int>(robotGloballyEnabled) << endl;
       }
       else
       {
@@ -341,7 +341,7 @@ void CableRobot::SwitchActuatedCable()
           {
             servoMotor[i].ChangeOperationMode(
               GoldSoloWhistleDrive::cyclicTorque);
-            modIndex = i;
+            modIndex = static_cast<uint8_t>(i);
           }
         }
         else
@@ -392,7 +392,7 @@ void CableRobot::MoveAway()
   if (homingFlag)
   {
     internalDelayCounter++;
-    double timeInSeconds = ((double)internalDelayCounter) / 1000.0;
+    double timeInSeconds = (static_cast<double>(internalDelayCounter)) / 1000.0;
     if (timeInSeconds <= transitionTime)
       servoMotor[homingActuator].MovePoly7Incremental(timeInSeconds);
     else
@@ -445,7 +445,7 @@ void CableRobot::MoveCentral()
   if (homingFlag)
   {
     internalDelayCounter++;
-    double timeInSeconds = ((double)internalDelayCounter) / 1000.0;
+    double timeInSeconds = (static_cast<double>(internalDelayCounter)) / 1000.0;
     if (timeInSeconds <= transitionTime)
       servoMotor[homingActuator].MovePoly7Incremental(timeInSeconds);
     else
@@ -459,7 +459,7 @@ void CableRobot::GoingHome()
 {
   internalDelayCounter++;
   homingFlag = 0;
-  double timeInSeconds = ((double)internalDelayCounter) / 1000.0;
+  double timeInSeconds = (static_cast<double>(internalDelayCounter)) / 1000.0;
   if (timeInSeconds <= goHomeTime)
     for (int i = 0; i < numberOfActuators; i += 2)
       servoMotor[i].MovePoly7Incremental(timeInSeconds);
@@ -663,7 +663,7 @@ void CableRobot::GoingHomePvt33()
   if (robotGloballyEnabled >= numberOfActuators)
   {
     internalDelayCounter++;
-    double timeInSeconds = ((double)internalDelayCounter) / 1000.0;
+    double timeInSeconds = (static_cast<double>(internalDelayCounter)) / 1000.0;
     if (timeInSeconds <= goHomeTime)
       for (int i = 0; i < numberOfActuators; i += 2)
         servoMotor[i].MovePoly7Incremental(timeInSeconds);
@@ -789,7 +789,10 @@ void CableRobot::CollectClearFaultRequest()
   }
 }
 
-void CableRobot::CollectHomingProcessControl(int state) { homingFlag = state; }
+void CableRobot::CollectHomingProcessControl(int state)
+{
+  homingFlag = static_cast<uint8_t>(state);
+}
 
 void CableRobot::CollectMeasurementRequest() { measurementFlag = 1; }
 

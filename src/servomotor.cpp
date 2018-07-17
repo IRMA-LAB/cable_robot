@@ -44,26 +44,26 @@ void ServoMotor::LoopFunction()
         {
         case PositionMovePlus:
         {
-          thisDrive->outputPdos.TargetPosition +=
-            thisWinch.FromLengthToCounts((double)upCounter * 0.0000001);
+          thisDrive->outputPdos.TargetPosition += thisWinch.FromLengthToCounts(
+            static_cast<double>(upCounter) * 0.0000001);
           break;
         }
         case PositionMoveMinus:
         {
-          thisDrive->outputPdos.TargetPosition -=
-            thisWinch.FromLengthToCounts((double)upCounter * 0.0000001);
+          thisDrive->outputPdos.TargetPosition -= thisWinch.FromLengthToCounts(
+            static_cast<double>(upCounter) * 0.0000001);
           break;
         }
         case PositionMicroMovePlus:
         {
-          thisDrive->outputPdos.TargetPosition +=
-            thisWinch.FromLengthToCounts((double)upCounter * 0.000000001);
+          thisDrive->outputPdos.TargetPosition += thisWinch.FromLengthToCounts(
+            static_cast<double>(upCounter) * 0.000000001);
           break;
         }
         case PositionMicroMoveMinus:
         {
-          thisDrive->outputPdos.TargetPosition -=
-            thisWinch.FromLengthToCounts((double)upCounter * 0.000000001);
+          thisDrive->outputPdos.TargetPosition -= thisWinch.FromLengthToCounts(
+            static_cast<double>(upCounter) * 0.000000001);
           break;
         }
         default:
@@ -73,11 +73,13 @@ void ServoMotor::LoopFunction()
       else
       {
         if (thisDrive->inputPdos.torqueActualValue > 10)
-          thisDrive->outputPdos.TargetPosition -= (int)ceil(
-            abs((double)thisDrive->inputPdos.velocityActualValue) * 0.00005);
+          thisDrive->outputPdos.TargetPosition -= static_cast<int>(ceil(
+            abs(static_cast<double>(thisDrive->inputPdos.velocityActualValue)) *
+            0.00005));
         if (thisDrive->inputPdos.torqueActualValue < -10)
-          thisDrive->outputPdos.TargetPosition += (int)ceil(
-            abs((double)thisDrive->inputPdos.velocityActualValue) * 0.00005);
+          thisDrive->outputPdos.TargetPosition += static_cast<int>(ceil(
+            abs(static_cast<double>(thisDrive->inputPdos.velocityActualValue)) *
+            0.00005));
       }
       break;
     }
@@ -175,15 +177,15 @@ void ServoMotor::ChangeOperationMode(int theMode)
   upCounter = 0;
   downCounter = 10000;
   thisDrive->operationStateFlags =
-    (GoldSoloWhistleDrive::GoldSoloWhistleOperationState)theMode;
+    static_cast<GoldSoloWhistleDrive::GoldSoloWhistleOperationState>(theMode);
 }
 
 void ServoMotor::SetCommand(int theCommand, int theState)
 {
   upCounter = 0;
   downCounter = 10000;
-  typeOfMotion = (TypeOfMotions)theCommand;
-  motionStatus = theState;
+  typeOfMotion = static_cast<TypeOfMotions>(theCommand);
+  motionStatus = static_cast<uint8_t>(theState);
 }
 
 void ServoMotor::SetTargetDefaults()
@@ -243,8 +245,9 @@ void ServoMotor::SetPoly7IncrementalParameters(double endLength, double endT)
 {
   if (endT >= 0.0)
   {
-    startCounts = (double)thisDrive->inputPdos.positionActualValue;
-    stopCounts = startCounts + (double)thisWinch.FromLengthToCounts(endLength);
+    startCounts = static_cast<double>(thisDrive->inputPdos.positionActualValue);
+    stopCounts = startCounts +
+                 static_cast<double>(thisWinch.FromLengthToCounts(endLength));
     endTime = endT;
     poly7Flag = 1;
   }
@@ -254,8 +257,8 @@ void ServoMotor::SetPoly7GoHomeParameters(double endT)
 {
   if (endT >= 0.0)
   {
-    startCounts = (double)thisDrive->inputPdos.positionActualValue;
-    stopCounts = (double)homeMotorCounts;
+    startCounts = static_cast<double>(thisDrive->inputPdos.positionActualValue);
+    stopCounts = static_cast<double>(homeMotorCounts);
     endTime = endT;
     poly7Flag = 1;
   }
@@ -265,8 +268,8 @@ void ServoMotor::SetPoly7GoStartParameters(double endT)
 {
   if (endT >= 0.0)
   {
-    startCounts = (double)thisDrive->inputPdos.positionActualValue;
-    stopCounts = (double)startMotorCounts;
+    startCounts = static_cast<double>(thisDrive->inputPdos.positionActualValue);
+    stopCounts = static_cast<double>(startMotorCounts);
     endTime = endT;
     poly7Flag = 1;
   }
@@ -277,13 +280,12 @@ void ServoMotor::MovePoly7Incremental(double t)
   double normalizedTime = t / endTime;
   if (normalizedTime <= 1.0 && poly7Flag)
   {
-    thisDrive->outputPdos.TargetPosition =
-      (int)(startCounts +
-            (stopCounts - startCounts) *
-              (poly7Coeff[0] * pow(normalizedTime, 4.0) +
-               poly7Coeff[1] * pow(normalizedTime, 5.0) +
-               poly7Coeff[2] * pow(normalizedTime, 6.0) +
-               poly7Coeff[3] * pow(normalizedTime, 7.0)));
+    thisDrive->outputPdos.TargetPosition = static_cast<int>(
+      startCounts +
+      (stopCounts - startCounts) * (poly7Coeff[0] * pow(normalizedTime, 4.0) +
+                                    poly7Coeff[1] * pow(normalizedTime, 5.0) +
+                                    poly7Coeff[2] * pow(normalizedTime, 6.0) +
+                                    poly7Coeff[3] * pow(normalizedTime, 7.0)));
   }
   else
   {

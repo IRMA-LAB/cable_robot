@@ -258,43 +258,43 @@ void ActuatorInterface::CollectGuiData(GoldSoloWhistleDrive::InputPdos* thePdos,
   case GoldSoloWhistleDrive::statusWordElement:
   {
     // ui->InputPdosTable->item(0,n)->setData(0,(quint16)thePdos->statusWord.to_ulong());
-    inputItems[n].setData(0, (quint16)thePdos->statusWord.to_ulong());
+    inputItems[n].setData(0, static_cast<qint16>(thePdos->statusWord.to_ulong()));
     break;
   }
   case GoldSoloWhistleDrive::modesOfOperationElement:
   {
     // ui->InputPdosTable->item(0,n)->setData(0,(qint8)thePdos->modesOfOperationDisplay);
-    inputItems[n].setData(0, (qint8)thePdos->modesOfOperationDisplay);
+    inputItems[n].setData(0, static_cast<qint8>(thePdos->modesOfOperationDisplay));
     break;
   }
   case GoldSoloWhistleDrive::positionActualvalueElement:
   {
     // ui->InputPdosTable->item(0,n)->setData(0,(qint32)thePdos->positionActualValue);
-    inputItems[n].setData(0, (qint32)thePdos->positionActualValue);
+    inputItems[n].setData(0, static_cast<qint32>(thePdos->positionActualValue));
     break;
   }
   case GoldSoloWhistleDrive::velocityActualvalueElement:
   {
     // ui->InputPdosTable->item(0,n)->setData(0,(qint32)thePdos->velocityActualValue);
-    inputItems[n].setData(0, (qint32)thePdos->velocityActualValue);
+    inputItems[n].setData(0, static_cast<qint32>(thePdos->velocityActualValue));
     break;
   }
   case GoldSoloWhistleDrive::torqueActualValueElement:
   {
     // ui->InputPdosTable->item(0,n)->setData(0,(qint16)thePdos->torqueActualValue);
-    inputItems[n].setData(0, (qint16)thePdos->torqueActualValue);
+    inputItems[n].setData(0, static_cast<qint16>(thePdos->torqueActualValue));
     break;
   }
   case GoldSoloWhistleDrive::digitalInputsElement:
   {
     // ui->InputPdosTable->item(0,n)->setData(0,(quint32)thePdos->digitalInputs);
-    inputItems[n].setData(0, (quint32)thePdos->digitalInputs);
+    inputItems[n].setData(0, static_cast<qint32>(thePdos->digitalInputs));
     break;
   }
   case GoldSoloWhistleDrive::auxiliaryPositionActualValueElement:
   {
     // ui->InputPdosTable->item(0,n)->setData(0,(qint32)thePdos->auxiliaryPositionActualValue);
-    inputItems[n].setData(0, (qint32)thePdos->auxiliaryPositionActualValue);
+    inputItems[n].setData(0, static_cast<qint32>(thePdos->auxiliaryPositionActualValue));
     break;
   }
   }

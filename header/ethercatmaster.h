@@ -46,7 +46,7 @@ private:
   // They just reside in the same namespace, so you need to call them in a
   // specific way
   static void ConfigureMemoryLocks();                  // Memory managment
-  static void LockProcessMemory(int size);             // Memory locks
+  static void LockProcessMemory(uint32_t size);        // Memory locks
   static void PeriodIncrement(PeriodInfo* periodInfo); // Timer utility
   static void*
   TheRtThread(void* args); // The actual real time thread that is executed

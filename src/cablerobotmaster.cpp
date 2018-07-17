@@ -18,7 +18,7 @@ void CableRobotMaster::ActuatorControlFun()
     else if (theServoMotor->HasOperationModeChangeRequestBeenProcessed())
     {
       emit SendOperationModeChangeRequestProcessed(
-        (int)theServoMotor->servoMotorOperationState);
+        static_cast<int>(theServoMotor->servoMotorOperationState));
     }
     else if (theServoMotor->FaultPresent())
     {
@@ -27,7 +27,7 @@ void CableRobotMaster::ActuatorControlFun()
     theServoMotor->UpdateState();
     theServoMotor->LoopFunction();
     if (theServoMotor->updateIndex ==
-        (int)GoldSoloWhistleDrive::GoldSoloWhistleDomainInputs)
+        static_cast<int>(GoldSoloWhistleDrive::GoldSoloWhistleDomainInputs))
       theServoMotor->updateIndex = 0;
     emit SendGuiData(theServoMotor->servoMotorInputPdos,
                      theServoMotor->updateIndex);

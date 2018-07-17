@@ -5,16 +5,16 @@ EthercatMaster* thisInstance;
 void EthercatMaster::ConfigureMemoryLocks()
 {
   if (mlockall(MCL_CURRENT | MCL_FUTURE))
-    perror("mlockall failed:"); // Memory Lock, no page faults
+    perror("mlockall failed:");  // Memory Lock, no page faults
   mallopt(M_TRIM_THRESHOLD, -1); // Turn off memory trimming
-  mallopt(M_MMAP_MAX, 0); // Turn off shared memory usage
+  mallopt(M_MMAP_MAX, 0);        // Turn off shared memory usage
 }
 
-void EthercatMaster::LockProcessMemory(int size)
+void EthercatMaster::LockProcessMemory(uint32_t size)
 {
-  int i;
+  uint32_t i;
   char* buffer;
-  buffer = (char*)malloc(size);
+  buffer = static_cast<char*>(malloc(size));
   for (i = 0; i < size; i += sysconf(_SC_PAGESIZE))
     buffer[i] = 0; // Send this memory to RAM and lock it there
   free(buffer);
@@ -36,9 +36,9 @@ void EthercatMaster::PeriodIncrement(PeriodInfo* periodInfo)
 uint8_t EthercatMaster::WaitUntilPeriodElapsed(PeriodInfo* periodInfo)
 {
   PeriodIncrement(periodInfo); // periodInfo structure handling
-  uint8_t msg = clock_nanosleep(
+  uint8_t msg = static_cast<uint8_t>(clock_nanosleep(
     CLOCK_MONOTONIC, TIMER_ABSTIME, &periodInfo->nextPeriod,
-    NULL); // Just Sleep until the end of the time period required
+    NULL)); // Just Sleep until the end of the time period required
   if (msg != 0)
   {
     cout << "An Error Occurred! Error number = " << msg << endl;
