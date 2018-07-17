@@ -110,8 +110,7 @@ public:
 
   void SetTargetDefaults();
   void SetStartingWinchParameter();
-  void SetHomeWinchParameters(double theCable, double thePulley,
-                              double theCable2);
+  void SetHomeWinchParameters(double theCable, double thePulley, double theCable2);
   void SetMaxTorque();
   void SetTorque(short theTorque);
   void SetPosition(double thePosition);

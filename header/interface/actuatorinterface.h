@@ -21,8 +21,7 @@ private:
   constexpr static uint8_t reset = 0;
 
 public:
-  explicit ActuatorInterface(QWidget* parent = 0,
-                             CableRobotMaster* theMaster = 0);
+  explicit ActuatorInterface(QWidget* parent = 0, CableRobotMaster* theMaster = 0);
   ~ActuatorInterface();
 
 signals:
@@ -66,8 +65,7 @@ public slots:
 private:
   CableRobotMaster* cableRobotMaster;
   Ui::ActuatorInterface* ui;
-  array<QTableWidgetItem, GoldSoloWhistleDrive::GoldSoloWhistleDomainInputs>
-    inputItems;
+  array<QTableWidgetItem, GoldSoloWhistleDrive::GoldSoloWhistleDomainInputs> inputItems;
 
   virtual void closeEvent(QCloseEvent* event);
 };

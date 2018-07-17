@@ -1,10 +1,8 @@
 #include "calibrationinterface.h"
 #include "ui_calibrationinterface.h"
 
-CalibrationInterface::CalibrationInterface(QWidget* parent,
-                                           CableRobotMaster* theMaster)
-  : QWidget(parent), cableRobotMaster(theMaster),
-    ui(new Ui::CalibrationInterface)
+CalibrationInterface::CalibrationInterface(QWidget* parent, CableRobotMaster* theMaster)
+  : QWidget(parent), cableRobotMaster(theMaster), ui(new Ui::CalibrationInterface)
 {
   ui->setupUi(this);
 

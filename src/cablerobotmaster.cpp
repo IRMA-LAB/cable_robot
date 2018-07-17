@@ -29,8 +29,7 @@ void CableRobotMaster::ActuatorControlFun()
     if (theServoMotor->updateIndex ==
         static_cast<int>(GoldSoloWhistleDrive::GoldSoloWhistleDomainInputs))
       theServoMotor->updateIndex = 0;
-    emit SendGuiData(theServoMotor->servoMotorInputPdos,
-                     theServoMotor->updateIndex);
+    emit SendGuiData(theServoMotor->servoMotorInputPdos, theServoMotor->updateIndex);
     theServoMotor->updateIndex++;
   }
 }
@@ -41,15 +40,9 @@ void CableRobotMaster::EasyCatControlFun()
     easyCatSlave[i].LoopFunction();
 }
 
-void CableRobotMaster::StandardRobotOperationFun()
-{
-  cableRobot.StandardLoopFunction();
-}
+void CableRobotMaster::StandardRobotOperationFun() { cableRobot.StandardLoopFunction(); }
 
-void CableRobotMaster::UserRobotOperationFun()
-{
-  cableRobot.UserLoopFunction();
-}
+void CableRobotMaster::UserRobotOperationFun() { cableRobot.UserLoopFunction(); }
 
 void CableRobotMaster::IdleTransition()
 {
@@ -178,10 +171,7 @@ void CableRobotMaster::CollectEnableRequest(int enable)
     theServoMotor->Disable();
 }
 
-void CableRobotMaster::CollectClearFaultRequest()
-{
-  theServoMotor->FaultReset();
-}
+void CableRobotMaster::CollectClearFaultRequest() { theServoMotor->FaultReset(); }
 
 void CableRobotMaster::CollectOperationModeChangeRequest(int theOperation)
 {

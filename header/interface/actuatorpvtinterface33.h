@@ -25,8 +25,7 @@ private:
   QFile dataFile;
 
 public:
-  explicit ActuatorPvtInterface33(QWidget* parent = 0,
-                                  CableRobotMaster* theMaster = 0);
+  explicit ActuatorPvtInterface33(QWidget* parent = 0, CableRobotMaster* theMaster = 0);
   ~ActuatorPvtInterface33();
 
 signals:

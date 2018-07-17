@@ -1,10 +1,8 @@
 #include "cablerobotinterface.h"
 #include "ui_cablerobotinterface.h"
 
-CableRobotInterface::CableRobotInterface(QWidget* parent,
-                                         CableRobotMaster* theMaster)
-  : QWidget(parent), cableRobotMaster(theMaster),
-    ui(new Ui::CableRobotInterface)
+CableRobotInterface::CableRobotInterface(QWidget* parent, CableRobotMaster* theMaster)
+  : QWidget(parent), cableRobotMaster(theMaster), ui(new Ui::CableRobotInterface)
 {
   ui->setupUi(this);
   ui->StandardModesBlock->setDisabled(true);
@@ -14,15 +12,15 @@ CableRobotInterface::CableRobotInterface(QWidget* parent,
           &CableRobotInterface::CollectStartUp);
   connect(cableRobotMaster, &CableRobotMaster::SendMasterRequestProcessed, this,
           &CableRobotInterface::CollectMasterRequestProcessed);
-  connect(&cableRobotMaster->cableRobot, &CableRobot::SendRobotRequestProcessed,
-          this, &CableRobotInterface::CollectRobotRequestProcessed);
+  connect(&cableRobotMaster->cableRobot, &CableRobot::SendRobotRequestProcessed, this,
+          &CableRobotInterface::CollectRobotRequestProcessed);
 
   connect(this, &CableRobotInterface::SendMasterRequest, cableRobotMaster,
           &CableRobotMaster::CollectMasterRequest);
   connect(this, &CableRobotInterface::SendMotorNumber, cableRobotMaster,
           &CableRobotMaster::CollectMotorNumber);
-  connect(this, &CableRobotInterface::SendRobotRequest,
-          &cableRobotMaster->cableRobot, &CableRobot::CollectRobotRequest);
+  connect(this, &CableRobotInterface::SendRobotRequest, &cableRobotMaster->cableRobot,
+          &CableRobot::CollectRobotRequest);
 }
 
 CableRobotInterface::~CableRobotInterface() { delete ui; }
@@ -163,8 +161,7 @@ void CableRobotInterface::CollectRobotRequestProcessed(int state)
   }
   case CableRobot::homing:
   {
-    HomingInterface* homingInterface =
-      new HomingInterface(nullptr, cableRobotMaster);
+    HomingInterface* homingInterface = new HomingInterface(nullptr, cableRobotMaster);
     homingInterface->show();
     this->setDisabled(true);
     break;
@@ -178,8 +175,7 @@ void CableRobotInterface::CollectRobotRequestProcessed(int state)
   }
   case CableRobot::robot33Automatic:
   {
-    DemoInterface33* demoInterface33 =
-      new DemoInterface33(nullptr, cableRobotMaster);
+    DemoInterface33* demoInterface33 = new DemoInterface33(nullptr, cableRobotMaster);
     demoInterface33->show();
     break;
   }
@@ -199,8 +195,7 @@ void CableRobotInterface::CollectRobotRequestProcessed(int state)
   }
   case CableRobot::robot66Demo:
   {
-    DemoInterface66* demoInterface66 =
-      new DemoInterface66(nullptr, cableRobotMaster);
+    DemoInterface66* demoInterface66 = new DemoInterface66(nullptr, cableRobotMaster);
     demoInterface66->show();
     break;
   }

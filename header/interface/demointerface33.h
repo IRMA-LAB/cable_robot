@@ -16,8 +16,7 @@ class DemoInterface33 : public QWidget
   Q_OBJECT
 
 public:
-  explicit DemoInterface33(QWidget* parent = 0,
-                           CableRobotMaster* theMaster = 0);
+  explicit DemoInterface33(QWidget* parent = 0, CableRobotMaster* theMaster = 0);
   ~DemoInterface33();
 
 signals:

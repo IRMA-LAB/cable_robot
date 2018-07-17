@@ -244,8 +244,7 @@ void CableRobot::SwitchToTensionMode()
     {
       for (int i = 0; i < numberOfActuators; i++)
       {
-        if (servoMotor[i].servoMotorOperationState !=
-            GoldSoloWhistleDrive::cyclicTorque)
+        if (servoMotor[i].servoMotorOperationState != GoldSoloWhistleDrive::cyclicTorque)
         {
           servoMotor[i].SetTargetDefaults();
           servoMotor[i].ChangeOperationMode(GoldSoloWhistleDrive::cyclicTorque);
@@ -271,8 +270,7 @@ void CableRobot::SwitchToTensionMode()
             GoldSoloWhistleDrive::cyclicPosition)
         {
           servoMotor[i].SetTargetDefaults();
-          servoMotor[i].ChangeOperationMode(
-            GoldSoloWhistleDrive::cyclicPosition);
+          servoMotor[i].ChangeOperationMode(GoldSoloWhistleDrive::cyclicPosition);
         }
         else
           flagCompleted++;
@@ -339,15 +337,13 @@ void CableRobot::SwitchActuatedCable()
           if (servoMotor[i].servoMotorOperationState !=
               GoldSoloWhistleDrive::cyclicTorque)
           {
-            servoMotor[i].ChangeOperationMode(
-              GoldSoloWhistleDrive::cyclicTorque);
+            servoMotor[i].ChangeOperationMode(GoldSoloWhistleDrive::cyclicTorque);
             modIndex = static_cast<uint8_t>(i);
           }
         }
         else
         {
-          servoMotor[i].ChangeOperationMode(
-            GoldSoloWhistleDrive::cyclicPosition);
+          servoMotor[i].ChangeOperationMode(GoldSoloWhistleDrive::cyclicPosition);
         }
         servoMotor[i].SetTargetDefaults();
       }
@@ -366,8 +362,7 @@ void CableRobot::SwitchActuatedCable()
     for (int i = 0; i < numberOfActuators; i += 2)
     {
       if (i == homingActuator &&
-          servoMotor[i].servoMotorOperationState ==
-            GoldSoloWhistleDrive::cyclicPosition)
+          servoMotor[i].servoMotorOperationState == GoldSoloWhistleDrive::cyclicPosition)
         flag *= 1;
       else if (i != homingActuator &&
                servoMotor[i].servoMotorOperationState ==
@@ -379,8 +374,8 @@ void CableRobot::SwitchActuatedCable()
     if (flag)
     {
       homingStateFlags = moveAway;
-      servoMotor[homingActuator].SetPoly7IncrementalParameters(
-        -incrementalHomingLength, transitionTime);
+      servoMotor[homingActuator].SetPoly7IncrementalParameters(-incrementalHomingLength,
+                                                               transitionTime);
       internalDelayCounter = 0;
       measurementStage = 0;
     }
@@ -420,16 +415,16 @@ void CableRobot::WaitForMeasurement()
     measurementStage++;
     if (measurementStage < 1)
     {
-      servoMotor[homingActuator].SetPoly7IncrementalParameters(
-        -incrementalHomingLength, transitionTime);
+      servoMotor[homingActuator].SetPoly7IncrementalParameters(-incrementalHomingLength,
+                                                               transitionTime);
       internalDelayCounter = 0;
       homingStateFlags = moveAway;
     }
     else if (measurementStage < 2)
     {
       homingStateFlags = moveCentral;
-      servoMotor[homingActuator].SetPoly7IncrementalParameters(
-        incrementalHomingLength, transitionTime);
+      servoMotor[homingActuator].SetPoly7IncrementalParameters(incrementalHomingLength,
+                                                               transitionTime);
       internalDelayCounter = 0;
     }
     else
@@ -583,8 +578,7 @@ void CableRobot::GoingHomeTransition()
 
 void CableRobot::IdleActuatorPvt33Fun()
 {
-  if (robotGloballyEnabled >= numberOfActuators &&
-      !actuatorPvt33ProcessFinished)
+  if (robotGloballyEnabled >= numberOfActuators && !actuatorPvt33ProcessFinished)
   {
     if (internalDelayCounter < homingDelay)
     {
@@ -610,8 +604,7 @@ void CableRobot::SwitchToPositionMode()
     uint8_t flagCompleted = 0;
     for (int i = 0; i < numberOfActuators; i++)
     {
-      if (servoMotor[i].servoMotorOperationState !=
-          GoldSoloWhistleDrive::cyclicPosition)
+      if (servoMotor[i].servoMotorOperationState != GoldSoloWhistleDrive::cyclicPosition)
       {
         servoMotor[i].SetTargetDefaults();
         servoMotor[i].ChangeOperationMode(GoldSoloWhistleDrive::cyclicPosition);
@@ -732,8 +725,7 @@ void CableRobot::GoingHomePvt33Transition()
   }
 }
 
-CableRobot::CableRobot(QObject* parent, GoldSoloWhistleDrive* theDrives)
-  : QObject(parent)
+CableRobot::CableRobot(QObject* parent, GoldSoloWhistleDrive* theDrives) : QObject(parent)
 {
   for (int i = 0; i < numberOfActuators; i++)
   {
@@ -769,8 +761,7 @@ void CableRobot::CollectEnableRequest(int enable)
   {
     if (enable)
     {
-      if (servoMotor[i].servoMotorState !=
-          GoldSoloWhistleDrive::operationEnabled)
+      if (servoMotor[i].servoMotorState != GoldSoloWhistleDrive::operationEnabled)
         servoMotor[i].Enable();
     }
     else

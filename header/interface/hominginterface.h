@@ -25,8 +25,7 @@ private:
   QFile dataFile;
 
 public:
-  explicit HomingInterface(QWidget* parent = 0,
-                           CableRobotMaster* theMaster = 0);
+  explicit HomingInterface(QWidget* parent = 0, CableRobotMaster* theMaster = 0);
   ~HomingInterface();
 
 signals:

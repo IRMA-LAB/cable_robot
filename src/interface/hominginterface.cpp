@@ -106,17 +106,14 @@ void HomingInterface::CollectFaultPresentAdvice(int theMotor)
 void HomingInterface::CollectEnableCommandProcessed(int status, int theMotor)
 {
   if (status == set)
-    ui->RobotLogBrowser->append("Motor " + QString::number(theMotor) +
-                                " enabled.");
+    ui->RobotLogBrowser->append("Motor " + QString::number(theMotor) + " enabled.");
   if (status == reset)
-    ui->RobotLogBrowser->append("Motor " + QString::number(theMotor) +
-                                " disabled.");
+    ui->RobotLogBrowser->append("Motor " + QString::number(theMotor) + " disabled.");
 }
 
 void HomingInterface::CollectClearFaultRequestProcessed(int theMotor)
 {
-  ui->RobotLogBrowser->append("Motor " + QString::number(theMotor) +
-                              " fault cleared.");
+  ui->RobotLogBrowser->append("Motor " + QString::number(theMotor) + " fault cleared.");
 }
 
 void HomingInterface::CollectHomingControl(int state)

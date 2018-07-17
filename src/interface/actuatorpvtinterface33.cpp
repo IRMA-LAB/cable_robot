@@ -3,8 +3,7 @@
 
 ActuatorPvtInterface33::ActuatorPvtInterface33(QWidget* parent,
                                                CableRobotMaster* theMaster)
-  : QWidget(parent), cableRobotMaster(theMaster),
-    ui(new Ui::ActuatorPvtInterface33)
+  : QWidget(parent), cableRobotMaster(theMaster), ui(new Ui::ActuatorPvtInterface33)
 {
   ui->setupUi(this);
   cableRobot = &cableRobotMaster->cableRobot;
@@ -21,8 +20,7 @@ ActuatorPvtInterface33::ActuatorPvtInterface33(QWidget* parent,
   connect(this, &ActuatorPvtInterface33::SendStartRequest, cableRobot,
           &CableRobot::CollectStartRequest);
 
-  connect(cableRobot, &CableRobot::SendData, this,
-          &ActuatorPvtInterface33::CollectData);
+  connect(cableRobot, &CableRobot::SendData, this, &ActuatorPvtInterface33::CollectData);
   connect(cableRobot, &CableRobot::SendActuatorPvt33Control, this,
           &ActuatorPvtInterface33::CollectActuatorPvt33Control);
   connect(cableRobot, &CableRobot::SendClearFaultRequestProcessed, this,
@@ -68,15 +66,14 @@ void ActuatorPvtInterface33::on_ImportDataButton_clicked()
           line = in.readLine();
           cableLengthIn[i].push_back(line.toDouble());
         }
-        ui->RobotLogBrowser->append(
-          QString::number(cableLengthIn[0][index]) + "\t" +
-          QString::number(cableLengthIn[1][index]) + "\t" +
-          QString::number(cableLengthIn[2][index]) + "\t");
+        ui->RobotLogBrowser->append(QString::number(cableLengthIn[0][index]) + "\t" +
+                                    QString::number(cableLengthIn[1][index]) + "\t" +
+                                    QString::number(cableLengthIn[2][index]) + "\t");
         index++;
       }
       dataFile.close();
-      emit SendSimulationData(numberOfData, &cableLengthIn[0][0],
-                              &cableLengthIn[1][0], &cableLengthIn[2][0]);
+      emit SendSimulationData(numberOfData, &cableLengthIn[0][0], &cableLengthIn[1][0],
+                              &cableLengthIn[2][0]);
     }
   }
   else
@@ -92,15 +89,14 @@ void ActuatorPvtInterface33::on_ImportDataButton_clicked()
         line = in.readLine();
         cableLengthIn[i].push_back(line.toDouble());
       }
-      ui->RobotLogBrowser->append(
-        QString::number(cableLengthIn[0][index]) + "\t" +
-        QString::number(cableLengthIn[1][index]) + "\t" +
-        QString::number(cableLengthIn[2][index]) + "\t");
+      ui->RobotLogBrowser->append(QString::number(cableLengthIn[0][index]) + "\t" +
+                                  QString::number(cableLengthIn[1][index]) + "\t" +
+                                  QString::number(cableLengthIn[2][index]) + "\t");
       index++;
     }
     dataFile.close();
-    emit SendSimulationData(numberOfData, &cableLengthIn[0][0],
-                            &cableLengthIn[1][0], &cableLengthIn[2][0]);
+    emit SendSimulationData(numberOfData, &cableLengthIn[0][0], &cableLengthIn[1][0],
+                            &cableLengthIn[2][0]);
   }
 }
 
@@ -151,21 +147,17 @@ void ActuatorPvtInterface33::CollectFaultPresentAdvice(int theMotor)
                               " in fault, please reset.");
 }
 
-void ActuatorPvtInterface33::CollectEnableCommandProcessed(int status,
-                                                           int theMotor)
+void ActuatorPvtInterface33::CollectEnableCommandProcessed(int status, int theMotor)
 {
   if (status == set)
-    ui->RobotLogBrowser->append("Motor " + QString::number(theMotor) +
-                                " enabled.");
+    ui->RobotLogBrowser->append("Motor " + QString::number(theMotor) + " enabled.");
   if (status == reset)
-    ui->RobotLogBrowser->append("Motor " + QString::number(theMotor) +
-                                " disabled.");
+    ui->RobotLogBrowser->append("Motor " + QString::number(theMotor) + " disabled.");
 }
 
 void ActuatorPvtInterface33::CollectClearFaultRequestProcessed(int theMotor)
 {
-  ui->RobotLogBrowser->append("Motor " + QString::number(theMotor) +
-                              " fault cleared.");
+  ui->RobotLogBrowser->append("Motor " + QString::number(theMotor) + " fault cleared.");
 }
 
 void ActuatorPvtInterface33::CollectActuatorPvt33Control(int state)
@@ -199,7 +191,4 @@ void ActuatorPvtInterface33::CollectData(double s0, double s1, double s2)
   pulleyAnglesOut[2].push_back(s2);
 }
 
-void ActuatorPvtInterface33::on_StartButton_clicked()
-{
-  emit SendStartRequest();
-}
+void ActuatorPvtInterface33::on_StartButton_clicked() { emit SendStartRequest(); }

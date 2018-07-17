@@ -12,8 +12,7 @@ class CableRobotMaster : public QObject, public EthercatMaster
 {
   Q_OBJECT
 private:
-  constexpr static uint8_t slavesNumber =
-    7; // Some easycat master specific infos
+  constexpr static uint8_t slavesNumber = 7; // Some easycat master specific infos
   // constexpr static uint8_t slavesNumber = 2;
   constexpr static uint8_t EasyCatNumber = 1;
   constexpr static uint8_t GoldSoloWhistleNumber = 6;
@@ -25,12 +24,10 @@ private:
     CableRobotMaster::*StateFunction)(); // Easy way to implement state machine
   StateFunction stateMachine[numberOfMasterStates] = {
     &CableRobotMaster::IdleFun, &CableRobotMaster::ActuatorControlFun,
-    &CableRobotMaster::EasyCatControlFun,
-    &CableRobotMaster::StandardRobotOperationFun,
+    &CableRobotMaster::EasyCatControlFun, &CableRobotMaster::StandardRobotOperationFun,
     &CableRobotMaster::UserRobotOperationFun};
   StateFunction stateManager[numberOfMasterStates] = {
-    &CableRobotMaster::IdleTransition,
-    &CableRobotMaster::ActuatorControlTransition,
+    &CableRobotMaster::IdleTransition, &CableRobotMaster::ActuatorControlTransition,
     &CableRobotMaster::EasyCatControlTransition,
     &CableRobotMaster::StandardRobotOperationTransition,
     &CableRobotMaster::UserRobotOperationTransition};
@@ -63,13 +60,11 @@ public:
 
   /* The next 2 array are fundamental. The first one contains all the slaves
    * of a specified type (easycat, in this case), and for each kind of ethercat
-   * slave
-   * we have to define a separate array.
+   * slave we have to define a separate array.
    * The *etherCatSlave pointer array contains the addresses of all the slave on
-   * the
-   * ethercat bus, in the order they are mapped in the bus. So the master base
-   * class can deal with
-   * everything ethercat related, without the user having to worry about it
+   * the ethercat bus, in the order they are mapped in the bus. So the master base
+   * class can deal with everything ethercat related, without the user having to worry
+   * about it
   */
   EasyCatSlave easyCatSlave[EasyCatNumber] = {
     {EasyCatSlave(0)},

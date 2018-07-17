@@ -16,8 +16,7 @@ class CalibrationInterface : public QWidget
   Q_OBJECT
 
 public:
-  explicit CalibrationInterface(QWidget* parent = 0,
-                                CableRobotMaster* theMaster = 0);
+  explicit CalibrationInterface(QWidget* parent = 0, CableRobotMaster* theMaster = 0);
   ~CalibrationInterface();
 
 signals:

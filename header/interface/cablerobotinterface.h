@@ -24,8 +24,7 @@ class CableRobotInterface : public QWidget
 
 private:
 public:
-  explicit CableRobotInterface(QWidget* parent = 0,
-                               CableRobotMaster* theMaster = 0);
+  explicit CableRobotInterface(QWidget* parent = 0, CableRobotMaster* theMaster = 0);
   ~CableRobotInterface();
 
 private slots:

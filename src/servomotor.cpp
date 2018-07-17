@@ -18,12 +18,11 @@ void ServoMotor::UpdateState()
   servoMotorState = thisDrive->state;
   servoMotorOperationState = thisDrive->operationState;
   cableLength = cableHomeLength +
-                thisWinch.FromCountsToLength(
-                  thisDrive->inputPdos.positionActualValue - homeMotorCounts);
-  pulleyAngle =
-    pulleyHomeAngle +
-    thisWinch.FromCountsToPulleyAngleRad(
-      thisDrive->inputPdos.auxiliaryPositionActualValue - homePulleyCounts);
+                thisWinch.FromCountsToLength(thisDrive->inputPdos.positionActualValue -
+                                             homeMotorCounts);
+  pulleyAngle = pulleyHomeAngle +
+                thisWinch.FromCountsToPulleyAngleRad(
+                  thisDrive->inputPdos.auxiliaryPositionActualValue - homePulleyCounts);
 }
 
 void ServoMotor::LoopFunction()
@@ -44,26 +43,26 @@ void ServoMotor::LoopFunction()
         {
         case PositionMovePlus:
         {
-          thisDrive->outputPdos.TargetPosition += thisWinch.FromLengthToCounts(
-            static_cast<double>(upCounter) * 0.0000001);
+          thisDrive->outputPdos.TargetPosition +=
+            thisWinch.FromLengthToCounts(static_cast<double>(upCounter) * 0.0000001);
           break;
         }
         case PositionMoveMinus:
         {
-          thisDrive->outputPdos.TargetPosition -= thisWinch.FromLengthToCounts(
-            static_cast<double>(upCounter) * 0.0000001);
+          thisDrive->outputPdos.TargetPosition -=
+            thisWinch.FromLengthToCounts(static_cast<double>(upCounter) * 0.0000001);
           break;
         }
         case PositionMicroMovePlus:
         {
-          thisDrive->outputPdos.TargetPosition += thisWinch.FromLengthToCounts(
-            static_cast<double>(upCounter) * 0.000000001);
+          thisDrive->outputPdos.TargetPosition +=
+            thisWinch.FromLengthToCounts(static_cast<double>(upCounter) * 0.000000001);
           break;
         }
         case PositionMicroMoveMinus:
         {
-          thisDrive->outputPdos.TargetPosition -= thisWinch.FromLengthToCounts(
-            static_cast<double>(upCounter) * 0.000000001);
+          thisDrive->outputPdos.TargetPosition -=
+            thisWinch.FromLengthToCounts(static_cast<double>(upCounter) * 0.000000001);
           break;
         }
         default:
@@ -73,13 +72,13 @@ void ServoMotor::LoopFunction()
       else
       {
         if (thisDrive->inputPdos.torqueActualValue > 10)
-          thisDrive->outputPdos.TargetPosition -= static_cast<int>(ceil(
-            abs(static_cast<double>(thisDrive->inputPdos.velocityActualValue)) *
-            0.00005));
+          thisDrive->outputPdos.TargetPosition -= static_cast<int>(
+            ceil(abs(static_cast<double>(thisDrive->inputPdos.velocityActualValue)) *
+                 0.00005));
         if (thisDrive->inputPdos.torqueActualValue < -10)
-          thisDrive->outputPdos.TargetPosition += static_cast<int>(ceil(
-            abs(static_cast<double>(thisDrive->inputPdos.velocityActualValue)) *
-            0.00005));
+          thisDrive->outputPdos.TargetPosition += static_cast<int>(
+            ceil(abs(static_cast<double>(thisDrive->inputPdos.velocityActualValue)) *
+                 0.00005));
       }
       break;
     }
@@ -140,8 +139,7 @@ void ServoMotor::LoopFunction()
         else
         {
           if (thisDrive->inputPdos.torqueActualValue > 10)
-            thisDrive->outputPdos.TargetTorque -=
-              thisDrive->outputPdos.TargetTorque / 10;
+            thisDrive->outputPdos.TargetTorque -= thisDrive->outputPdos.TargetTorque / 10;
           else if (thisDrive->inputPdos.torqueActualValue < -10)
             thisDrive->outputPdos.TargetTorque +=
               -thisDrive->outputPdos.TargetTorque / 10;
@@ -191,10 +189,8 @@ void ServoMotor::SetCommand(int theCommand, int theState)
 void ServoMotor::SetTargetDefaults()
 {
   thisDrive->outputPdos.TargetTorque = thisDrive->inputPdos.torqueActualValue;
-  thisDrive->outputPdos.TargetPosition =
-    thisDrive->inputPdos.positionActualValue;
-  thisDrive->outputPdos.TargetVelocity =
-    thisDrive->inputPdos.velocityActualValue;
+  thisDrive->outputPdos.TargetPosition = thisDrive->inputPdos.positionActualValue;
+  thisDrive->outputPdos.TargetVelocity = thisDrive->inputPdos.velocityActualValue;
 }
 
 void ServoMotor::SetStartingWinchParameter()
@@ -246,8 +242,8 @@ void ServoMotor::SetPoly7IncrementalParameters(double endLength, double endT)
   if (endT >= 0.0)
   {
     startCounts = static_cast<double>(thisDrive->inputPdos.positionActualValue);
-    stopCounts = startCounts +
-                 static_cast<double>(thisWinch.FromLengthToCounts(endLength));
+    stopCounts =
+      startCounts + static_cast<double>(thisWinch.FromLengthToCounts(endLength));
     endTime = endT;
     poly7Flag = 1;
   }

@@ -37,17 +37,15 @@ private:
   int8_t homingActuator = 0;
   uint8_t measurementStage = 0;
   uint8_t measurementFlag = 0;
-  typedef void (
-    CableRobot::*StateFunction)(); // Easy way to implement state machine
+  typedef void (CableRobot::*StateFunction)(); // Easy way to implement state machine
   StateFunction stateMachine[numberOfStates] = {
     &CableRobot::IdleFun, &CableRobot::CalibrationFun, &CableRobot::HomingFun,
     &CableRobot::Robot66ManualFun, &CableRobot::Robot66DemoFun,
     &CableRobot::Robot33ActuatorPvtFun, &CableRobot::Robot33AutomaticFun,
     &CableRobot::Robot33ManualFun};
   StateFunction homingStateMachine[numberOfHomingStates] = {
-    &CableRobot::IdleHomingFun, &CableRobot::SwitchToTensionMode,
-    &CableRobot::GoToCenter, &CableRobot::MoveAway,
-    &CableRobot::WaitForMeasurement, &CableRobot::MoveCentral,
+    &CableRobot::IdleHomingFun, &CableRobot::SwitchToTensionMode, &CableRobot::GoToCenter,
+    &CableRobot::MoveAway, &CableRobot::WaitForMeasurement, &CableRobot::MoveCentral,
     &CableRobot::SwitchActuatedCable, &CableRobot::GoingHome};
   StateFunction actuatorPvt33StateMachine[numberOfActuatorPvt33States] = {
     &CableRobot::IdleActuatorPvt33Fun, &CableRobot::SwitchToPositionMode,
@@ -55,23 +53,16 @@ private:
   StateFunction stateManager[numberOfStates] = {
     &CableRobot::IdleTransition, &CableRobot::CalibrationTransition,
     &CableRobot::HomingTransition, &CableRobot::Robot66ManualTransition,
-    &CableRobot::Robot66DemoTransition,
-    &CableRobot::Robot33ActuatorPvtTransition,
-    &CableRobot::Robot33AutomaticTransition,
-    &CableRobot::Robot33ManualTransition};
+    &CableRobot::Robot66DemoTransition, &CableRobot::Robot33ActuatorPvtTransition,
+    &CableRobot::Robot33AutomaticTransition, &CableRobot::Robot33ManualTransition};
   StateFunction homingStateManager[numberOfHomingStates] = {
-    &CableRobot::IdleFunHomingTransition,
-    &CableRobot::SwitchToTensionModeTransition,
+    &CableRobot::IdleFunHomingTransition, &CableRobot::SwitchToTensionModeTransition,
     &CableRobot::GoToCenterTransition, &CableRobot::MoveAwayTransition,
-    &CableRobot::WaitForMeasurementTransition,
-    &CableRobot::MoveCentralTransition,
-    &CableRobot::SwitchActuatedCableTransition,
-    &CableRobot::GoingHomeTransition};
+    &CableRobot::WaitForMeasurementTransition, &CableRobot::MoveCentralTransition,
+    &CableRobot::SwitchActuatedCableTransition, &CableRobot::GoingHomeTransition};
   StateFunction actuatorPvt33StateManager[numberOfActuatorPvt33States] = {
-    &CableRobot::IdleActuatorPvt33Transition,
-    &CableRobot::SwitchToPositionModeTransition,
-    &CableRobot::MoveActuatorPvt33Transition,
-    &CableRobot::GoingHomePvt33Transition};
+    &CableRobot::IdleActuatorPvt33Transition, &CableRobot::SwitchToPositionModeTransition,
+    &CableRobot::MoveActuatorPvt33Transition, &CableRobot::GoingHomePvt33Transition};
 
   void IdleFun();
   void CalibrationFun();

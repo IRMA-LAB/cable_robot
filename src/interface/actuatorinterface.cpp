@@ -4,8 +4,7 @@
 #include <iostream>
 using namespace std;
 
-ActuatorInterface::ActuatorInterface(QWidget* parent,
-                                     CableRobotMaster* theMaster)
+ActuatorInterface::ActuatorInterface(QWidget* parent, CableRobotMaster* theMaster)
   : QWidget(parent), cableRobotMaster(theMaster), ui(new Ui::ActuatorInterface)
 {
   ui->setupUi(this);
@@ -25,22 +24,19 @@ ActuatorInterface::ActuatorInterface(QWidget* parent,
           &CableRobotMaster::CollectCommandUpdateRequest);
   connect(this, &ActuatorInterface::SendEnableRequest, cableRobotMaster,
           &CableRobotMaster::CollectEnableRequest);
-  connect(this, &ActuatorInterface::SendOperationModeChangeRequest,
-          cableRobotMaster,
+  connect(this, &ActuatorInterface::SendOperationModeChangeRequest, cableRobotMaster,
           &CableRobotMaster::CollectOperationModeChangeRequest);
 
-  connect(cableRobotMaster, &CableRobotMaster::SendClearFaultRequestProcessed,
-          this, &ActuatorInterface::CollectClearFaultRequestProcessed);
-  connect(cableRobotMaster,
-          &CableRobotMaster::SendCommandUpdateRequestProcessed, this,
+  connect(cableRobotMaster, &CableRobotMaster::SendClearFaultRequestProcessed, this,
+          &ActuatorInterface::CollectClearFaultRequestProcessed);
+  connect(cableRobotMaster, &CableRobotMaster::SendCommandUpdateRequestProcessed, this,
           &ActuatorInterface::CollectCommandUpdateRequestProcessed);
   connect(cableRobotMaster, &CableRobotMaster::SendEnableRequestProcessed, this,
           &ActuatorInterface::CollectEnableCommandProcessed);
   connect(cableRobotMaster, &CableRobotMaster::SendFaultPresentAdvice, this,
           &ActuatorInterface::CollectFaultPresentAdvice);
-  connect(cableRobotMaster,
-          &CableRobotMaster::SendOperationModeChangeRequestProcessed, this,
-          &ActuatorInterface::CollectOperationModeChangeRequestProcessed);
+  connect(cableRobotMaster, &CableRobotMaster::SendOperationModeChangeRequestProcessed,
+          this, &ActuatorInterface::CollectOperationModeChangeRequestProcessed);
   connect(cableRobotMaster, &CableRobotMaster::SendGuiData, this,
           &ActuatorInterface::CollectGuiData);
 }
@@ -52,10 +48,7 @@ void ActuatorInterface::on_EnableButton_toggled(bool checked)
   emit SendEnableRequest(checked);
 }
 
-void ActuatorInterface::on_FaultResetButton_clicked()
-{
-  emit SendClearFaultRequest();
-}
+void ActuatorInterface::on_FaultResetButton_clicked() { emit SendClearFaultRequest(); }
 
 void ActuatorInterface::on_PositionEnable_toggled(bool checked)
 {
@@ -210,8 +203,7 @@ void ActuatorInterface::CollectClearFaultRequestProcessed()
   ui->FaultResetButton->setDisabled(true);
 }
 
-void ActuatorInterface::CollectOperationModeChangeRequestProcessed(
-  int modeOfOperation)
+void ActuatorInterface::CollectOperationModeChangeRequestProcessed(int modeOfOperation)
 {
   switch (modeOfOperation)
   {
@@ -244,14 +236,12 @@ void ActuatorInterface::CollectOperationModeChangeRequestProcessed(
   }
 }
 
-void ActuatorInterface::CollectCommandUpdateRequestProcessed(int command,
-                                                             int status)
+void ActuatorInterface::CollectCommandUpdateRequestProcessed(int command, int status)
 {
   cout << "Command " << command << " is set to " << status << "." << endl;
 }
 
-void ActuatorInterface::CollectGuiData(GoldSoloWhistleDrive::InputPdos* thePdos,
-                                       int n)
+void ActuatorInterface::CollectGuiData(GoldSoloWhistleDrive::InputPdos* thePdos, int n)
 {
   switch (n)
   {

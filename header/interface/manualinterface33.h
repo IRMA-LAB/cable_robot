@@ -16,8 +16,7 @@ class ManualInterface33 : public QWidget
   Q_OBJECT
 
 public:
-  explicit ManualInterface33(QWidget* parent = 0,
-                             CableRobotMaster* theMaster = 0);
+  explicit ManualInterface33(QWidget* parent = 0, CableRobotMaster* theMaster = 0);
   ~ManualInterface33();
 
 signals:

@@ -1,8 +1,7 @@
 #include "manualinterface66.h"
 #include "ui_manualinterface66.h"
 
-ManualInterface66::ManualInterface66(QWidget* parent,
-                                     CableRobotMaster* theMaster)
+ManualInterface66::ManualInterface66(QWidget* parent, CableRobotMaster* theMaster)
   : QWidget(parent), cableRobotMaster(theMaster), ui(new Ui::ManualInterface66)
 {
   ui->setupUi(this);
