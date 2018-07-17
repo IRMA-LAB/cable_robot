@@ -34,6 +34,8 @@ SOURCES = \
    $$PWD/src/goldsolowhistledrive.cpp \
    $$PWD/src/main.cpp \
    $$PWD/src/servomotor.cpp \
+    src/ethercatslave.cpp \
+    src/winch.cpp
 
 INCLUDEPATH = \
     $$PWD/header \
