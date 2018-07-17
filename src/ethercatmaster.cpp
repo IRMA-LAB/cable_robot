@@ -36,12 +36,12 @@ void EthercatMaster::PeriodIncrement(PeriodInfo* periodInfo)
 uint8_t EthercatMaster::WaitUntilPeriodElapsed(PeriodInfo* periodInfo)
 {
   PeriodIncrement(periodInfo); // periodInfo structure handling
-  uint8_t msg = static_cast<uint8_t>(clock_nanosleep(
-    CLOCK_MONOTONIC, TIMER_ABSTIME, &periodInfo->nextPeriod,
-    NULL)); // Just Sleep until the end of the time period required
+  uint8_t msg = static_cast<uint8_t>(
+    clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &periodInfo->nextPeriod,
+                    NULL)); // Just Sleep until the end of the time period required
   if (msg != 0)
   {
-    cout << "An Error Occurred! Error number = " << msg << endl;
+    std::cout << "An Error Occurred! Error number = " << msg << std::endl;
   }
   return msg;
 }
@@ -78,7 +78,7 @@ void* EthercatMaster::TheRtThread(void* args)
     }
     ecrt_domain_queue(thisInstance->domainPointer); // Write data
     ecrt_master_send(thisInstance->masterPointer);
-    pthread_mutex_unlock(&thisInstance->rtMutex); // Unlock resources
+    pthread_mutex_unlock(&thisInstance->rtMutex);                      // Unlock resources
     thisInstance->flags.notSync = WaitUntilPeriodElapsed(&periodInfo); // sleep
   }
   return args;
@@ -92,11 +92,11 @@ void EthercatMaster::CheckDomainState() // Check ethercat domain state machine
 
   if (domainStateLocal.working_counter != domainState.working_counter)
   {
-    cout << "Domain: WC " << domainStateLocal.working_counter << endl;
+    std::cout << "Domain: WC " << domainStateLocal.working_counter << std::endl;
   }
   if (domainStateLocal.wc_state != domainState.wc_state)
   {
-    cout << "Domain: State " << domainStateLocal.wc_state << endl;
+    std::cout << "Domain: State " << domainStateLocal.wc_state << std::endl;
     if (domainStateLocal.wc_state == domainOperational)
       flags.domainState = operationalState;
     else
@@ -114,12 +114,12 @@ void EthercatMaster::CheckMasterState() // Check ethercat master state machine
 
   if (masterStateLocal.slaves_responding != masterState.slaves_responding)
   {
-    cout << masterStateLocal.slaves_responding << " slave(s) on the bus"
-         << endl;
+    std::cout << masterStateLocal.slaves_responding << " slave(s) on the bus"
+              << std::endl;
   }
   if (masterStateLocal.al_states != masterState.al_states)
   {
-    cout << "Master states: " << masterStateLocal.al_states << endl;
+    std::cout << "Master states: " << masterStateLocal.al_states << std::endl;
     if (masterStateLocal.al_states == masterOperational)
       flags.masterState = operationalState;
     else
@@ -127,8 +127,8 @@ void EthercatMaster::CheckMasterState() // Check ethercat master state machine
   }
   if (masterStateLocal.link_up != masterState.link_up)
   {
-    cout << "Master Link is " << (masterStateLocal.link_up ? "up" : "down")
-         << endl;
+    std::cout << "Master Link is " << (masterStateLocal.link_up ? "up" : "down")
+              << std::endl;
   }
 
   masterState = masterStateLocal;
@@ -143,7 +143,7 @@ void EthercatMaster::CheckConfigState() // Check ethercat slave configuration
 
   if (configStateLocal.al_state != configState.al_state)
   {
-    cout << "Slaves State " << configStateLocal.al_state << endl;
+    std::cout << "Slaves State " << configStateLocal.al_state << std::endl;
     if (configStateLocal.al_state == slaveOperational)
       flags.configState = operationalState;
     else
@@ -151,13 +151,13 @@ void EthercatMaster::CheckConfigState() // Check ethercat slave configuration
   }
   if (configStateLocal.online != configState.online)
   {
-    cout << "Slaves: " << (configStateLocal.online ? "online" : "offline")
-         << endl;
+    std::cout << "Slaves: " << (configStateLocal.online ? "online" : "offline")
+              << std::endl;
   }
   if (configStateLocal.operational != configState.operational)
   {
-    cout << "Slaves: " << (configStateLocal.operational ? "" : "Not ")
-         << "operational" << endl;
+    std::cout << "Slaves: " << (configStateLocal.operational ? "" : "Not ")
+              << "operational" << std::endl;
   }
 
   configState = configStateLocal;
@@ -176,8 +176,8 @@ void EthercatMaster::GetDomainElements(ec_pdo_entry_reg_t* regs) // Wrapper..
   }
 }
 
-void EthercatMaster::SetSchedulerParameters(
-  uint8_t threadCpu, uint8_t threadPriority) // Thread utility..
+void EthercatMaster::SetSchedulerParameters(uint8_t threadCpu,
+                                            uint8_t threadPriority) // Thread utility..
 {
   cpu_set_t cpuset;
   CPU_ZERO(&cpuset);
@@ -206,29 +206,28 @@ uint8_t EthercatMaster::InitProtocol()
 
   if (!(masterPointer = ecrt_request_master(0)))
   { // Requesting to initialize master 0
-    cout << "Error requesting master" << endl;
+    std::cout << "Error requesting master" << std::endl;
     return notValidate;
   }
   if (!(domainPointer = ecrt_master_create_domain(masterPointer)))
   { // Creating Domain Process associated with master 0
-    cout << "Error Creating Domain" << endl;
+    std::cout << "Error Creating Domain" << std::endl;
     return notValidate;
   }
 
   for (int i = 0; i < numberOfSlaves; i++)
   { // Configuring Slaves
-    if (!(configPointer = ecrt_master_slave_config(
-            masterPointer, slave[i]->alias, slave[i]->position,
-            slave[i]->vendor_id, slave[i]->product_code)))
+    if (!(configPointer =
+            ecrt_master_slave_config(masterPointer, slave[i]->alias, slave[i]->position,
+                                     slave[i]->vendor_id, slave[i]->product_code)))
     {
-      cout << "Error Configuring Slave Devices" << endl;
+      std::cout << "Error Configuring Slave Devices" << std::endl;
       return notValidate;
     }
-    cout << "Configuring PDOs" << endl;
-    if (ecrt_slave_config_pdos(configPointer, EC_END,
-                               slave[i]->slaveSyncsPointer))
+    std::cout << "Configuring PDOs" << std::endl;
+    if (ecrt_slave_config_pdos(configPointer, EC_END, slave[i]->slaveSyncsPointer))
     {
-      cout << "Error Configuring PDOs" << endl;
+      std::cout << "Error Configuring PDOs" << std::endl;
       return notValidate;
     }
     if (slave[i]->SdoRequests(sdoPointer, configPointer))
@@ -240,19 +239,19 @@ uint8_t EthercatMaster::InitProtocol()
   GetDomainElements(domainRegistersLocal); // Configuring Domain
   if (ecrt_domain_reg_pdo_entry_list(domainPointer, domainRegistersLocal))
   {
-    cout << "Error Registering PDOs' entries" << endl;
+    std::cout << "Error Registering PDOs' entries" << std::endl;
     return notValidate;
   }
 
-  cout << "Activating master" << endl;
+  std::cout << "Activating master" << std::endl;
   if (ecrt_master_activate(masterPointer))
   { // Activating Master
-    cout << "Error activating Master" << endl;
+    std::cout << "Error activating Master" << std::endl;
     return notValidate;
   }
   if (!(domainDataPointer = ecrt_domain_data(domainPointer)))
   { // Activating Domain
-    cout << "Error Initializing Domain Data" << endl;
+    std::cout << "Error Initializing Domain Data" << std::endl;
     return notValidate;
   }
 
@@ -283,27 +282,25 @@ void EthercatMaster::Start()
   /* init to default values */
   if (pthread_attr_init(&threadAttributes))
   {
-    cout << "pthread_attr_init failed" << std::endl;
+    std::cout << "pthread_attr_init failed" << std::endl;
   }
   else
   {
-    if (pthread_attr_setstacksize(&threadAttributes,
-                                  PTHREAD_STACK_MIN + thisStackSize))
+    if (pthread_attr_setstacksize(&threadAttributes, PTHREAD_STACK_MIN + thisStackSize))
     {
-      cout << "pthread_attr_setstacksize failed" << std::endl;
+      std::cout << "pthread_attr_setstacksize failed" << std::endl;
     }
     else
     {
       if (thisInstance->InitProtocol())
       { // If everything is ok, start the master thread on a differrent thread
-        SetSchedulerParameters(
-          masterData.guiCpuId,
-          masterData.guiPriority); // Set priority for gui thread
+        SetSchedulerParameters(masterData.guiCpuId,
+                               masterData.guiPriority); // Set priority for gui thread
         pthread_create(&threadRt, &threadAttributes, TheRtThread,
                        NULL); // master thread start
       }
       else
-        cout << "Could not initialize Ethercat Devices" << endl;
+        std::cout << "Could not initialize Ethercat Devices" << std::endl;
     }
   }
 }

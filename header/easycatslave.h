@@ -5,13 +5,10 @@
 
 #include "ethercatslave.h"
 
-using namespace std;
-
 class EasyCatSlave : public EthercatSlave
 {
 private:
-  constexpr static uint8_t EasyCatDomainEntries =
-    6; // Easycat Slave specific info.
+  constexpr static uint8_t EasyCatDomainEntries = 6; // Easycat Slave specific info.
   constexpr static uint8_t EasyCatAlias = 0;
   constexpr static uint32_t EasyCatVendor_id = 0x0000079a;
   constexpr static uint32_t EasyCatProduct_code = 0x00defede;
@@ -37,8 +34,7 @@ private:
     unsigned int ledFrequency;
   } offsetOut;
 
-  typedef void (
-    EasyCatSlave::*StateFunction)(); // Easyway to implement state machine
+  typedef void (EasyCatSlave::*StateFunction)(); // Easyway to implement state machine
 
   void IdleFun(); // State functions
   void UpdateSlaveFun();
@@ -55,14 +51,13 @@ public:
   } internalState,
     slaveFlags; // state machine utilities
   // State machine function array
-  StateFunction stateMachine[numberOfEasyCatStates] = {
-    &EasyCatSlave::IdleFun, &EasyCatSlave::UpdateSlaveFun};
+  StateFunction stateMachine[numberOfEasyCatStates] = {&EasyCatSlave::IdleFun,
+                                                       &EasyCatSlave::UpdateSlaveFun};
   // State machine transition function array
   StateFunction stateManager[numberOfEasyCatStates] = {
     &EasyCatSlave::IdleTransition, &EasyCatSlave::UpdateSlaveTransition};
 
-  ec_pdo_entry_reg_t
-    domainRegisters[EasyCatDomainEntries]; // ethercat utilities
+  ec_pdo_entry_reg_t domainRegisters[EasyCatDomainEntries]; // ethercat utilities
   ec_pdo_entry_info_t slavePdoEntries[6] = {
     // ethercat utilities, can be retrieved in the xml config file provided by
     // the vendor
@@ -86,9 +81,10 @@ public:
     // the vendor
     {0, EC_DIR_OUTPUT, 1, slavePdos + 0, EC_WD_ENABLE},
     {1, EC_DIR_INPUT, 1, slavePdos + 1, EC_WD_DISABLE},
-    {0xff, (ec_direction_t)0, 0, NULL,
-     (ec_watchdog_mode_t)0} // this line has been modified so that the compiler
-                            // won't get mad
+    {0xff, static_cast<ec_direction_t>(0), 0, NULL,
+     static_cast<ec_watchdog_mode_t>(
+       0)} // this line has been modified so that the compiler
+           // won't get mad
   };
 
   // The last 3 array can be obtained by command line, executing sudo
@@ -108,8 +104,7 @@ public:
     uint8_t ledFrequency;
   } outputPdos;
 
-  virtual void
-  LoopFunction(); // The function we are overloading from the base class
+  virtual void LoopFunction(); // The function we are overloading from the base class
   virtual void ReadInputs();
   virtual void WriteOutputs();
 };

@@ -48,8 +48,7 @@ EasyCatSlave::EasyCatSlave(uint8_t thisSlavePosition)
 EasyCatSlave::~EasyCatSlave()
 {
   outputPdos.slaveStatus = notOperational;
-  EC_WRITE_U8(domainDataPointer + offsetOut.slaveStatus,
-              outputPdos.slaveStatus);
+  EC_WRITE_U8(domainDataPointer + offsetOut.slaveStatus, outputPdos.slaveStatus);
 }
 
 void EasyCatSlave::IdleFun() { outputPdos.controlWord = idle; }
@@ -93,19 +92,14 @@ void EasyCatSlave::ReadInputs()
 {
   // This is the way we can read the Pdos, according to ecrt.h
   inputPdos.slaveState = EC_READ_U8(domainDataPointer + offsetIn.slaveState);
-  inputPdos.numberOfCalls =
-    EC_READ_U8(domainDataPointer + offsetIn.numberOfCalls);
-  inputPdos.cycleCounter =
-    EC_READ_U8(domainDataPointer + offsetIn.cycleCounter);
+  inputPdos.numberOfCalls = EC_READ_U8(domainDataPointer + offsetIn.numberOfCalls);
+  inputPdos.cycleCounter = EC_READ_U8(domainDataPointer + offsetIn.cycleCounter);
 }
 
 void EasyCatSlave::WriteOutputs()
 {
   // This is the way we can write the Pdos, according to ecrt.h
-  EC_WRITE_U8(domainDataPointer + offsetOut.slaveStatus,
-              outputPdos.slaveStatus);
-  EC_WRITE_U8(domainDataPointer + offsetOut.controlWord,
-              outputPdos.controlWord);
-  EC_WRITE_U8(domainDataPointer + offsetOut.ledFrequency,
-              outputPdos.ledFrequency);
+  EC_WRITE_U8(domainDataPointer + offsetOut.slaveStatus, outputPdos.slaveStatus);
+  EC_WRITE_U8(domainDataPointer + offsetOut.controlWord, outputPdos.controlWord);
+  EC_WRITE_U8(domainDataPointer + offsetOut.ledFrequency, outputPdos.ledFrequency);
 }

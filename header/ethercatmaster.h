@@ -37,8 +37,6 @@ struct PeriodInfo
   long periodNs;
 };
 
-using namespace std;
-
 class EthercatMaster
 {
 private:
@@ -48,19 +46,17 @@ private:
   static void ConfigureMemoryLocks();                  // Memory managment
   static void LockProcessMemory(uint32_t size);        // Memory locks
   static void PeriodIncrement(PeriodInfo* periodInfo); // Timer utility
-  static void*
-  TheRtThread(void* args); // The actual real time thread that is executed
-  static uint8_t
-  WaitUntilPeriodElapsed(PeriodInfo* periodInfo); // put thread to sleep
+  static void* TheRtThread(void* args); // The actual real time thread that is executed
+  static uint8_t WaitUntilPeriodElapsed(PeriodInfo* periodInfo); // put thread to sleep
 
   void CheckDomainState();                          // ethercat utility
   void CheckMasterState();                          // ethercat utility
   void CheckConfigState();                          // ethercat utility
   void GetDomainElements(ec_pdo_entry_reg_t* regs); // ethercat utility
-  void SetSchedulerParameters(
-    uint8_t threadCpu, uint8_t threadPriority); // real time processing utility
-  uint8_t FlagManagement();                     // real time process management
-  uint8_t InitProtocol();                       // ethercat utility
+  void SetSchedulerParameters(uint8_t threadCpu,
+                              uint8_t threadPriority); // real time processing utility
+  uint8_t FlagManagement();                            // real time process management
+  uint8_t InitProtocol();                              // ethercat utility
 
 public:
   EthercatMaster();
@@ -107,13 +103,12 @@ public:
     uint8_t notSync;
   } flags; // ethercat utility
 
-  pthread_mutex_t rtMutex =
-    PTHREAD_MUTEX_INITIALIZER;      // real time process utility
-  EthercatSlave** slave;            // master utility
-  uint8_t domainElementsNumber = 0; // master utility
-  int numberOfSlaves;               // master utility
+  pthread_mutex_t rtMutex = PTHREAD_MUTEX_INITIALIZER; // real time process utility
+  EthercatSlave** slave;                               // master utility
+  uint8_t domainElementsNumber = 0;                    // master utility
+  int numberOfSlaves;                                  // master utility
 
-  void Start(); // the only thing you need to callnin the main
+  void Start();                       // the only thing you need to callnin the main
   virtual void StartUpFunction() = 0; // called before the cycle begins
   virtual void LoopFunction() = 0;    // called every cycle
 };

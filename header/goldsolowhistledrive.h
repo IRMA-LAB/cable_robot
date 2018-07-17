@@ -5,8 +5,6 @@
 #include <iostream>
 #include "ethercatslave.h"
 
-using namespace std;
-
 class GoldSoloWhistleDrive : public EthercatSlave
 {
 private:
@@ -180,7 +178,7 @@ public:
 
   struct OutputPdos
   { // this is a simple way to store the pdos output values
-    bitset<16> controlWord;
+    std::bitset<16> controlWord;
     signed char modesOfOperation;
     short TargetTorque;
     int TargetPosition;
@@ -199,7 +197,7 @@ public:
   };
   struct InputPdos
   { // this is a simple way to store the pdos input values
-    bitset<16> statusWord;
+    std::bitset<16> statusWord;
     signed char modesOfOperationDisplay;
     int positionActualValue;
     int velocityActualValue;

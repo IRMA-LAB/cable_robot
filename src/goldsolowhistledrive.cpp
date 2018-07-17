@@ -92,17 +92,17 @@ void GoldSoloWhistleDrive::SwitchOnDisabledTransitions()
   {
   case switchOnDisabled:
   { // We previously asked for a state change: it occurred
-    cout << "Drive " << position << " Status Word: " << inputPdos.statusWord
-         << endl;
-    cout << "Drive " << position << " Idle." << endl;
+    std::cout << "Drive " << position << " Status Word: " << inputPdos.statusWord
+              << std::endl;
+    std::cout << "Drive " << position << " Idle." << std::endl;
     stateFlags = nullState;
     break;
   }
   case readyToSwitchOn:
   { // We are starting the enabling sequence, transition 2
-    cout << "Drive " << position << " Status Word: " << inputPdos.statusWord
-         << endl;
-    cout << "Drive " << position << " requesting Ready To Switch On." << endl;
+    std::cout << "Drive " << position << " Status Word: " << inputPdos.statusWord
+              << std::endl;
+    std::cout << "Drive " << position << " requesting Ready To Switch On." << std::endl;
     outputPdos.controlWord[switchOnControlBit] = reset;
     outputPdos.controlWord[enableVoltageControlBit] = set;
     outputPdos.controlWord[quickStopControlBit] = set;
@@ -121,9 +121,9 @@ void GoldSoloWhistleDrive::ReadyToSwitchOnTransitions()
   {
   case readyToSwitchOn:
   { // We previously asked for a feasible state change, now we ask for another
-    cout << "Drive " << position << " Status Word: " << inputPdos.statusWord
-         << endl;
-    cout << "Drive " << position << " Ready To Switch On." << endl;
+    std::cout << "Drive " << position << " Status Word: " << inputPdos.statusWord
+              << std::endl;
+    std::cout << "Drive " << position << " Ready To Switch On." << std::endl;
     outputPdos.controlWord[switchOnControlBit] = set;
     stateFlags = switchOn;
     outputPdos.modesOfOperation = cyclicPosition;
@@ -141,9 +141,9 @@ void GoldSoloWhistleDrive::SwitchOnTransitions()
   {
   case switchOn:
   { // We previously asked for a feasible state change, now we ask for another
-    cout << "Drive " << position << " Status Word: " << inputPdos.statusWord
-         << endl;
-    cout << "Drive " << position << " Switch On." << endl;
+    std::cout << "Drive " << position << " Status Word: " << inputPdos.statusWord
+              << std::endl;
+    std::cout << "Drive " << position << " Switch On." << std::endl;
     // outputPdos.TargetPosition = inputPdos.positionActualValue;
     // outputPdos.TargetTorque = inputPdos.torqueActualValue;
     // outputPdos.TargetVelocity = inputPdos.velocityActualValue;
@@ -162,18 +162,18 @@ void GoldSoloWhistleDrive::OperationEnabledTransitions()
   {
   case operationEnabled:
   { // We previously asked for a state change: it occurred
-    cout << "Drive " << position << " Status Word: " << inputPdos.statusWord
-         << endl;
-    cout << "Drive " << position << "  Enabled." << endl;
+    std::cout << "Drive " << position << " Status Word: " << inputPdos.statusWord
+              << std::endl;
+    std::cout << "Drive " << position << "  Enabled." << std::endl;
     stateFlags = nullState;
     (this->*operationStateManager[operationState - operationOffset])();
     break;
   }
   case switchOnDisabled:
   { // We want to disable the drive
-    cout << "Drive " << position << " Status Word: " << inputPdos.statusWord
-         << endl;
-    cout << "Drive " << position << " going Idle" << endl;
+    std::cout << "Drive " << position << " Status Word: " << inputPdos.statusWord
+              << std::endl;
+    std::cout << "Drive " << position << " going Idle" << std::endl;
     outputPdos.controlWord.reset();
     break;
   }
@@ -201,10 +201,10 @@ void GoldSoloWhistleDrive::FaultTransitions()
   {
   case switchOnDisabled:
   { // we are requesting a fault reset
-    cout << "Drive " << position << " Status Word: " << inputPdos.statusWord
-         << endl;
-    cout << "Drive " << position << " requesting Fault Reset: going Idle"
-         << endl;
+    std::cout << "Drive " << position << " Status Word: " << inputPdos.statusWord
+              << std::endl;
+    std::cout << "Drive " << position << " requesting Fault Reset: going Idle"
+              << std::endl;
     outputPdos.controlWord.reset();
     outputPdos.controlWord[faultResetControlBit] = set;
     break;
@@ -213,11 +213,11 @@ void GoldSoloWhistleDrive::FaultTransitions()
     break;
   default:
   {
-    cout << "Drive " << position << " Status Word: " << inputPdos.statusWord
-         << endl;
-    cout << "Drive " << position
-         << " encountered an error asking for state change code: " << stateFlags
-         << endl;
+    std::cout << "Drive " << position << " Status Word: " << inputPdos.statusWord
+              << std::endl;
+    std::cout << "Drive " << position
+              << " encountered an error asking for state change code: " << stateFlags
+              << std::endl;
     stateFlags = nullState;
     break;
   }
@@ -329,43 +329,34 @@ GoldSoloWhistleDrive::GoldSoloWhistleDrive(uint8_t thisSlavePosition)
   product_code = GoldSoloWhistleProduct_code;
   numberOfDomainEntries = GoldSoloWhistleDomainEntries;
 
-  domainRegisters[0] = {alias, position, vendor_id, product_code,
-                        controlWordIndex, controlWordSubIndex,
-                        &offsetOut.controlWord, NULL};
-  domainRegisters[1] = {alias, position, vendor_id, product_code,
-                        modesOfOperationIndex, modesOfOperationSubIndex,
-                        &offsetOut.modesOfOperation, NULL};
-  domainRegisters[2] = {alias, position, vendor_id, product_code,
-                        targetTorqueIndex, targetTorqueSubIndex,
-                        &offsetOut.targetTorque, NULL};
-  domainRegisters[3] = {alias, position, vendor_id, product_code,
-                        targetPositionIndex, targetPositionSubIndex,
-                        &offsetOut.targetPosition, NULL};
-  domainRegisters[4] = {alias, position, vendor_id, product_code,
-                        targetVelocityIndex, targetVelocitySubIndex,
-                        &offsetOut.targetVelocity, NULL};
-  domainRegisters[5] = {alias, position, vendor_id, product_code,
-                        statusWordIndex, statusWordSubIndex,
-                        &offsetIn.statusWord, NULL};
-  domainRegisters[6] = {
-    alias, position, vendor_id, product_code, modesOfOperationDisplayIndex,
-    modesOfOperationDisplaySubIndex, &offsetIn.modesOfOperationDisplay, NULL};
+  domainRegisters[0] = {alias, position, vendor_id, product_code, controlWordIndex,
+                        controlWordSubIndex, &offsetOut.controlWord, NULL};
+  domainRegisters[1] = {alias, position, vendor_id, product_code, modesOfOperationIndex,
+                        modesOfOperationSubIndex, &offsetOut.modesOfOperation, NULL};
+  domainRegisters[2] = {alias, position, vendor_id, product_code, targetTorqueIndex,
+                        targetTorqueSubIndex, &offsetOut.targetTorque, NULL};
+  domainRegisters[3] = {alias, position, vendor_id, product_code, targetPositionIndex,
+                        targetPositionSubIndex, &offsetOut.targetPosition, NULL};
+  domainRegisters[4] = {alias, position, vendor_id, product_code, targetVelocityIndex,
+                        targetVelocitySubIndex, &offsetOut.targetVelocity, NULL};
+  domainRegisters[5] = {alias, position, vendor_id, product_code, statusWordIndex,
+                        statusWordSubIndex, &offsetIn.statusWord, NULL};
+  domainRegisters[6] = {alias, position, vendor_id, product_code,
+                        modesOfOperationDisplayIndex, modesOfOperationDisplaySubIndex,
+                        &offsetIn.modesOfOperationDisplay, NULL};
   domainRegisters[7] = {alias, position, vendor_id, product_code,
                         positionActualValueIndex, positionActualValueSubIndex,
                         &offsetIn.positionActualValue, NULL};
   domainRegisters[8] = {alias, position, vendor_id, product_code,
                         velocityActualValueIndex, velocityActualValueSubIndex,
                         &offsetIn.velocityActualValue, NULL};
-  domainRegisters[9] = {alias, position, vendor_id, product_code,
-                        torqueActualValueIndex, torqueActualValueSubIndex,
-                        &offsetIn.torqueActualValue, NULL};
-  domainRegisters[10] = {alias, position, vendor_id, product_code,
-                         digitalInputsIndex, digitalInputsSubIndex,
-                         &offsetIn.digitalInputs, NULL};
-  domainRegisters[11] = {alias, position, vendor_id, product_code,
-                         auxiliaryPositionActualValueIndex,
-                         auxiliaryPositionActualValueSubIndex,
-                         &offsetIn.auxiliaryPositionActualValue, NULL};
+  domainRegisters[9] = {alias, position, vendor_id, product_code, torqueActualValueIndex,
+                        torqueActualValueSubIndex, &offsetIn.torqueActualValue, NULL};
+  domainRegisters[10] = {alias, position, vendor_id, product_code, digitalInputsIndex,
+                         digitalInputsSubIndex, &offsetIn.digitalInputs, NULL};
+  domainRegisters[11] = {
+    alias, position, vendor_id, product_code, auxiliaryPositionActualValueIndex,
+    auxiliaryPositionActualValueSubIndex, &offsetIn.auxiliaryPositionActualValue, NULL};
 
   domainRegistersPointer = domainRegisters;
   slavePdoEntriesPointer = slavePdoEntries;
@@ -406,21 +397,21 @@ void GoldSoloWhistleDrive::SetTargetDefaults()
 int GoldSoloWhistleDrive::SdoRequests(ec_sdo_request_t* sdoPointer,
                                       ec_slave_config_t* configPointer)
 {
-  if (!(sdoPointer = ecrt_slave_config_create_sdo_request(
-          configPointer, modesOfOperationIndex, modesOfOperationSubIndex,
-          cyclicPosition)))
+  if (!(sdoPointer =
+          ecrt_slave_config_create_sdo_request(configPointer, modesOfOperationIndex,
+                                               modesOfOperationSubIndex, cyclicPosition)))
   {
-    cout << "Failed to create SDO request." << endl;
+    std::cout << "Failed to create SDO request." << std::endl;
     return 1;
   }
   ecrt_sdo_request_timeout(sdoPointer, 500);
-  ecrt_slave_config_sdo8(configPointer, modesOfOperationIndex,
-                         modesOfOperationSubIndex, cyclicPosition);
+  ecrt_slave_config_sdo8(configPointer, modesOfOperationIndex, modesOfOperationSubIndex,
+                         cyclicPosition);
   if (!(sdoPointer = ecrt_slave_config_create_sdo_request(
           configPointer, homingMethodIndex, homingMethodSubIndex,
           homingOnPositionMethod)))
   {
-    cout << "Failed to create SDO request." << endl;
+    std::cout << "Failed to create SDO request." << std::endl;
     return 1;
   }
   ecrt_sdo_request_timeout(sdoPointer, 500);
@@ -443,8 +434,7 @@ void GoldSoloWhistleDrive::ReadInputs()
     EC_READ_S32(domainDataPointer + offsetIn.velocityActualValue);
   inputPdos.torqueActualValue =
     EC_READ_S16(domainDataPointer + offsetIn.torqueActualValue);
-  inputPdos.digitalInputs =
-    EC_READ_U32(domainDataPointer + offsetIn.digitalInputs);
+  inputPdos.digitalInputs = EC_READ_U32(domainDataPointer + offsetIn.digitalInputs);
   inputPdos.auxiliaryPositionActualValue =
     EC_READ_S32(domainDataPointer + offsetIn.auxiliaryPositionActualValue);
   (this->*stateManager[state])();
@@ -458,11 +448,8 @@ void GoldSoloWhistleDrive::WriteOutputs()
               outputPdos.modesOfOperation);
   if (state == operationEnabled || state == switchOn)
   {
-    EC_WRITE_S32(domainDataPointer + offsetOut.targetPosition,
-                 outputPdos.TargetPosition);
-    EC_WRITE_S32(domainDataPointer + offsetOut.targetVelocity,
-                 outputPdos.TargetVelocity);
-    EC_WRITE_S16(domainDataPointer + offsetOut.targetTorque,
-                 outputPdos.TargetTorque);
+    EC_WRITE_S32(domainDataPointer + offsetOut.targetPosition, outputPdos.TargetPosition);
+    EC_WRITE_S32(domainDataPointer + offsetOut.targetVelocity, outputPdos.TargetVelocity);
+    EC_WRITE_S16(domainDataPointer + offsetOut.targetTorque, outputPdos.TargetTorque);
   }
 }
