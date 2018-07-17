@@ -175,6 +175,7 @@ void GoldSoloWhistleDrive::OperationEnabledTransitions()
          << endl;
     cout << "Drive " << position << " going Idle" << endl;
     outputPdos.controlWord.reset();
+    break;
   }
   default:
   {
