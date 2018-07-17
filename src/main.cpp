@@ -3,12 +3,12 @@
 #include "cablerobotmaster.h"    //User includes, the master we programmed,
 #include "cablerobotinterface.h" // And its inteface
 
-CableRobotMaster cableRobotMaster; // Declare master as global variable (usefull
+static CableRobotMaster cableRobotMaster; // Declare master as global variable (usefull
                                    // for qt signal and slot system)
 
 int main(int argc, char* argv[])
 {
-  QApplication a(argc, argv); // Qt default
+  QApplication a(argc, argv);                                          // Qt default
   CableRobotInterface cableRobotInterface(nullptr, &cableRobotMaster); // the
                                                                        // GUI
 
