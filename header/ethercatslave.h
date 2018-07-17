@@ -1,11 +1,10 @@
 #ifndef ETHERCATSLAVE_H
 #define ETHERCATSLAVE_H
 
-/* Ethercat Slave interface. This class is used as base class
-   for any slave. All the effort can be put in the design of our specific
-   slave, with in mind that the ethercat slave interface requires
-   to overload some function.
-   This functions are the ones marked as virtual
+/* Ethercat Slave interface. This class is used as base class  for any slave. All the
+   effort can be put in the design of our specific slave, with in mind that the ethercat
+   slave interface requires to overload some function. These functions are the ones marked
+   as virtual.
 */
 
 #include "ecrt.h"
@@ -14,6 +13,8 @@ class EthercatSlave
 {
 public:
   EthercatSlave() {}
+  virtual ~EthercatSlave() = 0;
+
   uint8_t numberOfDomainEntries; // Ethercat utility
   uint16_t alias;                // Ethercat utility
   uint16_t position;             // Ethercat utility
@@ -30,26 +31,12 @@ public:
 
   // Function to overload in the slave, it gets called before the cyclical task
   // begins
-  virtual void Init(uint8_t* domainDataPointerExt)
-  {
-    domainDataPointer = domainDataPointerExt;
-  }
-  virtual void LoopFunction() {} // Function to overload in the slave, it is the
-                                 // slave main function
-  virtual void ReadInputs() {} // Function to overload in the slave, you have to
-                               // specify what to read
-  virtual void WriteOutputs() {} // Function to overload in the slave, you have
-                                 // to specify what to write
+  virtual void Init(uint8_t* domainDataPointerExt);
+  virtual void LoopFunction() = 0; // slave main function
+  virtual void ReadInputs() = 0;   // to specify what to read
+  virtual void WriteOutputs() = 0; // to specify what to write
 
-  virtual int SdoRequests(ec_sdo_request_t* sdoPointer,
-                          ec_slave_config_t* configPointer)
-  {
-    if (sdoPointer != NULL)
-      return 1;
-    if (configPointer == NULL)
-      return 1;
-    return 0;
-  }
+  virtual int SdoRequests(ec_sdo_request_t* sdoPointer, ec_slave_config_t* configPointer);
 };
 
 #endif // ETHERCATSLAVE_H
