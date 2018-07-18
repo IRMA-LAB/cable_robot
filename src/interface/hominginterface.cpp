@@ -86,15 +86,15 @@ void HomingInterface::on_LoadExtenalHomingButton_clicked()
     ui->RobotLogBrowser->append("Loading homing data...\n");
   }
   QTextStream in(&data_file_);
-  QVector<double> homingData;
+  QVector<double> homing_data;
   while (!in.atEnd())
   {
     QString line = in.readLine();
-    homingData.push_back(line.toDouble());
+    homing_data.push_back(line.toDouble());
   }
 
   data_file_.close();
-  emit SendHomingData(homingData);
+  emit SendHomingData(homing_data);
 }
 
 void HomingInterface::CollectFaultPresentAdvice(int theMotor)

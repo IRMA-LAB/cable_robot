@@ -4,6 +4,7 @@
 // EasyCAT Slave class. Inherits Ethercat Slave base class
 
 #include "ethercatslave.h"
+#include "common.h"
 
 class EasyCatSlave : public EthercatSlave
 {
@@ -13,8 +14,6 @@ private:
   constexpr static uint32_t kEasyCatVendorID_ = 0x0000079a;
   constexpr static uint32_t kEasyCatProductCode_ = 0x00defede;
   constexpr static uint8_t kNumEasyCatStates_ = 2;
-  constexpr static uint8_t kOperational_ = 1;
-  constexpr static uint8_t kNotOperational_ = 0;
 
   uint8_t temp_;
 
@@ -44,8 +43,8 @@ public:
   ~EasyCatSlave();
   enum EasyCatState
   {
-    idle = 0,
-    updateSlave = 1,
+    IDLE = 0,
+    UPDATE_SLAVE = 1,
   } internal_state_,
     slave_flags_; // state machine utilities
   // State machine function array

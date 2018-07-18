@@ -1,8 +1,7 @@
 #include "actuatorpvtinterface33.h"
 #include "ui_actuatorpvtinterface33.h"
 
-ActuatorPvtInterface33::ActuatorPvtInterface33(QWidget* parent,
-                                               CableRobotMaster* master)
+ActuatorPvtInterface33::ActuatorPvtInterface33(QWidget* parent, CableRobotMaster* master)
   : QWidget(parent), cable_robot_master_(master), ui(new Ui::ActuatorPvtInterface33)
 {
   ui->setupUi(this);
@@ -20,7 +19,8 @@ ActuatorPvtInterface33::ActuatorPvtInterface33(QWidget* parent,
   connect(this, &ActuatorPvtInterface33::SendStartRequest, cable_robot_,
           &CableRobot::CollectStartRequest);
 
-  connect(cable_robot_, &CableRobot::SendData, this, &ActuatorPvtInterface33::CollectData);
+  connect(cable_robot_, &CableRobot::SendData, this,
+          &ActuatorPvtInterface33::CollectData);
   connect(cable_robot_, &CableRobot::SendActuatorPvt33Control, this,
           &ActuatorPvtInterface33::CollectActuatorPvt33Control);
   connect(cable_robot_, &CableRobot::SendClearFaultRequestProcessed, this,
@@ -57,7 +57,7 @@ void ActuatorPvtInterface33::on_ImportDataButton_clicked()
     {
       QTextStream in(&data_file_);
       QString line = in.readLine();
-      int numberOfData = line.toInt() / 3;
+      int num_of_data = line.toInt() / 3;
       int index = 0;
       while (!in.atEnd())
       {
@@ -72,7 +72,7 @@ void ActuatorPvtInterface33::on_ImportDataButton_clicked()
         index++;
       }
       data_file_.close();
-      emit SendSimulationData(numberOfData, &cable_len_in_[0][0], &cable_len_in_[1][0],
+      emit SendSimulationData(num_of_data, &cable_len_in_[0][0], &cable_len_in_[1][0],
                               &cable_len_in_[2][0]);
     }
   }
@@ -80,11 +80,11 @@ void ActuatorPvtInterface33::on_ImportDataButton_clicked()
   {
     QTextStream in(&data_file_);
     QString line = in.readLine();
-    int numberOfData = line.toInt() / 3;
+    int num_of_data = line.toInt() / 3;
     int index = 0;
     while (!in.atEnd())
     {
-      for (int i = 0; i < 3; i++)
+      for (uint8_t i = 0; i < 3; i++)
       {
         line = in.readLine();
         cable_len_in_[i].push_back(line.toDouble());
@@ -95,7 +95,7 @@ void ActuatorPvtInterface33::on_ImportDataButton_clicked()
       index++;
     }
     data_file_.close();
-    emit SendSimulationData(numberOfData, &cable_len_in_[0][0], &cable_len_in_[1][0],
+    emit SendSimulationData(num_of_data, &cable_len_in_[0][0], &cable_len_in_[1][0],
                             &cable_len_in_[2][0]);
   }
 }

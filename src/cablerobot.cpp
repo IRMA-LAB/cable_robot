@@ -7,7 +7,7 @@ void CableRobot::CalibrationFun() {}
 void CableRobot::HomingFun()
 {
 
-  for (int i = 0; i < kNumActuators; i++)
+  for (uint8_t i = 0; i < kNumActuators; i++)
   {
     int flag = servo_motor_[i].HasEnableRequestBeenProcessed();
     if (flag < 2)
@@ -53,7 +53,7 @@ void CableRobot::Robot66DemoFun() {}
 
 void CableRobot::Robot33ActuatorPvtFun()
 {
-  for (int i = 0; i < kNumActuators; i++)
+  for (uint8_t i = 0; i < kNumActuators; i++)
   {
     int flag = servo_motor_[i].HasEnableRequestBeenProcessed();
     if (flag < 2)
@@ -239,21 +239,21 @@ void CableRobot::SwitchToTensionMode()
 {
   if (robot_globally_enabled_ >= kNumActuators)
   {
-    uint8_t flagCompleted = 0;
+    uint8_t flag_completed = 0;
     if (homing_flag_ == 0)
     {
       for (int i = 0; i < kNumActuators; i++)
       {
         if (servo_motor_[i].servo_motor_operation_state_ !=
-            GoldSoloWhistleDrive::cyclicTorque)
+            GoldSoloWhistleDrive::CYCLIC_TORQUE)
         {
           servo_motor_[i].SetTargetDefaults();
-          servo_motor_[i].ChangeOperationMode(GoldSoloWhistleDrive::cyclicTorque);
+          servo_motor_[i].ChangeOperationMode(GoldSoloWhistleDrive::CYCLIC_TORQUE);
         }
         else
-          flagCompleted++;
+          flag_completed++;
       }
-      if (flagCompleted == kNumActuators)
+      if (flag_completed == kNumActuators)
       {
         homing_state_flags_ = GO2CENTER;
         emit SendHomingControl(1);
@@ -268,15 +268,15 @@ void CableRobot::SwitchToTensionMode()
       for (int i = 0; i < kNumActuators; i++)
       {
         if (servo_motor_[i].servo_motor_operation_state_ !=
-            GoldSoloWhistleDrive::cyclicPosition)
+            GoldSoloWhistleDrive::CYCLIC_POSITION)
         {
           servo_motor_[i].SetTargetDefaults();
-          servo_motor_[i].ChangeOperationMode(GoldSoloWhistleDrive::cyclicPosition);
+          servo_motor_[i].ChangeOperationMode(GoldSoloWhistleDrive::CYCLIC_POSITION);
         }
         else
-          flagCompleted++;
+          flag_completed++;
       }
-      if (flagCompleted == kNumActuators)
+      if (flag_completed == kNumActuators)
       {
         homing_state_flags_ = GOING_HOME;
         for (int i = 0; i < kNumActuators; i += 2)
@@ -322,7 +322,7 @@ void CableRobot::GoToCenter()
 
 void CableRobot::SwitchActuatedCable()
 {
-  static uint8_t modIndex = 99;
+  static uint8_t mod_index = 99;
 
   if (homing_flag_ && internal_delay_counter_ == 0)
   {
@@ -336,15 +336,15 @@ void CableRobot::SwitchActuatedCable()
         if (i != homing_actuator_)
         {
           if (servo_motor_[i].servo_motor_operation_state_ !=
-              GoldSoloWhistleDrive::cyclicTorque)
+              GoldSoloWhistleDrive::CYCLIC_TORQUE)
           {
-            servo_motor_[i].ChangeOperationMode(GoldSoloWhistleDrive::cyclicTorque);
-            modIndex = static_cast<uint8_t>(i);
+            servo_motor_[i].ChangeOperationMode(GoldSoloWhistleDrive::CYCLIC_TORQUE);
+            mod_index = static_cast<uint8_t>(i);
           }
         }
         else
         {
-          servo_motor_[i].ChangeOperationMode(GoldSoloWhistleDrive::cyclicPosition);
+          servo_motor_[i].ChangeOperationMode(GoldSoloWhistleDrive::CYCLIC_POSITION);
         }
         servo_motor_[i].SetTargetDefaults();
       }
@@ -364,11 +364,11 @@ void CableRobot::SwitchActuatedCable()
     {
       if (i == homing_actuator_ &&
           servo_motor_[i].servo_motor_operation_state_ ==
-            GoldSoloWhistleDrive::cyclicPosition)
+            GoldSoloWhistleDrive::CYCLIC_POSITION)
         flag *= 1;
       else if (i != homing_actuator_ &&
                servo_motor_[i].servo_motor_operation_state_ ==
-                 GoldSoloWhistleDrive::cyclicTorque)
+                 GoldSoloWhistleDrive::CYCLIC_TORQUE)
         flag *= 1;
       else
         flag *= 0;
@@ -389,9 +389,9 @@ void CableRobot::MoveAway()
   if (homing_flag_)
   {
     internal_delay_counter_++;
-    double timeInSeconds = (static_cast<double>(internal_delay_counter_)) / 1000.0;
-    if (timeInSeconds <= kTransitionTime)
-      servo_motor_[homing_actuator_].MovePoly7Incremental(timeInSeconds);
+    double time_sec = (static_cast<double>(internal_delay_counter_)) / 1000.0;
+    if (time_sec <= kTransitionTime)
+      servo_motor_[homing_actuator_].MovePoly7Incremental(time_sec);
     else
     {
       homing_state_flags_ = WAIT_FOR_MEAS;
@@ -442,9 +442,9 @@ void CableRobot::MoveCentral()
   if (homing_flag_)
   {
     internal_delay_counter_++;
-    double timeInSeconds = (static_cast<double>(internal_delay_counter_)) / 1000.0;
-    if (timeInSeconds <= kTransitionTime)
-      servo_motor_[homing_actuator_].MovePoly7Incremental(timeInSeconds);
+    double time_sec = (static_cast<double>(internal_delay_counter_)) / 1000.0;
+    if (time_sec <= kTransitionTime)
+      servo_motor_[homing_actuator_].MovePoly7Incremental(time_sec);
     else
     {
       homing_state_flags_ = WAIT_FOR_MEAS;
@@ -456,10 +456,10 @@ void CableRobot::GoingHome()
 {
   internal_delay_counter_++;
   homing_flag_ = 0;
-  double timeInSeconds = (static_cast<double>(internal_delay_counter_)) / 1000.0;
-  if (timeInSeconds <= kGoHomeTime)
+  double time_sec = (static_cast<double>(internal_delay_counter_)) / 1000.0;
+  if (time_sec <= kGoHomeTime)
     for (int i = 0; i < kNumActuators; i += 2)
-      servo_motor_[i].MovePoly7Incremental(timeInSeconds);
+      servo_motor_[i].MovePoly7Incremental(time_sec);
   else
   {
     homing_state_flags_ = IDLE_HOMING;
@@ -603,19 +603,19 @@ void CableRobot::SwitchToPositionMode()
 {
   if (robot_globally_enabled_ >= kNumActuators)
   {
-    uint8_t flagCompleted = 0;
+    uint8_t flag_completed = 0;
     for (int i = 0; i < kNumActuators; i++)
     {
       if (servo_motor_[i].servo_motor_operation_state_ !=
-          GoldSoloWhistleDrive::cyclicPosition)
+          GoldSoloWhistleDrive::CYCLIC_POSITION)
       {
         servo_motor_[i].SetTargetDefaults();
-        servo_motor_[i].ChangeOperationMode(GoldSoloWhistleDrive::cyclicPosition);
+        servo_motor_[i].ChangeOperationMode(GoldSoloWhistleDrive::CYCLIC_POSITION);
       }
       else
-        flagCompleted++;
+        flag_completed++;
     }
-    if (flagCompleted == kNumActuators)
+    if (flag_completed == kNumActuators)
     {
       enable_pvt_ = 1;
       actuator_pvt33state_flags_ = MOVE_ACTUATOR_PVT33;
@@ -659,10 +659,10 @@ void CableRobot::GoingHomePvt33()
   if (robot_globally_enabled_ >= kNumActuators)
   {
     internal_delay_counter_++;
-    double timeInSeconds = (static_cast<double>(internal_delay_counter_)) / 1000.0;
-    if (timeInSeconds <= kGoHomeTime)
+    double time_sec = (static_cast<double>(internal_delay_counter_)) / 1000.0;
+    if (time_sec <= kGoHomeTime)
       for (int i = 0; i < kNumActuators; i += 2)
-        servo_motor_[i].MovePoly7Incremental(timeInSeconds);
+        servo_motor_[i].MovePoly7Incremental(time_sec);
     else
     {
       actuator_pvt33state_flags_ = IDLE_ACTUATOR_PVT33;
@@ -760,11 +760,11 @@ void CableRobot::CollectRobotRequest(int state)
 void CableRobot::CollectEnableRequest(int enable)
 {
   robot_globally_enabled_ = 0;
-  for (int i = 0; i < kNumActuators; i++)
+  for (uint8_t i = 0; i < kNumActuators; i++)
   {
     if (enable)
     {
-      if (servo_motor_[i].servo_motor_state_ != GoldSoloWhistleDrive::operationEnabled)
+      if (servo_motor_[i].servo_motor_state_ != GoldSoloWhistleDrive::OPERATION_ENABLED)
         servo_motor_[i].Enable();
     }
     else
@@ -776,9 +776,9 @@ void CableRobot::CollectEnableRequest(int enable)
 
 void CableRobot::CollectClearFaultRequest()
 {
-  for (int i = 0; i < kNumActuators; i++)
+  for (uint8_t i = 0; i < kNumActuators; i++)
   {
-    if (servo_motor_[i].servo_motor_state_ == GoldSoloWhistleDrive::fault)
+    if (servo_motor_[i].servo_motor_state_ == GoldSoloWhistleDrive::FAULT)
       servo_motor_[i].FaultReset();
   }
 }
@@ -792,7 +792,7 @@ void CableRobot::CollectMeasurementRequest() { meas_flag_ = 1; }
 
 void CableRobot::CollectHomingData(QVector<double> data)
 {
-  for (int i = 0; i < kNumActuators; i += 2)
+  for (uint8_t i = 0; i < kNumActuators; i += 2)
   {
     servo_motor_[i].SetHomeWinchParameters(data[i / 2], data[i / 2 + kNumActuators / 2],
                                            data[i / 2 + kNumActuators]);

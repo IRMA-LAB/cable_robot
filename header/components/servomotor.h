@@ -1,9 +1,11 @@
 #ifndef SERVOMOTOR_H
 #define SERVOMOTOR_H
 
+#include <cmath>
+
 #include "goldsolowhistledrive.h"
 #include "winch.h"
-#include "cmath"
+#include "common.h"
 
 class ServoMotor
 {
@@ -11,8 +13,6 @@ private:
   GoldSoloWhistleDrive* drive_ = NULL;
   Winch winch_;
 
-  constexpr static uint8_t kSet_ = 1;
-  constexpr static uint8_t kReset_ = 0;
   constexpr static short kMaxTorque_ = 400;
 
   double stop_counts_ = 0.0;
@@ -37,7 +37,7 @@ public:
     SPEED_UP,
     SPEED_DOWN
   } type_of_motion_;
-  uint8_t motion_status_ = kReset_;
+  uint8_t motion_status_ = RESET;
   GoldSoloWhistleDrive::InputPdos* servo_motor_input_pdos_ = NULL;
   GoldSoloWhistleDrive::GoldSoloWhistleDriveState servo_motor_state_;
   GoldSoloWhistleDrive::GoldSoloWhistleOperationState servo_motor_operation_state_;
@@ -64,13 +64,13 @@ public:
 
   inline int HasEnableRequestBeenProcessed()
   {
-    if (drive_->state_ == GoldSoloWhistleDrive::operationEnabled &&
-        servo_motor_state_ == GoldSoloWhistleDrive::switchOn)
+    if (drive_->state_ == GoldSoloWhistleDrive::OPERATION_ENABLED &&
+        servo_motor_state_ == GoldSoloWhistleDrive::SWITCH_ON)
     {
       return 1;
     }
-    else if (drive_->state_ == GoldSoloWhistleDrive::switchOnDisabled &&
-             servo_motor_state_ == GoldSoloWhistleDrive::operationEnabled)
+    else if (drive_->state_ == GoldSoloWhistleDrive::SWITCH_ON_DISABLED &&
+             servo_motor_state_ == GoldSoloWhistleDrive::OPERATION_ENABLED)
     {
       return 0;
     }
@@ -79,8 +79,8 @@ public:
   }
   inline int FaultPresent()
   {
-    if (drive_->state_ == GoldSoloWhistleDrive::fault &&
-        servo_motor_state_ != GoldSoloWhistleDrive::fault)
+    if (drive_->state_ == GoldSoloWhistleDrive::FAULT &&
+        servo_motor_state_ != GoldSoloWhistleDrive::FAULT)
     {
       return 1;
     }
@@ -89,8 +89,8 @@ public:
   }
   inline int HasClearFaultRequestBeenProcessed()
   {
-    if (drive_->state_ == GoldSoloWhistleDrive::switchOnDisabled &&
-        servo_motor_state_ == GoldSoloWhistleDrive::fault)
+    if (drive_->state_ == GoldSoloWhistleDrive::SWITCH_ON_DISABLED &&
+        servo_motor_state_ == GoldSoloWhistleDrive::FAULT)
     {
       return 1;
     }
@@ -99,10 +99,10 @@ public:
   }
   inline int HasOperationModeChangeRequestBeenProcessed()
   {
-    if (drive_->operationState != servo_motor_operation_state_ &&
-        drive_->operationState != GoldSoloWhistleDrive::nullOperation)
+    if (drive_->operation_state_ != servo_motor_operation_state_ &&
+        drive_->operation_state_ != GoldSoloWhistleDrive::NULL_OPERATION)
     {
-      servo_motor_operation_state_ = drive_->operationState;
+      servo_motor_operation_state_ = drive_->operation_state_;
       return 1;
     }
     else

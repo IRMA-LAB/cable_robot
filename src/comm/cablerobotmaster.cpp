@@ -36,11 +36,14 @@ void CableRobotMaster::ActuatorControlFun()
 
 void CableRobotMaster::EasyCatControlFun()
 {
-  for (int i = 0; i < kEasyCatNum_; i++)
+  for (uint8_t i = 0; i < kEasyCatNum_; i++)
     easycat_slave_[i].LoopFunction();
 }
 
-void CableRobotMaster::StandardRobotOperationFun() { cable_robot_.StandardLoopFunction(); }
+void CableRobotMaster::StandardRobotOperationFun()
+{
+  cable_robot_.StandardLoopFunction();
+}
 
 void CableRobotMaster::UserRobotOperationFun() { cable_robot_.UserLoopFunction(); }
 
@@ -55,7 +58,7 @@ void CableRobotMaster::IdleTransition()
   else if (state_flags_ != NULL_STATE)
   {
     state_ = state_flags_;
-    for (int i = 0; i < kGoldSoloWhistleNum_; i++)
+    for (uint8_t i = 0; i < kGoldSoloWhistleNum_; i++)
       gold_solo_whistle_slave_[i].SetTargetDefaults();
   }
 }
@@ -145,11 +148,11 @@ void CableRobotMaster::StartUpFunction() { emit SendStartUp(); }
 
 void CableRobotMaster::LoopFunction()
 {
-  for (int i = 0; i < kSlavesNum_; i++)
+  for (uint8_t i = 0; i < kSlavesNum_; i++)
     etherCatSlave_[i]->ReadInputs(); // Read pdos, act accordingly
-  (this->*state_manager_[state_])();   // check if the state has to be changed
-  (this->*state_machine_[state_])();   // do your job
-  for (int i = 0; i < kSlavesNum_; i++)
+  (this->*state_manager_[state_])(); // check if the state has to be changed
+  (this->*state_machine_[state_])(); // do your job
+  for (uint8_t i = 0; i < kSlavesNum_; i++)
     etherCatSlave_[i]->WriteOutputs(); // Write all the necessary pdos
 }
 

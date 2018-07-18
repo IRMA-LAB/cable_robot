@@ -12,12 +12,11 @@ ActuatorInterface::ActuatorInterface(QWidget* parent, CableRobotMaster* master)
   ui->CyclicPositionBox->setDisabled(true);
   ui->CyclicTorqueBox->setDisabled(true);
   ui->CyclicVelocityBox->setDisabled(true);
-  for (int i = 0; i < GoldSoloWhistleDrive::kGoldSoloWhistleDomainInputs_; i++)
+  for (uint8_t i = 0; i < GoldSoloWhistleDrive::kGoldSoloWhistleDomainInputs_; i++)
     ui->InputPdosTable->setItem(i, 0, &input_items_[i]);
 
   connect(this, &ActuatorInterface::GoBackIdle, cable_robot_master_,
           &CableRobotMaster::CollectMasterRequest);
-
   connect(this, &ActuatorInterface::SendClearFaultRequest, cable_robot_master_,
           &CableRobotMaster::CollectClearFaultRequest);
   connect(this, &ActuatorInterface::SendCommandUpdateRequest, cable_robot_master_,
@@ -53,25 +52,19 @@ void ActuatorInterface::on_FaultResetButton_clicked() { emit SendClearFaultReque
 void ActuatorInterface::on_PositionEnable_toggled(bool checked)
 {
   if (checked)
-  {
-    emit SendOperationModeChangeRequest(GoldSoloWhistleDrive::cyclicPosition);
-  }
+    emit SendOperationModeChangeRequest(GoldSoloWhistleDrive::CYCLIC_POSITION);
 }
 
 void ActuatorInterface::on_TorqueEnable_toggled(bool checked)
 {
   if (checked)
-  {
-    emit SendOperationModeChangeRequest(GoldSoloWhistleDrive::cyclicTorque);
-  }
+    emit SendOperationModeChangeRequest(GoldSoloWhistleDrive::CYCLIC_TORQUE);
 }
 
 void ActuatorInterface::on_VelocityEnable_toggled(bool checked)
 {
   if (checked)
-  {
-    emit SendOperationModeChangeRequest(GoldSoloWhistleDrive::cyclicVelocity);
-  }
+    emit SendOperationModeChangeRequest(GoldSoloWhistleDrive::CYCLIC_VELOCITY);
 }
 
 void ActuatorInterface::on_MovePlusBut_pressed()
@@ -199,7 +192,9 @@ void ActuatorInterface::CollectClearFaultRequestProcessed()
 {
   ui->EnableButton->setEnabled(true);
   if (ui->EnableButton->isChecked())
+  {
     ui->EnableButton->toggle();
+  }
   ui->FaultResetButton->setDisabled(true);
 }
 
@@ -207,32 +202,32 @@ void ActuatorInterface::CollectOperationModeChangeRequestProcessed(int op_mode)
 {
   switch (op_mode)
   {
-  case GoldSoloWhistleDrive::cyclicPosition:
-  {
-    if (ui->TorqueEnable->isChecked())
-      ui->TorqueEnable->setChecked(false);
-    else if (ui->VelocityEnable->isChecked())
-      ui->VelocityEnable->setChecked(false);
-    break;
-  }
-  case GoldSoloWhistleDrive::cyclicTorque:
-  {
-    if (ui->PositionEnable->isChecked())
-      ui->PositionEnable->setChecked(false);
-    else if (ui->VelocityEnable->isChecked())
-      ui->VelocityEnable->setChecked(false);
-    break;
-  }
-  case GoldSoloWhistleDrive::cyclicVelocity:
-  {
-    if (ui->TorqueEnable->isChecked())
-      ui->TorqueEnable->setChecked(false);
-    else if (ui->PositionEnable->isChecked())
-      ui->PositionEnable->setChecked(false);
-    break;
-  }
-  default:
-    break;
+    case GoldSoloWhistleDrive::CYCLIC_POSITION:
+    {
+      if (ui->TorqueEnable->isChecked())
+        ui->TorqueEnable->setChecked(false);
+      else if (ui->VelocityEnable->isChecked())
+        ui->VelocityEnable->setChecked(false);
+      break;
+    }
+    case GoldSoloWhistleDrive::CYCLIC_TORQUE:
+    {
+      if (ui->PositionEnable->isChecked())
+        ui->PositionEnable->setChecked(false);
+      else if (ui->VelocityEnable->isChecked())
+        ui->VelocityEnable->setChecked(false);
+      break;
+    }
+    case GoldSoloWhistleDrive::CYCLIC_VELOCITY:
+    {
+      if (ui->TorqueEnable->isChecked())
+        ui->TorqueEnable->setChecked(false);
+      else if (ui->PositionEnable->isChecked())
+        ui->PositionEnable->setChecked(false);
+      break;
+    }
+    default:
+      break;
   }
 }
 
@@ -245,48 +240,48 @@ void ActuatorInterface::CollectGuiData(GoldSoloWhistleDrive::InputPdos* pdos, in
 {
   switch (n)
   {
-  case GoldSoloWhistleDrive::statusWordElement:
-  {
-    // ui->InputPdosTable->item(0,n)->setData(0,(quint16)thePdos->statusWord.to_ulong());
-    input_items_[n].setData(0, static_cast<qint16>(pdos->statusWord.to_ulong()));
-    break;
-  }
-  case GoldSoloWhistleDrive::modesOfOperationElement:
-  {
-    // ui->InputPdosTable->item(0,n)->setData(0,(qint8)thePdos->modesOfOperationDisplay);
-    input_items_[n].setData(0, static_cast<qint8>(pdos->modesOfOperationDisplay));
-    break;
-  }
-  case GoldSoloWhistleDrive::positionActualvalueElement:
-  {
-    // ui->InputPdosTable->item(0,n)->setData(0,(qint32)thePdos->positionActualValue);
-    input_items_[n].setData(0, static_cast<qint32>(pdos->positionActualValue));
-    break;
-  }
-  case GoldSoloWhistleDrive::velocityActualvalueElement:
-  {
-    // ui->InputPdosTable->item(0,n)->setData(0,(qint32)thePdos->velocityActualValue);
-    input_items_[n].setData(0, static_cast<qint32>(pdos->velocityActualValue));
-    break;
-  }
-  case GoldSoloWhistleDrive::torqueActualValueElement:
-  {
-    // ui->InputPdosTable->item(0,n)->setData(0,(qint16)thePdos->torqueActualValue);
-    input_items_[n].setData(0, static_cast<qint16>(pdos->torqueActualValue));
-    break;
-  }
-  case GoldSoloWhistleDrive::digitalInputsElement:
-  {
-    // ui->InputPdosTable->item(0,n)->setData(0,(quint32)thePdos->digitalInputs);
-    input_items_[n].setData(0, static_cast<qint32>(pdos->digitalInputs));
-    break;
-  }
-  case GoldSoloWhistleDrive::auxiliaryPositionActualValueElement:
-  {
-    // ui->InputPdosTable->item(0,n)->setData(0,(qint32)thePdos->auxiliaryPositionActualValue);
-    input_items_[n].setData(0, static_cast<qint32>(pdos->auxiliaryPositionActualValue));
-    break;
-  }
+    case GoldSoloWhistleDrive::kStatusWordElement:
+    {
+      // ui->InputPdosTable->item(0,n)->setData(0,(quint16)thePdos->statusWord.to_ulong());
+      input_items_[n].setData(0, static_cast<qint16>(pdos->status_word.to_ulong()));
+      break;
+    }
+    case GoldSoloWhistleDrive::kModesOfOperationElement:
+    {
+      // ui->InputPdosTable->item(0,n)->setData(0,(qint8)thePdos->modesOfOperationDisplay);
+      input_items_[n].setData(0, static_cast<qint8>(pdos->modes_of_operation_display));
+      break;
+    }
+    case GoldSoloWhistleDrive::kPositionActualvalueElement:
+    {
+      // ui->InputPdosTable->item(0,n)->setData(0,(qint32)thePdos->positionActualValue);
+      input_items_[n].setData(0, static_cast<qint32>(pdos->position_actual_value));
+      break;
+    }
+    case GoldSoloWhistleDrive::kVelocityActualvalueElement:
+    {
+      // ui->InputPdosTable->item(0,n)->setData(0,(qint32)thePdos->velocityActualValue);
+      input_items_[n].setData(0, static_cast<qint32>(pdos->velocity_actual_value));
+      break;
+    }
+    case GoldSoloWhistleDrive::kTorqueActualValueElement:
+    {
+      // ui->InputPdosTable->item(0,n)->setData(0,(qint16)thePdos->torqueActualValue);
+      input_items_[n].setData(0, static_cast<qint16>(pdos->torque_actual_value));
+      break;
+    }
+    case GoldSoloWhistleDrive::kDigitalInputsElement:
+    {
+      // ui->InputPdosTable->item(0,n)->setData(0,(quint32)thePdos->digitalInputs);
+      input_items_[n].setData(0, static_cast<qint32>(pdos->digital_inputs));
+      break;
+    }
+    case GoldSoloWhistleDrive::kAuxiliaryPositionActualValueElement:
+    {
+      // ui->InputPdosTable->item(0,n)->setData(0,(qint32)thePdos->auxiliaryPositionActualValue);
+      input_items_[n].setData(0, static_cast<qint32>(pdos->auxiliary_position_actual_value));
+      break;
+    }
   }
 }
 

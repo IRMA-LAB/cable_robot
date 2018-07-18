@@ -1,6 +1,6 @@
 #include "ethercatmaster.h"
 
-EthercatMaster* thisInstance;
+static EthercatMaster* this_instance;
 
 void EthercatMaster::ConfigureMemoryLocks()
 {
@@ -12,10 +12,9 @@ void EthercatMaster::ConfigureMemoryLocks()
 
 void EthercatMaster::LockProcessMemory(uint32_t size)
 {
-  uint32_t i;
   char* buffer;
   buffer = static_cast<char*>(malloc(size));
-  for (i = 0; i < size; i += sysconf(_SC_PAGESIZE))
+  for (uint32_t i = 0; i < size; i += sysconf(_SC_PAGESIZE))
     buffer[i] = 0; // Send this memory to RAM and lock it there
   free(buffer);
 }
@@ -24,7 +23,7 @@ void EthercatMaster::PeriodIncrement(PeriodInfo* periodInfo)
 {
   periodInfo->next_period.tv_nsec +=
     periodInfo->period_nsec; // Incrementing the NextPeriod interval for sleeping,
-                          // the timer source is monotonic
+                             // the timer source is monotonic
   while (periodInfo->next_period.tv_nsec >= nSecondsInSeconds)
   { // tv_nsec has to be less than nSecondsInSEconds, because seconds are dealt
     // with in tv_sec
@@ -48,119 +47,119 @@ uint8_t EthercatMaster::WaitUntilPeriodElapsed(PeriodInfo* periodInfo)
 
 void* EthercatMaster::TheRtThread(void* args)
 {
-  PeriodInfo periodInfo;
-  uint8_t cycleFlag = 1;
+  PeriodInfo period_info;
+  uint8_t cycle_flag = 1;
 
-  thisInstance->flags_.not_sync = 0;
-  thisInstance->SetSchedulerParameters(thisInstance->master_data_.rt_cpu_id,
-                                       thisInstance->master_data_.rt_priority);
-  periodInfo.period_nsec = thisInstance->master_data_.cycle_cime_nsec;
-  clock_gettime(CLOCK_MONOTONIC, &(periodInfo.next_period));
-  thisInstance->StartUpFunction();
-  while (cycleFlag)
+  this_instance->flags_.not_sync = 0;
+  this_instance->SetSchedulerParameters(this_instance->master_data_.rt_cpu_id,
+                                        this_instance->master_data_.rt_priority);
+  period_info.period_nsec = this_instance->master_data_.cycle_cime_nsec;
+  clock_gettime(CLOCK_MONOTONIC, &(period_info.next_period));
+  this_instance->StartUpFunction();
+  while (cycle_flag)
   {
     pthread_mutex_lock(
-      &thisInstance->rt_mutex_); // Lock the resources while we are using it
-    ecrt_master_receive(thisInstance->master_ptr_); // Receive data
-    ecrt_domain_process(thisInstance->domain_ptr_);
-    thisInstance->CheckConfigState(); // Check ethercat State Machine
-    thisInstance->CheckMasterState();
-    thisInstance->CheckDomainState();
-    if (!thisInstance->flags_.not_sync && thisInstance->flags_.config_state &&
-        thisInstance->flags_.master_state && thisInstance->flags_.domain_state)
+      &this_instance->rt_mutex_); // Lock the resources while we are using it
+    ecrt_master_receive(this_instance->master_ptr_); // Receive data
+    ecrt_domain_process(this_instance->domain_ptr_);
+    this_instance->CheckConfigState(); // Check ethercat State Machine
+    this_instance->CheckMasterState();
+    this_instance->CheckDomainState();
+    if (!this_instance->flags_.not_sync && this_instance->flags_.config_state &&
+        this_instance->flags_.master_state && this_instance->flags_.domain_state)
     {
-      thisInstance->LoopFunction(); // If everything is in order, execute
-                                    // loopfunction of master
+      this_instance->LoopFunction(); // If everything is in order, execute
+                                     // loopfunction of master
     }
     else
     {
-      cycleFlag = thisInstance->FlagManagement();
+      cycle_flag = this_instance->FlagManagement();
     }
-    ecrt_domain_queue(thisInstance->domain_ptr_); // Write data
-    ecrt_master_send(thisInstance->master_ptr_);
-    pthread_mutex_unlock(&thisInstance->rt_mutex_);                      // Unlock resources
-    thisInstance->flags_.not_sync = WaitUntilPeriodElapsed(&periodInfo); // sleep
+    ecrt_domain_queue(this_instance->domain_ptr_); // Write data
+    ecrt_master_send(this_instance->master_ptr_);
+    pthread_mutex_unlock(&this_instance->rt_mutex_); // Unlock resources
+    this_instance->flags_.not_sync = WaitUntilPeriodElapsed(&period_info); // sleep
   }
   return args;
 }
 
 void EthercatMaster::CheckDomainState() // Check ethercat domain state machine
 {
-  ec_domain_state_t domainStateLocal;
+  ec_domain_state_t domain_state_local;
 
-  ecrt_domain_state(domain_ptr_, &domainStateLocal);
+  ecrt_domain_state(domain_ptr_, &domain_state_local);
 
-  if (domainStateLocal.working_counter != domain_state_.working_counter)
+  if (domain_state_local.working_counter != domain_state_.working_counter)
   {
-    std::cout << "Domain: WC " << domainStateLocal.working_counter << std::endl;
+    std::cout << "Domain: WC " << domain_state_local.working_counter << std::endl;
   }
-  if (domainStateLocal.wc_state != domain_state_.wc_state)
+  if (domain_state_local.wc_state != domain_state_.wc_state)
   {
-    std::cout << "Domain: State " << domainStateLocal.wc_state << std::endl;
-    if (domainStateLocal.wc_state == kDomainOperational)
+    std::cout << "Domain: State " << domain_state_local.wc_state << std::endl;
+    if (domain_state_local.wc_state == kDomainOperational)
       flags_.domain_state = kOperationalState;
     else
       flags_.domain_state = kNotOperationalState;
   }
 
-  domain_state_ = domainStateLocal;
+  domain_state_ = domain_state_local;
 }
 
 void EthercatMaster::CheckMasterState() // Check ethercat master state machine
 {
-  ec_master_state_t masterStateLocal;
+  ec_master_state_t master_state_local;
 
-  ecrt_master_state(master_ptr_, &masterStateLocal);
+  ecrt_master_state(master_ptr_, &master_state_local);
 
-  if (masterStateLocal.slaves_responding != master_state_.slaves_responding)
+  if (master_state_local.slaves_responding != master_state_.slaves_responding)
   {
-    std::cout << masterStateLocal.slaves_responding << " slave(s) on the bus"
+    std::cout << master_state_local.slaves_responding << " slave(s) on the bus"
               << std::endl;
   }
-  if (masterStateLocal.al_states != master_state_.al_states)
+  if (master_state_local.al_states != master_state_.al_states)
   {
-    std::cout << "Master states: " << masterStateLocal.al_states << std::endl;
-    if (masterStateLocal.al_states == kMasterOperational)
+    std::cout << "Master states: " << master_state_local.al_states << std::endl;
+    if (master_state_local.al_states == kMasterOperational)
       flags_.master_state = kOperationalState;
     else
       flags_.master_state = kNotOperationalState;
   }
-  if (masterStateLocal.link_up != master_state_.link_up)
+  if (master_state_local.link_up != master_state_.link_up)
   {
-    std::cout << "Master Link is " << (masterStateLocal.link_up ? "up" : "down")
+    std::cout << "Master Link is " << (master_state_local.link_up ? "up" : "down")
               << std::endl;
   }
 
-  master_state_ = masterStateLocal;
+  master_state_ = master_state_local;
 }
 
 void EthercatMaster::CheckConfigState() // Check ethercat slave configuration
                                         // state machine
 {
-  ec_slave_config_state_t configStateLocal;
+  ec_slave_config_state_t config_state_local;
 
-  ecrt_slave_config_state(config_ptr_, &configStateLocal);
+  ecrt_slave_config_state(config_ptr_, &config_state_local);
 
-  if (configStateLocal.al_state != config_state_.al_state)
+  if (config_state_local.al_state != config_state_.al_state)
   {
-    std::cout << "Slaves State " << configStateLocal.al_state << std::endl;
-    if (configStateLocal.al_state == kSlaveOperational)
+    std::cout << "Slaves State " << config_state_local.al_state << std::endl;
+    if (config_state_local.al_state == kSlaveOperational)
       flags_.config_state = kOperationalState;
     else
       flags_.config_state = kNotOperationalState;
   }
-  if (configStateLocal.online != config_state_.online)
+  if (config_state_local.online != config_state_.online)
   {
-    std::cout << "Slaves: " << (configStateLocal.online ? "online" : "offline")
+    std::cout << "Slaves: " << (config_state_local.online ? "online" : "offline")
               << std::endl;
   }
-  if (configStateLocal.operational != config_state_.operational)
+  if (config_state_local.operational != config_state_.operational)
   {
-    std::cout << "Slaves: " << (configStateLocal.operational ? "" : "Not ")
+    std::cout << "Slaves: " << (config_state_local.operational ? "" : "Not ")
               << "operational" << std::endl;
   }
 
-  config_state_ = configStateLocal;
+  config_state_ = config_state_local;
 }
 
 void EthercatMaster::GetDomainElements(ec_pdo_entry_reg_t* regs) // Wrapper..
@@ -168,7 +167,7 @@ void EthercatMaster::GetDomainElements(ec_pdo_entry_reg_t* regs) // Wrapper..
   uint16_t index = 0;
   for (int i = 0; i < num_slaves_; i++)
   {
-    for (int j = 0; j < slave_[i]->num_domain_entries_; j++)
+    for (uint8_t j = 0; j < slave_[i]->num_domain_entries_; j++)
     {
       regs[index] = slave_[i]->domain_registers_ptr_[j];
       index++;
@@ -176,8 +175,8 @@ void EthercatMaster::GetDomainElements(ec_pdo_entry_reg_t* regs) // Wrapper..
   }
 }
 
-void EthercatMaster::SetSchedulerParameters(uint8_t thread_cpu,
-                                            uint8_t thread_priority) // Thread utility..
+// Thread utility
+void EthercatMaster::SetSchedulerParameters(uint8_t thread_cpu, uint8_t thread_priority)
 {
   cpu_set_t cpuset;
   CPU_ZERO(&cpuset);
@@ -202,7 +201,7 @@ uint8_t EthercatMaster::FlagManagement()
 
 uint8_t EthercatMaster::InitProtocol()
 {
-  ec_pdo_entry_reg_t domainRegistersLocal[num_domain_elements_];
+  ec_pdo_entry_reg_t domain_registers_local[num_domain_elements_];
 
   if (!(master_ptr_ = ecrt_request_master(0)))
   { // Requesting to initialize master 0
@@ -236,8 +235,8 @@ uint8_t EthercatMaster::InitProtocol()
     }
   }
 
-  GetDomainElements(domainRegistersLocal); // Configuring Domain
-  if (ecrt_domain_reg_pdo_entry_list(domain_ptr_, domainRegistersLocal))
+  GetDomainElements(domain_registers_local); // Configuring Domain
+  if (ecrt_domain_reg_pdo_entry_list(domain_ptr_, domain_registers_local))
   {
     std::cout << "Error Registering PDOs' entries" << std::endl;
     return kNotValidate_;
@@ -264,8 +263,8 @@ uint8_t EthercatMaster::InitProtocol()
 
 EthercatMaster::EthercatMaster()
 {
-  thisInstance = this; // we need the address of the actual master, we'll need
-                       // it in the static functions
+  this_instance = this; // we need the address of the actual master, we'll need
+                        // it in the static functions
 }
 
 EthercatMaster::~EthercatMaster() {}
@@ -273,34 +272,36 @@ EthercatMaster::~EthercatMaster() {}
 void EthercatMaster::Start()
 {
 
-  pthread_t threadRt;
-  pthread_attr_t threadAttributes;
+  pthread_t thread_rt;
+  pthread_attr_t thread_attributes;
 
-  ConfigureMemoryLocks();               // Call immediately
+  ConfigureMemoryLocks();                 // Call immediately
   LockProcessMemory(kPreAllocationSize_); // Call immediately
 
   /* init to default values */
-  if (pthread_attr_init(&threadAttributes))
+  if (pthread_attr_init(&thread_attributes))
   {
     std::cout << "pthread_attr_init failed" << std::endl;
   }
   else
   {
-    if (pthread_attr_setstacksize(&threadAttributes, PTHREAD_STACK_MIN + kThisStackSize_))
+    if (pthread_attr_setstacksize(&thread_attributes, PTHREAD_STACK_MIN + kThisStackSize_))
     {
       std::cout << "pthread_attr_setstacksize failed" << std::endl;
     }
     else
     {
-      if (thisInstance->InitProtocol())
+      if (this_instance->InitProtocol())
       { // If everything is ok, start the master thread on a differrent thread
         SetSchedulerParameters(master_data_.gui_cpu_id,
                                master_data_.gui_priority); // Set priority for gui thread
-        pthread_create(&threadRt, &threadAttributes, TheRtThread,
+        pthread_create(&thread_rt, &thread_attributes, TheRtThread,
                        NULL); // master thread start
       }
       else
-        std::cout << "Could not initialize Ethercat Devices" << std::endl;
+        {
+          std::cout << "Could not initialize Ethercat Devices" << std::endl;
+        }
     }
   }
 }

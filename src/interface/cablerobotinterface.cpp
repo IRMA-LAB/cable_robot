@@ -12,15 +12,15 @@ CableRobotInterface::CableRobotInterface(QWidget* parent, CableRobotMaster* mast
           &CableRobotInterface::CollectStartUp);
   connect(cable_robot_master_, &CableRobotMaster::SendMasterRequestProcessed, this,
           &CableRobotInterface::CollectMasterRequestProcessed);
-  connect(&cable_robot_master_->cable_robot_, &CableRobot::SendRobotRequestProcessed, this,
-          &CableRobotInterface::CollectRobotRequestProcessed);
+  connect(&cable_robot_master_->cable_robot_, &CableRobot::SendRobotRequestProcessed,
+          this, &CableRobotInterface::CollectRobotRequestProcessed);
 
   connect(this, &CableRobotInterface::SendMasterRequest, cable_robot_master_,
           &CableRobotMaster::CollectMasterRequest);
   connect(this, &CableRobotInterface::SendMotorNumber, cable_robot_master_,
           &CableRobotMaster::CollectMotorNumber);
-  connect(this, &CableRobotInterface::SendRobotRequest, &cable_robot_master_->cable_robot_,
-          &CableRobot::CollectRobotRequest);
+  connect(this, &CableRobotInterface::SendRobotRequest,
+          &cable_robot_master_->cable_robot_, &CableRobot::CollectRobotRequest);
 }
 
 CableRobotInterface::~CableRobotInterface() { delete ui; }
@@ -154,49 +154,49 @@ void CableRobotInterface::CollectRobotRequestProcessed(int state)
   {
   case CableRobot::CALIBRATION:
   {
-    CalibrationInterface* calirationInterface =
+    CalibrationInterface* calibration_interface =
       new CalibrationInterface(nullptr, cable_robot_master_);
-    calirationInterface->show();
+    calibration_interface->show();
     break;
   }
   case CableRobot::HOMING:
   {
-    HomingInterface* homingInterface = new HomingInterface(nullptr, cable_robot_master_);
-    homingInterface->show();
+    HomingInterface* homing_interface = new HomingInterface(nullptr, cable_robot_master_);
+    homing_interface->show();
     this->setDisabled(true);
     break;
   }
   case CableRobot::ROBOT33ACTUATOR_PVT:
   {
-    ActuatorPvtInterface33* actuatorPvtInterface33 =
+    ActuatorPvtInterface33* actuator_pvt_interface33 =
       new ActuatorPvtInterface33(nullptr, cable_robot_master_);
-    actuatorPvtInterface33->show();
+    actuator_pvt_interface33->show();
     break;
   }
   case CableRobot::ROBOT33AUTOMATIC:
   {
-    DemoInterface33* demoInterface33 = new DemoInterface33(nullptr, cable_robot_master_);
-    demoInterface33->show();
+    DemoInterface33* demo_interface33 = new DemoInterface33(nullptr, cable_robot_master_);
+    demo_interface33->show();
     break;
   }
   case CableRobot::ROBOT33MANUAL:
   {
-    ManualInterface33* manualInterface33 =
+    ManualInterface33* manual_interface33 =
       new ManualInterface33(nullptr, cable_robot_master_);
-    manualInterface33->show();
+    manual_interface33->show();
     break;
   }
   case CableRobot::ROBOT66MANUAL:
   {
-    ManualInterface66* manualInterface66 =
+    ManualInterface66* manual_interface66 =
       new ManualInterface66(nullptr, cable_robot_master_);
-    manualInterface66->show();
+    manual_interface66->show();
     break;
   }
   case CableRobot::ROBOT66DEMO:
   {
-    DemoInterface66* demoInterface66 = new DemoInterface66(nullptr, cable_robot_master_);
-    demoInterface66->show();
+    DemoInterface66* demo_interface66 = new DemoInterface66(nullptr, cable_robot_master_);
+    demo_interface66->show();
     break;
   }
   default:

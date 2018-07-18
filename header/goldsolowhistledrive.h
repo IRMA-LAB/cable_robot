@@ -63,8 +63,8 @@ private:
     unsigned int auxiliary_position_actual_value;
   } offset_in_;
 
-  typedef void (GoldSoloWhistleDrive::*
-                  StateFunction)(); // Easyway to implement state machine
+  typedef void (
+    GoldSoloWhistleDrive::*StateFunction)(); // Easyway to implement state machine
 
   void DetermineState();
   void DetermineOperationState();
@@ -94,7 +94,7 @@ private:
   void CyclicTorqueTransition();
 
 public:
-  GoldSoloWhistleDrive(uint8_t thisSlavePosition);
+  GoldSoloWhistleDrive(uint8_t slave_position);
   ~GoldSoloWhistleDrive() {}
 
   constexpr static uint8_t kGoldSoloWhistleDomainInputs_ = 7;
@@ -102,25 +102,22 @@ public:
 
   enum GoldSoloWhistleDriveState
   {
-    switchOnDisabled,
-    readyToSwitchOn,
-    switchOn,
-    operationEnabled,
-    quickStopActive,     // To be implemented, fast stop during operation
-    faultReactionActive, // To be implemented, reaction to a specific fault
-    fault,
-    nullState // usefull null flag
+    SWITCH_ON_DISABLED,
+    READY2SWITCH_ON,
+    SWITCH_ON,
+    OPERATION_ENABLED,
+    QUICK_STOP_ACTIVE,     // To be implemented, fast stop during operation
+    FAULT_REACTION_ACTIVE, // To be implemented, reaction to a specific fault
+    FAULT,
+    NULL_STATE // usefull null flag
   } state_,
-     state_flags_; // state machine utilities
+    state_flags_; // state machine utilities
   // State machine function array
   StateFunction state_machine_[kNumGoldSoloWhistleStates_] = {
-    &GoldSoloWhistleDrive::SwitchOnDisabledFun,
-    &GoldSoloWhistleDrive::ReadyToSwitchOnFun,
-    &GoldSoloWhistleDrive::SwitchOnFun,
-    &GoldSoloWhistleDrive::OperationEnabledFun,
+    &GoldSoloWhistleDrive::SwitchOnDisabledFun, &GoldSoloWhistleDrive::ReadyToSwitchOnFun,
+    &GoldSoloWhistleDrive::SwitchOnFun, &GoldSoloWhistleDrive::OperationEnabledFun,
     &GoldSoloWhistleDrive::QuickStopActiveFun,
-    &GoldSoloWhistleDrive::FaultReactionActiveFun,
-    &GoldSoloWhistleDrive::FaultFun};
+    &GoldSoloWhistleDrive::FaultReactionActiveFun, &GoldSoloWhistleDrive::FaultFun};
   // State machine transition function array
   StateFunction state_manager_[kNumGoldSoloWhistleStates_] = {
     &GoldSoloWhistleDrive::SwitchOnDisabledTransitions,
@@ -134,23 +131,19 @@ public:
   ec_pdo_entry_reg_t
     domain_registers_[kGoldSoloWhistleDomainEntries_]; // ethercat utilities
   ec_pdo_entry_info_t slave_pdo_entries_[kGoldSoloWhistleDomainEntries_] =
-    { // ethercat utilities, can be retrieved in the xml config file provided by
-      // the vendor
-     {kControlWordIndex_, kControlWordSubIndex_,
-      16}, // Start of RxPdo mapping (Outputs)
+    { // ethercat utilities, can be retrieved in the xml config file provided by the vendor
+     {kControlWordIndex_, kControlWordSubIndex_, 16}, // Start of RxPdo mapping (Outputs)
      {kModesOfOperationIndex_, kModesOfOperationSubIndex_, 8},
      {kTargetTorqueIndex_, kTargetTorqueSubIndex_, 16},
      {kTargetPositionIndex_, kTargetPositionSubIndex_, 32},
      {kTargetVelocityIndex_, kTargetVelocitySubIndex_, 32},
-     {kStatusWordIndex_, kStatusWordSubIndex_,
-      16}, // Start of TxPdo mapping (Inputs)
+     {kStatusWordIndex_, kStatusWordSubIndex_, 16}, // Start of TxPdo mapping (Inputs)
      {kModesOfOperationDisplayIndex_, kModesOfOperationDisplaySubIndex_, 8},
      {kPositionActualValueIndex_, kPositionActualValueSubIndex_, 32},
      {kVelocityActualValueIndex_, kVelocityActualValueSubIndex_, 32},
      {kTorqueActualValueIndex_, kTorqueActualValueSubIndex_, 16},
      {kDigitalInputsIndex_, kDigitalInputsSubIndex_, 32},
-     {kAuxiliaryPositionActualValueIndex_, kAuxiliaryPositionActualValueSubIndex_,
-      32}};
+     {kAuxiliaryPositionActualValueIndex_, kAuxiliaryPositionActualValueSubIndex_, 32}};
 
   ec_pdo_info_t slave_pdos_[2] = {
     // ethercat utilities, can be retrieved in the xml config file provided by
@@ -159,12 +152,11 @@ public:
     {0x1a07, 7, slave_pdo_entries_ + 5}, /* Inputs */
   };
 
-  ec_sync_info_t slave_syncs_[5] = {
-    {0, EC_DIR_OUTPUT, 0, NULL, EC_WD_DISABLE},
-    {1, EC_DIR_INPUT, 0, NULL, EC_WD_DISABLE},
-    {2, EC_DIR_OUTPUT, 1, slave_pdos_ + 0, EC_WD_ENABLE},
-    {3, EC_DIR_INPUT, 1, slave_pdos_ + 1, EC_WD_DISABLE},
-    {0xff, EC_DIR_INVALID, 0, 0x00, EC_WD_DEFAULT}};
+  ec_sync_info_t slave_syncs_[5] = {{0, EC_DIR_OUTPUT, 0, NULL, EC_WD_DISABLE},
+                                    {1, EC_DIR_INPUT, 0, NULL, EC_WD_DISABLE},
+                                    {2, EC_DIR_OUTPUT, 1, slave_pdos_ + 0, EC_WD_ENABLE},
+                                    {3, EC_DIR_INPUT, 1, slave_pdos_ + 1, EC_WD_DISABLE},
+                                    {0xff, EC_DIR_INVALID, 0, 0x00, EC_WD_DEFAULT}};
 
   struct OutputPdos
   { // this is a simple way to store the pdos output values
@@ -177,49 +169,49 @@ public:
 
   enum InputPdosElements
   {
-    statusWordElement,
-    modesOfOperationElement,
-    positionActualvalueElement,
-    velocityActualvalueElement,
-    torqueActualValueElement,
-    digitalInputsElement,
-    auxiliaryPositionActualValueElement
+    kStatusWordElement,
+    kModesOfOperationElement,
+    kPositionActualvalueElement,
+    kVelocityActualvalueElement,
+    kTorqueActualValueElement,
+    kDigitalInputsElement,
+    kAuxiliaryPositionActualValueElement
   };
+
   struct InputPdos
   { // this is a simple way to store the pdos input values
-    std::bitset<16> statusWord;
-    signed char modesOfOperationDisplay;
-    int positionActualValue;
-    int velocityActualValue;
-    short torqueActualValue;
-    unsigned int digitalInputs;
-    int auxiliaryPositionActualValue;
-  } inputPdos;
-  int operationOffset = 8;
+    std::bitset<16> status_word;
+    signed char modes_of_operation_display;
+    int position_actual_value;
+    int velocity_actual_value;
+    short torque_actual_value;
+    unsigned int digital_inputs;
+    int auxiliary_position_actual_value;
+  } input_pdos_;
+
+  int operation_offset_ = 8;
+
   enum GoldSoloWhistleOperationState
   {
-    nullOperation = 0,
-    cyclicPosition = 8,
-    cyclicVelocity = 9,
-    cyclicTorque = 10,
-  } operationState,
-    operationStateFlags;
+    NULL_OPERATION = 0,
+    CYCLIC_POSITION = 8,
+    CYCLIC_VELOCITY = 9,
+    CYCLIC_TORQUE = 10,
+  } operation_state_,
+    operation_state_flags_;
 
-  StateFunction operationStateMachine[kNumSupportedOperations_] = {
-    &GoldSoloWhistleDrive::CyclicPositionFun,
-    &GoldSoloWhistleDrive::CyclicVelocityFun,
+  StateFunction operation_state_machine_[kNumSupportedOperations_] = {
+    &GoldSoloWhistleDrive::CyclicPositionFun, &GoldSoloWhistleDrive::CyclicVelocityFun,
     &GoldSoloWhistleDrive::CyclicTorqueFun};
   // State machine transition function array
-  StateFunction operationStateManager[kNumSupportedOperations_] = {
+  StateFunction operation_state_manager_[kNumSupportedOperations_] = {
     &GoldSoloWhistleDrive::CyclicPositionTransition,
     &GoldSoloWhistleDrive::CyclicVelocityTransition,
     &GoldSoloWhistleDrive::CyclicTorqueTransition};
 
   void SetTargetDefaults();
-  virtual int SdoRequests(ec_sdo_request_t* sdoPointer,
-                          ec_slave_config_t* configPointer);
-  virtual void
-  LoopFunction(); // The function we are overloading from the base class
+  virtual int SdoRequests(ec_sdo_request_t* sdo_ptr, ec_slave_config_t* config_ptr);
+  virtual void LoopFunction(); // The function we are overloading from the base class
   virtual void ReadInputs();
   virtual void WriteOutputs();
 };

@@ -40,31 +40,31 @@ EasyCatSlave::EasyCatSlave(uint8_t slave_position)
   slave_sync_ptr_ = slave_syncs_;
   // and stop here, the rest is additional
 
-  internal_state_ = idle;
-  slave_flags_ = idle;
-  output_pdos_.slave_status = kOperational_;
+  internal_state_ = IDLE;
+  slave_flags_ = IDLE;
+  output_pdos_.slave_status = OPERATIONAL;
 }
 
 EasyCatSlave::~EasyCatSlave()
 {
-  output_pdos_.slave_status = kNotOperational_;
+  output_pdos_.slave_status = NOT_OPERATIONAL;
   EC_WRITE_U8(domain_data_ptr_ + offset_out_.slave_status, output_pdos_.slave_status);
 }
 
-void EasyCatSlave::IdleFun() { output_pdos_.control_word = idle; }
+void EasyCatSlave::IdleFun() { output_pdos_.control_word = IDLE; }
 
 void EasyCatSlave::UpdateSlaveFun()
 {
-  output_pdos_.control_word = updateSlave;
+  output_pdos_.control_word = UPDATE_SLAVE;
   temp_ = input_pdos_.num_calls;
 }
 
 void EasyCatSlave::IdleTransition()
 {
-  if (slave_flags_ == updateSlave && input_pdos_.slave_state == idle)
+  if (slave_flags_ == UPDATE_SLAVE && input_pdos_.slave_state == IDLE)
   {
-    slave_flags_ = idle;
-    internal_state_ = updateSlave;
+    slave_flags_ = IDLE;
+    internal_state_ = UPDATE_SLAVE;
   }
 }
 
@@ -72,7 +72,7 @@ void EasyCatSlave::UpdateSlaveTransition()
 {
   if (input_pdos_.num_calls > temp_)
   {
-    internal_state_ = idle;
+    internal_state_ = IDLE;
   }
 }
 
