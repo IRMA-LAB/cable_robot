@@ -1,8 +1,10 @@
 HEADERS = \
-    header/comm/cablerobotmaster.h \
-    header/comm/easycatslave.h \
-    header/comm/ethercatmaster.h \
-    header/comm/ethercatslave.h \
+    header/comm/master/cablerobotmaster.h \
+    header/comm/master/ethercatmaster.h \
+    header/comm/slave/easycatslave.h \
+    header/comm/slave/ethercatslave.h \
+    header/comm/slave/goldsolowhistledrive.h \
+    header/components/cablerobot.h \
     header/components/servomotor.h \
     header/components/winch.h \
     header/interface/actuatorinterface.h \
@@ -14,15 +16,15 @@ HEADERS = \
     header/interface/hominginterface.h \
     header/interface/manualinterface33.h \
     header/interface/manualinterface66.h \
-    header/cablerobot.h \
-    header/goldsolowhistledrive.h \
     header/common.h
 
 SOURCES = \
-    src/comm/cablerobotmaster.cpp \
-    src/comm/easycatslave.cpp \
-    src/comm/ethercatmaster.cpp \
-    src/comm/ethercatslave.cpp \
+    src/comm/master/cablerobotmaster.cpp \
+    src/comm/master/ethercatmaster.cpp \
+    src/comm/slave/easycatslave.cpp \
+    src/comm/slave/ethercatslave.cpp \
+    src/comm/slave/goldsolowhistledrive.cpp \
+    src/components/cablerobot.cpp \
     src/components/servomotor.cpp \
     src/components/winch.cpp \
     src/interface/actuatorinterface.cpp \
@@ -34,26 +36,26 @@ SOURCES = \
     src/interface/hominginterface.cpp \
     src/interface/manualinterface33.cpp \
     src/interface/manualinterface66.cpp \
-    src/cablerobot.cpp \
-    src/goldsolowhistledrive.cpp \
     src/main.cpp
 
 INCLUDEPATH = \
     $$PWD/header \
     $$PWD/header/interface \
-    $$PWD/header/comm \
-    $$PWD/header/components
+    $$PWD/header/comm/master \
+    $$PWD/header/comm/slave \
+    $$PWD/header/components \
+
 
 FORMS += \
-   $$PWD/gui/actuatorinterface.ui \
-   $$PWD/gui/actuatorpvtinterface33.ui \
-   $$PWD/gui/cablerobotinterface.ui \
-   $$PWD/gui/calibrationinterface.ui \
-   $$PWD/gui/demointerface33.ui \
-   $$PWD/gui/demointerface66.ui \
-   $$PWD/gui/hominginterface.ui \
-   $$PWD/gui/manualinterface33.ui \
-   $$PWD/gui/manualinterface66.ui \
+    gui/sub_win/actuatorinterface.ui \
+    gui/sub_win/actuatorpvtinterface33.ui \
+    gui/sub_win/calibrationinterface.ui \
+    gui/sub_win/demointerface33.ui \
+    gui/sub_win/demointerface66.ui \
+    gui/sub_win/hominginterface.ui \
+    gui/sub_win/manualinterface33.ui \
+    gui/sub_win/manualinterface66.ui \
+    gui/cablerobotinterface.ui
 
 QT += core gui widgets
 
