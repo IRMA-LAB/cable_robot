@@ -6,25 +6,27 @@
 
 #include "cablerobotmaster.h" //User declaration
 
-namespace Ui {
+namespace Ui
+{
 class DemoInterface33;
 }
 
 class DemoInterface33 : public QWidget
 {
-    Q_OBJECT
+  Q_OBJECT
 
 public:
-    explicit DemoInterface33(QWidget *parent = 0, CableRobotMaster *theMaster = 0);
-    ~DemoInterface33();
+  explicit DemoInterface33(QWidget* parent = 0, CableRobotMaster* master = 0);
+  ~DemoInterface33();
 
 signals:
-    void GoBackIdle(int);
-private:
-    CableRobotMaster *cableRobotMaster;
-    Ui::DemoInterface33 *ui;
+  void GoBackIdle(int);
 
-    virtual void closeEvent(QCloseEvent *event);
+private:
+  CableRobotMaster* cable_robot_master_;
+  Ui::DemoInterface33* ui;
+
+  virtual void closeEvent(QCloseEvent* event);
 };
 
 #endif // DEMOINTERFACE33_H

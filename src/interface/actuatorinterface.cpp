@@ -4,250 +4,290 @@
 #include <iostream>
 using namespace std;
 
-ActuatorInterface::ActuatorInterface(QWidget *parent, CableRobotMaster *theMaster) :
-    QWidget(parent),
-    cableRobotMaster(theMaster),
-    ui(new Ui::ActuatorInterface)
+ActuatorInterface::ActuatorInterface(QWidget* parent, CableRobotMaster* master)
+  : QWidget(parent), cable_robot_master_(master), ui(new Ui::ActuatorInterface)
 {
-    ui->setupUi(this);
-    ui->FaultResetButton->setDisabled(true);
-    ui->CyclicPositionBox->setDisabled(true);
-    ui->CyclicTorqueBox->setDisabled(true);
-    ui->CyclicVelocityBox->setDisabled(true);
-    for (int i=0;i<GoldSoloWhistleDrive::GoldSoloWhistleDomainInputs;i++) ui->InputPdosTable->setItem(i, 0, &inputItems[i]);
+  ui->setupUi(this);
+  ui->FaultResetButton->setDisabled(true);
+  ui->CyclicPositionBox->setDisabled(true);
+  ui->CyclicTorqueBox->setDisabled(true);
+  ui->CyclicVelocityBox->setDisabled(true);
+  for (uint8_t i = 0; i < GoldSoloWhistleDrive::kGoldSoloWhistleDomainInputs_; i++)
+    ui->InputPdosTable->setItem(i, 0, &input_items_[i]);
 
-    connect(this,&ActuatorInterface::GoBackIdle,cableRobotMaster,&CableRobotMaster::CollectMasterRequest);
+  connect(this, &ActuatorInterface::GoBackIdle, cable_robot_master_,
+          &CableRobotMaster::CollectMasterRequest);
+  connect(this, &ActuatorInterface::SendClearFaultRequest, cable_robot_master_,
+          &CableRobotMaster::CollectClearFaultRequest);
+  connect(this, &ActuatorInterface::SendCommandUpdateRequest, cable_robot_master_,
+          &CableRobotMaster::CollectCommandUpdateRequest);
+  connect(this, &ActuatorInterface::SendEnableRequest, cable_robot_master_,
+          &CableRobotMaster::CollectEnableRequest);
+  connect(this, &ActuatorInterface::SendOperationModeChangeRequest, cable_robot_master_,
+          &CableRobotMaster::CollectOperationModeChangeRequest);
 
-    connect(this,&ActuatorInterface::SendClearFaultRequest,cableRobotMaster,&CableRobotMaster::CollectClearFaultRequest);
-    connect(this,&ActuatorInterface::SendCommandUpdateRequest,cableRobotMaster,&CableRobotMaster::CollectCommandUpdateRequest);
-    connect(this,&ActuatorInterface::SendEnableRequest,cableRobotMaster,&CableRobotMaster::CollectEnableRequest);
-    connect(this,&ActuatorInterface::SendOperationModeChangeRequest,cableRobotMaster,&CableRobotMaster::CollectOperationModeChangeRequest);
-
-    connect(cableRobotMaster,&CableRobotMaster::SendClearFaultRequestProcessed,this,&ActuatorInterface::CollectClearFaultRequestProcessed);
-    connect(cableRobotMaster,&CableRobotMaster::SendCommandUpdateRequestProcessed,this,&ActuatorInterface::CollectCommandUpdateRequestProcessed);
-    connect(cableRobotMaster,&CableRobotMaster::SendEnableRequestProcessed,this,&ActuatorInterface::CollectEnableCommandProcessed);
-    connect(cableRobotMaster,&CableRobotMaster::SendFaultPresentAdvice,this,&ActuatorInterface::CollectFaultPresentAdvice);
-    connect(cableRobotMaster,&CableRobotMaster::SendOperationModeChangeRequestProcessed,this,&ActuatorInterface::CollectOperationModeChangeRequestProcessed);
-    connect(cableRobotMaster,&CableRobotMaster::SendGuiData,this,&ActuatorInterface::CollectGuiData);
-
+  connect(cable_robot_master_, &CableRobotMaster::SendClearFaultRequestProcessed, this,
+          &ActuatorInterface::CollectClearFaultRequestProcessed);
+  connect(cable_robot_master_, &CableRobotMaster::SendCommandUpdateRequestProcessed, this,
+          &ActuatorInterface::CollectCommandUpdateRequestProcessed);
+  connect(cable_robot_master_, &CableRobotMaster::SendEnableRequestProcessed, this,
+          &ActuatorInterface::CollectEnableCommandProcessed);
+  connect(cable_robot_master_, &CableRobotMaster::SendFaultPresentAdvice, this,
+          &ActuatorInterface::CollectFaultPresentAdvice);
+  connect(cable_robot_master_, &CableRobotMaster::SendOperationModeChangeRequestProcessed,
+          this, &ActuatorInterface::CollectOperationModeChangeRequestProcessed);
+  connect(cable_robot_master_, &CableRobotMaster::SendGuiData, this,
+          &ActuatorInterface::CollectGuiData);
 }
 
-ActuatorInterface::~ActuatorInterface()
-{
-    delete ui;
-}
+ActuatorInterface::~ActuatorInterface() { delete ui; }
 
 void ActuatorInterface::on_EnableButton_toggled(bool checked)
 {
-    emit SendEnableRequest(checked);
+  emit SendEnableRequest(checked);
 }
 
-void ActuatorInterface::on_FaultResetButton_clicked()
-{
-    emit SendClearFaultRequest();
-}
+void ActuatorInterface::on_FaultResetButton_clicked() { emit SendClearFaultRequest(); }
 
 void ActuatorInterface::on_PositionEnable_toggled(bool checked)
 {
-    if (checked) {
-        emit SendOperationModeChangeRequest(GoldSoloWhistleDrive::cyclicPosition);
-    }
+  if (checked)
+    emit SendOperationModeChangeRequest(GoldSoloWhistleDrive::CYCLIC_POSITION);
 }
 
 void ActuatorInterface::on_TorqueEnable_toggled(bool checked)
 {
-    if (checked) {
-        emit SendOperationModeChangeRequest(GoldSoloWhistleDrive::cyclicTorque);
-    }
+  if (checked)
+    emit SendOperationModeChangeRequest(GoldSoloWhistleDrive::CYCLIC_TORQUE);
 }
 
 void ActuatorInterface::on_VelocityEnable_toggled(bool checked)
 {
-    if (checked) {
-        emit SendOperationModeChangeRequest(GoldSoloWhistleDrive::cyclicVelocity);
-    }
+  if (checked)
+    emit SendOperationModeChangeRequest(GoldSoloWhistleDrive::CYCLIC_VELOCITY);
 }
 
 void ActuatorInterface::on_MovePlusBut_pressed()
 {
-    if (ui->PositionEnable->isChecked()) emit SendCommandUpdateRequest(ServoMotor::PositionMovePlus,set);
+  if (ui->PositionEnable->isChecked())
+    emit SendCommandUpdateRequest(ServoMotor::POS_MOVE_UP, SET);
 }
 
 void ActuatorInterface::on_MovePlusBut_released()
 {
-    if (ui->PositionEnable->isChecked()) emit SendCommandUpdateRequest(ServoMotor::PositionMovePlus,reset);
+  if (ui->PositionEnable->isChecked())
+    emit SendCommandUpdateRequest(ServoMotor::POS_MOVE_UP, RESET);
 }
 
 void ActuatorInterface::on_MoveMinusButton_pressed()
 {
-    if (ui->PositionEnable->isChecked()) emit SendCommandUpdateRequest(ServoMotor::PositionMoveMinus,set);
+  if (ui->PositionEnable->isChecked())
+    emit SendCommandUpdateRequest(ServoMotor::POS_MOVE_DOWN, SET);
 }
 
 void ActuatorInterface::on_MoveMinusButton_released()
 {
-    if (ui->PositionEnable->isChecked()) emit SendCommandUpdateRequest(ServoMotor::PositionMoveMinus,reset);
+  if (ui->PositionEnable->isChecked())
+    emit SendCommandUpdateRequest(ServoMotor::POS_MOVE_DOWN, RESET);
 }
 
 void ActuatorInterface::on_MicroMovePlusButton_pressed()
 {
-    if (ui->PositionEnable->isChecked()) emit SendCommandUpdateRequest(ServoMotor::PositionMicroMovePlus,set);
+  if (ui->PositionEnable->isChecked())
+    emit SendCommandUpdateRequest(ServoMotor::POS_MICRO_MOVE_UP, SET);
 }
 
 void ActuatorInterface::on_MicroMovePlusButton_released()
 {
-    if (ui->PositionEnable->isChecked()) emit SendCommandUpdateRequest(ServoMotor::PositionMicroMovePlus,reset);
+  if (ui->PositionEnable->isChecked())
+    emit SendCommandUpdateRequest(ServoMotor::POS_MICRO_MOVE_UP, RESET);
 }
 
 void ActuatorInterface::on_MicroMoveMinusButton_pressed()
 {
-    if (ui->PositionEnable->isChecked()) emit SendCommandUpdateRequest(ServoMotor::PositionMicroMoveMinus,set);
+  if (ui->PositionEnable->isChecked())
+    emit SendCommandUpdateRequest(ServoMotor::POS_MICRO_MOVE_DOWN, SET);
 }
 
 void ActuatorInterface::on_MicroMoveMinusButton_released()
 {
-    if (ui->PositionEnable->isChecked()) emit SendCommandUpdateRequest(ServoMotor::PositionMicroMoveMinus,reset);
+  if (ui->PositionEnable->isChecked())
+    emit SendCommandUpdateRequest(ServoMotor::POS_MICRO_MOVE_DOWN, RESET);
 }
 
 void ActuatorInterface::on_TorquePlusButton_pressed()
 {
-    if (ui->TorqueEnable->isChecked()) emit SendCommandUpdateRequest(ServoMotor::TorquePlus,set);
+  if (ui->TorqueEnable->isChecked())
+    emit SendCommandUpdateRequest(ServoMotor::TORQUE_UP, SET);
 }
 
 void ActuatorInterface::on_TorquePlusButton_released()
 {
-    if (ui->TorqueEnable->isChecked()) emit SendCommandUpdateRequest(ServoMotor::TorquePlus,reset);
+  if (ui->TorqueEnable->isChecked())
+    emit SendCommandUpdateRequest(ServoMotor::TORQUE_UP, RESET);
 }
 
 void ActuatorInterface::on_TorqueMinusButton_pressed()
 {
-    if (ui->TorqueEnable->isChecked()) emit SendCommandUpdateRequest(ServoMotor::TorqueMinus,set);
+  if (ui->TorqueEnable->isChecked())
+    emit SendCommandUpdateRequest(ServoMotor::TORQUE_DOWN, SET);
 }
 
 void ActuatorInterface::on_TorqueMinusButton_released()
 {
-    if (ui->TorqueEnable->isChecked()) emit SendCommandUpdateRequest(ServoMotor::TorqueMinus,reset);
+  if (ui->TorqueEnable->isChecked())
+    emit SendCommandUpdateRequest(ServoMotor::TORQUE_DOWN, RESET);
 }
 
 void ActuatorInterface::on_SpeedPlusButton_pressed()
 {
-    if (ui->VelocityEnable->isChecked()) emit SendCommandUpdateRequest(ServoMotor::SpeedPlus,set);
+  if (ui->VelocityEnable->isChecked())
+    emit SendCommandUpdateRequest(ServoMotor::SPEED_UP, SET);
 }
 
 void ActuatorInterface::on_SpeedPlusButton_released()
 {
-    if (ui->VelocityEnable->isChecked()) emit SendCommandUpdateRequest(ServoMotor::SpeedPlus,reset);
+  if (ui->VelocityEnable->isChecked())
+    emit SendCommandUpdateRequest(ServoMotor::SPEED_UP, RESET);
 }
 
 void ActuatorInterface::on_SpeedMinusButton_pressed()
 {
-    if (ui->VelocityEnable->isChecked()) emit SendCommandUpdateRequest(ServoMotor::SpeedMinus,set);
+  if (ui->VelocityEnable->isChecked())
+    emit SendCommandUpdateRequest(ServoMotor::SPEED_DOWN, SET);
 }
 
 void ActuatorInterface::on_SpeedMinusButton_released()
 {
-    if (ui->VelocityEnable->isChecked()) emit SendCommandUpdateRequest(ServoMotor::SpeedMinus,reset);
+  if (ui->VelocityEnable->isChecked())
+    emit SendCommandUpdateRequest(ServoMotor::SPEED_DOWN, RESET);
 }
 
 void ActuatorInterface::CollectEnableCommandProcessed(int status)
 {
-    if (status == set) {
-        ui->CyclicPositionBox->setEnabled(true);
-        ui->CyclicTorqueBox->setEnabled(true);
-        ui->CyclicVelocityBox->setEnabled(true);
-    } else {
-        ui->CyclicPositionBox->setDisabled(true);
-        ui->CyclicTorqueBox->setDisabled(true);
-        ui->CyclicVelocityBox->setDisabled(true);
-    }
+  if (status == SET)
+  {
+    ui->CyclicPositionBox->setEnabled(true);
+    ui->CyclicTorqueBox->setEnabled(true);
+    ui->CyclicVelocityBox->setEnabled(true);
+  }
+  else
+  {
+    ui->CyclicPositionBox->setDisabled(true);
+    ui->CyclicTorqueBox->setDisabled(true);
+    ui->CyclicVelocityBox->setDisabled(true);
+  }
 }
 
 void ActuatorInterface::CollectFaultPresentAdvice()
 {
-    ui->CyclicPositionBox->setDisabled(true);
-    ui->CyclicTorqueBox->setDisabled(true);
-    ui->CyclicVelocityBox->setDisabled(true);
-    ui->FaultResetButton->setEnabled(true);
-    ui->EnableButton->setDisabled(true);
+  ui->CyclicPositionBox->setDisabled(true);
+  ui->CyclicTorqueBox->setDisabled(true);
+  ui->CyclicVelocityBox->setDisabled(true);
+  ui->FaultResetButton->setEnabled(true);
+  ui->EnableButton->setDisabled(true);
 }
 
 void ActuatorInterface::CollectClearFaultRequestProcessed()
 {
-    ui->EnableButton->setEnabled(true);
-    if (ui->EnableButton->isChecked()) ui->EnableButton->toggle();
-    ui->FaultResetButton->setDisabled(true);
+  ui->EnableButton->setEnabled(true);
+  if (ui->EnableButton->isChecked())
+  {
+    ui->EnableButton->toggle();
+  }
+  ui->FaultResetButton->setDisabled(true);
 }
 
-void ActuatorInterface::CollectOperationModeChangeRequestProcessed(int modeOfOperation)
+void ActuatorInterface::CollectOperationModeChangeRequestProcessed(int op_mode)
 {
-    switch (modeOfOperation) {
-    case GoldSoloWhistleDrive::cyclicPosition : {
-        if (ui->TorqueEnable->isChecked()) ui->TorqueEnable->setChecked(false);
-        else if (ui->VelocityEnable->isChecked()) ui->VelocityEnable->setChecked(false);
-        break;
+  switch (op_mode)
+  {
+    case GoldSoloWhistleDrive::CYCLIC_POSITION:
+    {
+      if (ui->TorqueEnable->isChecked())
+        ui->TorqueEnable->setChecked(false);
+      else if (ui->VelocityEnable->isChecked())
+        ui->VelocityEnable->setChecked(false);
+      break;
     }
-    case GoldSoloWhistleDrive::cyclicTorque : {
-        if (ui->PositionEnable->isChecked()) ui->PositionEnable->setChecked(false);
-        else if (ui->VelocityEnable->isChecked()) ui->VelocityEnable->setChecked(false);
-        break;
+    case GoldSoloWhistleDrive::CYCLIC_TORQUE:
+    {
+      if (ui->PositionEnable->isChecked())
+        ui->PositionEnable->setChecked(false);
+      else if (ui->VelocityEnable->isChecked())
+        ui->VelocityEnable->setChecked(false);
+      break;
     }
-    case GoldSoloWhistleDrive::cyclicVelocity : {
-        if (ui->TorqueEnable->isChecked()) ui->TorqueEnable->setChecked(false);
-        else if (ui->PositionEnable->isChecked()) ui->PositionEnable->setChecked(false);
-        break;
+    case GoldSoloWhistleDrive::CYCLIC_VELOCITY:
+    {
+      if (ui->TorqueEnable->isChecked())
+        ui->TorqueEnable->setChecked(false);
+      else if (ui->PositionEnable->isChecked())
+        ui->PositionEnable->setChecked(false);
+      break;
     }
-    default: break;
-    }
+    default:
+      break;
+  }
 }
 
-void ActuatorInterface::CollectCommandUpdateRequestProcessed(int command,int status)
+void ActuatorInterface::CollectCommandUpdateRequestProcessed(int command, int status)
 {
-    cout << "Command " << command << " is set to " << status << "." << endl;
+  cout << "Command " << command << " is set to " << status << "." << endl;
 }
 
-void ActuatorInterface::CollectGuiData(GoldSoloWhistleDrive::InputPdos *thePdos, int n)
+void ActuatorInterface::CollectGuiData(GoldSoloWhistleDrive::InputPdos* pdos, int n)
 {
-    switch (n) {
-    case GoldSoloWhistleDrive::statusWordElement : {
-        //ui->InputPdosTable->item(0,n)->setData(0,(quint16)thePdos->statusWord.to_ulong());
-        inputItems[n].setData(0,(quint16)thePdos->statusWord.to_ulong());
-        break;
+  switch (n)
+  {
+    case GoldSoloWhistleDrive::kStatusWordElement:
+    {
+      // ui->InputPdosTable->item(0,n)->setData(0,(quint16)thePdos->statusWord.to_ulong());
+      input_items_[n].setData(0, static_cast<qint16>(pdos->status_word.to_ulong()));
+      break;
     }
-    case GoldSoloWhistleDrive::modesOfOperationElement : {
-        //ui->InputPdosTable->item(0,n)->setData(0,(qint8)thePdos->modesOfOperationDisplay);
-        inputItems[n].setData(0,(qint8)thePdos->modesOfOperationDisplay);
-        break;
+    case GoldSoloWhistleDrive::kModesOfOperationElement:
+    {
+      // ui->InputPdosTable->item(0,n)->setData(0,(qint8)thePdos->modesOfOperationDisplay);
+      input_items_[n].setData(0, static_cast<qint8>(pdos->modes_of_operation_display));
+      break;
     }
-    case GoldSoloWhistleDrive::positionActualvalueElement : {
-       // ui->InputPdosTable->item(0,n)->setData(0,(qint32)thePdos->positionActualValue);
-        inputItems[n].setData(0,(qint32)thePdos->positionActualValue);
-        break;
+    case GoldSoloWhistleDrive::kPositionActualvalueElement:
+    {
+      // ui->InputPdosTable->item(0,n)->setData(0,(qint32)thePdos->positionActualValue);
+      input_items_[n].setData(0, static_cast<qint32>(pdos->position_actual_value));
+      break;
     }
-    case GoldSoloWhistleDrive::velocityActualvalueElement : {
-       // ui->InputPdosTable->item(0,n)->setData(0,(qint32)thePdos->velocityActualValue);
-        inputItems[n].setData(0,(qint32)thePdos->velocityActualValue);
-        break;
+    case GoldSoloWhistleDrive::kVelocityActualvalueElement:
+    {
+      // ui->InputPdosTable->item(0,n)->setData(0,(qint32)thePdos->velocityActualValue);
+      input_items_[n].setData(0, static_cast<qint32>(pdos->velocity_actual_value));
+      break;
     }
-    case GoldSoloWhistleDrive::torqueActualValueElement : {
-       // ui->InputPdosTable->item(0,n)->setData(0,(qint16)thePdos->torqueActualValue);
-        inputItems[n].setData(0,(qint16)thePdos->torqueActualValue);
-        break;
+    case GoldSoloWhistleDrive::kTorqueActualValueElement:
+    {
+      // ui->InputPdosTable->item(0,n)->setData(0,(qint16)thePdos->torqueActualValue);
+      input_items_[n].setData(0, static_cast<qint16>(pdos->torque_actual_value));
+      break;
     }
-    case GoldSoloWhistleDrive::digitalInputsElement : {
-        //ui->InputPdosTable->item(0,n)->setData(0,(quint32)thePdos->digitalInputs);
-        inputItems[n].setData(0,(quint32)thePdos->digitalInputs);
-        break;
+    case GoldSoloWhistleDrive::kDigitalInputsElement:
+    {
+      // ui->InputPdosTable->item(0,n)->setData(0,(quint32)thePdos->digitalInputs);
+      input_items_[n].setData(0, static_cast<qint32>(pdos->digital_inputs));
+      break;
     }
-    case GoldSoloWhistleDrive::auxiliaryPositionActualValueElement : {
-        //ui->InputPdosTable->item(0,n)->setData(0,(qint32)thePdos->auxiliaryPositionActualValue);
-        inputItems[n].setData(0,(qint32)thePdos->auxiliaryPositionActualValue);
-        break;
+    case GoldSoloWhistleDrive::kAuxiliaryPositionActualValueElement:
+    {
+      // ui->InputPdosTable->item(0,n)->setData(0,(qint32)thePdos->auxiliaryPositionActualValue);
+      input_items_[n].setData(0, static_cast<qint32>(pdos->auxiliary_position_actual_value));
+      break;
     }
-    }
+  }
 }
 
-void ActuatorInterface::closeEvent(QCloseEvent *event)
+void ActuatorInterface::closeEvent(QCloseEvent* event)
 {
-    emit GoBackIdle(CableRobotMaster::idle);
-    event->accept();
-    delete this;
+  emit GoBackIdle(CableRobotMaster::IDLE);
+  event->accept();
+  delete this;
 }
