@@ -37,3 +37,6 @@
 
 # Build folders
 build
+/.cproject
+/.project
+/.settings/language.settings.xml
