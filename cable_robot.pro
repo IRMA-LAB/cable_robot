@@ -16,7 +16,9 @@ HEADERS = \
     header/interface/hominginterface.h \
     header/interface/manualinterface33.h \
     header/interface/manualinterface66.h \
-    header/common.h
+    header/common.h \
+    lib/grab_common/libnumeric/inc/matrix.h \
+    lib/grab_common/libnumeric/inc/matrix.h
 
 SOURCES = \
     src/comm/master/cablerobotmaster.cpp \
@@ -36,7 +38,9 @@ SOURCES = \
     src/interface/hominginterface.cpp \
     src/interface/manualinterface33.cpp \
     src/interface/manualinterface66.cpp \
-    src/main.cpp
+    src/main.cpp \
+    lib/grab_common/libnumeric/src/matrix.cpp
+    lib/grab_common/libnumeric/src/matrix.cpp
 
 INCLUDEPATH = \
     $$PWD/header \
@@ -44,7 +48,7 @@ INCLUDEPATH = \
     $$PWD/header/comm/master \
     $$PWD/header/comm/slave \
     $$PWD/header/components \
-
+    $$PWD/lib/grab_common/libnumeric/inc \
 
 FORMS += \
     gui/sub_win/actuatorinterface.ui \
@@ -76,3 +80,11 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # In order to do so, uncomment the following line.
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
+
+SUBDIRS += \
+    cable_robot.pro
+
+DISTFILES += \
+    lib/grab_common/libcdpr/README.md \
+    lib/grab_common/libgrabec/README.md \
+    lib/grab_common/libgrabrt/README.md
