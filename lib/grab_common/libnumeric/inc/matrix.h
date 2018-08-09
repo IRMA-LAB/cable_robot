@@ -1,15 +1,19 @@
-/*
- * EasyMatrix.h
- *
- *  Created on: 12 Jun 2018
- *      Author: Edoardo Idà
- */
-
 #ifndef GRABCOMMON_LIBNUMERIC_MATRIX_H_
 #define GRABCOMMON_LIBNUMERIC_MATRIX_H_
 
+/**
+ * Define whether the build target is a MCU or a device with a graphic interface.
+ * @todo move this flag in the preprocessor flags
+ */
+#define MCU_TARGET 0
+
 #include <algorithm>
 #include <cmath>
+
+#if (MCU_TARGET == 0)
+#include <iostream>
+#include <iomanip>
+#endif
 
 namespace grabnum
 {
@@ -23,7 +27,6 @@ namespace grabnum
 template <typename T, uint8_t rows, uint8_t cols> class Matrix
 {
 public:
-
   using Matrix_t = Matrix<T, rows, cols>;
 
   /**
@@ -35,7 +38,8 @@ public:
   /**
    * Constructor for empty or identity matrix.
    *
-   * @param[in] scalar A scalar value to be duplicated on the diagonal of the matrix. Use 0 for
+   * @param[in] scalar A scalar value to be duplicated on the diagonal of the matrix. Use
+   *0 for
    * initializing an empty matrix.
    */
   Matrix(T scalar);
@@ -45,7 +49,7 @@ public:
    *
    * @param[in] values A constant pointer to a constant @a T vector.
    */
-  Matrix(const T *const values);
+  Matrix(const T* const values);
 
   /**
    * Give full access to the matrix data.
@@ -67,7 +71,7 @@ public:
    * param[in] col The column index of the desired entry.
    * @return The (@a row , @a col ) entry of the matrix.
    */
-  inline const T& operator()(int row, int column) const
+  inline const T& operator()(uint8_t row, uint8_t column) const
   {
     return elements[row - 1][column - 1];
   }
@@ -78,14 +82,18 @@ public:
    * param[in] col The column index of the desired entry.
    * @return The (@a row , @a col ) entry of the matrix.
    */
-  inline T& operator()(int row, int column) { return elements[row - 1][column - 1]; }
+  inline T& operator()(uint8_t row, uint8_t column)
+  {
+    return elements[row - 1][column - 1];
+  }
 
   /**
    * Operator for element-wise comparison (equal).
    *
    * @param other The matrix to be compared against.
    * @return true if each element of @c *this and @a other are all exactly equal.
-   * @warning When using floating point scalar values you probably should rather use a fuzzy
+   * @warning When using floating point scalar values you probably should rather use a
+   *fuzzy
    * comparison such as IsApprox()
    * @see operator!=
    * @see IsApprox()
@@ -96,7 +104,8 @@ public:
    *
    * @param[in] other The matrix to be compared against.
    * @return true if at least one element of @c *this and @a other are not exactly equal.
-   * @warning When using floating point scalar values you probably should rather use a fuzzy
+   * @warning When using floating point scalar values you probably should rather use a
+   *fuzzy
    * comparison such as IsApprox()
    * @see operator==
    * @see IsApprox()
@@ -158,13 +167,15 @@ public:
    * @see SetBlock()
    * @todo example
    */
-  template <uint8_t block_rows, uint8_t block_cols> Matrix_t& SetBlock(
-      uint8_t start_row, uint8_t start_col,  const Matrix<T, block_rows, block_cols>& other);
+  template <uint8_t block_rows, uint8_t block_cols>
+  Matrix_t& SetBlock(uint8_t start_row, uint8_t start_col,
+                     const Matrix<T, block_rows, block_cols>& other);
   /**
    * Sets a column of @c *this with the elements of a 1D matrix.
    *
    * @param[in] col The index of the column to be replaced.
-   * @param[in] matrix1d The 1D vertical matrix to be used to replace the column of  @c *this.
+   * @param[in] matrix1d The 1D vertical matrix to be used to replace the column of  @c
+   **this.
    * @return A reference to @c *this.
    */
   Matrix_t& SetCol(uint8_t col, const Matrix<T, rows, 1>& matrix1d);
@@ -189,8 +200,9 @@ public:
    * @see SetBlock()
    * @todo example
    */
-  template <uint8_t _rows, uint8_t _cols> Matrix_t& SetFromBlock(
-      uint8_t start_row, uint8_t start_col, const Matrix<T, _rows, _cols>& other);
+  template <uint8_t _rows, uint8_t _cols>
+  Matrix_t& SetFromBlock(uint8_t start_row, uint8_t start_col,
+                         const Matrix<T, _rows, _cols>& other);
   /**
    * Set the matrix to an identity matrix.
    *
@@ -201,7 +213,8 @@ public:
    * Sets a row of @c *this with the elements of a 1D matrix.
    *
    * @param[in] row The index of the row to be replaced.
-   * @param[in] matrix1d The 1D horizontal matrix to be used to replace the row of  @c *this.
+   * @param[in] matrix1d The 1D horizontal matrix to be used to replace the row of  @c
+   **this.
    * @return A reference to @c *this.
    */
   Matrix_t& SetRow(uint8_t row, const Matrix<T, 1, cols>& matrix1d);
@@ -266,271 +279,235 @@ public:
   Matrix<T, rows, 1> GetCol(uint8_t col);
 
 private:
-
-  T elements[rows][cols];  /**< for easy internal access to matrix elements. */
+  T elements[rows][cols]; /**< for easy internal access to matrix elements. */
 };
 
-/////////////////////////////////////////////////////////////////// Matrix utilities
+///////////////////////////////////////////////////////////////////////////////
+/// Matrix utilities
+///////////////////////////////////////////////////////////////////////////////
 
-/*#include <iostream>
-#include <iomanip>
+#if (MCU_TARGET == 0)
+/**
+ * Print function for matrix.
+ *
+ * @param[in] stream A std output stream.
+ * @param[in] matrix A @a m x @a n matrix.
+ * @return A reference to the input stream.
+ */
+template <typename T, uint8_t rows, uint8_t cols>
+std::ostream& operator<<(std::ostream& stream, const Matrix<T, rows, cols>& matrix);
+#endif
 
-template <int Row, int Col, typename T>
-std::ostream& operator<<(std::ostream &stream, const EasyMatrix<Row, Col, T> &matrix)
-{
+/**
+ * Addition between a scalar and a matrix.
+ *
+ * @param[in] scalar A scalar value.
+ * @param[in] matrix A @a m x @a n matrix.
+ * @return A @a m x @a n matrix, result of the addition.
+ */
+template <typename T, uint8_t rows, uint8_t cols>
+Matrix<T, rows, cols> operator+(const T& scalar, const Matrix<T, rows, cols>& matrix);
 
-  for (int row = 1; row<=Row; row++) {
-      if (row==1) stream << "[";
-      else stream << " ";
-      for (int col = 1; col <= Col; col++) {
-          stream << std::setw(15) << std::setprecision(7) << matrix(row,col);
-          if (row==Row && col==Col)
-              stream << "         ]\n";
-      }
-      stream << "\n";
-  }
-  stream << "\n";
-  return stream;
-}*/
+/**
+ * Addition between a matrix and a scalar.
+ *
+ * @param[in] matrix A @a m x @a n matrix.
+ * @param[in] scalar A scalar value.
+ * @return A @a m x @a n matrix.
+ */
+template <typename T, uint8_t rows, uint8_t cols>
+Matrix<T, rows, cols> operator+(const Matrix<T, rows, cols>& matrix, const T& scalar);
 
-template <int rows, int cols, typename T>
-Matrix<T, rows, cols> operator+(const T& add, const Matrix<T, rows, cols>& m1)
-{
-  Matrix<T, rows, cols> result;
-  for (int row = 0; row < rows; row++)
-    for (int col = 0; col < cols; col++)
-      result.elements[row][col] = m1.elements[row][col] + add;
-  return result;
-}
+/**
+ * Addition between two matrices.
+ *
+ * @param[in] matrix1 A @a m x @a n matrix.
+ * @param[in] matrix2 A @a m x @a n matrix.
+ * @return A @a m x @a n matrix.
+ */
+template <typename T, uint8_t rows, uint8_t cols>
+Matrix<T, rows, cols> operator+(const Matrix<T, rows, cols>& matrix1,
+                                const Matrix<T, rows, cols>& matrix2);
 
-template <int rows, int cols, typename T>
-Matrix<T, rows, cols> operator+(const Matrix<T, rows, cols>& m1, const T& add)
-{
-  Matrix<T, rows, cols> result;
-  for (int row = 0; row < rows; row++)
-    for (int col = 0; col < cols; col++)
-      result.elements[row][col] = m1.elements[row][col] + add;
-  return result;
-}
+/**
+ * Subtraction between a scalar and a matrix.
+ *
+ * @param[in] scalar A scalar value.
+ * @param[in] matrix A @a m x @a n matrix.
+ * @return A @a m x @a n matrix.
+ */
+template <typename T, uint8_t rows, uint8_t cols>
+Matrix<T, rows, cols> operator-(const T& scalar, const Matrix<T, rows, cols>& matrix);
 
-template <int rows, int cols, typename T>
-Matrix<T, rows, cols> operator+(const Matrix<T, rows, cols>& m1,
-                                const Matrix<T, rows, cols>& m2)
-{
-  Matrix<T, rows, cols> result;
-  for (int row = 0; row < rows; row++)
-    for (int col = 0; col < cols; col++)
-      result.elements[row][col] = m1.elements[row][col] + m2.elements[row][col];
-  return result;
-}
+/**
+ * Subtraction between a matrix and a scalar.
+ *
+ * @param[in] matrix A @a m x @a n matrix.
+ * @param[in] scalar A scalar value.
+ * @return A @a m x @a n matrix, result of the subtraction.
+ */
+template <typename T, uint8_t rows, uint8_t cols>
+Matrix<T, rows, cols> operator-(const Matrix<T, rows, cols>& matrix, const T& scalar);
 
-template <int rows, int cols, typename T>
-Matrix<T, rows, cols> operator-(const T& subtract, const Matrix<T, rows, cols>& m1)
-{
-  Matrix<T, rows, cols> result;
-  for (int row = 0; row < rows; row++)
-    for (int col = 0; col < cols; col++)
-      result.elements[row][col] = subtract - m1.elements[row][col];
-  return result;
-}
+/**
+ * Subtraction between two matrices.
+ *
+ * @param[in] matrix1 A @a m x @a n matrix.
+ * @param[in] matrix2 A @a m x @a n matrix.
+ * @return A @a m x @a n matrix.
+ */
+template <typename T, uint8_t rows, uint8_t cols>
+Matrix<T, rows, cols> operator-(const Matrix<T, rows, cols>& matrix1,
+                                const Matrix<T, rows, cols>& matrix2);
 
-template <int rows, int cols, typename T>
-Matrix<T, rows, cols> operator-(const Matrix<T, rows, cols>& m1, const T& subtract)
-{
-  Matrix<T, rows, cols> result;
-  for (int row = 0; row < rows; row++)
-    for (int col = 0; col < cols; col++)
-      result.elements[row][col] = m1.elements[row][col] - subtract;
-  return result;
-}
+/**
+ * Returns the opposite of a matrix.
+ * This is equivalent to multiplication by -1.
+ *
+ * @param[in] matrix A @a m x @a n matrix.
+ * @return A @a m x @a n matrix.
+ */
+template <typename T, uint8_t rows, uint8_t cols>
+Matrix<T, rows, cols> operator-(const Matrix<T, rows, cols>& matrix);
 
-template <int rows, int cols, typename T>
-Matrix<T, rows, cols> operator-(const Matrix<T, rows, cols>& m1,
-                                const Matrix<T, rows, cols>& m2)
-{
-  Matrix<T, rows, cols> result;
-  for (int row = 0; row < rows; row++)
-    for (int col = 0; col < cols; col++)
-      result.elements[row][col] = m1.elements[row][col] - m2.elements[row][col];
-  return result;
-}
+/**
+ * Row-column matrix multiplication.
+ *
+ * @param[in] matrix1 A @a m x @a n matrix.
+ * @param[in] matrix2 A @a n x @a p matrix.
+ * @return A @a m x @a p matrix.
+ */
+template <typename T, uint8_t rows1, uint8_t dim_common, uint8_t cols2>
+Matrix<T, rows1, cols2> operator*(const Matrix<T, rows1, dim_common>& matrix1,
+                                  const Matrix<T, dim_common, cols2>& matrix2);
 
-template <int rows, int cols, typename T>
-Matrix<T, rows, cols> operator-(const Matrix<T, rows, cols>& m1)
-{
-  Matrix<T, rows, cols> result;
-  for (int row = 0; row < rows; row++)
-    for (int col = 0; col < cols; col++)
-      result.elements[row][col] = -m1.elements[row][col];
-  return result;
-}
+/**
+ * Outer product operation.
+ *
+ * @param[in] vvect A m-dimensional vertical vector.
+ * @param[in] hvect A n-dimensional horizontal vector.
+ * @return A @a m x @a n matrix.
+ */
+template <typename T, uint8_t rows, uint8_t cols>
+Matrix<T, rows, cols> operator*(const Matrix<T, rows, 1>& vvect,
+                                const Matrix<T, 1, cols>& hvect);
 
-template <int Row1, int Com, int Col2, typename T>
-Matrix<Row1, Col2, T> operator*(const Matrix<Row1, Com, T>& m1,
-                                const Matrix<Com, Col2, T>& m2)
-{
-  Matrix<Row1, Col2, T> result;
-  for (int row = 0; row < Row1; row++)
-  {
-    for (int col = 0; col < Col2; col++)
-    {
-      T sum = 0;
-      for (int j = 0; j < Com; j++)
-        sum += m1.elements[row][j] * m2.elements[j][col];
-      result.elements[row][col] = sum;
-    }
-  }
-  return result;
-}
+/**
+ * Scalar product operation.
+ *
+ * @param[in] scalar A scalar value.
+ * @param[in] matrix A @a m x @a n matrix.
+ * @return A @a m x @a n matrix.
+ */
+template <typename T, uint8_t rows, uint8_t cols>
+Matrix<T, rows, cols> operator*(const T& scalar, const Matrix<T, rows, cols>& matrix);
 
-template <int rows, int cols, typename T>
-Matrix<T, rows, cols> operator*(const Matrix<rows, 1, T>& m1,
-                                const Matrix<1, cols, T>& m2)
-{
-  Matrix<T, rows, cols> result;
-  for (int row = 0; row < rows; row++)
-  {
-    for (int col = 0; col < cols; col++)
-    {
-      result.elements[row][col] = m1.elements[row][0] * m2.elements[0][col];
-    }
-  }
-  return result;
-}
+/**
+ * Scalar product operation.
+ *
+ * @param[in] matrix A @a m x @a n matrix.
+ * @param[in] scalar A scalar value.
+ * @return A @a m x @a n matrix.
+ */
+template <typename T, uint8_t rows, uint8_t cols>
+Matrix<T, rows, cols> operator*(const Matrix<T, rows, cols>& matrix, const T& scalar);
 
-template <int rows, int cols, typename T>
-Matrix<T, rows, cols> operator*(const T& factor, const Matrix<T, rows, cols>& m1)
-{
-  Matrix<T, rows, cols> result;
-  for (int row = 0; row < rows; row++)
-    for (int col = 0; col < cols; col++)
-      result.elements[row][col] = m1.elements[row][col] * factor;
-  return result;
-}
+/**
+ * Element-wise vector multiplication.
+ *
+ * @param[in] vvect1 A m-dimensional vertical vector.
+ * @param[in] vvect2 A m-dimensional vertical vector.
+ * @return A m-dimensional vertical vector.
+ */
+template <uint8_t rows, typename T>
+Matrix<T, rows, 1> operator*(const Matrix<T, rows, 1>& vvect1,
+                             const Matrix<T, rows, 1>& vvect2);
 
-template <int rows, int cols, typename T>
-Matrix<T, rows, cols> operator*(const Matrix<T, rows, cols>& m1, const T& factor)
-{
-  Matrix<T, rows, cols> result;
-  for (int row = 0; row < rows; row++)
-    for (int col = 0; col < cols; col++)
-      result.elements[row][col] = m1.elements[row][col] * factor;
-  return result;
-}
+/**
+ * Matrix division by scalar operation.
+ *
+ * @param[in] matrix A @a m x @a n matrix.
+ * @param[in] scalar A scalar value.
+ * @return A @a m x @a n matrix.
+ */
+template <typename T, uint8_t rows, uint8_t cols>
+Matrix<T, rows, cols> operator/(const Matrix<T, rows, cols>& matrix, const T& scalar);
 
-template <int rows, typename T>
-Matrix<rows, 1, T> operator*(const Matrix<rows, 1, T>& m1, const Matrix<rows, 1, T>& m2)
-{
-  Matrix<rows, 1, T> result;
-  for (int row = 0; row < rows; row++)
-    for (int col = 0; col < 1; col++)
-      result.elements[row][col] = m1.elements[row][col] * m2.elements[row][col];
-  return result;
-}
+/**
+ * Matrix horizontal concatenation.
+ *
+ * @param[in] matrix_lx A @a m x @a n matrix.
+ * @param[in] matrix_rx A @a m x @a p matrix.
+ * @return A @a m x @a (n+p) matrix.
+ */
+template <typename T, uint8_t rows, uint8_t cols1, uint8_t cols2>
+Matrix<T, rows, cols1 + cols2> HorzCat(const Matrix<T, rows, cols1>& matrix_lx,
+                                       const Matrix<T, rows, cols2>& matrix_rx);
 
-template <int rows, int cols, typename T>
-Matrix<T, rows, cols> operator/(const Matrix<T, rows, cols>& m1, const T& divisor)
-{
-  Matrix<T, rows, cols> result;
-  for (int row = 0; row < rows; row++)
-    for (int col = 0; col < cols; col++)
-      result.elements[row][col] = m1.elements[row][col] / divisor;
-  return result;
-}
+/**
+ * Matrix vertical concatenation.
+ *
+ * @param[in] matrix_up A @a m x @a n matrix.
+ * @param[in] matrix_down A @a p x @a n matrix.
+ * @return A @a (m+p) x @a n matrix.
+ */
+template <typename T, uint8_t rows1, uint8_t rows2, uint8_t cols>
+Matrix<T, rows1 + rows2, cols> VertCat(const Matrix<T, rows1, cols>& matrix_up,
+                                       const Matrix<T, rows2, cols>& matrix_down);
 
-template <int rows, int Col1, int Col2, typename T>
-Matrix<rows, Col1 + Col2, T> HorzCat(const Matrix<rows, Col1, T>& m1,
-                                     const Matrix<rows, Col2, T>& m2)
-{
-  Matrix<rows, Col1 + Col2, T> result;
+/**
+ * Vector dot-product operation.
+ *
+ * @param[in] vvect1 A m-dimensional vertical vector.
+ * @param[in] vvect2 A m-dimensional vertical vector.
+ * @return A m-dimensional vertical vector.
+ */
+template <typename T, uint8_t dim>
+T Dot(Matrix<T, dim, 1>& vvect1, Matrix<T, dim, 1>& vvect2);
 
-  for (int row = 0; row < rows; row++)
-  {
-    for (int col = 0; col < Col1; col++)
-      result.elements[row][col] = m1.elements[row][col];
-    for (int col = 0; col < Col2; col++)
-      result.elements[row][col + Col1] = m2.elements[row][col];
-  }
-  return result;
-}
+/**
+ * Vector dot-product operation.
+ *
+ * @param[in] hvect A m-dimensional horizontal vector.
+ * @param[in] vvect A m-dimensional vertical vector.
+ * @return A m-dimensional vertical vector.
+ */
+template <typename T, uint8_t dim>
+T Dot(const Matrix<T, 1, dim>& hvect, const Matrix<T, dim, 1>& vvect);
 
-template <int Row1, int Row2, int cols, typename T>
-Matrix<Row1 + Row2, cols, T> VertCat(const Matrix<Row1, cols, T>& m1,
-                                     const Matrix<Row2, cols, T>& m2)
-{
-  Matrix<Row1 + Row2, cols, T> result;
-  for (int col = 0; col < cols; col++)
-  {
-    for (int row = 0; row < Row1; row++)
-      result.elements[row][col] = m1.elements[row][col];
-    for (int row = 0; row < Row2; row++)
-      result.elements[row + Row1][col] = m2.elements[row][col];
-  }
-  return result;
-}
+/**
+ * Vector L2-norm (i.e. Euclidean norm).
+ *
+ * @param[in] vvect A m-dimensional vertical vector.
+ * @return A scalar value.
+ */
+template <typename T, uint8_t dim> T Norm(const Matrix<T, dim, 1>& vvect);
 
-template <int Dim, typename T> T Dot(Matrix<Dim, 1, T>& m1, Matrix<Dim, 1, T>& m2)
-{
-  T result = 0;
+/**
+ * Vector L2-norm (i.e. Euclidean norm).
+ *
+ * @param[in] hvect A m-dimensional horizontal vector.
+ * @return A scalar value.
+ */
+template <typename T, uint8_t dim> T Norm(const Matrix<T, 1, dim>& hvect);
 
-  for (int i = 1; i <= Dim; i++)
-  {
-    result += m1(i, 1) * m2(i, 1);
-  }
-
-  return result;
-}
-
-template <int Dim, typename T>
-T Dot(const Matrix<1, Dim, T>& m1, const Matrix<Dim, 1, T>& m2)
-{
-  T result = 0;
-
-  for (int i = 1; i <= Dim; i++)
-  {
-    result += m1(1, i) * m2(i, 1);
-  }
-
-  return result;
-}
-
-template <int Dim, typename T> T Norm(const Matrix<Dim, 1, T>& mat)
-{
-  T result = 0;
-  for (int i = 1; i <= Dim; i++)
-    result += mat(i, 1) * mat(i, 1);
-  return sqrt(result);
-}
-
-template <int Dim, typename T> T Norm(const Matrix<1, Dim, T>& mat)
-{
-  T result = 0;
-  for (int i = 1; i <= Dim; i++)
-    result += mat(1, i) * mat(1, i);
-  return sqrt(result);
-}
-
+/**
+ * Vector cross-product operation.
+ *
+ * @param[in] vvect3d1 A 3-dimensional vertical vector.
+ * @param[in] vvect2 A 3-dimensional vertical vector.
+ * @return A 3x3 matrix.
+ */
 template <typename T>
-Matrix<3, 1, T> Cross(const Matrix<3, 1, T>& m1, const Matrix<3, 1, T>& m2)
-{
+Matrix<T, 3, 1> Cross(const Matrix<T, 3, 1>& vvect3d1, const Matrix<T, 3, 1>& vvect3d2);
 
-  return Anti(m1) * m2;
-}
-
-template <typename T> Matrix<3, 3, T> Anti(const Matrix<3, 1, T>& m1)
-{
-  Matrix<3, 3, T> result;
-  result(1, 1) = 0;
-  result(2, 2) = 0;
-  result(3, 3) = 0;
-  result(1, 2) = -m1(3, 1);
-  result(2, 1) = m1(3, 1);
-  result(1, 3) = m1(2, 1);
-  result(3, 1) = -m1(2, 1);
-  result(2, 3) = -m1(1, 1);
-  result(3, 2) = m1(1, 1);
-  return result;
-}
+/**
+ * Computes the anti-symmetric matrix of a 3D vector.
+ *
+ * @param[in] vvect3d A 3-dimensional vertical vector.
+ * @return A 3x3 matrix.
+ */
+template <typename T> Matrix<T, 3, 3> Anti(const Matrix<T, 3, 1>& vvect3d);
 
 } //  end namespace grabnum
 
