@@ -39,8 +39,9 @@ public:
    * Constructor for empty or identity matrix.
    *
    * @param[in] scalar A scalar value to be duplicated on the diagonal of the matrix. Use
-   *0 for
-   * initializing an empty matrix.
+   * 0 for initializing an empty matrix.
+   * @see SetZero()
+   * @see SetIdentity()
    */
   Matrix(T scalar);
   /**
@@ -48,21 +49,49 @@ public:
    * Fills the matrix row-by-row with the elements of @a values.
    *
    * @param[in] values A constant pointer to a constant @a T vector.
+   * @param[in] size The number of elements in the vector.
+   * @see Fill()
    */
-  Matrix(const T* const values);
+  Matrix(const T* values, const size_t size);
+  /**
+   * Implicit constructor from another matrix with the same shape and size.
+   * Makes a copy of the given matrix. It also handle automatic casting in case of
+   * different types.
+   *
+   * @param[in] other The copied matrix.
+   */
+  template <typename T2> Matrix(const Matrix<T2, rows, cols>& other);
 
+  /**
+   * Returns numbers of rows.
+   *
+   * @return A size.
+   */
+  size_t Rows() { return rows; }
+  /**
+   * Returns numbers of rows.
+   *
+   * @return A size.
+   */
+  size_t Cols() { return cols; }
+  /**
+   * Returns the matrix size, i.e. @a m x @a n.
+   *
+   * @return A size.
+   */
+  uint16_t Size() { return rows * cols; }
   /**
    * Give full access to the matrix data.
    *
    * @return A pointer to the data of the matrix.
    */
-  inline T* data() { return *elements; }
+  inline T* data() { return *elements_; }
   /**
    * Give read-only access to the matrix data.
    *
    * @return A pointer to the data of the matrix.
    */
-  inline const T* data() const { return *elements; }
+  inline const T* data() const { return *elements_; }
 
   /**
    * Give read-only access to a single entry of the matrix.
@@ -73,7 +102,7 @@ public:
    */
   inline const T& operator()(uint8_t row, uint8_t column) const
   {
-    return elements[row - 1][column - 1];
+    return elements_[row - 1][column - 1];
   }
   /**
    * Give access to a single entry of the matrix.
@@ -84,7 +113,7 @@ public:
    */
   inline T& operator()(uint8_t row, uint8_t column)
   {
-    return elements[row - 1][column - 1];
+    return elements_[row - 1][column - 1];
   }
 
   /**
@@ -236,9 +265,10 @@ public:
    * Fills the matrix row-by-row with the elements of @a values.
    *
    * @param[in] values A constant pointer to a constant @a T vector.
+   * @param[in] size The number of elements in the vector.
    * @return A reference to @c *this.
    */
-  Matrix_t& Fill(const T* values);
+  Matrix_t& Fill(const T* values, const size_t size);
 
   /**
    * Returns the transposed matrix.
@@ -278,8 +308,21 @@ public:
    */
   Matrix<T, rows, 1> GetCol(uint8_t col);
 
+  /**
+   * Check if the matrix is square, i.e. @a m = @a n.
+   *
+   * @return true if matrix is square.
+   */
+  bool IsSquare();
+  /**
+   * Check if the matrix is symmetric, i.e. @a A = @a A^T.
+   *
+   * @return true if matrix is symmetric.
+   */
+  bool IsSymmetric();
+
 private:
-  T elements[rows][cols]; /**< for easy internal access to matrix elements. */
+  T elements_[rows][cols]; /**< for easy internal access to matrix elements. */
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -510,5 +553,7 @@ Matrix<T, 3, 1> Cross(const Matrix<T, 3, 1>& vvect3d1, const Matrix<T, 3, 1>& vv
 template <typename T> Matrix<T, 3, 3> Anti(const Matrix<T, 3, 1>& vvect3d);
 
 } //  end namespace grabnum
+
+#include "matrix.cpp"
 
 #endif /* GRABCOMMON_LIBNUMERIC_MATRIX_H_ */

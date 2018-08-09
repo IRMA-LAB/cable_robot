@@ -17,7 +17,6 @@ HEADERS = \
     header/interface/manualinterface33.h \
     header/interface/manualinterface66.h \
     header/common.h \
-    lib/grab_common/libnumeric/inc/matrix.h
 
 SOURCES = \
     src/comm/master/cablerobotmaster.cpp \
@@ -38,7 +37,6 @@ SOURCES = \
     src/interface/manualinterface33.cpp \
     src/interface/manualinterface66.cpp \
     src/main.cpp \
-    lib/grab_common/libnumeric/src/matrix.cpp
 
 INCLUDEPATH = \
     $$PWD/header \
@@ -46,7 +44,6 @@ INCLUDEPATH = \
     $$PWD/header/comm/master \
     $$PWD/header/comm/slave \
     $$PWD/header/components \
-    $$PWD/lib/grab_common/libnumeric/inc \
 
 FORMS += \
     gui/sub_win/actuatorinterface.ui \
