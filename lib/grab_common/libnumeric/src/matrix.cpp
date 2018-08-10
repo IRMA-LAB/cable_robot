@@ -1,4 +1,6 @@
 #include <assert.h>
+#include <cmath>
+
 #include "matrix.h"
 
 #ifndef ARRAY_SIZE
@@ -25,21 +27,41 @@ template <typename T, uint8_t rows, uint8_t cols> Matrix<T, rows, cols>::Matrix(
     *this = SetIdentity() * scalar;
 }
 
-  template <typename T, uint8_t rows, uint8_t cols>
-  Matrix<T, rows, cols>::Matrix(const T* values, const size_t size)
-  {
-    Fill(values, size);
-  }
+template <typename T, uint8_t rows, uint8_t cols>
+Matrix<T, rows, cols>::Matrix(const T* values, const size_t size)
+{
+  Fill(values, size);
+}
 
-  template <typename T, uint8_t rows, uint8_t cols>
-  template <typename T2>
-  Matrix<T, rows, cols>::Matrix(const Matrix<T2, rows, cols>& other)
-  {
-  }
+template <typename T, uint8_t rows, uint8_t cols>
+template <typename T2>
+Matrix<T, rows, cols>::Matrix(const Matrix<T2, rows, cols>& other)
+{
+  for (uint8_t row = 0; row < rows; ++row)
+    for (uint8_t col = 0; col < cols; ++col)
+      elements_[row][col] = static_cast<T>(other(row + 1, col + 1));
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Operator Overloadings
 ///////////////////////////////////////////////////////////////////////////////
+
+template <typename T, uint8_t rows, uint8_t cols>
+template <typename NewT>
+Matrix<T, rows, cols>::operator Matrix<NewT, rows, cols>()
+{
+  Matrix<NewT, rows, cols> result(*this);
+  return result;
+}
+
+template <typename T, uint8_t rows, uint8_t cols>
+template <typename NewT>
+Matrix<T, rows, cols>& Matrix<T, rows, cols>::
+operator=(const Matrix<NewT, rows, cols>& other)
+{
+  *this = static_cast<Matrix<T, rows, cols>>(other);
+  return *this;
+}
 
 template <typename T, uint8_t rows, uint8_t cols>
 bool Matrix<T, rows, cols>::operator==(const Matrix<T, rows, cols>& other) const
@@ -275,7 +297,7 @@ Matrix<T, rows, cols>& Matrix<T, rows, cols>::SwapCol(uint8_t col1, uint8_t col2
 ///////////////////////////////////////////////////////////////////////////////
 
 template <typename T, uint8_t rows, uint8_t cols>
-Matrix<T, 1, cols> Matrix<T, rows, cols>::GetRow(uint8_t row)
+Matrix<T, 1, cols> Matrix<T, rows, cols>::GetRow(uint8_t row) const
 {
   Matrix<T, 1, cols> row_vect;
   for (uint8_t col = 0; col < cols; ++col)
@@ -284,7 +306,7 @@ Matrix<T, 1, cols> Matrix<T, rows, cols>::GetRow(uint8_t row)
 }
 
 template <typename T, uint8_t rows, uint8_t cols>
-Matrix<T, rows, 1> Matrix<T, rows, cols>::GetCol(uint8_t col)
+Matrix<T, rows, 1> Matrix<T, rows, cols>::GetCol(uint8_t col) const
 {
   Matrix<T, rows, 1> col_vect;
   for (uint8_t row = 0; row < rows; ++row)
@@ -297,17 +319,29 @@ Matrix<T, rows, 1> Matrix<T, rows, cols>::GetCol(uint8_t col)
 ///////////////////////////////////////////////////////////////////////////////
 
 template <typename T, uint8_t rows, uint8_t cols>
-bool Matrix<T, rows, cols>::IsSquare()
+bool Matrix<T, rows, cols>::IsSquare() const
 {
   return rows == cols;
 }
 
 template <typename T, uint8_t rows, uint8_t cols>
-bool Matrix<T, rows, cols>::IsSymmetric()
+bool Matrix<T, rows, cols>::IsSymmetric() const
 {
   if (!IsSquare())
     return false;
   return *this == Transpose();
+}
+
+template <typename T, uint8_t rows, uint8_t cols>
+bool Matrix<T, rows, cols>::IsApprox(const Matrix<T, rows, cols>& other, double tol /* = 1e-7*/) const
+{
+  for (uint8_t row = 0; row < rows; ++row)
+    for (uint8_t col = 0; col < cols; ++col)
+    {
+      if (std::abs(elements_[row][col] - other(row + 1, col + 1)) > tol)
+        return false;
+    }
+  return true;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

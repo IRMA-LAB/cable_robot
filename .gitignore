@@ -42,3 +42,4 @@ build
 /.cproject
 /.project
 /.settings/language.settings.xml
+*.pro.user

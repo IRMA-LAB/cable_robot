@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <typeinfo>
 
 #if (MCU_TARGET == 0)
 #include <iostream>
@@ -54,7 +55,7 @@ public:
    */
   Matrix(const T* values, const size_t size);
   /**
-   * Implicit constructor from another matrix with the same shape and size.
+   * Parametrized constructor from another matrix with the same shape and size.
    * Makes a copy of the given matrix. It also handle automatic casting in case of
    * different types.
    *
@@ -67,38 +68,58 @@ public:
    *
    * @return A size.
    */
-  size_t Rows() { return rows; }
+  size_t Rows() const { return rows; }
   /**
    * Returns numbers of rows.
    *
    * @return A size.
    */
-  size_t Cols() { return cols; }
+  size_t Cols() const { return cols; }
   /**
    * Returns the matrix size, i.e. @a m x @a n.
    *
    * @return A size.
    */
-  uint16_t Size() { return rows * cols; }
+  uint16_t Size() const { return rows * cols; }
+  /**
+   * Returns the matrix type.
+   *
+   * @return A constant reference to @c std::type_info.
+   * @note This can be useful to compare different matrix types, but can't be used to to
+   *declare a variable, for instance.
+   */
+  const std::type_info& Type() const { return typeid(T); }
   /**
    * Give full access to the matrix data.
    *
    * @return A pointer to the data of the matrix.
    */
-  inline T* data() { return *elements_; }
+  inline T* Data() { return *elements_; }
   /**
    * Give read-only access to the matrix data.
    *
    * @return A pointer to the data of the matrix.
    */
-  inline const T* data() const { return *elements_; }
+  inline const T* Data() const { return *elements_; }
 
+  /**
+   * Conversion operator.
+   */
+  template <typename NewT> operator Matrix<NewT, rows, cols>();
+  /**
+   * Assign operator with conversion.
+   *
+   * @param[in] other The matrix to be copied and type-casted.
+   * @return A reference to @c *this.
+   */
+  template <typename NewT> Matrix_t& operator=(const Matrix<NewT, rows, cols>& other);
   /**
    * Give read-only access to a single entry of the matrix.
    *
    * param[in] row The row index of the desired entry.
    * param[in] col The column index of the desired entry.
    * @return The (@a row , @a col ) entry of the matrix.
+   * @note Matrix indexing starts from 1 like in Matlab.
    */
   inline const T& operator()(uint8_t row, uint8_t column) const
   {
@@ -110,6 +131,7 @@ public:
    * param[in] row The row index of the desired entry.
    * param[in] col The column index of the desired entry.
    * @return The (@a row , @a col ) entry of the matrix.
+   * @note Matrix indexing starts from 1 like in Matlab.
    */
   inline T& operator()(uint8_t row, uint8_t column)
   {
@@ -299,27 +321,38 @@ public:
    * @param[in] row The index of the row to be extracted.
    * @return A 1-dimensional matrix (aka an horizontal vector).
    */
-  Matrix<T, 1, cols> GetRow(uint8_t row);
+  Matrix<T, 1, cols> GetRow(uint8_t row) const;
   /**
    * Extracts a column from the matrix.
    *
    * @param[in] col The index of the column to be extracted.
    * @return A 1-dimensional matrix (aka a vertical vector).
    */
-  Matrix<T, rows, 1> GetCol(uint8_t col);
+  Matrix<T, rows, 1> GetCol(uint8_t col) const;
 
   /**
    * Check if the matrix is square, i.e. @a m = @a n.
    *
    * @return true if matrix is square.
    */
-  bool IsSquare();
+  bool IsSquare() const;
   /**
    * Check if the matrix is symmetric, i.e. @a A = @a A^T.
    *
    * @return true if matrix is symmetric.
    */
-  bool IsSymmetric();
+  bool IsSymmetric() const;
+  /**
+   * Operator for fuzzy element-wise comparison (equal).
+   *
+   * @param[in] other The matrix to be compared against.
+   * @param[in] tol (optional) The difference below which two single entries are
+   *considered equal.
+   * @return true if each element of @c *this and @a other are all equal up to a certain
+   *tolerance.
+   * @see operator!=
+   */
+  bool IsApprox(const Matrix<T, rows, cols>& other, double tol = 1e-7) const;
 
 private:
   T elements_[rows][cols]; /**< for easy internal access to matrix elements. */
