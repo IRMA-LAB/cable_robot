@@ -3,6 +3,9 @@
 
 #include "matrix.h"
 
+/**
+ * @brief The TestMatrix class
+ */
 class TestMatrix : public QObject
 {
   Q_OBJECT

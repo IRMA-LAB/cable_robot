@@ -43,3 +43,7 @@ build
 /.project
 /.settings/language.settings.xml
 *.pro.user
+
+# Documentation
+/lib/grab_common/libnumeric/doc*
+/lib/grab_common/libnumeric/Doxyfile

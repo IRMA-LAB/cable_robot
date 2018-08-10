@@ -28,7 +28,7 @@ namespace grabnum
 template <typename T, uint8_t rows, uint8_t cols> class Matrix
 {
 public:
-  using Matrix_t = Matrix<T, rows, cols>;
+  using Matrix_t = Matrix<T, rows, cols>;  /**< practical typedef for local use */
 
   /**
    * Default empty constructor.
@@ -273,7 +273,7 @@ public:
    * Sets a row of @c *this with the elements of a standard vector.
    *
    * @param[in] row The index of the row to be replaced.
-   * @param[in] matrix1d The standard vector to be used to replace the row of  @c *this.
+   * @param[in] vect The standard vector to be used to replace the row of  @c *this.
    * @return A reference to @c *this.
    */
   Matrix_t& SetRow(uint8_t row, const T* vect);
