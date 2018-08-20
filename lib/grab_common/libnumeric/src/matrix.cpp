@@ -149,29 +149,36 @@ Matrix<T, rows, cols>& Matrix<T, rows, cols>::operator/=(const T& scalar)
 
 template <typename T, uint8_t rows, uint8_t cols>
 template <uint8_t block_rows, uint8_t block_cols>
-Matrix<T, rows, cols>& Matrix<T, rows, cols>::SetBlock(
-  uint8_t start_row, uint8_t start_col, const Matrix<T, block_rows, block_cols>& other)
+Matrix<T, rows, cols>&
+Matrix<T, rows, cols>::SetBlock(const uint8_t start_row, const uint8_t start_col,
+                                const Matrix<T, block_rows, block_cols>& other)
 {
+  assert(start_row + block_rows - 1 <= rows);
+  assert(start_col + block_cols - 1 <= cols);
+
   for (uint8_t row = start_row; row < start_row + block_rows; ++row)
     for (uint8_t col = start_col; col < start_col + block_cols; ++col)
-      elements_[row - 1][col - 1] = other.elements_[row - start_row][col - start_col];
+      elements_[row - 1][col - 1] = other(row - start_row + 1, col - start_col + 1);
   return *this;
 }
 
 template <typename T, uint8_t rows, uint8_t cols>
-Matrix<T, rows, cols>& Matrix<T, rows, cols>::SetCol(uint8_t cl,
-                                                     const Matrix<T, rows, 1>& matrix1d)
+Matrix<T, rows, cols>& Matrix<T, rows, cols>::SetCol(const uint8_t cl,
+                                                     const VectorX<T, rows>& matrix1d)
 {
   for (uint8_t i = 0; i < rows; i++)
   {
-    elements_[i][cl - 1] = matrix1d.elements_[i][0];
+    elements_[i][cl - 1] = matrix1d(i + 1, 1);
   }
   return *this;
 }
 
 template <typename T, uint8_t rows, uint8_t cols>
-Matrix<T, rows, cols>& Matrix<T, rows, cols>::SetCol(uint8_t cl, const T* vect)
+Matrix<T, rows, cols>& Matrix<T, rows, cols>::SetCol(const uint8_t cl, const T* vect,
+                                                     const size_t size)
 {
+  assert(size == rows);
+
   for (uint8_t i = 0; i < rows; i++)
   {
     elements_[i][cl - 1] = vect[i];
@@ -182,11 +189,14 @@ Matrix<T, rows, cols>& Matrix<T, rows, cols>::SetCol(uint8_t cl, const T* vect)
 template <typename T, uint8_t rows, uint8_t cols>
 template <uint8_t _rows, uint8_t _cols>
 Matrix<T, rows, cols>& Matrix<T, rows, cols>::SetFromBlock(
-  uint8_t start_row, uint8_t start_col, const Matrix<T, _rows, _cols>& other)
+  const uint8_t start_row, const uint8_t start_col, const Matrix<T, _rows, _cols>& other)
 {
+  assert(start_row + rows - 1 <= _rows);
+  assert(start_col + cols - 1 <= _cols);
+
   for (uint8_t row = 0; row < rows; ++row)
     for (uint8_t col = 0; col < cols; ++col)
-      elements_[row][col] = other.elements_[row + start_row - 1][col + start_col - 1];
+      elements_[row][col] = other(row + start_row, col + start_col);
   return *this;
 }
 
@@ -212,19 +222,22 @@ Matrix<T, rows, cols>& Matrix<T, rows, cols>::SetIdentity()
 }
 
 template <typename T, uint8_t rows, uint8_t cols>
-Matrix<T, rows, cols>& Matrix<T, rows, cols>::SetRow(uint8_t rw,
+Matrix<T, rows, cols>& Matrix<T, rows, cols>::SetRow(const uint8_t rw,
                                                      const Matrix<T, 1, cols>& matrix1d)
 {
   for (uint8_t i = 0; i < cols; i++)
   {
-    elements_[rw - 1][i] = matrix1d.elements_[0][i];
+    elements_[rw - 1][i] = matrix1d(1, i + 1);
   }
   return *this;
 }
 
 template <typename T, uint8_t rows, uint8_t cols>
-Matrix<T, rows, cols>& Matrix<T, rows, cols>::SetRow(uint8_t rw, const T* vect)
+Matrix<T, rows, cols>& Matrix<T, rows, cols>::SetRow(const uint8_t rw, const T* vect,
+                                                     const size_t size)
 {
+  assert(size == cols);
+
   for (uint8_t i = 0; i < cols; i++)
   {
     elements_[rw - 1][i] = vect[i];
@@ -267,20 +280,22 @@ Matrix<T, cols, rows> Matrix<T, rows, cols>::Transpose() const
 }
 
 template <typename T, uint8_t rows, uint8_t cols>
-Matrix<T, rows, cols>& Matrix<T, rows, cols>::SwapRow(uint8_t row1, uint8_t row2)
+Matrix<T, rows, cols>& Matrix<T, rows, cols>::SwapRow(const uint8_t row1,
+                                                      const uint8_t row2)
 {
   T temp;
   for (uint8_t i = 0; i < cols; i++)
   {
     temp = elements_[row1 - 1][i];
     elements_[row1 - 1][i] = elements_[row2 - 1][i];
-    elements_[row1 - 1][i] = temp;
+    elements_[row2 - 1][i] = temp;
   }
   return *this;
 }
 
 template <typename T, uint8_t rows, uint8_t cols>
-Matrix<T, rows, cols>& Matrix<T, rows, cols>::SwapCol(uint8_t col1, uint8_t col2)
+Matrix<T, rows, cols>& Matrix<T, rows, cols>::SwapCol(const uint8_t col1,
+                                                      const uint8_t col2)
 {
   T temp;
   for (uint8_t i = 0; i < rows; i++)
@@ -297,7 +312,7 @@ Matrix<T, rows, cols>& Matrix<T, rows, cols>::SwapCol(uint8_t col1, uint8_t col2
 ///////////////////////////////////////////////////////////////////////////////
 
 template <typename T, uint8_t rows, uint8_t cols>
-Matrix<T, 1, cols> Matrix<T, rows, cols>::GetRow(uint8_t row) const
+Matrix<T, 1, cols> Matrix<T, rows, cols>::GetRow(const uint8_t row) const
 {
   Matrix<T, 1, cols> row_vect;
   for (uint8_t col = 0; col < cols; ++col)
@@ -306,9 +321,9 @@ Matrix<T, 1, cols> Matrix<T, rows, cols>::GetRow(uint8_t row) const
 }
 
 template <typename T, uint8_t rows, uint8_t cols>
-Matrix<T, rows, 1> Matrix<T, rows, cols>::GetCol(uint8_t col) const
+VectorX<T, rows> Matrix<T, rows, cols>::GetCol(const uint8_t col) const
 {
-  Matrix<T, rows, 1> col_vect;
+  VectorX<T, rows> col_vect;
   for (uint8_t row = 0; row < rows; ++row)
     col_vect(row + 1, 1) = elements_[row][col - 1];
   return col_vect;
@@ -333,7 +348,8 @@ bool Matrix<T, rows, cols>::IsSymmetric() const
 }
 
 template <typename T, uint8_t rows, uint8_t cols>
-bool Matrix<T, rows, cols>::IsApprox(const Matrix<T, rows, cols>& other, double tol /* = 1e-7*/) const
+bool Matrix<T, rows, cols>::IsApprox(const Matrix<T, rows, cols>& other,
+                                     const double tol /* = epsilon*/) const
 {
   for (uint8_t row = 0; row < rows; ++row)
     for (uint8_t col = 0; col < cols; ++col)
@@ -463,7 +479,7 @@ Matrix<T, rows1, cols2> operator*(const Matrix<T, rows1, dim_common>& matrix1,
 }
 
 template <typename T, uint8_t rows, uint8_t cols>
-Matrix<T, rows, cols> operator*(const Matrix<T, rows, 1>& vvect,
+Matrix<T, rows, cols> operator*(const VectorX<T, rows>& vvect,
                                 const Matrix<T, 1, cols>& hvect)
 {
   Matrix<T, rows, cols> prod;
@@ -498,12 +514,22 @@ Matrix<T, rows, cols> operator*(const Matrix<T, rows, cols>& matrix, const T& sc
 }
 
 template <uint8_t rows, typename T>
-Matrix<T, rows, 1> operator*(const Matrix<T, rows, 1>& vvect1,
-                             const Matrix<T, rows, 1>& vvect2)
+Matrix<T, rows, 1> operator*(const VectorX<T, rows>& vvect1,
+                             const VectorX<T, rows>& vvect2)
 {
-  Matrix<T, rows, 1> prod;
+  VectorX<T, rows> prod;
   for (uint8_t row = 1; row <= rows; ++row)
     prod(row, 1) = vvect1(row, 1) * vvect2(row, 1);
+  return prod;
+}
+
+template <uint8_t cols, typename T>
+Matrix<T, 1, cols> operator*(const Matrix<T, 1, cols>& hvect1,
+                             const Matrix<T, 1, cols>& hvect2)
+{
+  Matrix<T, 1, cols> prod;
+  for (uint8_t col = 1; col <= cols; ++col)
+    prod(1, col) = hvect1(1, col) * hvect2(1, col);
   return prod;
 }
 
@@ -551,7 +577,7 @@ Matrix<T, rows1 + rows2, cols> VertCat(const Matrix<T, rows1, cols>& matrix_up,
 }
 
 template <typename T, uint8_t dim>
-T Dot(Matrix<T, dim, 1>& vvect1, Matrix<T, dim, 1>& vvect2)
+T Dot(const VectorX<T, dim>& vvect1, const VectorX<T, dim>& vvect2)
 {
   T result = 0;
   for (uint8_t i = 1; i <= dim; ++i)
@@ -562,7 +588,7 @@ T Dot(Matrix<T, dim, 1>& vvect1, Matrix<T, dim, 1>& vvect2)
 }
 
 template <typename T, uint8_t dim>
-T Dot(const Matrix<T, 1, dim>& hvect, const Matrix<T, dim, 1>& vvect)
+T Dot(const Matrix<T, 1, dim>& hvect, const VectorX<T, dim>& vvect)
 {
   T result = 0;
   for (uint8_t i = 1; i <= dim; ++i)
@@ -572,7 +598,7 @@ T Dot(const Matrix<T, 1, dim>& hvect, const Matrix<T, dim, 1>& vvect)
   return result;
 }
 
-template <typename T, uint8_t dim> T Norm(const Matrix<T, dim, 1>& vvect)
+template <typename T, uint8_t dim> double Norm(const VectorX<T, dim>& vvect)
 {
   T result = 0;
   for (uint8_t i = 1; i <= dim; i++)
@@ -580,7 +606,7 @@ template <typename T, uint8_t dim> T Norm(const Matrix<T, dim, 1>& vvect)
   return sqrt(result);
 }
 
-template <typename T, uint8_t dim> T Norm(const Matrix<T, 1, dim>& hvect)
+template <typename T, uint8_t dim> double Norm(const Matrix<T, 1, dim>& hvect)
 {
   T result = 0;
   for (uint8_t i = 1; i <= dim; i++)
@@ -589,14 +615,14 @@ template <typename T, uint8_t dim> T Norm(const Matrix<T, 1, dim>& hvect)
 }
 
 template <typename T>
-Matrix<T, 3, 1> Cross(const Matrix<T, 3, 1>& vvect3d1, const Matrix<T, 3, 1>& vvect3d2)
+Vector3<T> Cross(const Vector3<T>& vvect3d1, const Vector3<T>& vvect3d2)
 {
   return Anti(vvect3d1) * vvect3d2;
 }
 
-template <typename T> Matrix<T, 3, 3> Anti(const Matrix<T, 3, 1>& vvect3d)
+template <typename T> Matrix3<T> Anti(const Vector3<T>& vvect3d)
 {
-  Matrix<T, 3, 3> result;
+  Matrix3<T> result;
   result(1, 1) = 0;
   result(2, 2) = 0;
   result(3, 3) = 0;
