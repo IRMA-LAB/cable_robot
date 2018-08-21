@@ -5,11 +5,13 @@
 #-------------------------------------------------
 
 HEADERS = \
-    inc/matrix.h
+    inc/matrix.h \
+    inc/solvers.h
 
 SOURCES = \
     src/matrix.cpp \
-    tests/matrix_test.cpp
+    tests/matrix_test.cpp \
+    src/solvers.cpp
 
 INCLUDEPATH = inc src
 
