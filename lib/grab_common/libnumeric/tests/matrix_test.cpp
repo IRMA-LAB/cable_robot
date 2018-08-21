@@ -132,11 +132,11 @@ void TestMatrix::Constructors()
   // Double vector constructor.
   grabnum::VectorXd<ARRAY_SIZE(DValues_)> vvect(DValues_, ARRAY_SIZE(DValues_));
   grabnum::MatrixXd<1, ARRAY_SIZE(DValues_)> hvect(vvect.Transpose());
-  for (uint8_t i=1; i<=vvect.Size(); i++)
-    {
-      QVERIFY(vvect(i) == DValues_[i-1]);
-      QVERIFY(hvect(i) == DValues_[i-1]);
-    }
+  for (uint8_t i = 1; i <= vvect.Size(); i++)
+  {
+    QVERIFY(vvect(i) == DValues_[i - 1]);
+    QVERIFY(hvect(i) == DValues_[i - 1]);
+  }
 }
 
 void TestMatrix::ClassOperators()

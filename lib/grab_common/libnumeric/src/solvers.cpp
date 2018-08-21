@@ -1,3 +1,10 @@
+/**
+ * @file solvers.cpp
+ * @author Edoardo Idà, Simone Comari
+ * @date 21 Aug 2018
+ * @brief File containing definitions and implementation of solvers.
+ */
+
 #include "solvers.h"
 
 namespace grabnum

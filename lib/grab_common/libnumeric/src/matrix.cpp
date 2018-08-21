@@ -1,10 +1,16 @@
+/**
+ * @file matrix.cpp
+ * @author Edoardo Idà, Simone Comari
+ * @date 21 Aug 2018
+ * @brief File containing definitions and implementation of matrix class and utilities.
+ */
+
 #include <assert.h>
-#include <cmath>
 
 #include "matrix.h"
 
 #ifndef ARRAY_SIZE
-#define ARRAY_SIZE(x) (sizeof((x)) / sizeof((x)[0]))
+#define ARRAY_SIZE(x) (sizeof((x)) / sizeof((x)[0]))  /**< returns the size of a standard array*/
 #endif
 
 namespace grabnum
@@ -27,17 +33,17 @@ template <typename T, uint8_t rows, uint8_t cols> Matrix<T, rows, cols>::Matrix(
     *this = SetIdentity() * scalar;
 }
 
-  template <typename T, uint8_t rows, uint8_t cols>
-  Matrix<T, rows, cols>::Matrix(const T* values, const uint16_t size)
-  {
-    Fill(values, size);
-  }
+template <typename T, uint8_t rows, uint8_t cols>
+Matrix<T, rows, cols>::Matrix(const T* values, const uint16_t size)
+{
+  Fill(values, size);
+}
 
-  template <typename T, uint8_t rows, uint8_t cols>
-  Matrix<T, rows, cols>::Matrix(const std::vector<T> &values)
-  {
-    Fill(values);
-  }
+template <typename T, uint8_t rows, uint8_t cols>
+Matrix<T, rows, cols>::Matrix(const std::vector<T>& values)
+{
+  Fill(values);
+}
 
 template <typename T, uint8_t rows, uint8_t cols>
 template <typename T2>
@@ -193,7 +199,8 @@ Matrix<T, rows, cols>& Matrix<T, rows, cols>::SetCol(const uint8_t cl, const T* 
 }
 
 template <typename T, uint8_t rows, uint8_t cols>
-Matrix<T, rows, cols>& Matrix<T, rows, cols>::SetCol(const uint8_t cl, const std::vector<T> &vect)
+Matrix<T, rows, cols>& Matrix<T, rows, cols>::SetCol(const uint8_t cl,
+                                                     const std::vector<T>& vect)
 {
   assert(vect.size() == rows);
 
@@ -264,7 +271,8 @@ Matrix<T, rows, cols>& Matrix<T, rows, cols>::SetRow(const uint8_t rw, const T* 
 }
 
 template <typename T, uint8_t rows, uint8_t cols>
-Matrix<T, rows, cols>& Matrix<T, rows, cols>::SetRow(const uint8_t rw, const std::vector<T> &vect)
+Matrix<T, rows, cols>& Matrix<T, rows, cols>::SetRow(const uint8_t rw,
+                                                     const std::vector<T>& vect)
 {
   assert(vect.size() == cols);
 
@@ -296,7 +304,7 @@ Matrix<T, rows, cols>& Matrix<T, rows, cols>::Fill(const T* values, const uint16
 }
 
 template <typename T, uint8_t rows, uint8_t cols>
-Matrix<T, rows, cols>& Matrix<T, rows, cols>::Fill(const std::vector<T> &values)
+Matrix<T, rows, cols>& Matrix<T, rows, cols>::Fill(const std::vector<T>& values)
 {
   assert(values.size() == this->Size());
 
@@ -554,9 +562,8 @@ Matrix<T, rows, cols> operator*(const Matrix<T, rows, cols>& matrix, const T& sc
   return prod;
 }
 
-template <uint8_t rows, typename T>
-Matrix<T, rows, 1> operator*(const VectorX<T, rows>& vvect1,
-                             const VectorX<T, rows>& vvect2)
+template <typename T, uint8_t rows>
+VectorX<T, rows> operator*(const VectorX<T, rows>& vvect1, const VectorX<T, rows>& vvect2)
 {
   VectorX<T, rows> prod;
   for (uint8_t row = 1; row <= rows; ++row)
@@ -564,7 +571,7 @@ Matrix<T, rows, 1> operator*(const VectorX<T, rows>& vvect1,
   return prod;
 }
 
-template <uint8_t cols, typename T>
+template <typename T, uint8_t cols>
 Matrix<T, 1, cols> operator*(const Matrix<T, 1, cols>& hvect1,
                              const Matrix<T, 1, cols>& hvect2)
 {

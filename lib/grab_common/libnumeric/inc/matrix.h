@@ -1,3 +1,17 @@
+/**
+ * @file matrix.h
+ * @author Edoardo Idà, Simone Comari
+ * @date 21 Aug 2018
+ * @brief File containing matrix class and utilities to be included in the GRAB numeric
+ * library.
+ *
+ * In this file a simple implementation of a class object is provided, with its basic
+ * functionalities.
+ * Below the class there are some external independent functions which provide extra
+ * utilities related to matrix operations. All elements of this file are templated to be
+ * compatible with all different types and leave the user more flexibility.
+ */
+
 #ifndef GRABCOMMON_LIBNUMERIC_MATRIX_H_
 #define GRABCOMMON_LIBNUMERIC_MATRIX_H_
 
@@ -16,10 +30,13 @@
 #include <iomanip>
 #endif
 
+/**
+ * Namespace for GRAB numeric library.
+ */
 namespace grabnum
 {
 
-static constexpr double EPSILON = 1e-7;
+static constexpr double EPSILON = 1e-7; /**< tolerance for floating point comparison */
 
 /**
  * A Matlab-alike implementation of a matrix class to simplify and speed up standard
@@ -63,7 +80,7 @@ public:
    * @param[in] values A standard @a T vector.
    * @see Fill()
    */
-  Matrix(const std::vector<T> &values);
+  Matrix(const std::vector<T>& values);
   /**
    * Parametrized constructor from another matrix with the same shape and size.
    * Makes a copy of the given matrix. It also handle automatic casting in case of
@@ -122,7 +139,8 @@ public:
    * @param[in] other The matrix to be copied and type-casted.
    * @return A reference to @c *this.
    */
-  template <typename NewT> Matrix_t& operator=(const Matrix<NewT, rows, cols>& other);
+  template <typename NewT>
+  Matrix<T, rows, cols>& operator=(const Matrix<NewT, rows, cols>& other);
   /**
    * Give read-only access to a single entry of the matrix.
    *
@@ -153,7 +171,8 @@ public:
    *
    * param[in] lin_index The linear index of the desired entry.
    * @return The i-th entry of the matrix.
-   * @note Matrix indexing starts from 1 like in Matlab and read row-by-row, top-to-bottom.
+   * @note Matrix indexing starts from 1 like in Matlab and read row-by-row,
+   *top-to-bottom.
    */
   inline const T& operator()(const uint8_t lin_index) const
   {
@@ -167,7 +186,8 @@ public:
    *
    * param[in] lin_index The linear index of the desired entry.
    * @return The i-th entry of the matrix.
-   * @note Matrix indexing starts from 1 like in Matlab and read row-by-row, top-to-bottom.
+   * @note Matrix indexing starts from 1 like in Matlab and read row-by-row,
+   *top-to-bottom.
    */
   inline T& operator()(const uint8_t lin_index)
   {
@@ -285,7 +305,7 @@ public:
    * @param[in] vect The standard vector to be used to replace the column of  @c *this.
    * @return A reference to @c *this.
    */
-  Matrix_t& SetCol(const uint8_t col, const std::vector<T> &vect);
+  Matrix_t& SetCol(const uint8_t col, const std::vector<T>& vect);
   /**
    * Replaces @c *this with a block of @a other.
    *
@@ -300,8 +320,8 @@ public:
    * @todo example
    */
   template <uint8_t _rows, uint8_t _cols>
-  Matrix_t& SetFromBlock(const uint8_t start_row, const uint8_t start_col,
-                         const Matrix<T, _rows, _cols>& other);
+  Matrix<T, rows, cols>& SetFromBlock(const uint8_t start_row, const uint8_t start_col,
+                                      const Matrix<T, _rows, _cols>& other);
   /**
    * Set the matrix to an identity matrix.
    *
@@ -334,7 +354,7 @@ public:
    * @param[in] vect The standard vector to be used to replace the row of  @c *this.
    * @return A reference to @c *this.
    */
-  Matrix_t& SetRow(const uint8_t row, const std::vector<T> &vect);
+  Matrix_t& SetRow(const uint8_t row, const std::vector<T>& vect);
   /**
    * Sets the matrix to an empty matrix.
    *
@@ -355,7 +375,7 @@ public:
    * @param[in] values A reference to a standard @a T vector.
    * @return A reference to @c *this.
    */
-  Matrix_t& Fill(const std::vector<T> &values);
+  Matrix_t& Fill(const std::vector<T>& values);
 
   /**
    * Returns the transposed matrix.
@@ -427,40 +447,48 @@ private:
 /// Common typedef
 ///////////////////////////////////////////////////////////////////////////////
 
-template <typename T> using Vector2 = Matrix<T, 2, 1>;
-using Vector2i = Vector2<int>;
-using Vector2l = Vector2<int>;
-using Vector2f = Vector2<int>;
-using Vector2d = Vector2<int>;
+template <typename T> using Vector2 = Matrix<T, 2, 1>; /**< generic 2D vector */
+using Vector2i = Vector2<int>;                         /**< 2D vector of int */
+using Vector2l = Vector2<long>;                        /**< 2D vector of long */
+using Vector2f = Vector2<float>;                       /**< 2D vector of float */
+using Vector2d = Vector2<double>;                      /**< 2D vector of double */
 
-template <typename T> using Vector3 = Matrix<T, 3, 1>;
-using Vector3i = Vector3<int>;
-using Vector3l = Vector3<long>;
-using Vector3f = Vector3<float>;
-using Vector3d = Vector3<double>;
+template <typename T> using Vector3 = Matrix<T, 3, 1>; /**< generic 3D vector */
+using Vector3i = Vector3<int>;                         /**< 3D vector of int */
+using Vector3l = Vector3<long>;                        /**< 3D vector of long */
+using Vector3f = Vector3<float>;                       /**< 3D vector of float */
+using Vector3d = Vector3<double>;                      /**< 3D vector of double */
 
-template <typename T> using Matrix2 = Matrix<T, 2, 2>;
-using Matrix2i = Matrix2<int>;
-using Matrix2l = Matrix2<long>;
-using Matrix2f = Matrix2<float>;
-using Matrix2d = Matrix2<double>;
+template <typename T> using Matrix2 = Matrix<T, 2, 2>; /**< generic 2x2 matrix */
+using Matrix2i = Matrix2<int>;                         /**< 2x2 matrix of int */
+using Matrix2l = Matrix2<long>;                        /**< 2x2 matrix of long */
+using Matrix2f = Matrix2<float>;                       /**< 2x2 matrix of float */
+using Matrix2d = Matrix2<double>;                      /**< 2x2 matrix of double */
 
-template <typename T> using Matrix3 = Matrix<T, 3, 3>;
-using Matrix3i = Matrix3<int>;
-using Matrix3l = Matrix3<long>;
-using Matrix3f = Matrix3<float>;
-using Matrix3d = Matrix3<double>;
+template <typename T> using Matrix3 = Matrix<T, 3, 3>; /**< generic 3x3 matrix */
+using Matrix3i = Matrix3<int>;                         /**< 3x3 matrix of int */
+using Matrix3l = Matrix3<long>;                        /**< 3x3 matrix of long */
+using Matrix3f = Matrix3<float>;                       /**< 3x3 matrix of float */
+using Matrix3d = Matrix3<double>;                      /**< 3x3 matrix of double */
 
-template <uint8_t rows, uint8_t cols> using MatrixXi = Matrix<int, rows, cols>;
-template <uint8_t rows, uint8_t cols> using MatrixXl = Matrix<long, rows, cols>;
-template <uint8_t rows, uint8_t cols> using MatrixXf = Matrix<float, rows, cols>;
-template <uint8_t rows, uint8_t cols> using MatrixXd = Matrix<double, rows, cols>;
+template <uint8_t rows, uint8_t cols>
+using MatrixXi = Matrix<int, rows, cols>; /**< generic mxn matrix of int */
+template <uint8_t rows, uint8_t cols>
+using MatrixXl = Matrix<long, rows, cols>; /**< generic mxn matrix of long */
+template <uint8_t rows, uint8_t cols>
+using MatrixXf = Matrix<float, rows, cols>; /**< generic mxn matrix of float */
+template <uint8_t rows, uint8_t cols>
+using MatrixXd = Matrix<double, rows, cols>; /**< generic mxn matrix of double */
 
-template <typename T, uint8_t dim> using VectorX = Matrix<T, dim, 1>;
-template <uint8_t dim> using VectorXi = Matrix<int, dim, 1>;
-template <uint8_t dim> using VectorXl = Matrix<long, dim, 1>;
-template <uint8_t dim> using VectorXf = Matrix<float, dim, 1>;
-template <uint8_t dim> using VectorXd = Matrix<double, dim, 1>;
+template <typename T, uint8_t dim>
+using VectorX = Matrix<T, dim, 1>;                           /**< generic vector */
+template <uint8_t dim> using VectorXi = Matrix<int, dim, 1>; /**< generic vector of int */
+template <uint8_t dim>
+using VectorXl = Matrix<long, dim, 1>; /**< generic vector of long */
+template <uint8_t dim>
+using VectorXf = Matrix<float, dim, 1>; /**< generic vector of float */
+template <uint8_t dim>
+using VectorXd = Matrix<double, dim, 1>; /**< generic vector of double */
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Matrix utilities
@@ -569,7 +597,7 @@ Matrix<T, rows1, cols2> operator*(const Matrix<T, rows1, dim_common>& matrix1,
  * @return A @a m x @a n matrix.
  */
 template <typename T, uint8_t rows, uint8_t cols>
-Matrix<T, rows, cols> operator*(const Matrix<T, rows, 1>& vvect,
+Matrix<T, rows, cols> operator*(const VectorX<T, rows>& vvect,
                                 const Matrix<T, 1, cols>& hvect);
 
 /**
@@ -599,9 +627,9 @@ Matrix<T, rows, cols> operator*(const Matrix<T, rows, cols>& matrix, const T& sc
  * @param[in] vvect2 A m-dimensional vertical vector.
  * @return A m-dimensional vertical vector.
  */
-template <uint8_t rows, typename T>
-Matrix<T, rows, 1> operator*(const Matrix<T, rows, 1>& vvect1,
-                             const Matrix<T, rows, 1>& vvect2);
+template <typename T, uint8_t rows>
+VectorX<T, rows> operator*(const VectorX<T, rows>& vvect1,
+                           const VectorX<T, rows>& vvect2);
 
 /**
  * Element-wise vector multiplication.
@@ -610,7 +638,7 @@ Matrix<T, rows, 1> operator*(const Matrix<T, rows, 1>& vvect1,
  * @param[in] hvect2 A m-dimensional horizontal vector.
  * @return A m-dimensional horizontal vector.
  */
-template <uint8_t cols, typename T>
+template <typename T, uint8_t cols>
 Matrix<T, 1, cols> operator*(const Matrix<T, 1, cols>& hvect1,
                              const Matrix<T, 1, cols>& hvect2);
 
@@ -654,7 +682,7 @@ Matrix<T, rows1 + rows2, cols> VertCat(const Matrix<T, rows1, cols>& matrix_up,
  * @return A scalar value.
  */
 template <typename T, uint8_t dim>
-T Dot(const Matrix<T, dim, 1>& vvect1, const Matrix<T, dim, 1>& vvect2);
+T Dot(const VectorX<T, dim>& vvect1, const VectorX<T, dim>& vvect2);
 
 /**
  * Vector dot-product operation.
@@ -664,7 +692,7 @@ T Dot(const Matrix<T, dim, 1>& vvect1, const Matrix<T, dim, 1>& vvect2);
  * @return A scalar value.
  */
 template <typename T, uint8_t dim>
-T Dot(const Matrix<T, 1, dim>& hvect, const Matrix<T, dim, 1>& vvect);
+T Dot(const Matrix<T, 1, dim>& hvect, const VectorX<T, dim>& vvect);
 
 /**
  * Vector L2-norm (i.e. Euclidean norm).
@@ -672,7 +700,7 @@ T Dot(const Matrix<T, 1, dim>& hvect, const Matrix<T, dim, 1>& vvect);
  * @param[in] vvect A m-dimensional vertical vector.
  * @return A scalar value.
  */
-template <typename T, uint8_t dim> double Norm(const Matrix<T, dim, 1>& vvect);
+template <typename T, uint8_t dim> double Norm(const VectorX<T, dim>& vvect);
 
 /**
  * Vector L2-norm (i.e. Euclidean norm).
