@@ -97,12 +97,18 @@ void TestMatrix::Constructors()
     for (uint8_t j = 1; j <= m; ++j)
       QCOMPARE(mat_nxm_f(i, j), vec[(i - 1) * m + (j - 1)]);
 
-  // Constructor from standard array.
+  // Constructor from standard array (hard way).
   std::vector<float> std_vec(vec, vec + sizeof(vec) / sizeof(float));
   grabnum::MatrixXf<n, m> mat_nxm_f2(&std_vec.front(), std_vec.size());
   for (uint8_t i = 1; i <= n; ++i)
     for (uint8_t j = 1; j <= m; ++j)
       QCOMPARE(mat_nxm_f2(i, j), std_vec[(i - 1) * m + (j - 1)]);
+
+  // Constructor from standard array (easy way).
+  grabnum::MatrixXf<n, m> mat_nxm_f4(std_vec);
+  for (uint8_t i = 1; i <= n; ++i)
+    for (uint8_t j = 1; j <= m; ++j)
+      QCOMPARE(mat_nxm_f4(i, j), std_vec[(i - 1) * m + (j - 1)]);
 
   // Constructor from copy.
   grabnum::MatrixXf<n, m> mat_nxm_f3 = mat_nxm_f2;
@@ -122,13 +128,22 @@ void TestMatrix::Constructors()
   grabnum::MatrixXl<n, m> mat_nxm_i2 = mat_nxm_f2;
   QVERIFY(mat_nxm_i2 != mat_nxm_f2);
   QVERIFY(mat_nxm_i2.Type() != mat_nxm_f2.Type());
+
+  // Double vector constructor.
+  grabnum::VectorXd<ARRAY_SIZE(DValues_)> vvect(DValues_, ARRAY_SIZE(DValues_));
+  grabnum::MatrixXd<1, ARRAY_SIZE(DValues_)> hvect(vvect.Transpose());
+  for (uint8_t i=1; i<=vvect.Size(); i++)
+    {
+      QVERIFY(vvect(i) == DValues_[i-1]);
+      QVERIFY(hvect(i) == DValues_[i-1]);
+    }
 }
 
 void TestMatrix::ClassOperators()
 {
   double scalar = 0.1;
   double values[ARRAY_SIZE(DValues_)];
-  for (size_t i = 0; i < ARRAY_SIZE(DValues_); ++i)
+  for (uint16_t i = 0; i < ARRAY_SIZE(DValues_); ++i)
     values[i] = DValues_[i] + scalar;
   grabnum::MatrixXd<kDim1_, kDim2_> other(values, mat23d_.Size());
   grabnum::MatrixXd<kDim1_, kDim2_> mat23d_copy(mat23d_);
@@ -174,7 +189,7 @@ void TestMatrix::ClassOperators()
   QVERIFY(other.IsApprox(other_copy));
 
   // Test scalar multiplication
-  for (size_t i = 0; i < ARRAY_SIZE(DValues_); ++i)
+  for (uint16_t i = 0; i < ARRAY_SIZE(DValues_); ++i)
     values[i] = DValues_[i] * scalar;
   grabnum::MatrixXd<kDim1_, kDim2_> mat23d_scaled(values, mat23d_.Size());
   mat23d_copy *= scalar;
@@ -210,8 +225,8 @@ void TestMatrix::ClassOperators()
 
 void TestMatrix::Setters()
 {
-  const size_t dim1 = 5;
-  const size_t dim2 = 4;
+  const uint8_t dim1 = 5;
+  const uint8_t dim2 = 4;
   grabnum::MatrixXi<dim1, dim2> mat;
 
   // Test SetZero
@@ -231,8 +246,8 @@ void TestMatrix::Setters()
 
   // Test SetBlock
   mat.SetZero();
-  const size_t start_row = 2;
-  const size_t start_col = 3;
+  const uint8_t start_row = 2;
+  const uint8_t start_col = 3;
   mat.SetBlock(start_row, start_col, mat22i_);
   for (uint8_t i = 1; i <= dim1; ++i)
     for (uint8_t j = 1; j <= dim2; ++j)

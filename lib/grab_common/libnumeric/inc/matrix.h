@@ -55,7 +55,15 @@ public:
    * @param[in] size The number of elements in the vector.
    * @see Fill()
    */
-  Matrix(const T* values, const size_t size);
+  Matrix(const T* values, const uint16_t size);
+  /**
+   * Full constructor.
+   * Fills the matrix row-by-row with the elements of @a values.
+   *
+   * @param[in] values A standard @a T vector.
+   * @see Fill()
+   */
+  Matrix(const std::vector<T> &values);
   /**
    * Parametrized constructor from another matrix with the same shape and size.
    * Makes a copy of the given matrix. It also handle automatic casting in case of
@@ -70,13 +78,13 @@ public:
    *
    * @return A size.
    */
-  size_t Rows() const { return rows; }
+  uint8_t Rows() const { return rows; }
   /**
    * Returns numbers of rows.
    *
    * @return A size.
    */
-  size_t Cols() const { return cols; }
+  uint8_t Cols() const { return cols; }
   /**
    * Returns the matrix size, i.e. @a m x @a n.
    *
@@ -138,6 +146,34 @@ public:
   inline T& operator()(const uint8_t row, const uint8_t column)
   {
     return elements_[row - 1][column - 1];
+  }
+  /**
+   * Give read-only access to a single entry of the unraveled matrix.
+   * This is particularly useful when accessing elements of a vector (aka 1D matrix).
+   *
+   * param[in] lin_index The linear index of the desired entry.
+   * @return The i-th entry of the matrix.
+   * @note Matrix indexing starts from 1 like in Matlab and read row-by-row, top-to-bottom.
+   */
+  inline const T& operator()(const uint8_t lin_index) const
+  {
+    uint8_t row = (lin_index - 1) / cols;
+    uint8_t column = (lin_index - 1) % cols;
+    return elements_[row][column];
+  }
+  /**
+   * Give access to a single entry of the unraveled matrix.
+   * This is particularly useful when accessing elements of a vector (aka 1D matrix).
+   *
+   * param[in] lin_index The linear index of the desired entry.
+   * @return The i-th entry of the matrix.
+   * @note Matrix indexing starts from 1 like in Matlab and read row-by-row, top-to-bottom.
+   */
+  inline T& operator()(const uint8_t lin_index)
+  {
+    uint8_t row = (lin_index - 1) / cols;
+    uint8_t column = (lin_index - 1) % cols;
+    return elements_[row][column];
   }
 
   /**
@@ -241,7 +277,15 @@ public:
    *number of rows in the original matrix.
    * @return A reference to @c *this.
    */
-  Matrix_t& SetCol(const uint8_t col, const T* vect, const size_t size);
+  Matrix_t& SetCol(const uint8_t col, const T* vect, const uint8_t size);
+  /**
+   * Sets a column of @c *this with the elements of a standard vector.
+   *
+   * @param[in] col The index of the column to be replaced.
+   * @param[in] vect The standard vector to be used to replace the column of  @c *this.
+   * @return A reference to @c *this.
+   */
+  Matrix_t& SetCol(const uint8_t col, const std::vector<T> &vect);
   /**
    * Replaces @c *this with a block of @a other.
    *
@@ -277,12 +321,20 @@ public:
    * Sets a row of @c *this with the elements of a standard vector.
    *
    * @param[in] row The index of the row to be replaced.
-   * @param[in] vect The standard vector to be used to replace the row of  @c *this.
+   * @param[in] vect A pointer to the vector to be used to replace the row of  @c *this.
    * @param[in] size The length of the row vector. It needs to be the same as the number
    *of rows in the original matrix.
    * @return A reference to @c *this.
    */
-  Matrix_t& SetRow(const uint8_t row, const T* vect, const size_t size);
+  Matrix_t& SetRow(const uint8_t row, const T* vect, const uint8_t size);
+  /**
+   * Sets a row of @c *this with the elements of a standard vector.
+   *
+   * @param[in] row The index of the row to be replaced.
+   * @param[in] vect The standard vector to be used to replace the row of  @c *this.
+   * @return A reference to @c *this.
+   */
+  Matrix_t& SetRow(const uint8_t row, const std::vector<T> &vect);
   /**
    * Sets the matrix to an empty matrix.
    *
@@ -296,7 +348,14 @@ public:
    * @param[in] size The number of elements in the vector.
    * @return A reference to @c *this.
    */
-  Matrix_t& Fill(const T* values, const size_t size);
+  Matrix_t& Fill(const T* values, const uint16_t size);
+  /**
+   * Fills the matrix row-by-row with the elements of @a values.
+   *
+   * @param[in] values A reference to a standard @a T vector.
+   * @return A reference to @c *this.
+   */
+  Matrix_t& Fill(const std::vector<T> &values);
 
   /**
    * Returns the transposed matrix.
@@ -643,6 +702,7 @@ template <typename T> Matrix3<T> Anti(const Vector3<T>& vvect3d);
 
 } //  end namespace grabnum
 
+// This is a trick to define templated functions in a source file.
 #include "matrix.cpp"
 
 #endif /* GRABCOMMON_LIBNUMERIC_MATRIX_H_ */
