@@ -38,6 +38,7 @@
 # Build folders
 build
 /lib/grab_common/libnumeric/build*
+/lib/grab_common/libgeom/build*
 
 /.cproject
 /.project
@@ -46,4 +47,5 @@ build
 
 # Documentation
 /lib/grab_common/libnumeric/doc*
-/lib/grab_common/libnumeric/Doxyfile
+/lib/grab_common/libgeom/doc*
+Doxyfile
