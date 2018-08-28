@@ -1,20 +1,19 @@
 #include <QString>
 #include <QtTest>
 
+/**
+ * @brief The LibcdprTest class
+ */
 class LibcdprTest : public QObject
 {
   Q_OBJECT
 
-public:
-  LibcdprTest();
-
 private Q_SLOTS:
+  /**
+   * @brief testCase1
+   */
   void testCase1();
 };
-
-LibcdprTest::LibcdprTest()
-{
-}
 
 void LibcdprTest::testCase1()
 {

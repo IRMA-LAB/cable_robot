@@ -39,6 +39,7 @@
 build
 /lib/grab_common/libnumeric/build*
 /lib/grab_common/libgeom/build*
+/lib/grab_common/libcdpr/build*
 
 /.cproject
 /.project
@@ -48,4 +49,5 @@ build
 # Documentation
 /lib/grab_common/libnumeric/doc*
 /lib/grab_common/libgeom/doc*
+/lib/grab_common/libcdpr/doc*
 Doxyfile
