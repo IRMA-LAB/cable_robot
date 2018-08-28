@@ -109,6 +109,37 @@ public:
    */
   uint16_t Size() const { return rows * cols; }
   /**
+   * Returns the maximum value inside the matrix.
+   *
+   * @return The maximum value.
+   */
+  inline T Max() const { return this(MaxIdx()); }
+  /**
+   * Returns the minimum value inside the matrix.
+   *
+   * @return The minimum value.
+   */
+  inline T Min() const { return this(MinIdx()); }
+  /**
+   * Returns the linear index of the maximum value inside the matrix.
+   *
+   * @return The linear index of the maximum value.
+   */
+  uint16_t MaxIdx() const;
+  /**
+   * Returns the linear index of the minimum value inside the matrix.
+   *
+   * @return The linear index of the minimum value.
+   */
+  uint16_t MinIdx() const;
+  /**
+   * Returns the linear index corresponding to a standard double index.
+   *
+   * @return The linear index corresponding to a standard double index.
+   */
+  inline uint16_t LinIdx(const uint8_t row, const uint8_t col) const
+  { return (row - 1) * cols + col; }
+  /**
    * Returns the matrix type.
    *
    * @return A constant reference to @c std::type_info.

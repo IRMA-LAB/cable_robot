@@ -410,6 +410,52 @@ bool Matrix<T, rows, cols>::IsApprox(const Matrix<T, rows, cols>& other,
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+/// Matrix internal utilities
+///////////////////////////////////////////////////////////////////////////////
+
+template <typename T, uint8_t rows, uint8_t cols>
+uint16_t Matrix<T, rows, cols>::MaxIdx() const
+{
+  uint16_t index;
+  uint8_t i_max = 0;
+  uint8_t j_max = 0;
+  T max = elements_[0][0];
+  for (uint8_t row = 0; row < rows; ++row)
+    for (uint8_t col = 0; col < cols; ++col)
+    {
+      if (elements_[row][col] > max)
+        {
+          max = elements_[row][col];
+          i_max = row;
+          j_max = col;
+        }
+    }
+  index = i_max * cols + j_max + 1;
+  return index;
+}
+
+template <typename T, uint8_t rows, uint8_t cols>
+uint16_t Matrix<T, rows, cols>::MinIdx() const
+{
+  uint16_t index;
+  uint8_t i_min = 0;
+  uint8_t j_min = 0;
+  T min = elements_[0][0];
+  for (uint8_t row = 0; row < rows; ++row)
+    for (uint8_t col = 0; col < cols; ++col)
+    {
+      if (elements_[row][col] < min)
+        {
+          min = elements_[row][col];
+          i_min = row;
+          j_min = col;
+        }
+    }
+  index = i_min * cols + j_min + 1;
+  return index;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 /// Matrix external utilities
 ///////////////////////////////////////////////////////////////////////////////
 
