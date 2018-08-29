@@ -35,7 +35,9 @@ SOURCES += \
 
 INCLUDEPATH += \
         ../libgeom/inc \
+        ../libgeom/src \
         ../libnumeric/inc \
+        ../libnumeric/src \
         inc
 
 DEFINES += SRCDIR=\\\"$$PWD/\\\"

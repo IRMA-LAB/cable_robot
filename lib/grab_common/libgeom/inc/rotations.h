@@ -20,7 +20,8 @@
  * @f[
  *     ^0\mathbf{R}_1 =
  *                      \begin{bmatrix}
- *                          ^0\mathbf{\hat{x}}_1 & ^0\mathbf{\hat{y}}_1 & ^0\mathbf{\hat{z}}_1
+ *                          ^0\mathbf{\hat{x}}_1 & ^0\mathbf{\hat{y}}_1 &
+ *^0\mathbf{\hat{z}}_1
  *                      \end{bmatrix}
  * @f]
  * 2. @f$^0\mathbf{R}_1@f$ defines the coordinate transformation between the
@@ -37,7 +38,8 @@
  * @note
  * ### Differential angular kinematics ###
  * @note
- * In general, given a triple of angles @f$\boldsymbol\epsilon@f$, i.e. a parametrization of the
+ * In general, given a triple of angles @f$\boldsymbol\epsilon@f$, i.e. a parametrization
+ *of the
  * orientation of a rigid body, a transformation matrix
  * @f$\mathbf{H}(\boldsymbol{\epsilon})@f$ exists such that:
  * @f[ \boldsymbol{\omega} = \mathbf{H}(\boldsymbol\epsilon)\dot{\boldsymbol\epsilon} @f]
@@ -115,7 +117,7 @@ grabnum::Matrix3d RotY(const double angle);
 grabnum::Matrix3d RotZ(const double angle);
 
 /**
- * @brief Rotation matrix based on @a Tait-Bryan angles convention and @f$X_1Y_2Z_3@f$
+ * @brief Rotation matrix based on @a _Tait-Bryan_ angles convention and @f$X_1Y_2Z_3@f$
  *order.
  *
  * _Tait-Bryan_ angles @f$(\alpha,\beta,\gamma)@f$ represent three rotations, applied
@@ -143,6 +145,36 @@ grabnum::Matrix3d RotZ(const double angle);
  * @return A 3x3 orthogonal matrix (double).
  */
 grabnum::Matrix3d RotXYZ(const double alpha, const double beta, const double gamma);
+/**
+ * @brief Rotation matrix based on @a _Tait-Bryan_ angles convention and @f$X_1Y_2Z_3@f$
+ *order.
+ *
+ * _Tait-Bryan_ angles @f$(\alpha,\beta,\gamma)@f$ represent three rotations, applied
+ * sequentially about axes @f$\mathbf{x}_0, \mathbf{y}_1,\mathbf{z}_2@f$ of the _current_
+ * frame @f$\mathcal{F}_0, \mathcal{F}_1, \mathcal{F}_2@f$.
+ *
+ * Consider a base frame @f$\mathcal{F}_0@f$. By applying the three rotations we have:
+ * - A frame @f$\mathcal{F}_1@f$ obtained with the rotation @f$\alpha@f$ about
+ * @f$\mathbf{x}_0@f$
+ * - A frame @f$\mathcal{F}_2@f$ obtained from @f$\mathcal{F}_1@f$ with the rotation
+ * @f$\beta@f$ about @f$\mathbf{y}_1@f$
+ * - A frame @f$\mathcal{F}_3@f$ obtaine from @f$\mathcal{F}_2@f$ with the rotation
+ * @f$\gamma@f$ about @f$\mathbf{z}_2@f$
+ * .
+ * By composing the three rotations, the total rotation from @f$\mathcal{F}_0@f$ to
+ * @f$\mathcal{F}_3@f$ is:
+ * @f[
+ * ^0\mathbf{R}_3 = \mathbf{R}_{xyz}(\alpha,\beta,\gamma) = \mathbf{R}_{x_0}(\alpha)
+ * \mathbf{R}_{y_1}(\beta) \mathbf{R}_{z_2}(\gamma)
+ * @f]
+ *
+ * @param[in] angles [rad] _Tait-Bryan_ angles @f$(\alpha,\beta,\gamma)@f$ vector.
+ * @return A 3x3 orthogonal matrix (double).
+ */
+grabnum::Matrix3d RotXYZ(const grabnum::Vector3d& angles)
+{
+  return RotXYZ(angles(1), angles(2), angles(3));
+}
 
 /**
  * @brief Rotation matrix based on _Roll, Pitch, Yaw_ angles convention (from aviation).
@@ -167,6 +199,30 @@ grabnum::Matrix3d RotXYZ(const double alpha, const double beta, const double gam
  * @return A 3x3 orthogonal matrix (double).
  */
 grabnum::Matrix3d RotRPY(const double roll, const double pitch, const double yaw);
+/**
+ * @brief Rotation matrix based on _Roll, Pitch, Yaw_ angles convention (from aviation).
+ *
+ * _Roll, pitch, yaw_ angles @f$(\phi,\theta,\psi)@f$ represent three consecutive
+ *rotations
+ * about the axes of the _base_ frame @f$\mathcal{F}_0@f$:
+ * - _roll_ is a counter-clockwise rotation of @f$\phi@f$ about the @f$x_0@f$-axis
+ * - _pitch_ is a counter-clockwise rotation of @f$\theta@f$ about the @f$y_0@f$-axis
+ * - _yaw_ is a counter-clockwise rotation of @f$\psi@f$ about the @f$z_0@f$-axis
+ * .
+ * By composing the three rotations, the total rotation from @f$\mathcal{F}_0@f$ to
+ * @f$\mathcal{F}_3@f$ is:
+ * @f[
+ * ^0\mathbf{R}_3 = \mathbf{R}_{RPY}(\phi,\theta,\psi) = \mathbf{R}_{z_0}(\psi)
+ * \mathbf{R}_{y_0}(\theta) \mathbf{R}_{x_0}(\phi)
+ * @f]
+ *
+ * @param[in] rpy [rad]  _Roll, pitch, yaw_ angles @f$(\phi,\theta,\psi)@f$ vector.
+ * @return A 3x3 orthogonal matrix (double).
+ */
+grabnum::Matrix3d RotRPY(const grabnum::Vector3d& rpy)
+{
+  return RotRPY(rpy(1), rpy(2), rpy(3));
+}
 
 /**
  * @brief Rotation matrix based on _Euler_ angles convention and @f$Z_1Y_2Z_3@f$ order.
@@ -196,6 +252,35 @@ grabnum::Matrix3d RotRPY(const double roll, const double pitch, const double yaw
  * @return A 3x3 orthogonal matrix (double).
  */
 grabnum::Matrix3d RotZYZ(const double alpha, const double beta, const double gamma);
+/**
+ * @brief Rotation matrix based on _Euler_ angles convention and @f$Z_1Y_2Z_3@f$ order.
+ *
+ * _Euler_ angles @f$(\alpha,\beta,\gamma)@f$ represent three rotations, applied
+ * sequentially about axes @f$\mathbf{z}_0, \mathbf{y}_1,\mathbf{z}_2@f$ of the _current_
+ * frame @f$\mathcal{F}_0, \mathcal{F}_1, \mathcal{F}_2@f$.
+ *
+ * Consider a base frame @f$\mathcal{F}_0@f$. By applying the three rotations we have:
+ * - A frame @f$\mathcal{F}_1@f$ obtained with the rotation @f$\alpha@f$ about
+ * @f$\mathbf{z}_0@f$
+ * - A frame @f$\mathcal{F}_2@f$ obtained from @f$\mathcal{F}_1@f$ with the rotation
+ * @f$\beta@f$ about @f$\mathbf{y}_1@f$
+ * - A frame @f$\mathcal{F}_3@f$ obtaine from @f$\mathcal{F}_2@f$ with the rotation
+ * @f$\gamma@f$ about @f$\mathbf{z}_2@f$
+ * .
+ * By composing the three rotations, the total rotation from @f$\mathcal{F}_0@f$ to
+ * @f$\mathcal{F}_3@f$ is:
+ * @f[
+ * ^0\mathbf{R}_3 = \mathbf{R}_{zyz}(\alpha,\beta,\gamma) = \mathbf{R}_{z_0}(\alpha)
+ * \mathbf{R}_{y_1}(\beta) \mathbf{R}_{z_2}(\gamma)
+ * @f]
+ *
+ * @param[in] angles [rad] _Euler_ angles @f$(\alpha,\beta,\gamma)@f$ vector.
+ * @return A 3x3 orthogonal matrix (double).
+ */
+grabnum::Matrix3d RotZYZ(const grabnum::Vector3d& angles)
+{
+  return RotZYZ(angles(1), angles(2), angles(3));
+}
 
 /**
  * @brief Rotation matrix based on _tilt-and-torsion_ angle system.
@@ -220,6 +305,29 @@ grabnum::Matrix3d RotZYZ(const double alpha, const double beta, const double gam
  */
 grabnum::Matrix3d RotTiltTorsion(const double tilt_azimuth, const double tilt,
                                  const double torsion);
+/**
+ * @brief Rotation matrix based on _tilt-and-torsion_ angle system.
+
+ * _Tilt-and-torsion_ angle system is a variation of _Euler_ angles convention where:
+ * - @f$\alpha = \phi @f$ is the _tilt-azimuth_ angle
+ * - @f$\beta = \theta @f$ is the _tilt_ angle
+ * - @f$\gamma = \tau -  \phi@f$, being @f$\tau@f$ the _torsion_ angle
+ * .
+ * Hence, the total rotation from @f$\mathcal{F}_0@f$ to @f$\mathcal{F}_3@f$ becomes:
+ * @f[
+ * ^0\mathbf{R}_3 = \mathbf{R}_{zyz}(\alpha,\beta,\gamma) =
+ * \mathbf{R}_{zyz}(\phi,\theta,\tau -  \phi) =
+ * \mathbf{R}_{z_0}(\phi) \mathbf{R}_{y_1}(\theta) \mathbf{R}_{z_2}(\tau -  \phi)
+ * @f]
+ *
+ * @param[in] angles [rad] _Tilt-and-torsion_ angles @f$(\phi,\theta,\tau)@f$ vector.
+ * @return A 3x3 orthogonal matrix (double).
+ * @see RotZYZ()
+ */
+grabnum::Matrix3d RotTiltTorsion(const grabnum::Vector3d& angles)
+{
+  return RotTiltTorsion(angles(1), angles(2), angles(3));
+}
 
 /**
  * @brief Transformation matrix @f$\mathbf{H}@f$ between the derivative of Tait-Bryan
@@ -231,21 +339,42 @@ grabnum::Matrix3d RotTiltTorsion(const double tilt_azimuth, const double tilt,
  * @return A 3x3 matrix (double).
  */
 grabnum::Matrix3d HtfXYZ(const double alpha, const double beta);
+/**
+ * @brief Transformation matrix @f$\mathbf{H}@f$ between the derivative of _Tait-Bryan_
+ *angles and angular
+ * velocity vector @f$\boldsymbol\omega@f$.
+ *
+ * @param[in] angles [rad] _Tait-Bryan_ angles @f$(\alpha,\beta,\gamma)@f$ vector.
+ * @return A 3x3 matrix (double).
+ */
+grabnum::Matrix3d HtfXYZ(const grabnum::Vector3d& angles)
+{
+  return HtfXYZ(angles(1), angles(2));
+}
 
 /**
  * @brief Transformation matrix @f$\mathbf{H}@f$ between the derivative of
- *tilt-and-torsion angles and
- *angular
- * velocity vector @f$\boldsymbol\omega@f$.
+ * _tilt-and-torsion_ angles and angular velocity vector @f$\boldsymbol\omega@f$.
  *
- * @param tilt_azimuth [rad] Tilt-azimuth angle (about @f$z_0@f$-axis).
- * @param tilt [rad] Tilt angle (about @f$y_1@f$-axis).
+ * @param[in] tilt_azimuth [rad] Tilt-azimuth angle (about @f$z_0@f$-axis).
+ * @param[in] tilt [rad] Tilt angle (about @f$y_1@f$-axis).
  * @return A 3x3 matrix (double).
  */
 grabnum::Matrix3d HtfTiltTorsion(const double tilt_azimuth, const double tilt);
+/**
+ * @brief Transformation matrix @f$\mathbf{H}@f$ between the derivative of
+ * _tilt-and-torsion_ angles and angular velocity vector @f$\boldsymbol\omega@f$.
+ *
+ * @param[in] angles [rad] _Tilt-and-torsion_ angles @f$(\phi,\theta,\tau)@f$ vector.
+ * @return A 3x3 matrix (double).
+ */
+grabnum::Matrix3d HtfTiltTorsion(const grabnum::Vector3d& angles)
+{
+  return HtfTiltTorsion(angles(1), angles(2));
+}
 
 /**
- * @brief Transformation matrix @f$\mathbf{H}@f$ between the derivative of Euler angles
+ * @brief Transformation matrix @f$\mathbf{H}@f$ between the derivative of _Euler_ angles
  * and angular velocity vector @f$\boldsymbol\omega@f$.
  *
  * @param[in] alpha [rad] Rotation angle about @f$z_0@f$-axis.
@@ -255,9 +384,20 @@ grabnum::Matrix3d HtfTiltTorsion(const double tilt_azimuth, const double tilt);
 grabnum::Matrix3d HtfZYZ(const double alpha, const double beta);
 
 /**
- * @brief Time derivative of transformation matrix between the derivative of Tait-Bryan
- *angles
+ * @brief Transformation matrix @f$\mathbf{H}@f$ between the derivative of _Euler_ angles
  * and angular velocity vector @f$\boldsymbol\omega@f$.
+ *
+ * @param[in] angles [rad] _Euler_ angles @f$(\alpha,\beta,\gamma)@f$ vector.
+ * @return A 3x3 matrix (double).
+ */
+grabnum::Matrix3d HtfZYZ(const grabnum::Vector3d& angles)
+{
+  return HtfZYZ(angles(1), angles(2));
+}
+
+/**
+ * @brief Time derivative of transformation matrix between the derivative of _Tait-Bryan_
+ * angles and angular velocity vector @f$\boldsymbol\omega@f$.
  *
  * @f[
  * \mathbf{\dot{H}}(\boldsymbol\epsilon, \boldsymbol{\dot{\epsilon}}) =
@@ -274,6 +414,26 @@ grabnum::Matrix3d HtfZYZ(const double alpha, const double beta);
  */
 grabnum::Matrix3d DHtfXYZ(const double alpha, const double beta, const double alpha_dot,
                           const double beta_dot);
+/**
+ * @brief Time derivative of transformation matrix between the derivative of _Tait-Bryan_
+ * angles and angular velocity vector @f$\boldsymbol\omega@f$.
+ *
+ * @f[
+ * \mathbf{\dot{H}}(\boldsymbol\epsilon, \boldsymbol{\dot{\epsilon}}) =
+ * \frac{d\mathbf{H}(\boldsymbol\epsilon)}{dt}
+ * @f]
+ *
+ * @param[in] angles [rad] _Tait-Bryan_ angles @f$(\alpha,\beta,\gamma)@f$ vector.
+ * @param[in] angles_dot [rad] _Tait-Bryan_ angles derivatives
+ * @f$(\dot\alpha,\dot\beta,\dot\gamma)@f$ vector.
+ * @return A 3x3 matrix (double).
+ * @see HtfXYZ()
+ */
+grabnum::Matrix3d DHtfXYZ(const grabnum::Vector3d& angles,
+                          const grabnum::Vector3d& angles_dot)
+{
+  return DHtfXYZ(angles(1), angles(2), angles_dot(1), angles_dot(2));
+}
 
 /**
  * @brief Time derivative of transformation matrix between the derivative of
@@ -295,6 +455,27 @@ grabnum::Matrix3d DHtfXYZ(const double alpha, const double beta, const double al
  */
 grabnum::Matrix3d DHtfTiltTorsion(const double tilt_azimuth, const double tilt,
                                   const double tilt_azimuth_dot, const double tilt_dot);
+/**
+ * @brief Time derivative of transformation matrix between the derivative of
+ *tilt-and-torsion
+ * angles and angular velocity vector @f$\boldsymbol\omega@f$.
+ *
+ * @f[
+ * \mathbf{\dot{H}}(\boldsymbol\epsilon, \boldsymbol{\dot{\epsilon}}) =
+ * \frac{d\mathbf{H}(\boldsymbol\epsilon)}{dt}
+ * @f]
+ *
+ * @param[in] angles [rad] _Tilt-and-torsion_ angles @f$(\phi,\theta,\tau)@f$ vector.
+ * @param[in] angles_dot [rad] _Tilt-and-torsion_ angles derivatives
+ * @f$(\dot\phi,\dot\theta,\dot\tau)@f$ vector.
+ * @return A 3x3 matrix (double).
+ * @see HtfTiltTorsion()
+ */
+grabnum::Matrix3d DHtfTiltTorsion(const grabnum::Vector3d& angles,
+                                  const grabnum::Vector3d& angles_dot)
+{
+  return DHtfTiltTorsion(angles(1), angles(2), angles_dot(1), angles_dot(2));
+}
 
 /**
  * @brief Determines the rotation matrix corresponding to a given quaternion.
@@ -307,7 +488,7 @@ grabnum::Matrix3d Quat2Rot(const grabnum::VectorXd<4>& quaternion);
 
 /**
  * @brief Determines the quaternion corresponding to a given rotation matrix.
- * @param rot_mat A rotation matrix.
+ * @param[in] rot_mat A rotation matrix.
  * @return A quaternion @f$(q_w, q_x, q_y, q_z)@f$.
  */
 grabnum::VectorXd<4> Rot2Quat(const grabnum::Matrix3d& rot_mat);
