@@ -117,7 +117,7 @@ grabnum::Matrix3d RotY(const double angle);
 grabnum::Matrix3d RotZ(const double angle);
 
 /**
- * @brief Rotation matrix based on @a _Tait-Bryan_ angles convention and @f$X_1Y_2Z_3@f$
+ * @brief Rotation matrix based on _Tait-Bryan_ angles convention and @f$X_1Y_2Z_3@f$
  *order.
  *
  * _Tait-Bryan_ angles @f$(\alpha,\beta,\gamma)@f$ represent three rotations, applied
@@ -146,7 +146,7 @@ grabnum::Matrix3d RotZ(const double angle);
  */
 grabnum::Matrix3d RotXYZ(const double alpha, const double beta, const double gamma);
 /**
- * @brief Rotation matrix based on @a _Tait-Bryan_ angles convention and @f$X_1Y_2Z_3@f$
+ * @brief Rotation matrix based on _Tait-Bryan_ angles convention and @f$X_1Y_2Z_3@f$
  *order.
  *
  * _Tait-Bryan_ angles @f$(\alpha,\beta,\gamma)@f$ represent three rotations, applied

@@ -10,7 +10,7 @@
 namespace grabcdpr
 {
 
-void UpdatePlatform(const grabnum::Vector3d& position,
+void UpdatePlatformPose(const grabnum::Vector3d& position,
                     const grabnum::Vector3d& orientation,
                     const RotParametrization angles_type,
                     const grabnum::Vector3d& pos_PG_loc, PlatformVars* platform)
@@ -69,7 +69,7 @@ void CalcCableVectors(const CableParams* params, const grabnum::Vector3d& vers_u
   cable->pos_BA_glob = pos_DA_glob - params->swivel_pulley_r * (vers_u + cable->vers_n);
 }
 
-void UpdateCable(const CableParams* params, const PlatformVars* platform,
+void UpdateCableZeroOrd(const CableParams* params, const PlatformVars* platform,
                  CableVars* cable)
 {
   // Update segments ending with point A_i.
@@ -84,13 +84,13 @@ void UpdateCable(const CableParams* params, const PlatformVars* platform,
     CalcCableLen(cable->pos_BA_glob, params->swivel_pulley_r, cable->tan_ang);
 }
 
-void UpdateIK(const grabnum::Vector3d& position, const grabnum::Vector3d& orientation,
+void UpdateIK0(const grabnum::Vector3d& position, const grabnum::Vector3d& orientation,
               const RotParametrization angles_type, const Params* params, Vars* vars)
 {
-  UpdatePlatform(position, orientation, angles_type, params->platform->pos_PG_loc,
+  UpdatePlatformPose(position, orientation, angles_type, params->platform->pos_PG_loc,
                  vars->platform);
   for (uint8_t i = 0; i < vars->cables.size(); ++i)
-    UpdateCable(&(params->cables[i]), vars->platform, &(vars->cables[i]));
+    UpdateCableZeroOrd(&(params->cables[i]), vars->platform, &(vars->cables[i]));
 }
 
 } // end namespace grabcdpr

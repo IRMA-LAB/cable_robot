@@ -1,7 +1,9 @@
 
-HEADERS += inc/kinematics.h
+HEADERS += inc/kinematics.h \
+    inc/diffkinematics.h
 
-SOURCES += src/kinematics.cpp
+SOURCES += src/kinematics.cpp \
+    src/diffkinematics.cpp
 
 INCLUDEPATH += inc \
         ../libgeom/inc \
