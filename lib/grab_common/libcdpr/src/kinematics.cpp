@@ -11,15 +11,21 @@ namespace grabcdpr
 {
 
 void UpdatePlatformPose(const grabnum::Vector3d& position,
-                    const grabnum::Vector3d& orientation,
-                    const RotParametrization angles_type,
-                    const grabnum::Vector3d& pos_PG_loc, PlatformVars* platform)
+                        const grabnum::Vector3d& orientation,
+                        const grabnum::Vector3d& pos_PG_loc, PlatformVars* platform)
 {
   // Update platform pose.
-  platform->UpdatePose(position, orientation, angles_type);
+  platform->UpdatePose(position, orientation);
   // Calculate platform baricenter positions expressed in global frame.
   platform->pos_PG_glob = platform->rot_mat * pos_PG_loc;
   platform->pos_OG_glob = platform->position + platform->pos_PG_glob;
+}
+
+void UpdatePlatformPose(const grabnum::Vector3d& position,
+                        const grabnum::Vector3d& orientation,
+                        const PlatformParams* params, PlatformVars* platform)
+{
+  UpdatePlatformPose(position, orientation, params->pos_PG_loc, platform);
 }
 
 void UpdatePosA(const CableParams* params, const PlatformVars* platform, CableVars* cable)
@@ -38,10 +44,20 @@ void CalcPulleyVersors(const CableParams* params, const double swivel_ang,
   cable->vers_w = -params->vers_i * sin_sigma + params->vers_j * cos_sigma;
 }
 
+void CalcPulleyVersors(const CableParams* params, CableVars* cable)
+{
+  CalcPulleyVersors(params, cable->swivel_ang, cable);
+}
+
 double CalcSwivelAngle(const CableParams* params, const grabnum::Vector3d& pos_DA_glob)
 {
   return atan2(grabnum::Dot(params->vers_j, pos_DA_glob),
                grabnum::Dot(params->vers_i, pos_DA_glob));
+}
+
+double CalcSwivelAngle(const CableParams* params, const CableVars* cable)
+{
+  return CalcSwivelAngle(params, cable->pos_DA_glob);
 }
 
 double CalcTangentAngle(const CableParams* params, const grabnum::Vector3d& vers_u,
@@ -54,6 +70,11 @@ double CalcTangentAngle(const CableParams* params, const grabnum::Vector3d& vers
               sqrt(1. - 2. * params->swivel_pulley_r / grabnum::Dot(vers_u, pos_DA_glob) +
                    app_var * app_var));
   return psi;
+}
+
+double CalcTangentAngle(const CableParams* params, const CableVars* cable)
+{
+  return CalcTangentAngle(params, cable->vers_u, cable->pos_DA_glob);
 }
 
 void CalcCableVectors(const CableParams* params, const grabnum::Vector3d& vers_u,
@@ -69,26 +90,37 @@ void CalcCableVectors(const CableParams* params, const grabnum::Vector3d& vers_u
   cable->pos_BA_glob = pos_DA_glob - params->swivel_pulley_r * (vers_u + cable->vers_n);
 }
 
-void UpdateCableZeroOrd(const CableParams* params, const PlatformVars* platform,
-                 CableVars* cable)
+void CalcCableVectors(const CableParams* params, CableVars* cable)
 {
-  // Update segments ending with point A_i.
-  UpdatePosA(params, platform, cable);
-  // From 2nd kinematic constraint.
-  cable->tan_ang = CalcTangentAngle(params, cable->vers_u, cable->pos_DA_glob);
-  // From 1st kinematic constraint.
-  cable->swivel_ang = CalcSwivelAngle(params, cable->pos_DA_glob);
   CalcCableVectors(params, cable->vers_u, cable->pos_DA_glob, cable->tan_ang, cable);
-  // From 3rd kinematic constraint.
-  cable->length =
-    CalcCableLen(cable->pos_BA_glob, params->swivel_pulley_r, cable->tan_ang);
+}
+
+double CalcCableLen(const grabnum::Vector3d& pos_BA_glob, const double pulley_radius,
+                    const double tan_ang)
+{
+  return pulley_radius * (M_PI - tan_ang) + grabnum::Norm(pos_BA_glob);
+}
+
+double CalcCableLen(const CableParams* params, const CableVars* cable)
+{
+  return CalcCableLen(cable->pos_BA_glob, params->swivel_pulley_r, cable->tan_ang);
+}
+
+void UpdateCableZeroOrd(const CableParams* params, const PlatformVars* platform,
+                        CableVars* cable)
+{  
+  UpdatePosA(params, platform, cable);             // update segments ending with point A_i.
+  cable->swivel_ang = CalcSwivelAngle(params, cable);  // from 1st kinematic constraint.
+  CalcPulleyVersors(params, cable);
+  cable->tan_ang = CalcTangentAngle(params, cable);    // from 2nd kinematic constraint.
+  CalcCableVectors(params, cable);                                  // from 1st kinematic constraint.
+  cable->length = CalcCableLen(params, cable);             // from 3rd kinematic constraint.
 }
 
 void UpdateIK0(const grabnum::Vector3d& position, const grabnum::Vector3d& orientation,
-              const RotParametrization angles_type, const Params* params, Vars* vars)
+               const Params* params, Vars* vars)
 {
-  UpdatePlatformPose(position, orientation, angles_type, params->platform->pos_PG_loc,
-                 vars->platform);
+  UpdatePlatformPose(position, orientation, params->platform, vars->platform);
   for (uint8_t i = 0; i < vars->cables.size(); ++i)
     UpdateCableZeroOrd(&(params->cables[i]), vars->platform, &(vars->cables[i]));
 }

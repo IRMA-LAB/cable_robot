@@ -7,7 +7,7 @@
  *
  * @note
  * <table>
- * <caption id="multi_row">Legend</caption>
+ * <caption id="legend">Legend</caption>
  * <tr><th>Name     <th>Symbol     <th>Expression  <th>Description
  * <tr><td> _Global frame_  <td>@f$\mathcal{O}@f$ <td> -<td> World frame, centered on
  *point
@@ -153,10 +153,13 @@ typedef enum RotParametrizationEnum
 
 /**
  * @brief Structure collecting all variables related to a generic 6DoF platform.
+ * @note See @ref legend for more details.
  * @todo implement quaternion 1st-2nd order stuff.
  */
 typedef struct PlatformVarsStruct
-{
+{    
+  RotParametrization angles_type = TILT_TORSION;  /**< rotation parametrization used. */
+
   /** @addtogroup ZeroOrderKinematics
    * @{
    */
@@ -168,8 +171,8 @@ typedef struct PlatformVarsStruct
   grabnum::VectorXd<6> pose;     /**< global pose (position + orientation).  */
   grabnum::VectorXd<7> pose_q;  /**< global pose (position + quaternion). */
 
-  grabnum::Vector3d pos_PG_glob;  /**< [_m_] see @f$\mathbf{r}'@f$ */
-  grabnum::Vector3d pos_OG_glob;  /**< [_m_] see @f$\mathbf{r}@f$. */
+  grabnum::Vector3d pos_PG_glob;  /**< [_m_] vector @f$\mathbf{r}'@f$.*/
+  grabnum::Vector3d pos_OG_glob;  /**< [_m_] vector @f$\mathbf{r}@f$.*/
   /** @} */                      // end of ZeroOrderKinematics group
 
   /** @addtogroup FirstOrderKinematics
@@ -178,35 +181,48 @@ typedef struct PlatformVarsStruct
   grabnum::Vector3d velocity;           /**< [_m/s_] 3D global linear velocity of the platform. */
   grabnum::Vector3d angles_speed;  /**< [_rad/s_] orientation time-derivative. */
 
-  grabnum::Vector3d angular_vel;     /**< see @f$\boldsymbol\omega@f$. */
+  grabnum::Vector3d angular_vel;     /**< vector @f$\boldsymbol\omega@f$. */
 
-  grabnum::Vector3d vel_OG_glob;   /**< [_m/s_] see @f$\dot{\mathbf{r}}@f$. */
+  grabnum::Vector3d vel_OG_glob;   /**< [_m/s_] vector @f$\dot{\mathbf{r}}@f$. */
   /** @} */                      // end of FirstOrderKinematics group
 
   /** @addtogroup SecondOrderKinematics
    * @{
    */
   grabnum::Vector3d
-    acceleration; /**< [_m/s<sup>2</sup>_] 3D global linear acceleration of the platform */
+    acceleration; /**< [_m/s<sup>2</sup>_] 3D global linear acceleration of the platform. */
   grabnum::Vector3d
-    angles_acc;   /**< [_rad/s<sup>2</sup>_] orientation second time-derivative */
+    angles_acc;   /**< [_rad/s<sup>2</sup>_] orientation second time-derivative. */
 
-  grabnum::Vector3d angular_acc;  /**< see @f$\boldsymbol\alpha@f$ */
+  grabnum::Vector3d angular_acc;  /**< vector @f$\boldsymbol\alpha@f$.*/
 
   grabnum::Vector3d
-    acc_OG_glob;  /**< [_m/s<sup>2</sup>_] see @f$\ddot{\mathbf{r}}@f$ */
+    acc_OG_glob;  /**< [_m/s<sup>2</sup>_] vector @f$\ddot{\mathbf{r}}@f$.*/
   /** @} */                      // end of SecondOrderKinematics group
 
   /**
+   * @brief Constructor to explicitly declare rotation parametrization desired only.
+   * @param[in] _angles_type Desired rotation parametrization.
+   */
+  PlatformVarsStruct(const RotParametrization _angles_type)
+  {
+    angles_type = _angles_type;
+  }
+  /**
    * @brief Constructor to initialize platform vars with position and angles and their first and
    * second derivatives.
-   * @param[in] _position [m] Platform global position.
-   * @param[in] _velocity [m/s] Platform global linear velocity.
-   * @param[in] _acceleration [m/s<sup>2</sup>] Platform global linear acceleration.
-   * @param[in] _orientation [rad] Platform global orientation expressed by angles.
-   * @param[in] _angles_speed [rad/s] Platform orientation time-derivative.
+   * @param[in] _position [m] Platform global position @f$\mathbf{p}@f$.
+   * @param[in] _velocity [m/s] Platform global linear velocity @f$\dot{\mathbf{p}}@f$.
+   * @param[in] _acceleration [m/s<sup>2</sup>] Platform global linear acceleration
+   * @f$\ddot{\mathbf{p}}@f$.
+   * @param[in] _orientation [rad] Platform global orientation expressed by angles
+   * @f$\boldsymbol{\varepsilon}@f$.
+   * @param[in] _angles_speed [rad/s] Platform orientation time-derivative
+   * @f$\dot{\boldsymbol{\varepsilon}}@f$.
    * @param[in] _angles_acc [rad/s<sup>2</sup>] Platform orientation 2nd time-derivative
-   * @param[in] angles_type Desired rotation parametrization. Default is _TILT_TORSION_.
+   * @f$\ddot{\boldsymbol{\varepsilon}}@f$.
+   * @param[in] _angles_type Desired rotation parametrization. Default is @a TILT_TORSION.
+   * @note See @ref legend for more details.
    */
   PlatformVarsStruct(const grabnum::Vector3d& _position,
                      const grabnum::Vector3d& _velocity,
@@ -214,36 +230,40 @@ typedef struct PlatformVarsStruct
                      const grabnum::Vector3d& _orientation,
                      const grabnum::Vector3d& _angles_speed,
                      const grabnum::Vector3d& _angles_acc,
-                     const RotParametrization angles_type = TILT_TORSION)
+                     const RotParametrization _angles_type = TILT_TORSION)
   {
-    UpdatePose(_position, _orientation, angles_type);
-    UpdateVel(_velocity, _angles_speed, angles_type);
-    UpdateAcc(_acceleration, _angles_acc, angles_type);
+    angles_type = _angles_type;
+    UpdatePose(_position, _orientation);
+    UpdateVel(_velocity, _angles_speed);
+    UpdateAcc(_acceleration, _angles_acc);
   }
   /**
    * @brief Constructor to initialize platform pose with position and quaternion.
-   * @param[in] _position [m] Platform global position.
-   * @param[in] _orientation Platform global orientation expressed by quaternion.
-   * @todo include velocities and speed for quaternion case too
+   * @param[in] _position [m] Platform global position @f$\mathbf{p}@f$.
+   * @param[in] _orientation Platform global orientation expressed by quaternion
+   * @f$\mathbf{q}@f$.
+   * @todo include velocities and speed for quaternion case too.
+   * @note See @ref legend for more details.
    */
   PlatformVarsStruct(const grabnum::Vector3d& _position,
                      const grabnum::VectorXd<4>& _orientation)
   {
+    angles_type = QUATERNION;
     UpdatePose(_position, _orientation);
   }
 
   /**
    * @brief Update platform pose with position and angles.
-   * @param[in] _position [m] Platform global position.
-   * @param[in] _orientation [rad] Platform global orientation expressed by angles.
-   * @param[in] angles_type Desired rotation parametrization. Default is _TILT_TORSION_.
+   * @param[in] _position [m] Platform global position @f$\mathbf{p}@f$.
+   * @param[in] _orientation [rad] Platform global orientation expressed by angles
+   * @f$\boldsymbol{\varepsilon}@f$.
    * @todo handle default case better
    * @ingroup ZeroOrderKinematics
    * @see UpdateVel() UpdateAcc()
+   * @note See @ref legend for more details.
    */
   void UpdatePose(const grabnum::Vector3d& _position,
-                  const grabnum::Vector3d& _orientation,
-                  const RotParametrization angles_type = TILT_TORSION)
+                  const grabnum::Vector3d& _orientation)
   {
     position = _position;
     orientation = _orientation;
@@ -273,11 +293,13 @@ typedef struct PlatformVarsStruct
   }
   /**
    * @brief Update platform pose with position and quaternion.
-   * @param[in] _position [m] Platform global position.
-   * @param[in] _quaternion Platform global orientation expressed by quaternion.
+   * @param[in] _position [m] Platform global position @f$\mathbf{p}@f$.
+   * @param[in] _quaternion Platform global orientation expressed by quaternion
+   * @f$\mathbf{q}@f$.
    * @todo automatically update orientation from quaternion.
    * @ingroup ZeroOrderKinematics
    * @see UpdateVel() UpdateAcc()
+   * @note See @ref legend for more details.
    */
   void UpdatePose(const grabnum::Vector3d& _position,
                   const grabnum::VectorXd<4>& _quaternion)
@@ -297,15 +319,14 @@ typedef struct PlatformVarsStruct
   /**
    * @brief Update platform velocities with linear velocity and angles speed.
    * @param[in] _velocity [m/s] Platform global linear velocity @f$\dot{\mathbf{p}}@f$.
-   * @param[in] _angles_speed [rad/s] See @f$\dot{\boldsymbol{\varepsilon}}@f$.
-   * @param[in] angles_type Desired rotation parametrization. Default is _TILT_TORSION_.
+   * @param[in] _angles_speed [rad/s] Vector @f$\dot{\boldsymbol{\varepsilon}}@f$.
    * @todo implement HtfRPY()
    * @ingroup FirstOrderKinematics
    * @see UpdatePose() UpdateAcc()
+   * @note See @ref legend for more details.
    */
   void UpdateVel(const grabnum::Vector3d& _velocity,
-                 const grabnum::Vector3d& _angles_speed,
-                 const RotParametrization angles_type = TILT_TORSION)
+                 const grabnum::Vector3d& _angles_speed)
   {
     velocity = _velocity;
     angles_speed = _angles_speed;
@@ -327,16 +348,16 @@ typedef struct PlatformVarsStruct
 
   /**
    * @brief Update platform accelerations with linear and angles acceleration.
-   * @param[in] _acceleration [m/s<sup>2</sup>] See @f$\ddot{\mathbf{p}}@f$.
-   * @param[in] _angles_acc [rad/s<sup>2</sup>] See @f$\ddot{\boldsymbol{\varepsilon}}@f$.
-   * @param[in] angles_type Desired rotation parametrization. Default is _TILT_TORSION_.
+   * @param[in] _acceleration [m/s<sup>2</sup>] Vector @f$\ddot{\mathbf{p}}@f$.
+   * @param[in] _angles_acc [rad/s<sup>2</sup>] Vector
+   * @f$\ddot{\boldsymbol{\varepsilon}}@f$.
    * @todo implement DHtfRPY(), DHtfZYZ()
    * @ingroup SecondOrderKinematics
    * @see UpdateVel() UpdateAcc()
+   * @note See @ref legend for more details.
    */
   void UpdateAcc(const grabnum::Vector3d& _acceleration,
-                 const grabnum::Vector3d& _angles_acc,
-                 const RotParametrization angles_type = TILT_TORSION)
+                 const grabnum::Vector3d& _angles_acc)
   {
     acceleration = _acceleration;
     angles_acc = _angles_acc;
@@ -358,6 +379,7 @@ typedef struct PlatformVarsStruct
 
 /**
  * @brief Structure collecting variable related to a single generic cable of a CDPR.
+ * @note See @ref legend for symbols reference.
  */
 typedef struct CableVarsStruct
 {
@@ -366,13 +388,13 @@ typedef struct CableVarsStruct
    */
   double length; /**< [m] cable length @f$l_i@f$. */
 
-  double swivel_ang; /**< [rad] swivel angle @f$\sigma_i@f$. */
-  double tan_ang;    /**< [rad] tangent angle @f$\psi_i@f$. */
+  double swivel_ang; /**< [rad] _i-th_ pulley swivel angle @f$\sigma_i@f$. */
+  double tan_ang;    /**< [rad] _i-th_ pulley tangent angle @f$\psi_i@f$. */
 
-  grabnum::Vector3d pos_PA_glob; /**< [m] segment @f$\mathbf{a}'_i@f$. */
-  grabnum::Vector3d pos_OA_glob; /**< [m] segment @f$\mathbf{a}_i@f$. */
-  grabnum::Vector3d pos_DA_glob; /**< [m] segment @f$\mathbf{f}_i@f$. */
-  grabnum::Vector3d pos_BA_glob; /**< [m] segment @f$\boldsymbol{\rho}_i@f$. */
+  grabnum::Vector3d pos_PA_glob; /**< [m] vector @f$\mathbf{a}'_i@f$. */
+  grabnum::Vector3d pos_OA_glob; /**< [m] vector @f$\mathbf{a}_i@f$. */
+  grabnum::Vector3d pos_DA_glob; /**< [m] vector @f$\mathbf{f}_i@f$. */
+  grabnum::Vector3d pos_BA_glob; /**< [m] vector @f$\boldsymbol{\rho}_i@f$. */
 
   grabnum::Vector3d vers_u;   /**< _i-th_ swivel pulley versor @f$\hat{\mathbf{u}}_i@f$. */
   grabnum::Vector3d vers_w;   /**< _i-th_ swivel pulley versor @f$\hat{\mathbf{w}}_i@f$. */
@@ -383,18 +405,18 @@ typedef struct CableVarsStruct
   /** @addtogroup FirstOrderKinematics
    * @{
    */
-  double speed; /**< [m/s] cable speed @f$\dot{l}_i@f$. */
+  double speed; /**< [m/s] _i-th_ cable speed @f$\dot{l}_i@f$. */
 
-  double swivel_ang_vel;  /**< [rad/s] swivel angle speed @f$\dot{\sigma}_i@f$. */
-  double tan_ang_vel;      /**< [rad/s] tangent angle speed @f$\dot{\psi}_i@f$. */
+  double swivel_ang_vel;  /**< [rad/s] _i-th_ pulley swivel angle speed @f$\dot{\sigma}_i@f$. */
+  double tan_ang_vel;      /**< [rad/s] _i-th_ pulley tangent angle speed @f$\dot{\psi}_i@f$. */
 
-  grabnum::Vector3d vel_OA_glob;   /**< [m/s] see @f$\dot{\mathbf{a}}_i@f$. */
-  grabnum::Vector3d vel_BA_glob;   /**< [m/s] see @f$\dot{\boldsymbol{\rho}}_i@f$. */
+  grabnum::Vector3d vel_OA_glob;   /**< [m/s] vector @f$\dot{\mathbf{a}}_i@f$. */
+  grabnum::Vector3d vel_BA_glob;   /**< [m/s] vector @f$\dot{\boldsymbol{\rho}}_i@f$. */
 
-  grabnum::Vector3d vers_u_dot;     /**< see @f$\dot{\hat{\mathbf{u}}}_i@f$. */
-  grabnum::Vector3d vers_w_dot;     /**< see @f$\dot{\hat{\mathbf{w}}}_i@f$. */
-  grabnum::Vector3d vers_n_dot;     /**< see @f$\dot{\hat{\mathbf{n}}}_i@f$. */
-  grabnum::Vector3d vers_rho_dot;  /**< see @f$\dot{\hat{\boldsymbol{\rho}}}_i@f$. */
+  grabnum::Vector3d vers_u_dot;     /**< versor @f$\dot{\hat{\mathbf{u}}}_i@f$. */
+  grabnum::Vector3d vers_w_dot;     /**< versor @f$\dot{\hat{\mathbf{w}}}_i@f$. */
+  grabnum::Vector3d vers_n_dot;     /**< versor @f$\dot{\hat{\mathbf{n}}}_i@f$. */
+  grabnum::Vector3d vers_rho_dot;  /**< versor @f$\dot{\hat{\boldsymbol{\rho}}}_i@f$. */
   /** @} */                       // end of FirstOrderKinematics group
 
   /** @addtogroup SecondOrderKinematics
@@ -402,10 +424,11 @@ typedef struct CableVarsStruct
    */
   double acceleration;  /**< [m/s<sup>2</sup>] cable acceleration @f$\ddot{l}_i@f$. */
 
-  double swivel_ang_acc; /**< [rad/s<sup>2</sup>] see @f$\ddot{\sigma}_i@f$. */
-  double tan_ang_acc;     /**< [rad/s<sup>2</sup>] see @f$\ddot{\psi}_i@f$. */
+  double swivel_ang_acc; /**< [rad/s<sup>2</sup>] _i-th_ pulley @f$\ddot{\sigma}_i@f$. */
+  double tan_ang_acc;     /**< [rad/s<sup>2</sup>] _i-th_ pulley @f$\ddot{\psi}_i@f$. */
 
-  grabnum::Vector3d acc_OA_glob; /**< [m/s<sup>2</sup>] see @f$\ddot{\mathbf{a}}_i@f$. */
+  grabnum::Vector3d
+              acc_OA_glob; /**< [m/s<sup>2</sup>] vector @f$\ddot{\mathbf{a}}_i@f$. */
   /** @} */                      // end of SecondOrderKinematics group
 
 } CableVars;
@@ -429,7 +452,7 @@ typedef struct PlatformParamsStruct
     ext_torque_loc;      /**< [Nm] external torque vector expressed in the local frame. */
   grabnum::Vector3d
     ext_force_loc;        /**< [N] external force vector expressed in the local frame. */
-  grabnum::Vector3d pos_PG_loc;  /**< [m] see @f$^\mathcal{P}\mathbf{r}'@f$. */
+  grabnum::Vector3d pos_PG_loc;  /**< [m] vector @f$^\mathcal{P}\mathbf{r}'@f$. */
   grabnum::Matrix3d inertia_mat_G_loc;  /**< inertia matrix. */
 } PlatformParams;
 
@@ -445,8 +468,8 @@ typedef struct CableParamsStruct
   uint32_t swivel_pulley_encoder_res =
     0; /**< _i-th_ swivel pulley encoder resolution in counts per revolution. */
   double swivel_pulley_r = 0.0;  /**< [m] _i-th_ swivel pulley radius length @f$r_i@f$ */
-  grabnum::Vector3d pos_OD_glob; /**< [m] see @f$\mathbf{d}_i@f$. */
-  grabnum::Vector3d pos_PA_loc;  /**< see @f$\mathbf{a}_i'@f$. */
+  grabnum::Vector3d pos_OD_glob; /**< [m] vector @f$\mathbf{d}_i@f$. */
+  grabnum::Vector3d pos_PA_loc;  /**< vector @f$\mathbf{a}_i'@f$. */
   grabnum::Vector3d vers_i; /**< versor @f$\hat{\mathbf{i}}_i@f$ of _i-th_ swivel pulley
                                expressed in global frame. */
   grabnum::Vector3d vers_j; /**< versor @f$\hat{\mathbf{j}}_i@f$ of _i-th_ swivel pulley
@@ -474,19 +497,33 @@ typedef struct ParamsStruct
 /// Functions
 ///////////////////////////////////////////////////////////////////////////////
 
-/**
- * @brief Update platform-related zero-order quantities.
- * @param[in] position [m] Platform global position @f$\mathbf{p}@f$.
- * @param[in] orientation [m] Platform global orientation expressed by angles
- * @f$\boldsymbol{\varepsilon}@f$.
- * @param[in] angles_type Desired rotation parametrization. Default is _TILT_TORSION_.
- * @param[in] pos_PG_loc [m] Local CoG position (see @f$^\matcal{P}\mathbf{r}'@f$).
- * @param[out] platform A pointer to the platform variables structure to be updated.
- */
-void UpdatePlatformPose(const grabnum::Vector3d& position,
-                        const grabnum::Vector3d& orientation,
-                        const RotParametrization angles_type,
-                        const grabnum::Vector3d& pos_PG_loc, PlatformVars* platform);
+  /**
+   * @brief Update platform-related zero-order quantities.
+   * Given a new pose of the platform @f$\mathbf{q}@f$ the following quantities are updated:
+   * @f[
+   * \mathbf{r}' = \mathbf{R} ^\mathcal{P}\mathbf{r}'
+   * \mathbf{r} = \mathbf{p} + \mathbf{r}'
+   * @f]
+   * @param[in] position [m] Platform global position @f$\mathbf{p}@f$.
+   * @param[in] orientation [rad] Platform global orientation expressed by angles
+   * @f$\boldsymbol{\varepsilon}@f$.
+   * @param[in] pos_PG_loc [m] Local CoG position @f$^\mathcal{P}\mathbf{r}'@f$.
+   * @param[out] platform A pointer to the platform variables structure to be updated.
+   */
+  void UpdatePlatformPose(const grabnum::Vector3d& position,
+                          const grabnum::Vector3d& orientation,
+                          const grabnum::Vector3d& pos_PG_loc, PlatformVars* platform);
+  /**
+   * @brief Update platform-related zero-order quantities.
+   * @param[in] position [m] Platform global position @f$\mathbf{p}@f$.
+   * @param[in] orientation [rad] Platform global orientation expressed by angles
+   * @f$\boldsymbol{\varepsilon}@f$.
+   * @param[in] params A pointer to the platform parameters structure.
+   * @param[out] platform A pointer to the platform variables structure to be updated.
+   */
+  void UpdatePlatformPose(const grabnum::Vector3d& position,
+                          const grabnum::Vector3d& orientation,
+                          const PlatformParams* params, PlatformVars* platform);
 
 /**
  * @brief Update global position of point @f$A_i@f$ and relative segments.
@@ -506,6 +543,12 @@ void UpdatePosA(const CableParams* params, const PlatformVars* platform,
  */
 void CalcPulleyVersors(const CableParams* params, const double swivel_ang,
                        CableVars* cable);
+/**
+ * @brief Calculate swivel pulley versors @f$\hat{\mathbf{u}}_i, \hat{\mathbf{w}}_i@f$.
+ * @param[in] params A pointer to cable parameters.
+ * @param[in,out] cable A pointer to the cable structure including the versors to be updated.
+ */
+void CalcPulleyVersors(const CableParams* params, CableVars* cable);
 
 /**
  * @brief Calculate pulley swivel angle @f$\sigma_i@f$.
@@ -514,6 +557,13 @@ void CalcPulleyVersors(const CableParams* params, const double swivel_ang,
  * @return Swivel angle @f$\sigma_i@f$ in radians.
  */
 double CalcSwivelAngle(const CableParams* params, const grabnum::Vector3d& pos_DA_glob);
+/**
+ * @brief Calculate pulley swivel angle @f$\sigma_i@f$.
+ * @param[in] params A pointer to cable parameters.
+ * @param[in] cable A pointer to the cable structure.
+ * @return Swivel angle @f$\sigma_i@f$ in radians.
+ */
+double CalcSwivelAngle(const CableParams* params, const CableVars* cable);
 
 /**
  * @brief Calculate pulley tangent angle @f$\psi_i@f$.
@@ -524,10 +574,17 @@ double CalcSwivelAngle(const CableParams* params, const grabnum::Vector3d& pos_D
  */
 double CalcTangentAngle(const CableParams* params, const grabnum::Vector3d& vers_u,
                         const grabnum::Vector3d& pos_DA_glob);
+/**
+ * @brief Calculate pulley tangent angle @f$\psi_i@f$.
+ * @param[in] params A pointer to cable parameters.
+ * @param[in] cable A pointer to the cable structure.
+ * @return Tangent angle @f$\psi_i@f$  in radians.
+ */
+double CalcTangentAngle(const CableParams* params, const CableVars* cable);
 
 /**
  * @brief Calculate cable versors @f$\hat{\mathbf{n}}_i, \hat{\boldsymbol{\rho}}_i@f$ and
- * cable vector.
+ * cable vector @f$\boldsymbol{\rho}_i@f$.
  * @param[in] params A pointer to cable parameters.
  * @param[in] vers_u Versor @f$\hat{\mathbf{u}}_i@f$.
  * @param[in] pos_DA_glob [m] Vector @f$\mathbf{f}_i@f$.
@@ -538,25 +595,37 @@ double CalcTangentAngle(const CableParams* params, const grabnum::Vector3d& vers
 void CalcCableVectors(const CableParams* params, const grabnum::Vector3d& vers_u,
                       const grabnum::Vector3d& pos_DA_glob, const double tan_ang,
                       CableVars* cable);
+/**
+ * @brief Calculate cable versors @f$\hat{\mathbf{n}}_i, \hat{\boldsymbol{\rho}}_i@f$ and
+ * cable vector @f$\boldsymbol{\rho}_i@f$.
+ * @param[in] params A pointer to cable parameters.
+ * @param[in,out] cable A pointer to the cable structure including the variables to be
+ * calculated.
+ */
+void CalcCableVectors(const CableParams* params, CableVars* cable);
 
 /**
- * @brief Calculate cable length.
- * @param[in] pos_BA_glob [m] Vector @f$\boldsymbol{\rho}_i@f$.
+ * @brief Calculate cable length @f$l_i@f$.
+ * @param[in] pos_BA_glob [m] Cable vector @f$\boldsymbol{\rho}_i@f$.
  * @param[in] pulley_radius [m] Swivel pulley radius.
  * @param[in] tan_ang [rad] Tangent angle @f$\psi_i@f$.
- * @return Cable length in meters.
+ * @return Cable length @f$l_i@f$ in meters.
  */
 double CalcCableLen(const grabnum::Vector3d& pos_BA_glob, const double pulley_radius,
-                    const double tan_ang)
-{
-  return pulley_radius * (M_PI - tan_ang) + grabnum::Norm(pos_BA_glob);
-}
+                    const double tan_ang);
+/**
+ * @brief Calculate cable length @f$l_i@f$.
+ * @param[in] params A pointer to cable parameters structure.
+ * @param[in] cable A pointer to cable variables structure.
+ * @return Cable length @f$l_i@f$ in meters.
+ */
+double CalcCableLen(const CableParams* params, const CableVars* cable);
 
 /**
  * @brief Update all zero-order variables of a single cable at once.
  * @param[in] platform A pointer to the updated platform structure.
  * @param[in] params A pointer to _i-th_ cable parameters.
- * @param[out] cable A pointer to the cable structure to be updated.
+ * @param[out] cable A pointer to _i-th_ cable variables structure to be updated.
  */
 void UpdateCableZeroOrd(const CableParams* params, const PlatformVars* platform,
                         CableVars* cable);
@@ -566,12 +635,11 @@ void UpdateCableZeroOrd(const CableParams* params, const PlatformVars* platform,
 * @param[in] position [m] Platform global position @f$\mathbf{p}@f$.
 * @param[in] orientation [rad] Platform global orientation expressed by angles
 * @f$\boldsymbol{\varepsilon}@f$.
-* @param[in] angles_type Desired rotation parametrization. Default is _TILT_TORSION_.
 * @param[in] params A pointer to the robot parameters structure.
 * @param[out] vars A pointer to the robot variables structure to be updated.
 */
 void UpdateIK0(const grabnum::Vector3d& position, const grabnum::Vector3d& orientation,
-               const RotParametrization angles_type, const Params* params, Vars* vars);
+               const Params* params, Vars* vars);
 
 /** @} */ // end of ZeroOrderKinematics group
 
