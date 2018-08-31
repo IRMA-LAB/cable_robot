@@ -68,7 +68,7 @@ double CalcTangentAngle(const CableParams* params, const grabnum::Vector3d& vers
   double psi =
     2. * atan(app_var +
               sqrt(1. - 2. * params->swivel_pulley_r / grabnum::Dot(vers_u, pos_DA_glob) +
-                   app_var * app_var));
+                   SQUARE(app_var)));
   return psi;
 }
 

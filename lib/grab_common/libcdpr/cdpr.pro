@@ -1,6 +1,7 @@
 
 HEADERS += inc/kinematics.h \
-    inc/diffkinematics.h
+    inc/diffkinematics.h \
+    inc/types.h
 
 SOURCES += src/kinematics.cpp \
     src/diffkinematics.cpp

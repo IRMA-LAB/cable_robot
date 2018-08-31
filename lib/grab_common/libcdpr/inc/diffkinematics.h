@@ -9,7 +9,10 @@
 #ifndef GRABCOMMON_LIBCDPR_DIFFKINEMATICS_H
 #define GRABCOMMON_LIBCDPR_DIFFKINEMATICS_H
 
+#include "types.h"
 #include "kinematics.h"
+#include "rotations.h"
+#include "matrix.h"
 
 /**
  * @brief namespace for CDPR-related utilities, such as kinematics and dynamics.

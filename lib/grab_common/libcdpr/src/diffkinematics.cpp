@@ -7,10 +7,6 @@
 
 #include "diffkinematics.h"
 
-#ifndef SQUARE
-#define SQUARE(x) (x * x) /**< returns the square of an element*/
-#endif
-
 namespace grabcdpr
 {
 
