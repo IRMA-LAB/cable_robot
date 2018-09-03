@@ -134,6 +134,7 @@
 #define GRABCOMMON_LIBCDPR_TYPES_H
 
 #include "rotations.h"
+#include "quaternions.h"
 #include "matrix.h"
 
 #ifndef SQUARE

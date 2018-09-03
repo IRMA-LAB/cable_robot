@@ -1,7 +1,9 @@
 
-HEADERS += inc/rotations.h
+HEADERS += inc/rotations.h \
+    inc/quaternions.h
 
-SOURCES += src/rotations.cpp
+SOURCES += src/rotations.cpp \
+    src/quaternions.cpp
 
 INCLUDEPATH += inc ../libnumeric/inc ../libnumeric/src
 
