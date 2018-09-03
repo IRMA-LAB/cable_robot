@@ -354,6 +354,29 @@ grabnum::Matrix3d HtfXYZ(const grabnum::Vector3d& angles)
 
 /**
  * @brief Transformation matrix @f$\mathbf{H}@f$ between the derivative of
+ * _Roll, Pitch, Yaw_ angles and angular velocity vector @f$\boldsymbol\omega@f$.
+ *
+ * @param[in] roll [rad] Rolling angle (about @f$x_0@f$-axis).
+ * @param[in] pitch [rad] Pitching angle (about @f$y_0@f$-axis).
+ * @return A 3x3 matrix (double).
+ * @see RotRPY()
+ */
+grabnum::Matrix3d HtfRPY(const double roll, const double pitch);
+/**
+ * @brief Transformation matrix @f$\mathbf{H}@f$ between the derivative of
+ * _Roll, Pitch, Yaw_ angles and angular velocity vector @f$\boldsymbol\omega@f$.
+ *
+ * @param[in] rpy [rad]  _Roll, pitch, yaw_ angles @f$(\phi,\theta,\psi)@f$ vector.
+ * @return A 3x3 matrix (double).
+ * @see HtfRPY()
+ */
+grabnum::Matrix3d HtfRPY(const grabnum::Vector3d& rpy)
+{
+  return HtfRPY(rpy(1), rpy(2));
+}
+
+/**
+ * @brief Transformation matrix @f$\mathbf{H}@f$ between the derivative of
  * _tilt-and-torsion_ angles and angular velocity vector @f$\boldsymbol\omega@f$.
  *
  * @param[in] tilt_azimuth [rad] Tilt-azimuth angle (about @f$z_0@f$-axis).
@@ -382,7 +405,6 @@ grabnum::Matrix3d HtfTiltTorsion(const grabnum::Vector3d& angles)
  * @return A 3x3 matrix (double).
  */
 grabnum::Matrix3d HtfZYZ(const double alpha, const double beta);
-
 /**
  * @brief Transformation matrix @f$\mathbf{H}@f$ between the derivative of _Euler_ angles
  * and angular velocity vector @f$\boldsymbol\omega@f$.
@@ -437,6 +459,85 @@ grabnum::Matrix3d DHtfXYZ(const grabnum::Vector3d& angles,
 
 /**
  * @brief Time derivative of transformation matrix between the derivative of
+ * _Roll, Pitch, Yaw_ angles and angular velocity vector @f$\boldsymbol\omega@f$.
+ *
+ * @f[
+ * \mathbf{\dot{H}}(\boldsymbol\epsilon, \boldsymbol{\dot{\epsilon}}) =
+ * \frac{d\mathbf{H}(\boldsymbol\epsilon)}{dt}
+ * @f]
+ *
+ * @param[in] roll [rad] Rolling angle (about @f$x_0@f$-axis).
+ * @param[in] pitch [rad] Pitching angle (about @f$y_0@f$-axis).
+ * @param[in] roll_dot [rad/s] Time derivative of rolling angle (about @f$x_0@f$-axis).
+ * @param[in] pitch_dot [rad/s] Time derivative of pitching angle (about @f$y_0@f$-axis).
+ * @return A 3x3 matrix (double).
+ * @see HtfRPY()
+ */
+grabnum::Matrix3d DHtfRPY(const double roll, const double pitch, const double roll_dot,
+                          const double pitch_dot);
+/**
+ * @brief Time derivative of transformation matrix between the derivative of _Euler_
+ * angles and angular velocity vector @f$\boldsymbol\omega@f$.
+ *
+ * @f[
+ * \mathbf{\dot{H}}(\boldsymbol\epsilon, \boldsymbol{\dot{\epsilon}}) =
+ * \frac{d\mathbf{H}(\boldsymbol\epsilon)}{dt}
+ * @f]
+ *
+ * @param[in] rpy [rad]  _Roll, pitch, yaw_ angles @f$(\phi,\theta,\psi)@f$ vector.
+ * @param[in] rpy_dot [rad] _Roll, pitch, yaw_ angles derivatives
+ * @f$(\dot\phi,\dot\theta,\dot\psi)@f$ vector.
+ * @return A 3x3 matrix (double).
+ * @see HtfRPY()
+ */
+grabnum::Matrix3d DHtfRPY(const grabnum::Vector3d& rpy,
+                          const grabnum::Vector3d& rpy_dot)
+{
+  return DHtfRPY(rpy(1), rpy(2), rpy_dot(1), rpy_dot(2));
+}
+
+/**
+ * @brief Time derivative of transformation matrix between the derivative of _Euler_
+ * angles and angular velocity vector @f$\boldsymbol\omega@f$.
+ *
+ * @f[
+ * \mathbf{\dot{H}}(\boldsymbol\epsilon, \boldsymbol{\dot{\epsilon}}) =
+ * \frac{d\mathbf{H}(\boldsymbol\epsilon)}{dt}
+ * @f]
+ *
+ * @param[in] alpha [rad] Rotation angle about @f$z_0@f$-axis.
+ * @param[in] beta [rad] Rotation angle about @f$y_1@f$-axis.
+ * @param[in] alpha_dot [rad/s] Time derivative of rotation angle _alpha_ about
+ *@f$z_0@f$-axis.
+ * @param[in] beta_dot [rad/s] Time derivative of rotation angle _beta_ about @f$y_1@f$-axis.
+ * @return A 3x3 matrix (double).
+ * @see HtfXYZ()
+ */
+grabnum::Matrix3d DHtfZYZ(const double alpha, const double beta, const double alpha_dot,
+                          const double beta_dot);
+/**
+ * @brief Time derivative of transformation matrix between the derivative of _Euler_
+ * angles and angular velocity vector @f$\boldsymbol\omega@f$.
+ *
+ * @f[
+ * \mathbf{\dot{H}}(\boldsymbol\epsilon, \boldsymbol{\dot{\epsilon}}) =
+ * \frac{d\mathbf{H}(\boldsymbol\epsilon)}{dt}
+ * @f]
+ *
+ * @param[in] angles [rad] _Euler_ angles @f$(\alpha,\beta,\gamma)@f$ vector.
+ * @param[in] angles_dot [rad] _Euler_ angles derivatives
+ * @f$(\dot\alpha,\dot\beta,\dot\gamma)@f$ vector.
+ * @return A 3x3 matrix (double).
+ * @see HtfXYZ()
+ */
+grabnum::Matrix3d DHtfZYZ(const grabnum::Vector3d& angles,
+                          const grabnum::Vector3d& angles_dot)
+{
+  return DHtfZYZ(angles(1), angles(2), angles_dot(1), angles_dot(2));
+}
+
+/**
+ * @brief Time derivative of transformation matrix between the derivative of
  *tilt-and-torsion
  * angles and angular velocity vector @f$\boldsymbol\omega@f$.
  *
@@ -476,22 +577,6 @@ grabnum::Matrix3d DHtfTiltTorsion(const grabnum::Vector3d& angles,
 {
   return DHtfTiltTorsion(angles(1), angles(2), angles_dot(1), angles_dot(2));
 }
-
-/**
- * @brief Determines the rotation matrix corresponding to a given quaternion.
- *
- * @param[in] quaternion The orientation expressed by a quaternion
- * @f$(q_w, q_x, q_y, q_z)@f$.
- * @return A 3x3 orthogonal matrix (double).
- */
-grabnum::Matrix3d Quat2Rot(const grabnum::VectorXd<4>& quaternion);
-
-/**
- * @brief Determines the quaternion corresponding to a given rotation matrix.
- * @param[in] rot_mat A rotation matrix.
- * @return A quaternion @f$(q_w, q_x, q_y, q_z)@f$.
- */
-grabnum::VectorXd<4> Rot2Quat(const grabnum::Matrix3d& rot_mat);
 
 } // end namespace grabgeom
 

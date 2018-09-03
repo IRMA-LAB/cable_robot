@@ -161,9 +161,7 @@ typedef enum RotParametrizationEnum
   EULER_ZYZ,    /**< _Euler_ angles convention with @f$Z_1Y_2Z_3@f$ order. */
   TAIT_BRYAN,   /**< _Tait-Bryan_ angles convention and @f$X_1Y_2Z_3@f$. */
   RPY,          /**< _Roll, Pitch, Yaw_ angles convention (from aviation). */
-  TILT_TORSION, /**< _Tilt-and-torsion_ angles, a variation of _Euler_ angles convention.
-                   */
-  QUATERNION    /**< Use _quaternion_ to determine rotation. */
+  TILT_TORSION, /**< _Tilt-and-torsion_ angles, a variation of _Euler_ angles convention. */
 } RotParametrization;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -182,13 +180,16 @@ typedef struct PlatformVarsStruct
   /** @addtogroup ZeroOrderKinematics
    * @{
    */
-  grabnum::Vector3d position;    /**< [_m_] vector @f$\mathbf{p}@f$. */
-  grabnum::Vector3d orientation; /**< [_rad_] vector @f$\boldsymbol{\varepsilon}@f$. */
+  grabnum::Vector3d position;      /**< [_m_] vector @f$\mathbf{p}@f$. */
+  grabnum::Vector3d orientation;   /**< [_rad_] vector @f$\boldsymbol{\varepsilon}@f$. */
   grabnum::VectorXd<4> quaternion; /**< vector @f$\boldsymbol{\varepsilon}_q@f$. */
 
-  grabnum::Matrix3d rot_mat;   /**< matrix @f$\mathbf{R}@f$. */
-  grabnum::VectorXd<6> pose;   /**< vector @f$\mathbf{q}@f$.  */
-  grabnum::VectorXd<7> pose_q; /**< vector @f$\mathbf{q}_q@f$. */
+  grabnum::Matrix3d rot_mat;        /**< matrix @f$\mathbf{R}@f$. */
+  grabnum::Matrix3d h_mat;          /**< matrix @f$\mathbf{H}@f$. */
+  grabnum::Matrix3d dh_mat;        /**< matrix @f$\dot{\mathbf{H}}@f$. */
+
+  grabnum::VectorXd<6> pose;     /**< vector @f$\mathbf{q}@f$.  */
+  grabnum::VectorXd<7> pose_q;  /**< vector @f$\mathbf{q}_q@f$. */
 
   grabnum::Vector3d pos_PG_glob; /**< [_m_] vector @f$\mathbf{r}'@f$.*/
   grabnum::Vector3d pos_OG_glob; /**< [_m_] vector @f$\mathbf{r}@f$.*/
@@ -211,8 +212,8 @@ typedef struct PlatformVarsStruct
    */
   grabnum::Vector3d
     acceleration; /**< [_m/s<sup>2</sup>_] vector @f$\ddot{\mathbf{p}}@f$. */
-  grabnum::Vector3d
-    angles_acc; /**< [_rad/s<sup>2</sup>_] vector @f$\ddot{\boldsymbol{\varepsilon}}@f$. */
+  grabnum::Vector3d angles_acc; /**< [_rad/s<sup>2</sup>_] vector
+                                   @f$\ddot{\boldsymbol{\varepsilon}}@f$. */
 
   grabnum::Vector3d angular_acc; /**< vector @f$\boldsymbol\alpha@f$.*/
 
@@ -230,8 +231,7 @@ typedef struct PlatformVarsStruct
   }
   /**
    * @brief Constructor to initialize platform vars with position and angles and their
-   * first and
-   * second derivatives.
+   * first and second derivatives.
    * @param[in] _position [m] Platform global position @f$\mathbf{p}@f$.
    * @param[in] _velocity [m/s] Platform global linear velocity @f$\dot{\mathbf{p}}@f$.
    * @param[in] _acceleration [m/s<sup>2</sup>] Platform global linear acceleration
@@ -269,7 +269,7 @@ typedef struct PlatformVarsStruct
   PlatformVarsStruct(const grabnum::Vector3d& _position,
                      const grabnum::VectorXd<4>& _orientation)
   {
-    angles_type = QUATERNION;
+    angles_type = TILT_TORSION;
     UpdatePose(_position, _orientation);
   }
 
@@ -292,6 +292,7 @@ typedef struct PlatformVarsStruct
     {
       pose(i) = position(i);
       pose(2 * i) = orientation(i);
+      pose_q(i) = position(i);
     }
     switch (angles_type)
     {
@@ -307,10 +308,9 @@ typedef struct PlatformVarsStruct
     case TILT_TORSION:
       rot_mat = grabgeom::RotTiltTorsion(orientation);
       break;
-    default:
-      break;
     }
     quaternion = grabgeom::Rot2Quat(rot_mat);
+    pose_q.SetBlock(4, 1, quaternion);
   }
   /**
    * @brief Update platform pose with position and quaternion.
@@ -354,17 +354,19 @@ typedef struct PlatformVarsStruct
     switch (angles_type)
     {
     case EULER_ZYZ:
-      angular_vel = grabgeom::HtfZYZ(orientation) * angles_speed;
+      h_mat = grabgeom::HtfZYZ(orientation);
       break;
     case TAIT_BRYAN:
-      angular_vel = grabgeom::HtfXYZ(orientation) * angles_speed;
+      h_mat = grabgeom::HtfXYZ(orientation);
       break;
     case TILT_TORSION:
-      angular_vel = grabgeom::HtfTiltTorsion(orientation) * angles_speed;
+      h_mat = grabgeom::HtfRPY(orientation);
       break;
-    default:
+    case RPY:
+      h_mat = grabgeom::HtfTiltTorsion(orientation);
       break;
     }
+    angular_vel = h_mat * angles_speed;
   }
 
   /**
@@ -385,16 +387,19 @@ typedef struct PlatformVarsStruct
     switch (angles_type)
     {
     case TAIT_BRYAN:
-      angular_acc = grabgeom::DHtfXYZ(orientation, angles_speed) * angles_speed +
-                    grabgeom::HtfXYZ(orientation) * angles_acc;
+      dh_mat = grabgeom::DHtfXYZ(orientation, angles_speed);
       break;
     case TILT_TORSION:
-      angular_acc = grabgeom::DHtfTiltTorsion(orientation, angles_speed) * angles_speed +
-                    grabgeom::HtfTiltTorsion(orientation) * angles_acc;
+      dh_mat = grabgeom::DHtfTiltTorsion(orientation, angles_speed);
       break;
-    default:
+    case RPY:
+      dh_mat = grabgeom::DHtfRPY(orientation, angles_speed);
+      break;
+    case EULER_ZYZ:
+      dh_mat = grabgeom::DHtfZYZ(orientation, angles_speed);
       break;
     }
+    angular_acc = dh_mat * angles_speed + h_mat * angles_acc;
   }
 } PlatformVars;
 
@@ -428,8 +433,8 @@ typedef struct CableVarsStruct
    */
   double speed; /**< [_m/s_] _i-th_ cable speed @f$\dot{l}_i@f$. */
 
-  double
-    swivel_ang_vel; /**< [_rad/s_] _i-th_ pulley swivel angle speed @f$\dot{\sigma}_i@f$. */
+  double swivel_ang_vel; /**< [_rad/s_] _i-th_ pulley swivel angle speed
+                            @f$\dot{\sigma}_i@f$. */
   double
     tan_ang_vel; /**< [_rad/s_] _i-th_ pulley tangent angle speed @f$\dot{\psi}_i@f$. */
 
@@ -447,8 +452,9 @@ typedef struct CableVarsStruct
    */
   double acceleration; /**< [_m/s<sup>2</sup>_] cable acceleration @f$\ddot{l}_i@f$. */
 
-  double swivel_ang_acc; /**< [_rad/s<sup>2</sup>_] _i-th_ pulley @f$\ddot{\sigma}_i@f$. */
-  double tan_ang_acc;    /**< [_rad/s<sup>2</sup>_] _i-th_ pulley @f$\ddot{\psi}_i@f$. */
+  double
+    swivel_ang_acc;   /**< [_rad/s<sup>2</sup>_] _i-th_ pulley @f$\ddot{\sigma}_i@f$. */
+  double tan_ang_acc; /**< [_rad/s<sup>2</sup>_] _i-th_ pulley @f$\ddot{\psi}_i@f$. */
 
   grabnum::Vector3d
     acc_OA_glob; /**< [_m/s<sup>2</sup>_] vector @f$\ddot{\mathbf{a}}_i@f$. */
