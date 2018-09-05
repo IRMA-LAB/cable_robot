@@ -33,6 +33,16 @@ grabnum::Matrix3d Quat2Rot(const Quaternion& quaternion);
  */
 Quaternion Rot2Quat(const grabnum::Matrix3d& rot_mat);
 
+/**
+ * @brief Transformation matrix @f$\mathbf{H}@f$ between the derivative of a quaternion
+ * and angular velocity vector @f$\boldsymbol\omega@f$.
+ *
+ * @param[in] quaternion The orientation expressed by a quaternion
+ * @f$(q_w, q_x, q_y, q_z)@f$.
+ * @return A 3x3 matrix (double).
+ */
+grabnum::MatrixXd<3,4> HtfQuat(const Quaternion& quaternion);
+
 } // end namespace grabgeom
 
 #endif // GRABCOMMON_LIBGEOM_QUATERNIONS_H
