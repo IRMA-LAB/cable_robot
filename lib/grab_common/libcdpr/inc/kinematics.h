@@ -1,7 +1,7 @@
 /**
  * @file kinematics.h
  * @author Edoardo Idà, Simone Comari
- * @date 31 Aug 2018
+ * @date 05 Sep 2018
  * @brief File containing kinematics-related functions to be included in the GRAB CDPR
  * library.
  */
@@ -41,10 +41,13 @@ namespace grabcdpr
  * @param[in] pos_PG_loc [m] Local CoG position @f$^\mathcal{P}\mathbf{r}'@f$.
  * @param[out] platform A pointer to the platform variables structure to be updated.
  * @note See @ref legend for symbols reference.
+ * @note Both orientation parametrizations are valid here, that is both angles and quaternions
+ * can be used.
  */
+template <class OrientationType, class PlatformVarsType>
 void UpdatePlatformPose(const grabnum::Vector3d& position,
-                        const grabnum::Vector3d& orientation,
-                        const grabnum::Vector3d& pos_PG_loc, PlatformVars* platform);
+                        const OrientationType& orientation,
+                        const grabnum::Vector3d& pos_PG_loc, PlatformVarsType* platform);
 /**
  * @brief Update platform-related zero-order quantities (implicit).
  * @param[in] position [m] Platform global position @f$\mathbf{p}@f$.
@@ -53,10 +56,13 @@ void UpdatePlatformPose(const grabnum::Vector3d& position,
  * @param[in] params A pointer to the platform parameters structure.
  * @param[out] platform A pointer to the platform variables structure to be updated.
  * @see UpdatePlatformPose()
+ * @note Both orientation parametrizations are valid here, that is both angles and quaternions
+ * can be used.
  */
+template <class OrientationType, class PlatformVarsType>
 void UpdatePlatformPose(const grabnum::Vector3d& position,
-                        const grabnum::Vector3d& orientation,
-                        const PlatformParams* params, PlatformVars* platform);
+                        const OrientationType& orientation,
+                        const PlatformParams* params, PlatformVarsType* platform);
 
 /**
  * @brief Update global position of point @f$A_i@f$ and relative segments.
@@ -74,8 +80,11 @@ void UpdatePlatformPose(const grabnum::Vector3d& position,
  * @param[out] cable A pointer to the cable structure including the positions to be
  * updated.
  * @note See @ref legend for symbols reference.
+ * @note Both orientation parametrizations are valid here, that is both angles and quaternions
+ * can be used.
  */
-void UpdatePosA(const CableParams* params, const PlatformVars* platform,
+template <class PlatformVarsType>
+void UpdatePosA(const CableParams* params, const PlatformVarsType* platform,
                 CableVars* cable);
 
 /**
@@ -240,20 +249,26 @@ double CalcCableLen(const CableParams* params, const CableVars* cable);
  * @param[in] platform A pointer to the updated platform structure.
  * @param[in] params A pointer to _i-th_ cable parameters.
  * @param[out] cable A pointer to _i-th_ cable variables structure to be updated.
+ * @note Both orientation parametrizations are valid here, that is both angles and quaternions
+ * can be used.
  */
-void UpdateCableZeroOrd(const CableParams* params, const PlatformVars* platform,
+template <class PlatformVarsType>
+void UpdateCableZeroOrd(const CableParams* params, const PlatformVarsType* platform,
                         CableVars* cable);
 
 /**
-* @brief Update all robots zero-order variables at once (inverse kinematics problem).
-* @param[in] position [m] Platform global position @f$\mathbf{p}@f$.
-* @param[in] orientation [rad] Platform global orientation expressed by angles
-* @f$\boldsymbol{\varepsilon}@f$.
-* @param[in] params A pointer to the robot parameters structure.
-* @param[out] vars A pointer to the robot variables structure to be updated.
-*/
-void UpdateIK0(const grabnum::Vector3d& position, const grabnum::Vector3d& orientation,
-               const Params* params, Vars* vars);
+ * @brief Update all robots zero-order variables at once (inverse kinematics problem).
+ * @param[in] position [m] Platform global position @f$\mathbf{p}@f$.
+ * @param[in] orientation [rad] Platform global orientation expressed by angles
+ * @f$\boldsymbol{\varepsilon}@f$.
+ * @param[in] params A pointer to the robot parameters structure.
+ * @param[out] vars A pointer to the robot variables structure to be updated.
+ * @note Both orientation parametrizations are valid here, that is both angles and quaternions
+ * can be used.
+ */
+template <class OrientationType, class VarsType>
+void UpdateIK0(const grabnum::Vector3d& position, const OrientationType& orientation,
+               const Params* params, VarsType* vars);
 
 /** @} */ // end of ZeroOrderKinematics group
 

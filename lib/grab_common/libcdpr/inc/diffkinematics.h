@@ -1,7 +1,7 @@
 /**
  * @file diffkinematics.h
  * @author Edoardo Idà, Simone Comari
- * @date 31 Aug 2018
+ * @date 05 Sep 2018
  * @brief File containing differential kinematics-related functions to be included in the
  * GRAB CDPR library.
  */
@@ -41,26 +41,33 @@ namespace grabcdpr
  * being @f$\tilde{\boldsymbol{\Omega}}@f$ the anti-symmetric matrix of
  * @f$\boldsymbol{\omega}@f$.
  * @param[in] velocity [m/s] Platform global linear velocity @f$\dot{\mathbf{p}}@f$.
- * @param[in] angles_speed [rad/s] Platform orientation time-derivative
+ * @param[in] orientation_dot Platform orientation time-derivative
  * @f$\dot{\boldsymbol{\varepsilon}}@f$.
  * @param[in] pos_PG_glob [m] Global CoG position @f$\mathbf{r}'@f$.
  * @param[out] platform A pointer to the platform structure including vars to be updated.
  * @note See @ref legend for symbols reference.
+ * @note Both orientation parametrizations are valid here, that is both angles and quaternions
+ * can be used.
  */
+template <class OrientationType, class PlatformVarsType>
 void UpdatePlatformVel(const grabnum::Vector3d& velocity,
-                       const grabnum::Vector3d& angles_speed,
-                       const grabnum::Vector3d& pos_PG_glob, PlatformVars* platform);
+                       const OrientationType& orientation_dot,
+                       const grabnum::Vector3d& pos_PG_glob, PlatformVarsType* platform);
 /**
  * @brief Update platform-related first-order quantities.
  * @param[in] velocity [m/s] Platform global linear velocity @f$\dot{\mathbf{p}}@f$.
- * @param[in] angles_speed [rad/s] Platform orientation time-derivative
+ * @param[in] orientation_dot Platform orientation time-derivative
  * @f$\dot{\boldsymbol{\varepsilon}}@f$.
  * @param[in,out] platform A pointer to the platform structure including vars to be
  * updated.
  * @see UpdatePlatformVel()
+ * @note Both orientation parametrizations are valid here, that is both angles and quaternions
+ * can be used.
  */
+template <class OrientationType, class PlatformVarsType>
 void UpdatePlatformVel(const grabnum::Vector3d& velocity,
-                       const grabnum::Vector3d& angles_speed, PlatformVars* platform);
+                       const OrientationType& orientation_dot,
+                       PlatformVarsType* platform);
 
 /**
  * @brief Update global velocity of point @f$A_i@f$ and relative segments.
@@ -76,8 +83,11 @@ void UpdatePlatformVel(const grabnum::Vector3d& velocity,
  * @param[out] cable A pointer to the cable variables structure including the velocities
  * to be updated.
  * @note See @ref legend for symbols reference.
+ * @note Both orientation parametrizations are valid here, that is both angles and quaternions
+ * can be used.
  */
-void UpdateVelA(const grabnum::Vector3d& pos_PA_glob, const PlatformVars* platform,
+template <class PlatformVarsType>
+void UpdateVelA(const grabnum::Vector3d& pos_PA_glob, const PlatformVarsType* platform,
                 CableVars* cable);
 /**
  * @brief Update global velocity of point @f$A_i@f$ and relative segments.
@@ -85,8 +95,11 @@ void UpdateVelA(const grabnum::Vector3d& pos_PA_glob, const PlatformVars* platfo
  * @param[in,out] cable A pointer to the cable variables structure including the
  * velocities to be updated.
  * @see UpdateVelA()
+ * @note Both orientation parametrizations are valid here, that is both angles and quaternions
+ * can be used.
  */
-void UpdateVelA(const PlatformVars* platform, CableVars* cable);
+template <class PlatformVarsType>
+void UpdateVelA(const PlatformVarsType* platform, CableVars* cable);
 
 /**
  * @brief Calculate swivel pulley versors speed
@@ -238,17 +251,21 @@ double CalcCableSpeed(const CableVars* cable);
  * @param[in,out] cable A pointer to the cable structure with updated zero-order variables
  * and first-order variables to be updated.
  */
-void UpdateCableFirstOrd(const PlatformVars* platform, CableVars* cable);
+template <class PlatformVarsType>
+void UpdateCableFirstOrd(const PlatformVarsType* platform, CableVars* cable);
 
 /**
-* @brief Update all robots first-order variables at once (inverse kinematics problem).
+ * @brief Update all robots first-order variables at once (inverse kinematics problem).
  * @param[in] velocity [m/s] Platform global linear velocity.
- * @param[in] angles_speed [rad/s] Platform orientation time-derivative.
-* @param[in,out] vars A pointer to the robot structure with updated zero-order variables
+ * @param[in] orientation_dot Platform orientation time-derivative.
+ * @param[in,out] vars A pointer to the robot structure with updated zero-order variables
  * and first-order variables to be updated.
-*/
-void UpdateIK1(const grabnum::Vector3d& velocity, const grabnum::Vector3d& angles_speed,
-               Vars* vars);
+ * @note Both orientation parametrizations are valid here, that is both angles and quaternions
+ * can be used.
+ */
+template <class OrientationType, class VarsType>
+void UpdateIK1(const grabnum::Vector3d& velocity, const OrientationType& orientation_dot,
+               VarsType* vars);
 
 /** @} */ // end of FirstOrderKinematics group
 
@@ -283,10 +300,13 @@ void UpdateIK1(const grabnum::Vector3d& velocity, const grabnum::Vector3d& angle
  * @param[in] pos_PG_glob [m] Global CoG position @f$\mathbf{r}'@f$.
  * @param[out] platform A pointer to the platform structure including vars to be updated.
  * @note See @ref legend for symbols reference.
+ * @note Both orientation parametrizations are valid here, that is both angles and quaternions
+ * can be used.
  */
+template <class OrientationType, class PlatformVarsType>
 void UpdatePlatformAcc(const grabnum::Vector3d& acceleration,
-                       const grabnum::Vector3d& angles_acc,
-                       const grabnum::Vector3d& pos_PG_glob, PlatformVars* platform);
+                       const OrientationType& angles_acc,
+                       const grabnum::Vector3d& pos_PG_glob, PlatformVarsType* platform);
 /**
  * @brief Update platform-related second-order quantities.
  * @param[in] acceleration [m/s<sup>2</sup>] Platform global linear acceleration
@@ -296,9 +316,12 @@ void UpdatePlatformAcc(const grabnum::Vector3d& acceleration,
  * @param[in,out] platform A pointer to the platform structure including vars to be
  * updated.
  * @see UpdatePlatformAcc()
+ * @note Both orientation parametrizations are valid here, that is both angles and quaternions
+ * can be used.
  */
+template <class OrientationType, class PlatformVarsType>
 void UpdatePlatformAcc(const grabnum::Vector3d& acceleration,
-                       const grabnum::Vector3d& angles_acc, PlatformVars* platform);
+                       const OrientationType& angles_acc, PlatformVarsType* platform);
 
 /**
  * @brief Update global velocity of point @f$A_i@f$ and relative segments.
@@ -318,8 +341,11 @@ void UpdatePlatformAcc(const grabnum::Vector3d& acceleration,
  * @param[out] cable A pointer to the cable structure including the accelerations to be
  * updated.
  * @note See @ref legend for symbols reference.
+ * @note Both orientation parametrizations are valid here, that is both angles and quaternions
+ * can be used.
  */
-void UpdateAccA(const grabnum::Vector3d& pos_PA_glob, const PlatformVars* platform,
+template <class PlatformVarsType>
+void UpdateAccA(const grabnum::Vector3d& pos_PA_glob, const PlatformVarsType* platform,
                 CableVars* cable);
 /**
  * @brief Update global velocity of point @f$A_i@f$ and relative segments.
@@ -327,8 +353,11 @@ void UpdateAccA(const grabnum::Vector3d& pos_PA_glob, const PlatformVars* platfo
  * @param[in,out] cable A pointer to the cable structure including the accelerations to be
  * updated.
  * @see UpdateAccA()
+ * @note Both orientation parametrizations are valid here, that is both angles and quaternions
+ * can be used.
  */
-void UpdateAccA(const PlatformVars* platform, CableVars* cable);
+template <class PlatformVarsType>
+void UpdateAccA(const PlatformVarsType* platform, CableVars* cable);
 
 /**
  * @brief Calculate pulley swivel angle acceleration @f$\ddot{\sigma}_i@f$.
@@ -446,40 +475,52 @@ double CalcCableAcc(const CableVars* cable);
  * @param[in] platform A pointer to the updated platform structure.
  * @param[in,out] cable A pointer to the cable structure with updated zero and first-order
  * variables and second-order variables to be updated.
+ * @note Both orientation parametrizations are valid here, that is both angles and quaternions
+ * can be used.
  */
-void UpdateCableSecondOrd(const CableParams* params, const PlatformVars* platform,
+template <class PlatformVarsType>
+void UpdateCableSecondOrd(const CableParams* params, const PlatformVarsType* platform,
                           CableVars* cable);
 
 /**
 * @brief Update all robots second-order variables at once (inverse kinematics problem).
 * @param[in] acceleration [m/s<sup>2</sup>] Platform global linear acceleration
 * @f$\ddot{\mathbf{p}}@f$.
-* @param[in] angles_acc [rad/s<sup>2</sup>] Platform orientation second time-derivative
+* @param[in] orientation_ddot [rad/s<sup>2</sup>] Platform orientation second
+* time-derivative
 * @f$\ddot{\boldsymbol{\varepsilon}}@f$.
 * @param[in] params A pointer to the robot parameters structure.
 * @param[in,out] vars A pointer to the robot structure with updated zero and first-order
 * variables and second-order variables to be updated.
+* @note Both orientation parametrizations are valid here, that is both angles and quaternions
+* can be used.
 */
-void UpdateIK2(const grabnum::Vector3d& acceleration, const grabnum::Vector3d& angles_acc,
-               const Params* params, Vars* vars);
+template <class OrientationType, class VarsType>
+void UpdateIK2(const grabnum::Vector3d& acceleration,
+               const OrientationType& orientation_ddot, const Params* params,
+               VarsType* vars);
 
 /** @} */ // end of SecondOrderKinematics group
 
 /**
 * @brief Update all robots variables at once (full inverse kinematics problem).
 * @param[in] position Platform global position.
-* @param[in] orientation Platform global orientation expressed by angles.
+* @param[in] orientation Platform global orientation.
 * @param[in] velocity [m/s] Platform global linear velocity.
-* @param[in] angles_speed [rad/s] Platform orientation time-derivative.
+* @param[in] orientation_dot Platform orientation time-derivative.
 * @param[in] acceleration [m/s<sup>2</sup>] Platform global linear acceleration.
-* @param[in] angles_acc [rad/s] Platform orientation time-derivative.
+* @param[in] orientation_ddot Platform orientation time-derivative.
 * @param[in] params A pointer to the robot parameters structure.
 * @param[out] vars A pointer to the robot structure to be updated.
+* @note Both orientation parametrizations are valid here, that is both angles and quaternions
+* can be used.
 */
-void UpdateIK(const grabnum::Vector3d& position, const grabnum::Vector3d& orientation,
-              const grabnum::Vector3d& velocity, const grabnum::Vector3d& angles_speed,
-              const grabnum::Vector3d& acceleration, const grabnum::Vector3d& angles_acc,
-              const Params* params, Vars* vars);
+template <class OrientationType, class VarsType>
+void UpdateIK(const grabnum::Vector3d& position, const OrientationType& orientation,
+              const grabnum::Vector3d& velocity, const OrientationType& orientation_dot,
+              const grabnum::Vector3d& acceleration,
+              const OrientationType& orientation_ddot, const Params* params,
+              VarsType* vars);
 
 } // end namespace grabcdpr
 

@@ -1,7 +1,7 @@
 /**
  * @file kinematics.cpp
  * @author Edoardo Idà, Simone Comari
- * @date 28 Aug 2018
+ * @date 05 Sep 2018
  * @brief File containing definitions of functions declared in kinematics.h.
  */
 
@@ -10,9 +10,10 @@
 namespace grabcdpr
 {
 
+template <class OrientationType, class PlatformVarsType>
 void UpdatePlatformPose(const grabnum::Vector3d& position,
-                        const grabnum::Vector3d& orientation,
-                        const grabnum::Vector3d& pos_PG_loc, PlatformVars* platform)
+                        const OrientationType& orientation,
+                        const grabnum::Vector3d& pos_PG_loc, PlatformVarsType* platform)
 {
   // Update platform pose.
   platform->UpdatePose(position, orientation);
@@ -21,14 +22,17 @@ void UpdatePlatformPose(const grabnum::Vector3d& position,
   platform->pos_OG_glob = platform->position + platform->pos_PG_glob;
 }
 
+template <class OrientationType, class PlatformVarsType>
 void UpdatePlatformPose(const grabnum::Vector3d& position,
-                        const grabnum::Vector3d& orientation,
-                        const PlatformParams* params, PlatformVars* platform)
+                        const OrientationType& orientation,
+                        const PlatformParams* params, PlatformVarsType* platform)
 {
   UpdatePlatformPose(position, orientation, params->pos_PG_loc, platform);
 }
 
-void UpdatePosA(const CableParams* params, const PlatformVars* platform, CableVars* cable)
+template <class PlatformVarsType>
+void UpdatePosA(const CableParams* params, const PlatformVarsType* platform,
+                CableVars* cable)
 {
   cable->pos_PA_glob = platform->rot_mat * params->pos_PA_loc;
   cable->pos_OA_glob = platform->position + cable->pos_PA_glob;
@@ -106,19 +110,21 @@ double CalcCableLen(const CableParams* params, const CableVars* cable)
   return CalcCableLen(cable->pos_BA_glob, params->swivel_pulley_r, cable->tan_ang);
 }
 
-void UpdateCableZeroOrd(const CableParams* params, const PlatformVars* platform,
+template <class PlatformVarsType>
+void UpdateCableZeroOrd(const CableParams* params, const PlatformVarsType* platform,
                         CableVars* cable)
-{  
-  UpdatePosA(params, platform, cable);             // update segments ending with point A_i.
-  cable->swivel_ang = CalcSwivelAngle(params, cable);  // from 1st kinematic constraint.
+{
+  UpdatePosA(params, platform, cable); // update segments ending with point A_i.
+  cable->swivel_ang = CalcSwivelAngle(params, cable); // from 1st kinematic constraint.
   CalcPulleyVersors(params, cable);
-  cable->tan_ang = CalcTangentAngle(params, cable);    // from 2nd kinematic constraint.
-  CalcCableVectors(params, cable);                                  // from 1st kinematic constraint.
-  cable->length = CalcCableLen(params, cable);             // from 3rd kinematic constraint.
+  cable->tan_ang = CalcTangentAngle(params, cable); // from 2nd kinematic constraint.
+  CalcCableVectors(params, cable);                  // from 1st kinematic constraint.
+  cable->length = CalcCableLen(params, cable);      // from 3rd kinematic constraint.
 }
 
-void UpdateIK0(const grabnum::Vector3d& position, const grabnum::Vector3d& orientation,
-               const Params* params, Vars* vars)
+template <class OrientationType, class VarsType>
+void UpdateIK0(const grabnum::Vector3d& position, const OrientationType& orientation,
+               const Params* params, VarsType* vars)
 {
   UpdatePlatformPose(position, orientation, params->platform, vars->platform);
   for (uint8_t i = 0; i < vars->cables.size(); ++i)
