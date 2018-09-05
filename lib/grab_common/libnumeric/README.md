@@ -22,6 +22,7 @@ Feel free to adapt the settings to your specific need, but the minimal setup for
   - Select _$REPO/cable_robot/lib/grab_common/libnumeric_ as `Source code directory` and tick `Scan recursively` option below
   - Select _$REPO/cable_robot/lib/grab_common/libnumeric/doc_ as `Destination directory` (make directory if it does not exist yet)
 - In `Step 2`, in the tab `Wizard`, select `Output` under `Topics` and untick **LaTeX** option unless desired.
+- In `Step 2`, in the tab `Expert`, select `HTML` under `Topics` and tick **USE_MATHJAX** option to display mathematical formulas.
 - Close the window. You will be asked to save the _Doxyfile_ in the project directory. Do it as it suggests and you are done!
 Obviously, you can edit your configuration file with your favourite text editor in a later stage.
 
