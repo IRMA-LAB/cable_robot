@@ -378,6 +378,15 @@ VectorX<T, rows> Matrix<T, rows, cols>::GetCol(const uint8_t col) const
   return col_vect;
 }
 
+template <typename T, uint8_t rows, uint8_t cols>
+template<uint8_t blk_rows, uint8_t blk_cols>
+Matrix<T, blk_rows, blk_cols> Matrix<T, rows, cols>::GetBlock(const uint8_t start_row, const uint8_t start_col) const
+{
+  Matrix<T, blk_rows, blk_cols> block;
+  block.SetFromBlock(start_row, start_col, *this);
+  return block;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 /// Check functions
 ///////////////////////////////////////////////////////////////////////////////

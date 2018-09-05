@@ -445,6 +445,16 @@ public:
    * @return A 1-dimensional matrix (aka a vertical vector).
    */
   Matrix<T, rows, 1> GetCol(const uint8_t col) const;
+  /**
+   * Extracts a block from the matrix.
+   *
+   * The number of rows and columns of the block are specified in the template arguments.
+   * @param[in] start_row The starting row of the block.
+   * @param[in] start_col The starting column of the block.
+   * @return A block of the original matrix.
+   */
+  template<uint8_t blk_rows, uint8_t blk_cols>
+  Matrix<T, blk_rows, blk_cols> GetBlock(const uint8_t start_row, const uint8_t start_col) const;
 
   /**
    * Check if the matrix is square, i.e. @a m = @a n.
