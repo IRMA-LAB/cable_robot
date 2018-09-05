@@ -169,27 +169,18 @@ typedef enum RotParametrizationEnum
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * @brief Structure collecting all variables related to a generic 6DoF platform.
+ * @brief Structure collecting all common variables related to a generic 6DoF platform.
+ * @see PlatformVarsStruct PlatformQuatVarsStruct
  * @note See @ref legend for symbols reference.
- * @todo implement quaternion 1st-2nd order stuff.
  */
-typedef struct PlatformVarsStruct
+typedef struct PlatformVarsBaseStruct
 {
-  RotParametrization angles_type = TILT_TORSION; /**< rotation parametrization used. */
-
   /** @addtogroup ZeroOrderKinematics
    * @{
    */
-  grabnum::Vector3d position;      /**< [_m_] vector @f$\mathbf{p}@f$. */
-  grabnum::Vector3d orientation;   /**< [_rad_] vector @f$\boldsymbol{\varepsilon}@f$. */
-  grabnum::VectorXd<4> quaternion; /**< vector @f$\boldsymbol{\varepsilon}_q@f$. */
+  grabnum::Vector3d position; /**< [_m_] vector @f$\mathbf{p}@f$. */
 
-  grabnum::Matrix3d rot_mat;        /**< matrix @f$\mathbf{R}@f$. */
-  grabnum::Matrix3d h_mat;          /**< matrix @f$\mathbf{H}@f$. */
-  grabnum::Matrix3d dh_mat;        /**< matrix @f$\dot{\mathbf{H}}@f$. */
-
-  grabnum::VectorXd<6> pose;     /**< vector @f$\mathbf{q}@f$.  */
-  grabnum::VectorXd<7> pose_q;  /**< vector @f$\mathbf{q}_q@f$. */
+  grabnum::Matrix3d rot_mat; /**< matrix @f$\mathbf{R}@f$. */
 
   grabnum::Vector3d pos_PG_glob; /**< [_m_] vector @f$\mathbf{r}'@f$.*/
   grabnum::Vector3d pos_OG_glob; /**< [_m_] vector @f$\mathbf{r}@f$.*/
@@ -199,8 +190,6 @@ typedef struct PlatformVarsStruct
    * @{
    */
   grabnum::Vector3d velocity; /**< [_m/s_] vector @f$\dot{\mathbf{p}}@f$. */
-  grabnum::Vector3d
-    angles_speed; /**< [_rad/s_] vector @f$\dot{\boldsymbol{\varepsilon}}@f$. */
 
   grabnum::Vector3d angular_vel; /**< vector @f$\boldsymbol\omega@f$. */
 
@@ -212,14 +201,49 @@ typedef struct PlatformVarsStruct
    */
   grabnum::Vector3d
     acceleration; /**< [_m/s<sup>2</sup>_] vector @f$\ddot{\mathbf{p}}@f$. */
-  grabnum::Vector3d angles_acc; /**< [_rad/s<sup>2</sup>_] vector
-                                   @f$\ddot{\boldsymbol{\varepsilon}}@f$. */
 
   grabnum::Vector3d angular_acc; /**< vector @f$\boldsymbol\alpha@f$.*/
 
   grabnum::Vector3d
     acc_OG_glob; /**< [_m/s<sup>2</sup>_] vector @f$\ddot{\mathbf{r}}@f$.*/
   /** @} */      // end of SecondOrderKinematics group
+} PlatformBaseVars;
+
+/**
+ * @brief Structure collecting all variables related to minimal orientation
+ * parametrization of a
+ * generic 6DoF platform, i.e. with 3 angles.
+ * @see PlatformQuatVarsStruct
+ * @note See @ref legend for symbols reference.
+ */
+typedef struct PlatformVarsStruct : PlatformBaseVars
+{
+  RotParametrization angles_type = TILT_TORSION; /**< rotation parametrization used. */
+
+  /** @addtogroup ZeroOrderKinematics
+   * @{
+   */
+  grabnum::Vector3d orientation; /**< [_rad_] vector @f$\boldsymbol{\varepsilon}@f$. */
+
+  grabnum::Matrix3d h_mat;  /**< matrix @f$\mathbf{H}@f$. */
+  grabnum::Matrix3d dh_mat; /**< matrix @f$\dot{\mathbf{H}}@f$. */
+
+  grabnum::VectorXd<6> pose; /**< vector @f$\mathbf{q}@f$.  */
+  /** @} */                  // end of ZeroOrderKinematics group
+
+  /** @addtogroup FirstOrderKinematics
+   * @{
+   */
+  grabnum::Vector3d
+    orientation_dot; /**< [_rad/s_] vector @f$\dot{\boldsymbol{\varepsilon}}@f$. */
+  /** @} */          // end of FirstOrderKinematics group
+
+  /** @addtogroup SecondOrderKinematics
+   * @{
+   */
+  grabnum::Vector3d orientation_ddot; /**< [_rad/s<sup>2</sup>_] vector
+                                   @f$\ddot{\boldsymbol{\varepsilon}}@f$. */
+  /** @} */                           // end of SecondOrderKinematics group
 
   /**
    * @brief Constructor to explicitly declare rotation parametrization desired only.
@@ -229,6 +253,7 @@ typedef struct PlatformVarsStruct
   {
     angles_type = _angles_type;
   }
+
   /**
    * @brief Constructor to initialize platform vars with position and angles and their
    * first and second derivatives.
@@ -238,39 +263,26 @@ typedef struct PlatformVarsStruct
    * @f$\ddot{\mathbf{p}}@f$.
    * @param[in] _orientation [rad] Platform global orientation expressed by angles
    * @f$\boldsymbol{\varepsilon}@f$.
-   * @param[in] _angles_speed [rad/s] Platform orientation time-derivative
+   * @param[in] _orientation_dot [rad/s] Platform orientation time-derivative
    * @f$\dot{\boldsymbol{\varepsilon}}@f$.
-   * @param[in] _angles_acc [rad/s<sup>2</sup>] Platform orientation 2nd time-derivative
+   * @param[in] _orientation_ddot [rad/s<sup>2</sup>] Platform orientation 2nd
+   * time-derivative
    * @f$\ddot{\boldsymbol{\varepsilon}}@f$.
    * @param[in] _angles_type Desired rotation parametrization. Default is @a TILT_TORSION.
    * @note See @ref legend for more details.
+   * @see Update()
    */
   PlatformVarsStruct(const grabnum::Vector3d& _position,
                      const grabnum::Vector3d& _velocity,
                      const grabnum::Vector3d& _acceleration,
                      const grabnum::Vector3d& _orientation,
-                     const grabnum::Vector3d& _angles_speed,
-                     const grabnum::Vector3d& _angles_acc,
+                     const grabnum::Vector3d& _orientation_dot,
+                     const grabnum::Vector3d& _orientation_ddot,
                      const RotParametrization _angles_type = TILT_TORSION)
   {
     angles_type = _angles_type;
-    UpdatePose(_position, _orientation);
-    UpdateVel(_velocity, _angles_speed);
-    UpdateAcc(_acceleration, _angles_acc);
-  }
-  /**
-   * @brief Constructor to initialize platform pose with position and quaternion.
-   * @param[in] _position [m] Platform global position @f$\mathbf{p}@f$.
-   * @param[in] _orientation Platform global orientation expressed by quaternion
-   * @f$\boldsymbol{\varepsilon}_q@f$.
-   * @todo include velocities and speed for quaternion case too.
-   * @note See @ref legend for more details.
-   */
-  PlatformVarsStruct(const grabnum::Vector3d& _position,
-                     const grabnum::VectorXd<4>& _orientation)
-  {
-    angles_type = TILT_TORSION;
-    UpdatePose(_position, _orientation);
+    Update(_position, _velocity, _acceleration, _orientation, _orientation_dot,
+           _orientation_ddot);
   }
 
   /**
@@ -280,7 +292,7 @@ typedef struct PlatformVarsStruct
    * @f$\boldsymbol{\varepsilon}@f$.
    * @todo handle default case better
    * @ingroup ZeroOrderKinematics
-   * @see UpdateVel() UpdateAcc()
+   * @see UpdateVel() UpdateAcc() Update()
    * @note See @ref legend for more details.
    */
   void UpdatePose(const grabnum::Vector3d& _position,
@@ -292,7 +304,6 @@ typedef struct PlatformVarsStruct
     {
       pose(i) = position(i);
       pose(2 * i) = orientation(i);
-      pose_q(i) = position(i);
     }
     switch (angles_type)
     {
@@ -309,13 +320,210 @@ typedef struct PlatformVarsStruct
       rot_mat = grabgeom::RotTiltTorsion(orientation);
       break;
     }
-    quaternion = grabgeom::Rot2Quat(rot_mat);
-    pose_q.SetBlock(4, 1, quaternion);
   }
+
+  /**
+   * @brief Update platform velocities with linear velocity and angles speed.
+   * @param[in] _velocity [m/s] Platform global linear velocity @f$\dot{\mathbf{p}}@f$.
+   * @param[in] _orientation_dot [rad/s] Vector @f$\dot{\boldsymbol{\varepsilon}}@f$.
+   * @param[in] _orientation [rad] Platform global orientation expressed by angles
+   * @f$\boldsymbol{\varepsilon}@f$.
+   * @ingroup FirstOrderKinematics
+   * @see UpdatePose() UpdateAcc() Update()
+   * @note See @ref legend for more details.
+   */
+  void UpdateVel(const grabnum::Vector3d& _velocity,
+                 const grabnum::Vector3d& _orientation_dot,
+                 const grabnum::Vector3d& _orientation)
+  {
+    velocity = _velocity;
+    orientation_dot = _orientation_dot;
+    switch (angles_type)
+    {
+    case EULER_ZYZ:
+      h_mat = grabgeom::HtfZYZ(_orientation);
+      break;
+    case TAIT_BRYAN:
+      h_mat = grabgeom::HtfXYZ(_orientation);
+      break;
+    case TILT_TORSION:
+      h_mat = grabgeom::HtfRPY(_orientation);
+      break;
+    case RPY:
+      h_mat = grabgeom::HtfTiltTorsion(_orientation);
+      break;
+    }
+    angular_vel = h_mat * orientation_dot;
+  }
+
+  /**
+   * @brief Update platform velocities with linear velocity and angles speed.
+   *
+   * Platform orientation needed for the update are infered from current values of
+   *structure
+   * members, so make sure it is up-to-date by using UpdatePose() first.
+   * @param[in] _velocity [m/s] Platform global linear velocity @f$\dot{\mathbf{p}}@f$.
+   * @param[in] _orientation_dot [rad/s] Vector @f$\dot{\boldsymbol{\varepsilon}}@f$.
+   * @ingroup FirstOrderKinematics
+   * @see UpdateVel()
+   * @note See @ref legend for more details.
+   */
+  void UpdateVel(const grabnum::Vector3d& _velocity,
+                 const grabnum::Vector3d& _orientation_dot)
+  {
+    UpdateVel(_velocity, _orientation_dot, orientation);
+  }
+
+  /**
+   * @brief Update platform accelerations with linear and angles acceleration.
+   * @param[in] _acceleration [m/s<sup>2</sup>] Vector @f$\ddot{\mathbf{p}}@f$.
+   * @param[in] _orientation_ddot [rad/s<sup>2</sup>] Vector
+   * @f$\ddot{\boldsymbol{\varepsilon}}@f$.
+   * @param[in] _orientation_dot [rad/s] Vector @f$\dot{\boldsymbol{\varepsilon}}@f$.
+   * @param[in] _orientation [rad] Platform global orientation expressed by angles
+   * @f$\boldsymbol{\varepsilon}@f$.
+   * @param[in] _h_mat Transformation matrix @f$\mathbf{H}@f$.
+   * @ingroup SecondOrderKinematics
+   * @see UpdateVel() UpdatePose() Update()
+   * @note See @ref legend for more details.
+   */
+  void UpdateAcc(const grabnum::Vector3d& _acceleration,
+                 const grabnum::Vector3d& _orientation_ddot,
+                 const grabnum::Vector3d& _orientation_dot,
+                 const grabnum::Vector3d& _orientation, const grabnum::Matrix3d& _h_mat)
+  {
+    acceleration = _acceleration;
+    orientation_ddot = _orientation_ddot;
+    switch (angles_type)
+    {
+    case TAIT_BRYAN:
+      dh_mat = grabgeom::DHtfXYZ(_orientation, _orientation_dot);
+      break;
+    case TILT_TORSION:
+      dh_mat = grabgeom::DHtfTiltTorsion(_orientation, _orientation_dot);
+      break;
+    case RPY:
+      dh_mat = grabgeom::DHtfRPY(_orientation, _orientation_dot);
+      break;
+    case EULER_ZYZ:
+      dh_mat = grabgeom::DHtfZYZ(_orientation, _orientation_dot);
+      break;
+    }
+    angular_acc = dh_mat * _orientation_dot + _h_mat * orientation_ddot;
+  }
+  /**
+   * @brief Update platform accelerations with linear and quaternion acceleration.
+   *
+   * Platform orientation and angular velocity needed for the update are infered from
+   * current values of structure members, so make sure they are up-to-date by using
+   * UpdateVel() first.
+   * @param[in] _acceleration [m/s<sup>2</sup>] Vector @f$\ddot{\mathbf{p}}@f$.
+   * @param[in] _orientation_ddot [rad/s<sup>2</sup>] Vector
+   * @f$\ddot{\boldsymbol{\varepsilon}}@f$.
+   * @ingroup SecondOrderKinematics
+   * @see UpdateAcc()
+   * @note See @ref legend for more details.
+   */
+  void UpdateAcc(const grabnum::Vector3d& _acceleration,
+                 const grabnum::Vector3d& _orientation_ddot)
+  {
+    UpdateAcc(_acceleration, _orientation_ddot, orientation_dot, orientation, h_mat);
+  }
+
+  /**
+   * @brief Update platform vars with position and angles and their first and second
+   * derivatives.
+   * @param[in] _position [m] Platform global position @f$\mathbf{p}@f$.
+   * @param[in] _velocity [m/s] Platform global linear velocity @f$\dot{\mathbf{p}}@f$.
+   * @param[in] _acceleration [m/s<sup>2</sup>] Platform global linear acceleration
+   * @f$\ddot{\mathbf{p}}@f$.
+   * @param[in] _orientation [rad] Platform global orientation expressed by angles
+   * @f$\boldsymbol{\varepsilon}@f$.
+   * @param[in] _orientation_dot [rad/s] Platform orientation time-derivative
+   * @f$\dot{\boldsymbol{\varepsilon}}@f$.
+   * @param[in] _orientation_ddot [rad/s<sup>2</sup>] Platform orientation 2nd
+   * time-derivative
+   * @f$\ddot{\boldsymbol{\varepsilon}}@f$.
+   * @note See @ref legend for more details.
+   * @see UpdatePose() UpdateVel() UpdateAcc()
+   */
+  void Update(const grabnum::Vector3d& _position, const grabnum::Vector3d& _velocity,
+              const grabnum::Vector3d& _acceleration,
+              const grabnum::Vector3d& _orientation,
+              const grabnum::Vector3d& _orientation_dot,
+              const grabnum::Vector3d& _orientation_ddot)
+  {
+    UpdatePose(_position, _orientation);
+    UpdateVel(_velocity, _orientation_dot);
+    UpdateAcc(_acceleration, _orientation_ddot);
+  }
+} PlatformVars;
+
+/**
+ * @brief Structure collecting all variables related to non-minimal orientation
+ * parametrization
+ * of a generic 6DoF platform, i.e. with quaternions.
+ * @see PlatformVarsQuatStruct
+ * @note See @ref legend for symbols reference.
+ */
+typedef struct PlatformQuatVarsStruct : PlatformBaseVars
+{
+  /** @addtogroup ZeroOrderKinematics
+   * @{
+   */
+  grabnum::VectorXd<4> orientation; /**< vector @f$\boldsymbol{\varepsilon}_q@f$. */
+
+  grabnum::MatrixXd<3, 4> h_mat;  /**< matrix @f$\mathbf{H}_q@f$. */
+  grabnum::MatrixXd<3, 4> dh_mat; /**< matrix @f$\dot{\mathbf{H}}_q@f$. */
+
+  grabnum::VectorXd<7> pose; /**< vector @f$\mathbf{q}_q@f$. */
+  /** @} */                  // end of ZeroOrderKinematics group
+
+  /** @addtogroup FirstOrderKinematics
+   * @{
+   */
+  grabgeom::Quaternion
+    orientation_dot; /**< quaternion @f$\dot{\boldsymbol{\varepsilon}}_q@f$. */
+  /** @} */          // end of FirstOrderKinematics group
+
+  /** @addtogroup SecondOrderKinematics
+   * @{
+   */
+  grabgeom::Quaternion
+    orientation_ddot; /**< quaternion @f$\ddot{\boldsymbol{\varepsilon}}_q@f$. */
+  /** @} */           // end of SecondOrderKinematics group
+
+  /**
+   * @brief Constructor to initialize platform vars with position and orientation and their
+   * first and second derivatives.
+   * @param[in] _position [m] Platform global position @f$\mathbf{p}@f$.
+   * @param[in] _velocity [m/s] Platform global linear velocity @f$\dot{\mathbf{p}}@f$.
+   * @param[in] _acceleration [m/s<sup>2</sup>] Platform global linear acceleration
+   * @f$\ddot{\mathbf{p}}@f$.
+   * @param[in] _orientation Platform global orientation expressed by quaternion
+   * @f$\boldsymbol{\varepsilon}_q@f$.
+   * @param[in] _orientation_dot Platform orientation time-derivative
+   * @f$\dot{\boldsymbol{\varepsilon}}_q@f$.
+   * @param[in] _orientation_ddot Platform orientation 2<sup>nd</sup> time-derivative
+   * @f$\ddot{\boldsymbol{\varepsilon}}_q@f$.
+   * @note See @ref legend for more details.
+   * @see Update()
+   */
+  PlatformQuatVarsStruct(const grabnum::Vector3d& _position,
+                         const grabnum::Vector3d& _velocity,
+                         const grabnum::Vector3d& _acceleration,
+                         const grabgeom::Quaternion& _orientation,
+                         const grabgeom::Quaternion& _orientation_dot,
+                         const grabgeom::Quaternion& _orientation_ddot)
+  {
+    Update(_position, _velocity, _acceleration, _orientation, _orientation_dot,
+           _orientation_ddot);
+  }
+
   /**
    * @brief Update platform pose with position and quaternion.
    * @param[in] _position [m] Platform global position @f$\mathbf{p}@f$.
-   * @param[in] _quaternion Platform global orientation expressed by quaternion
+   * @param[in] _orientation Platform global orientation expressed by quaternion
    * @f$\boldsymbol{\varepsilon}_q = (q_w, q_x, q_y, q_z)@f$.
    * @todo automatically update orientation from quaternion.
    * @ingroup ZeroOrderKinematics
@@ -323,85 +531,103 @@ typedef struct PlatformVarsStruct
    * @note See @ref legend for more details.
    */
   void UpdatePose(const grabnum::Vector3d& _position,
-                  const grabnum::VectorXd<4>& _quaternion)
+                  const grabgeom::Quaternion& _orientation)
   {
     position = _position;
-    quaternion = _quaternion;
+    orientation = _orientation;
     for (uint8_t i = 1; i <= 3; ++i)
     {
-      pose_q(i) = position(i);
       pose(i) = position(i);
-      pose_q(2 * i) = quaternion(i);
+      pose(2 * i) = orientation(i);
     }
-    pose_q(7) = quaternion(4);
-    rot_mat = grabgeom::Quat2Rot(quaternion);
+    pose(7) = orientation(4);
+    rot_mat = grabgeom::Quat2Rot(orientation);
   }
 
   /**
    * @brief Update platform velocities with linear velocity and angles speed.
    * @param[in] _velocity [m/s] Platform global linear velocity @f$\dot{\mathbf{p}}@f$.
-   * @param[in] _angles_speed [rad/s] Vector @f$\dot{\boldsymbol{\varepsilon}}@f$.
-   * @todo implement HtfRPY()
+   * @param[in] _orientation_dot Quaternion velocity
+   * @f$\dot{\boldsymbol{\varepsilon}}_q@f$.
+   * @param[in] _orientation Platform global orientation expressed by quaternion
+   * @f$\boldsymbol{\varepsilon}_q = (q_w, q_x, q_y, q_z)@f$.
    * @ingroup FirstOrderKinematics
    * @see UpdatePose() UpdateAcc()
    * @note See @ref legend for more details.
    */
   void UpdateVel(const grabnum::Vector3d& _velocity,
-                 const grabnum::Vector3d& _angles_speed)
+                 const grabgeom::Quaternion& _orientation_dot,
+                 const grabgeom::Quaternion& _orientation)
   {
     velocity = _velocity;
-    angles_speed = _angles_speed;
-    switch (angles_type)
-    {
-    case EULER_ZYZ:
-      h_mat = grabgeom::HtfZYZ(orientation);
-      break;
-    case TAIT_BRYAN:
-      h_mat = grabgeom::HtfXYZ(orientation);
-      break;
-    case TILT_TORSION:
-      h_mat = grabgeom::HtfRPY(orientation);
-      break;
-    case RPY:
-      h_mat = grabgeom::HtfTiltTorsion(orientation);
-      break;
-    }
-    angular_vel = h_mat * angles_speed;
+    orientation_dot = _orientation_dot;
+    h_mat = grabgeom::HtfQuat(_orientation);
+    angular_vel = h_mat * orientation_dot;
+  }
+  /**
+   * @brief Update platform velocities with linear velocity and angles speed.
+   *
+   * Platform orientation needed for the update are infered from current values of
+   *structure
+   * members, so make sure they are up-to-date by using UpdatePose() first.
+   * @param[in] _velocity [m/s] Platform global linear velocity @f$\dot{\mathbf{p}}@f$.
+   * @param[in] _orientation_dot Quaternion velocity
+   *@f$\dot{\boldsymbol{\varepsilon}}_q@f$.
+   * @ingroup FirstOrderKinematics
+   * @see UpdateVel()
+   * @note See @ref legend for more details.
+   */
+  void UpdateVel(const grabnum::Vector3d& _velocity,
+                 const grabgeom::Quaternion& _orientation_dot)
+  {
+    UpdateVel(_velocity, _orientation_dot, orientation);
   }
 
   /**
-   * @brief Update platform accelerations with linear and angles acceleration.
+   * @brief Update platform accelerations with linear and quaternion acceleration.
+   *
+   * Platform orientation and angular velocity needed for the update are infered from
+   * current values of structure members, so make sure they are up-to-date by using
+   * UpdateVel() first.
    * @param[in] _acceleration [m/s<sup>2</sup>] Vector @f$\ddot{\mathbf{p}}@f$.
-   * @param[in] _angles_acc [rad/s<sup>2</sup>] Vector
-   * @f$\ddot{\boldsymbol{\varepsilon}}@f$.
-   * @todo implement DHtfRPY(), DHtfZYZ()
+   * @param[in] _orientation_ddot Quaternion acceleration
+   * @f$\ddot{\boldsymbol{\varepsilon}}_q@f$.
    * @ingroup SecondOrderKinematics
-   * @see UpdateVel() UpdateAcc()
    * @note See @ref legend for more details.
+   * @todo this
    */
   void UpdateAcc(const grabnum::Vector3d& _acceleration,
-                 const grabnum::Vector3d& _angles_acc)
+                 const grabgeom::Quaternion& _orientation_ddot)
   {
-    acceleration = _acceleration;
-    angles_acc = _angles_acc;
-    switch (angles_type)
-    {
-    case TAIT_BRYAN:
-      dh_mat = grabgeom::DHtfXYZ(orientation, angles_speed);
-      break;
-    case TILT_TORSION:
-      dh_mat = grabgeom::DHtfTiltTorsion(orientation, angles_speed);
-      break;
-    case RPY:
-      dh_mat = grabgeom::DHtfRPY(orientation, angles_speed);
-      break;
-    case EULER_ZYZ:
-      dh_mat = grabgeom::DHtfZYZ(orientation, angles_speed);
-      break;
-    }
-    angular_acc = dh_mat * angles_speed + h_mat * angles_acc;
   }
-} PlatformVars;
+
+  /**
+   * @brief Update platform vars with position and orientation and their first and second
+   * derivatives.
+   * @param[in] _position [m] Platform global position @f$\mathbf{p}@f$.
+   * @param[in] _velocity [m/s] Platform global linear velocity @f$\dot{\mathbf{p}}@f$.
+   * @param[in] _acceleration [m/s<sup>2</sup>] Platform global linear acceleration
+   * @f$\ddot{\mathbf{p}}@f$.
+   * @param[in] _orientation Platform global orientation expressed by quaternion
+   * @f$\boldsymbol{\varepsilon}_q@f$.
+   * @param[in] _orientation_dot Platform orientation time-derivative
+   * @f$\dot{\boldsymbol{\varepsilon}}_q@f$.
+   * @param[in] _orientation_ddot Platform orientation 2<sup>nd</sup> time-derivative
+   * @f$\ddot{\boldsymbol{\varepsilon}}_q@f$.
+   * @note See @ref legend for more details.
+   * @see UpdatePose() UpdateVel() UpdateAcc()
+   */
+  void Update(const grabnum::Vector3d& _position, const grabnum::Vector3d& _velocity,
+              const grabnum::Vector3d& _acceleration,
+              const grabgeom::Quaternion& _orientation,
+              const grabgeom::Quaternion& _orientation_dot,
+              const grabgeom::Quaternion& _orientation_ddot)
+  {
+    UpdatePose(_position, _orientation);
+    UpdateVel(_velocity, _orientation_dot);
+    UpdateAcc(_acceleration, _orientation_ddot);
+  }
+} PlatformQuatVars;
 
 /**
  * @brief Structure collecting variable related to a single generic cable of a CDPR.
@@ -464,12 +690,27 @@ typedef struct CableVarsStruct
 
 /**
  * @brief Structure collecting all variables related to a generic 6DoF CDPR.
+ *
+ * This structure employs 3-angle parametrization for the orientation of the platform.
+ * @see VarsQuatStruct
  */
 typedef struct VarsStruct
 {
-  PlatformVars* platform;        /**< variables of a generic 6DoF platform. */
+  PlatformVars* platform;        /**< variables of a generic 6DoF platform with angles. */
   std::vector<CableVars> cables; /**< vector of variables of a single cables in a CDPR. */
 } Vars;
+/**
+ * @brief Structure collecting all variables related to a generic 6DoF CDPR.
+ *
+ * This structure employs quaternion parametrization for the orientation of the platform.
+ * @see VarsStruct
+ */
+typedef struct VarsQuatStruct
+{
+  PlatformQuatVars*
+    platform; /**< variables of a generic 6DoF platform with quaternions. */
+  std::vector<CableVars> cables; /**< vector of variables of a single cables in a CDPR. */
+} VarsQuat;
 
 /**
  * @brief Structure collecting parameters related to a generic 6DoF platform.
