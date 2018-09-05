@@ -43,6 +43,24 @@ Quaternion Rot2Quat(const grabnum::Matrix3d& rot_mat);
  */
 grabnum::MatrixXd<3,4> HtfQuat(const Quaternion& quaternion);
 
+/**
+ * @brief Time-derivative of transformation matrix @f$\mathbf{H}@f$ between the
+ * derivative of a quaternion and angular velocity vector @f$\boldsymbol\omega@f$.
+ *
+ * @f[
+ * \mathbf{\dot{H}}(\boldsymbol{\epsilon}_q, \boldsymbol{\dot{\epsilon}}_q) =
+ * \frac{d\mathbf{H}(\boldsymbol{\epsilon}_q)}{dt}
+ * @f]
+ *
+ * @param[in] quaternion_dot The orientation speed expressed by a quaternion
+ * @f$\dot{\boldsymbol{\epsilon}}_q@f$.
+ * @return A 3x3 matrix (double).
+ */
+grabnum::MatrixXd<3,4> DHtfQuat(const Quaternion& quaternion_dot)
+{
+  return HtfQuat(quaternion_dot);
+}
+
 } // end namespace grabgeom
 
 #endif // GRABCOMMON_LIBGEOM_QUATERNIONS_H

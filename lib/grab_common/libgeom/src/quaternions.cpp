@@ -66,7 +66,7 @@ grabnum::VectorXd<4> Rot2Quat(const grabnum::Matrix3d& rot_mat)
 grabnum::MatrixXd<3,4> HtfQuat(const Quaternion& quat)
 {
   grabnum::MatrixXd<3,4> hmat;
-  hmat.SetCol(1, quat.GetBlock<3,1>(2,1));
+  hmat.SetCol(1, -quat.GetBlock<3,1>(2,1));
   hmat.SetBlock(1, 2, grabnum::Anti(quat.GetBlock<3,1>(2,1)) + grabnum::Matrix3d(quat(1)));
   return 2. * hmat;
 }

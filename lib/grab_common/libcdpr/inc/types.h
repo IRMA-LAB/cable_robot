@@ -1,7 +1,7 @@
 /**
  * @file types.h
  * @author Edoardo Idà, Simone Comari
- * @date 31 Aug 2018
+ * @date 05 Sep 2018
  * @brief File containing kinematics-related types to be included in the GRAB CDPR
  * library.
  *
@@ -586,19 +586,40 @@ typedef struct PlatformQuatVarsStruct : PlatformBaseVars
   /**
    * @brief Update platform accelerations with linear and quaternion acceleration.
    *
-   * Platform orientation and angular velocity needed for the update are infered from
-   * current values of structure members, so make sure they are up-to-date by using
+   * @param[in] _acceleration [m/s<sup>2</sup>] Vector @f$\ddot{\mathbf{p}}@f$.
+   * @param[in] _orientation_ddot Quaternion acceleration
+   * @f$\ddot{\boldsymbol{\varepsilon}}_q@f$.
+   * @param[in] _orientation_dot Quaternion speed @f$\dot{\boldsymbol{\varepsilon}}_q@f$.
+   * @param[in] _h_mat Transformation matrix @f$\mathbf{H}_q@f$.
+   * @ingroup SecondOrderKinematics
+   * @note See @ref legend for more details.
+   */
+  void UpdateAcc(const grabnum::Vector3d& _acceleration,
+                 const grabgeom::Quaternion& _orientation_ddot,
+                 const grabgeom::Quaternion& _orientation_dot,
+                 const grabnum::MatrixXd<3, 4>& _h_mat)
+  {
+    acceleration = _acceleration;
+    orientation_ddot = _orientation_ddot;
+    dh_mat = grabgeom::DHtfQuat(_orientation_dot);
+    angular_acc = dh_mat * _orientation_dot + _h_mat * orientation_ddot;
+  }
+  /**
+   * @brief Update platform accelerations with linear and quaternion acceleration.
+   *
+   * Platform angular velocity needed for the update are infered from current values of
+   * structure members, so make sure they are up-to-date by using
    * UpdateVel() first.
    * @param[in] _acceleration [m/s<sup>2</sup>] Vector @f$\ddot{\mathbf{p}}@f$.
    * @param[in] _orientation_ddot Quaternion acceleration
    * @f$\ddot{\boldsymbol{\varepsilon}}_q@f$.
    * @ingroup SecondOrderKinematics
    * @note See @ref legend for more details.
-   * @todo this
    */
   void UpdateAcc(const grabnum::Vector3d& _acceleration,
                  const grabgeom::Quaternion& _orientation_ddot)
   {
+    UpdateAcc(_acceleration, _orientation_ddot, orientation_dot, h_mat);
   }
 
   /**
