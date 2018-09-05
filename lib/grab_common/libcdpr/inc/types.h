@@ -137,10 +137,6 @@
 #include "quaternions.h"
 #include "matrix.h"
 
-#ifndef SQUARE
-#define SQUARE(x) (x * x) /**< returns the square of an element. */
-#endif
-
 /**
  * @brief namespace for CDPR-related utilities, such as kinematics and dynamics.
  */
@@ -308,16 +304,16 @@ typedef struct PlatformVarsStruct : PlatformBaseVars
     switch (angles_type)
     {
     case EULER_ZYZ:
-      rot_mat = grabgeom::RotZYZ(orientation);
+      rot_mat = grabgeom::EulerZYZ2Rot(orientation);
       break;
     case TAIT_BRYAN:
-      rot_mat = grabgeom::RotXYZ(orientation);
+      rot_mat = grabgeom::EulerXYZ2Rot(orientation);
       break;
     case RPY:
-      rot_mat = grabgeom::RotRPY(orientation);
+      rot_mat = grabgeom::RPY2Rot(orientation);
       break;
     case TILT_TORSION:
-      rot_mat = grabgeom::RotTiltTorsion(orientation);
+      rot_mat = grabgeom::TiltTorsion2Rot(orientation);
       break;
     }
   }

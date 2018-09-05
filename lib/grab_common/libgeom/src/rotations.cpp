@@ -1,7 +1,7 @@
 /**
  * @file rotations.cpp
  * @author Edoardo Idà, Simone Comari
- * @date 27 Aug 2018
+ * @date 05 Sep 2018
  * @brief File containing definitions of rotations.h.
  */
 
@@ -34,37 +34,72 @@ grabnum::Matrix3d RotZ(const double angle)
 {
   grabnum::Matrix3d rot(1.0);
   rot(1, 1) = cos(angle);
-  rot(2, 2) = rot(2, 2);
+  rot(2, 2) = rot(1, 1);
   rot(2, 1) = sin(angle);
   rot(1, 2) = -rot(2, 1);
   return rot;
 }
 
-grabnum::Matrix3d RotXYZ(const double alpha, const double beta, const double gamma)
+grabnum::Matrix3d EulerXYZ2Rot(const double alpha, const double beta, const double gamma)
 {
   grabnum::Matrix3d rot;
   rot = RotX(alpha) * RotY(beta) * RotZ(gamma);
   return rot;
 }
 
-grabnum::Matrix3d RotRPY(const double roll, const double pitch, const double yaw)
+grabnum::Matrix3d RPY2Rot(const double roll, const double pitch, const double yaw)
 {
   grabnum::Matrix3d rot;
   rot = RotZ(yaw) * RotY(pitch) * RotX(roll);
   return rot;
 }
 
-grabnum::Matrix3d RotZYZ(const double alpha, const double beta, const double gamma)
+grabnum::Matrix3d EulerZYZ2Rot(const double alpha, const double beta, const double gamma)
 {
   grabnum::Matrix3d rot;
   rot = RotZ(alpha) * RotY(beta) * RotZ(gamma);
   return rot;
 }
 
-grabnum::Matrix3d RotTiltTorsion(const double tilt_azimuth, const double tilt,
-                                 const double torsion)
+grabnum::Matrix3d TiltTorsion2Rot(const double tilt_azimuth, const double tilt,
+                                  const double torsion)
 {
-  return RotZYZ(tilt_azimuth, tilt, torsion - tilt_azimuth);
+  return EulerZYZ2Rot(tilt_azimuth, tilt, torsion - tilt_azimuth);
+}
+
+grabnum::Vector3d Rot2EulerXYZ(const grabnum::Matrix3d& rot_mat)
+{
+  grabnum::Vector3d angles;
+  angles(1) = atan2(-rot_mat(2, 3), rot_mat(3, 3));  // alpha
+  angles(2) = atan2(rot_mat(1, 3), sqrt(SQUARE(rot_mat(1, 1)) + SQUARE(rot_mat(1, 2))));  // beta
+  angles(3) = atan2(-rot_mat(1, 2), rot_mat(1, 1));  // gamma
+  return angles;
+}
+
+grabnum::Vector3d Rot2RPY(const grabnum::Matrix3d& rot_mat)
+{
+  grabnum::Vector3d rpy;
+  rpy(1) = atan2(rot_mat(3, 2), rot_mat(3, 3)); // roll
+  rpy(2) =
+    atan2(-rot_mat(3, 1), sqrt(SQUARE(rot_mat(3, 2)) + SQUARE(rot_mat(3, 3)))); // pitch
+  rpy(3) = atan2(rot_mat(2, 1), rot_mat(1, 1));                                 // yaw
+  return rpy;
+}
+
+grabnum::Vector3d Rot2EulerZYZ(const grabnum::Matrix3d& rot_mat)
+{
+  grabnum::Vector3d angles;
+  angles(1) = atan2(rot_mat(2, 3), rot_mat(1, 3));  // alpha
+  angles(2) = atan2(sqrt(SQUARE(rot_mat(1, 3)) + SQUARE(rot_mat(2, 3))), rot_mat(3, 3)); // beta
+  angles(3) = atan2(rot_mat(3, 2), -rot_mat(3, 1)); // gamma
+  return angles;
+}
+
+grabnum::Vector3d Rot2TiltTorsion(const grabnum::Matrix3d& rot_mat)
+{
+  grabnum::Vector3d angles = Rot2EulerZYZ(rot_mat);
+  angles(3) += angles(1); // tau
+  return angles;
 }
 
 grabnum::Matrix3d HtfXYZ(const double alpha, const double beta)

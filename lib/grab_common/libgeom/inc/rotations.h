@@ -1,7 +1,7 @@
 /**
  * @file rotations.h
  * @author Edoardo Idà, Simone Comari
- * @date 27 Aug 2018
+ * @date 05 Sep 2018
  * @brief File containing rotation parametrizations to be included in the GRAB geometric
  * library.
  *
@@ -118,7 +118,7 @@ grabnum::Matrix3d RotZ(const double angle);
 
 /**
  * @brief Rotation matrix based on _Tait-Bryan_ angles convention and @f$X_1Y_2Z_3@f$
- *order.
+ * order.
  *
  * _Tait-Bryan_ angles @f$(\alpha,\beta,\gamma)@f$ represent three rotations, applied
  * sequentially about axes @f$\mathbf{x}_0, \mathbf{y}_1,\mathbf{z}_2@f$ of the _current_
@@ -144,7 +144,7 @@ grabnum::Matrix3d RotZ(const double angle);
  * @param[in] gamma [rad] Rotation angle about @f$z_2@f$-axis.
  * @return A 3x3 orthogonal matrix (double).
  */
-grabnum::Matrix3d RotXYZ(const double alpha, const double beta, const double gamma);
+grabnum::Matrix3d EulerXYZ2Rot(const double alpha, const double beta, const double gamma);
 /**
  * @brief Rotation matrix based on _Tait-Bryan_ angles convention and @f$X_1Y_2Z_3@f$
  *order.
@@ -171,9 +171,9 @@ grabnum::Matrix3d RotXYZ(const double alpha, const double beta, const double gam
  * @param[in] angles [rad] _Tait-Bryan_ angles @f$(\alpha,\beta,\gamma)@f$ vector.
  * @return A 3x3 orthogonal matrix (double).
  */
-grabnum::Matrix3d RotXYZ(const grabnum::Vector3d& angles)
+grabnum::Matrix3d EulerXYZ2Rot(const grabnum::Vector3d& angles)
 {
-  return RotXYZ(angles(1), angles(2), angles(3));
+  return EulerXYZ2Rot(angles(1), angles(2), angles(3));
 }
 
 /**
@@ -198,7 +198,7 @@ grabnum::Matrix3d RotXYZ(const grabnum::Vector3d& angles)
  * @param[in] yaw [rad] Yawing angle (about @f$z_0@f$-axis).
  * @return A 3x3 orthogonal matrix (double).
  */
-grabnum::Matrix3d RotRPY(const double roll, const double pitch, const double yaw);
+grabnum::Matrix3d RPY2Rot(const double roll, const double pitch, const double yaw);
 /**
  * @brief Rotation matrix based on _Roll, Pitch, Yaw_ angles convention (from aviation).
  *
@@ -219,9 +219,9 @@ grabnum::Matrix3d RotRPY(const double roll, const double pitch, const double yaw
  * @param[in] rpy [rad]  _Roll, pitch, yaw_ angles @f$(\phi,\theta,\psi)@f$ vector.
  * @return A 3x3 orthogonal matrix (double).
  */
-grabnum::Matrix3d RotRPY(const grabnum::Vector3d& rpy)
+grabnum::Matrix3d RPY2Rot(const grabnum::Vector3d& rpy)
 {
-  return RotRPY(rpy(1), rpy(2), rpy(3));
+  return RPY2Rot(rpy(1), rpy(2), rpy(3));
 }
 
 /**
@@ -251,7 +251,7 @@ grabnum::Matrix3d RotRPY(const grabnum::Vector3d& rpy)
  * @param[in] gamma [rad] Rotation angle about @f$z_2@f$-axis.
  * @return A 3x3 orthogonal matrix (double).
  */
-grabnum::Matrix3d RotZYZ(const double alpha, const double beta, const double gamma);
+grabnum::Matrix3d EulerZYZ2Rot(const double alpha, const double beta, const double gamma);
 /**
  * @brief Rotation matrix based on _Euler_ angles convention and @f$Z_1Y_2Z_3@f$ order.
  *
@@ -277,9 +277,9 @@ grabnum::Matrix3d RotZYZ(const double alpha, const double beta, const double gam
  * @param[in] angles [rad] _Euler_ angles @f$(\alpha,\beta,\gamma)@f$ vector.
  * @return A 3x3 orthogonal matrix (double).
  */
-grabnum::Matrix3d RotZYZ(const grabnum::Vector3d& angles)
+grabnum::Matrix3d EulerZYZ2Rot(const grabnum::Vector3d& angles)
 {
-  return RotZYZ(angles(1), angles(2), angles(3));
+  return EulerZYZ2Rot(angles(1), angles(2), angles(3));
 }
 
 /**
@@ -303,7 +303,7 @@ grabnum::Matrix3d RotZYZ(const grabnum::Vector3d& angles)
  * @return A 3x3 orthogonal matrix (double).
  * @see RotZYZ()
  */
-grabnum::Matrix3d RotTiltTorsion(const double tilt_azimuth, const double tilt,
+grabnum::Matrix3d TiltTorsion2Rot(const double tilt_azimuth, const double tilt,
                                  const double torsion);
 /**
  * @brief Rotation matrix based on _tilt-and-torsion_ angle system.
@@ -324,10 +324,45 @@ grabnum::Matrix3d RotTiltTorsion(const double tilt_azimuth, const double tilt,
  * @return A 3x3 orthogonal matrix (double).
  * @see RotZYZ()
  */
-grabnum::Matrix3d RotTiltTorsion(const grabnum::Vector3d& angles)
+grabnum::Matrix3d TiltTorsion2Rot(const grabnum::Vector3d& angles)
 {
-  return RotTiltTorsion(angles(1), angles(2), angles(3));
+  return TiltTorsion2Rot(angles(1), angles(2), angles(3));
 }
+
+/**
+ * @brief Obtain _Tait-Bryan_ angles (Euler with @f$X_1Y_2Z_3@f$ order) out of a rotation
+ * matrix.
+ * @param rot_mat An orthogonal rotation matrix (double).
+ * @return A 3D vector with _Tait-Bryan_ angles @f$(\alpha,\beta,\gamma)@f$ in radians.
+ * @see EulerXYZ2Rot()
+ */
+grabnum::Vector3d Rot2EulerXYZ(const grabnum::Matrix3d& rot_mat);
+
+/**
+ * @brief Obtain _Roll, Pitch, Yaw_ angles out of a rotation matrix.
+ * @param rot_mat An orthogonal rotation matrix (double).
+ * @return A 3D vector with _Roll, Pitch, Yaw_ angles @f$(\phi,\theta,\psi)@f$ in radians.
+ * @see RPY2Rot()
+ */
+grabnum::Vector3d Rot2RPY(const grabnum::Matrix3d& rot_mat);
+
+/**
+ * @brief Obtain _Euler_ angles (Euler with @f$Z_1Y_2Z_3@f$ order) out of a rotation
+ * matrix.
+ * @param rot_mat An orthogonal rotation matrix (double).
+ * @return A 3D vector with _Euler_ angles @f$(\alpha,\beta,\gamma)@f$ in radians.
+ * @see EulerZYZ2Rot()
+ */
+grabnum::Vector3d Rot2EulerZYZ(const grabnum::Matrix3d& rot_mat);
+
+/**
+ * @brief Obtain _tilt-and-torsion_ angles (Euler variant with @f$Z_1Y_2Z_3@f$ order) out of
+ * a rotation matrix.
+ * @param rot_mat An orthogonal rotation matrix (double).
+ * @return A 3D vector with _tilt-and-torsion_ angles @f$(\phi,\theta,\tau)@f$ in radians.
+ * @see TiltTorsion2Rot()
+ */
+grabnum::Vector3d Rot2TiltTorsion(const grabnum::Matrix3d& rot_mat);
 
 /**
  * @brief Transformation matrix @f$\mathbf{H}@f$ between the derivative of Tait-Bryan
