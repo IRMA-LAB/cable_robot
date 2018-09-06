@@ -3,11 +3,11 @@
 ## Overview
 
 This repository contains common utilities for different projects developed at GRAB lab. They are organized in library form, divided by topic:
-- _[libnumeric](https://github.com/scomari/cable_robot/tree/scomari/libdevel/lib/grab_common/libnumeric)_: numeric library with minimal matrix class implementation and related tools, and few numerical solvers;
-- _[libgeom](https://github.com/scomari/cable_robot/tree/scomari/libdevel/lib/grab_common/libgeom)_: geometric library with rotation parametrization and derivatives, and quaternion minimal class implementation;
-- _[libcdpr](https://github.com/scomari/cable_robot/tree/scomari/libdevel/lib/grab_common/libcdpr)_: library including kinematics, dynamics and other utilities related to a generic Cable-Driven Parallel Robot;
-- _[libgrabec](https://github.com/scomari/cable_robot/tree/scomari/libdevel/lib/grab_common/libgrabec)_: library providing basic functionalities to setup an EtherCAT communication system;
-- _[libgrabrt](https://github.com/scomari/cable_robot/tree/scomari/libdevel/lib/grab_common/libgrabrt)_: library providing basic functionalities to setup a Real-Time thread, provided that you are working on a RT Unix machine.
+- _[libnumeric](./libnumeric)_: numeric library with minimal matrix class implementation and related tools, and few numerical solvers;
+- _[libgeom](./libgeom)_: geometric library with rotation parametrization and derivatives, and quaternion minimal class implementation;
+- _[libcdpr](./libcdpr)_: library including kinematics, dynamics and other utilities related to a generic Cable-Driven Parallel Robot;
+- _[libgrabec](./libgrabec)_: library providing basic functionalities to setup an EtherCAT communication system;
+- _[libgrabrt](./libgrabrt)_: library providing basic functionalities to setup a Real-Time thread, provided that you are working on a RT Unix machine.
 
 ## Documentation
 
