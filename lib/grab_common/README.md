@@ -1,8 +1,19 @@
-# Documentation
+# GRAB Common
+
+## Overview
+
+This repository contains common utilities for different projects developed at GRAB lab. They are organized in library form, divided by topic:
+- _[libnumeric](https://github.com/scomari/cable_robot/tree/scomari/libdevel/lib/grab_common/libnumeric)_: numeric library with minimal matrix class implementation and related tools, and few numerical solvers;
+- _[libgeom](https://github.com/scomari/cable_robot/tree/scomari/libdevel/lib/grab_common/libgeom)_: geometric library with rotation parametrization and derivatives, and quaternion minimal class implementation;
+- _[libcdpr](https://github.com/scomari/cable_robot/tree/scomari/libdevel/lib/grab_common/libcdpr)_: library including kinematics, dynamics and other utilities related to a generic Cable-Driven Parallel Robot;
+- _[libgrabec](https://github.com/scomari/cable_robot/tree/scomari/libdevel/lib/grab_common/libgrabec)_: library providing basic functionalities to setup an EtherCAT communication system;
+- _[libgrabrt](https://github.com/scomari/cable_robot/tree/scomari/libdevel/lib/grab_common/libgrabrt)_: library providing basic functionalities to setup a Real-Time thread, provided that you are working on a RT Unix machine.
+
+## Documentation
 
 To auto-generate an user-friendly documentation straight out of the source code, we make use of well-known software tool _[Doxygen](http://www.stack.nl/~dimitri/doxygen/)_. On the official website you can find all the details about how to use it, install it and build it. While we provide here a short tutorial on how to integrate it in our Qt-based framework, we leave to the user the task of reading the [manual](http://www.stack.nl/~dimitri/doxygen/manual/docblocks.html) on the format to be employed when writing documentation within the code. Bear in mind that in this project we opted for _JavaDoc_ style, so please comply with it.
 
-## Prerequisites
+### Prerequisites
 
 First of all, you need to download the tool itself (you can skip this step if it is already installed in your machine).
 To do so, open a terminal and type the following command:
@@ -11,7 +22,7 @@ sudo apt-get install doxygen doxygen-gui
 ```
 That's it. Now _Doxygen_ is installed and ready to be used.
 
-## Setup a Doxygen project with _doxywizard_
+### Setup a Doxygen project with _doxywizard_
 
 Next, you need to setup a _Doxyfile_, which yields all the instructions to generate the documentation out of your code. Instead of compiling this file yourself, _Doxygen_ provides a nice wizard to walk you throug all the necessary step: _doxywizard_.
 To start it, just type `doxywizard` in a terminal and a small GUI will appear.
@@ -26,7 +37,7 @@ Feel free to adapt the settings to your specific need, but the minimal setup for
 - Close the window. You will be asked to save the _Doxyfile_ in the project directory. Do it as it suggests and you are done!
 Obviously, you can edit your configuration file with your favourite text editor in a later stage.
 
-## Setup Doxygen in your Qt project
+### Setup Doxygen in your Qt project
 
 Assuming the code you want to document already belongs to a Qt project, open it with _QtCreator_ and go to _Projects_ tab. In the **Build Settings**, under the **Build Steps** section, click on `Add Build Step` button and select `Custom Process Step`.
 In the `Command` field type `doxygen`, while in the `Arguments` field you need to write the absolute path to the _Doxyfile_ we just created, i.e. _$MYPROJECTPATH/Doxyfile_.
