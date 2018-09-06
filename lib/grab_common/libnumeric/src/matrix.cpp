@@ -412,7 +412,7 @@ bool Matrix<T, rows, cols>::IsApprox(const Matrix<T, rows, cols>& other,
   for (uint8_t row = 0; row < rows; ++row)
     for (uint8_t col = 0; col < cols; ++col)
     {
-      if (IsClose(elements_[row][col], other(row + 1, col + 1, tol)))
+      if (IsClose(elements_[row][col], other(row + 1, col + 1), tol))
         return false;
     }
   return true;
