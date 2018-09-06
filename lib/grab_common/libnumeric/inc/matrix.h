@@ -1,7 +1,7 @@
 /**
  * @file matrix.h
  * @author Edoardo Idà, Simone Comari
- * @date 05 Sep 2018
+ * @date 06 Sep 2018
  * @brief File containing matrix class and utilities to be included in the GRAB numeric
  * library.
  *
@@ -41,6 +41,21 @@ namespace grabnum
 {
 
 static constexpr double EPSILON = 1e-7; /**< tolerance for floating point comparison */
+
+/**
+ * @brief Check whether two floating numbers are close within a certain tolerance.
+ *
+ * This function is safer when comparing two floating numbers than using the standard `==`
+ * operator, which could deliver misleading result due to numerical errors.
+ * @param[in] a First floating point value to be compared.
+ * @param[in] b Second floating point value to be compared.
+ * @param[in] tol (Optional) Maximum tolerance on the absolute difference in order to
+ * consider the two values close (aka "equal").
+ * return _True_ if their absolute difference is within the threshold.
+ * @see EPSILON
+ */
+template <typename T>
+bool IsClose(const T a, const T b, const double tol = EPSILON) { return fabs(a - b) <= tol; }
 
 /**
  * A Matlab-alike implementation of a matrix class to simplify and speed up standard
