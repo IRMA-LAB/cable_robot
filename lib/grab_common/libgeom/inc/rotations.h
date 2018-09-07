@@ -1,7 +1,7 @@
 /**
  * @file rotations.h
  * @author Edoardo Idà, Simone Comari
- * @date 05 Sep 2018
+ * @date 07 Sep 2018
  * @brief File containing rotation parametrizations to be included in the GRAB geometric
  * library.
  *
@@ -284,7 +284,7 @@ grabnum::Matrix3d EulerZYZ2Rot(const grabnum::Vector3d& angles)
 
 /**
  * @brief Rotation matrix based on _tilt-and-torsion_ angle system.
-
+ *
  * _Tilt-and-torsion_ angle system is a variation of _Euler_ angles convention where:
  * - @f$\alpha = \phi @f$ is the _tilt-azimuth_ angle
  * - @f$\beta = \theta @f$ is the _tilt_ angle
@@ -307,7 +307,7 @@ grabnum::Matrix3d TiltTorsion2Rot(const double tilt_azimuth, const double tilt,
                                  const double torsion);
 /**
  * @brief Rotation matrix based on _tilt-and-torsion_ angle system.
-
+ *
  * _Tilt-and-torsion_ angle system is a variation of _Euler_ angles convention where:
  * - @f$\alpha = \phi @f$ is the _tilt-azimuth_ angle
  * - @f$\beta = \theta @f$ is the _tilt_ angle
@@ -332,7 +332,7 @@ grabnum::Matrix3d TiltTorsion2Rot(const grabnum::Vector3d& angles)
 /**
  * @brief Obtain _Tait-Bryan_ angles (Euler with @f$X_1Y_2Z_3@f$ order) out of a rotation
  * matrix.
- * @param rot_mat An orthogonal rotation matrix (double).
+ * @param[in] rot_mat An orthogonal rotation matrix (double).
  * @return A 3D vector with _Tait-Bryan_ angles @f$(\alpha,\beta,\gamma)@f$ in radians.
  * @see EulerXYZ2Rot()
  */
@@ -340,7 +340,7 @@ grabnum::Vector3d Rot2EulerXYZ(const grabnum::Matrix3d& rot_mat);
 
 /**
  * @brief Obtain _Roll, Pitch, Yaw_ angles out of a rotation matrix.
- * @param rot_mat An orthogonal rotation matrix (double).
+ * @param[in] rot_mat An orthogonal rotation matrix (double).
  * @return A 3D vector with _Roll, Pitch, Yaw_ angles @f$(\phi,\theta,\psi)@f$ in radians.
  * @see RPY2Rot()
  */
@@ -349,7 +349,7 @@ grabnum::Vector3d Rot2RPY(const grabnum::Matrix3d& rot_mat);
 /**
  * @brief Obtain _Euler_ angles (Euler with @f$Z_1Y_2Z_3@f$ order) out of a rotation
  * matrix.
- * @param rot_mat An orthogonal rotation matrix (double).
+ * @param[in] rot_mat An orthogonal rotation matrix (double).
  * @return A 3D vector with _Euler_ angles @f$(\alpha,\beta,\gamma)@f$ in radians.
  * @see EulerZYZ2Rot()
  */
@@ -358,7 +358,7 @@ grabnum::Vector3d Rot2EulerZYZ(const grabnum::Matrix3d& rot_mat);
 /**
  * @brief Obtain _tilt-and-torsion_ angles (Euler variant with @f$Z_1Y_2Z_3@f$ order) out of
  * a rotation matrix.
- * @param rot_mat An orthogonal rotation matrix (double).
+ * @param[in] rot_mat An orthogonal rotation matrix (double).
  * @return A 3D vector with _tilt-and-torsion_ angles @f$(\phi,\theta,\tau)@f$ in radians.
  * @see TiltTorsion2Rot()
  */

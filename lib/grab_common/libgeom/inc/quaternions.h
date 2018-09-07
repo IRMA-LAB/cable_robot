@@ -1,7 +1,7 @@
 /**
  * @file quaternions.h
  * @author Edoardo Idà, Simone Comari
- * @date 06 Sep 2018
+ * @date 07 Sep 2018
  * @brief File containing quaternions utilities to be included in the GRAB geometric
  * library.
  * @todo documentation of external operators.
@@ -11,6 +11,7 @@
 #define GRABCOMMON_LIBGEOM_QUATERNIONS_H
 
 #include "matrix.h"
+#include "rotations.h"
 
 namespace grabgeom
 {
@@ -81,7 +82,7 @@ struct Quaternion
    * @brief operator ==
    * @param[in] other The quaternion to be compared against.
    * @return _True_ if quaternions are exactly the same.
-   * @note This methos is not safe due to numerical imprecition of floating points.
+   * @note This method is not safe due to numerical imprecition of floating points.
    * @see IsApprox()
    */
   bool operator==(const Quaternion& other) const { return v() == other.v(); }
@@ -90,7 +91,7 @@ struct Quaternion
    * @brief operator !=
    * @param other The quaternion to be compared against.
    * @return _True_ if quaternions are not exactly the same.
-   * @note This methos is not safe due to numerical imprecition of floating points.
+   * @note This method is not safe due to numerical imprecition of floating points.
    * @see IsApprox()
    */
   bool operator!=(const Quaternion& other) const { return v() != other.v(); }
@@ -294,6 +295,8 @@ struct Quaternion
    * @f[
    * \mathbf{q}^{-1} = \mathbf{q}^* / \|\mathbf{q}\|^2
    * @f]
+   * @note For unit quaternions, it holds @f$\mathbf{q}^{-1} = \mathbf{q}^*@f$, being
+   * @f$\|\mathbf{q}\| = 1@f$.
    * @return The inverse quaternion @f$\mathbf{q}^{-1}@f$.
    */
   Quaternion Inv() const { return Conj() / Norm(); }
@@ -302,13 +305,13 @@ struct Quaternion
    * @brief Calculate the norm of @c *this.
    *
    * The norm of a quaternion is the standard L2 norm of the 4-vector @f$\mathbf{q}@f$.
-   * @return The norm of @a *this.
+   * @return The norm of @c *this.
    * @see Normalized() Normalize()
    */
   double Norm() const { return grabnum::Norm(q()); }
 
   /**
-   * @brief Normalize @a *this.
+   * @brief Normalize @c *this.
    *
    * Normalizing a quaternion is done by diving all its elements by its norm. The result is a
    * unitary quaternion.
@@ -324,7 +327,7 @@ struct Quaternion
   }
 
   /**
-   * @brief Returns the normalized version of @a *this.
+   * @brief Returns the normalized version of @c *this.
    *
    * Normalizing a quaternion is done by diving all its elements by its norm. The result is a
    * unitary quaternion.
@@ -334,7 +337,7 @@ struct Quaternion
   Quaternion Normalized() const { return *this / Norm(); }
 
   /**
-   * @brief Check whether @a *this is a unitary quaternion.
+   * @brief Check whether @c *this is a unitary quaternion.
    * @return _True_ if it is unitary.
    */
   bool IsUnitary() const { return grabnum::IsClose(Norm(), 1.); }
@@ -350,74 +353,81 @@ struct Quaternion
 };
 
 /**
- * @brief operator +
- * @param lhs
- * @param rhs
- * @return
+ * @brief Addition between two quaternions.
+ * @param[in] lhs A quaternion.
+ * @param[in] rhs A quaternion.
+ * @return A quaternion, result of the addition.
  */
 Quaternion operator+(Quaternion lhs, const Quaternion& rhs) { return lhs += rhs; }
 
 /**
- * @brief operator +
- * @param lhs
- * @param rhs
- * @return
+ * @brief Addition between a quaternion and a scalar.
+ * @param[in] lhs A quaternion.
+ * @param[in] rhs A scalar value.
+ * @return A quaternion, result of the addition.
  */
 Quaternion operator+(Quaternion lhs, const double rhs) { return lhs += rhs; }
 
 /**
- * @brief operator +
- * @param lhs
- * @param rhs
- * @return
+ * @brief Addition between a scalar and a quaternion.
+ * @param[in] lhs A scalar value.
+ * @param[in] rhs A quaternion.
+ * @return A quaternion, result of the addition.
  */
 Quaternion operator+(const double lhs, Quaternion rhs) { return rhs += lhs; }
 
 /**
- * @brief operator -
- * @param lhs
- * @param rhs
- * @return
+ * @brief Returns the opposite of a quaternion @f$-\mathbf{q}@f$.
+ * @param[in] quat A quaternion
+ * @return A quaternion, opposite of @c quat.
+ */
+Quaternion operator-(Quaternion quat) { return quat *= -1.; }
+
+/**
+ * @brief Subtraction between two quaternions.
+ * @param[in] lhs A quaternion.
+ * @param[in] rhs A quaternion.
+ * @return A quaternion, result of the subtraction.
  */
 Quaternion operator-(Quaternion lhs, const Quaternion& rhs) { return lhs -= rhs; }
 
 /**
- * @brief operator -
- * @param lhs
- * @param rhs
- * @return
+ * @brief Subtraction between a quaternion and a scalar.
+ * @param[in] lhs A quaternion.
+ * @param[in] rhs A scalar value.
+ * @return A quaternion, result of the subtraction.
  */
 Quaternion operator-(Quaternion lhs, const double rhs) { return lhs -= rhs; }
 
 /**
- * @brief operator -
- * @param lhs
- * @param rhs
- * @return
+ * @brief Subtraction between a scalar and a quaternion.
+ * @param[in] rhs A scalar value.
+ * @param[in] lhs A quaternion.
+ * @return A quaternion, result of the subtraction.
  */
-Quaternion operator-(const double lhs, Quaternion rhs) { return rhs -= lhs; }
+Quaternion operator-(const double lhs, Quaternion rhs) { return -rhs + lhs; }
 
 /**
- * @brief operator *
- * @param lhs
- * @param rhs
- * @return
+ * @brief Quaternions product @f$\otimes@f$.
+ * @param[in] lhs A quaternion.
+ * @param[in] rhs A quaternion.
+ * @return A quaternion, result of the product @f$\mathbf{q} \otimes \mathbf{p}@f$.
  */
 Quaternion operator*(Quaternion lhs, const Quaternion& rhs) { return lhs *= rhs; }
 
 /**
- * @brief operator *
- * @param lhs
- * @param rhs
- * @return
+ * @brief Multiplication between a quaternion and a scalar.
+ * @param[in] lhs A quaternion.
+ * @param[in] rhs A scalar value.
+ * @return A quaternion, result of the multiplication.
  */
 Quaternion operator*(Quaternion lhs, const double rhs) { return lhs *= rhs; }
 
 /**
- * @brief operator *
- * @param lhs
- * @param rhs
- * @return
+ * @brief Multiplication between a scalar and a quaternion.
+ * @param[in] rhs A scalar value.
+ * @param[in] lhs A quaternion.
+ * @return A quaternion, result of the multiplication.
  */
 Quaternion operator*(const double lhs, Quaternion rhs) { return rhs *= lhs; }
 
@@ -428,7 +438,7 @@ Quaternion operator*(const double lhs, Quaternion rhs) { return rhs *= lhs; }
  * @f[
  * \mathbf{q}^* := \begin{bmatrix} q_ w \\ -\mathbf{q}_v \end{bmatrix}
  * @f]
- * @param quat The original quaternion.
+ * @param[in] quat The original quaternion.
  * @return The conjugate quaternion @f$\mathbf{q}^*@f$.
  */
 Quaternion QuatConjugate(const Quaternion& quat) { return quat.Conj(); }
@@ -441,11 +451,13 @@ Quaternion QuatConjugate(const Quaternion& quat) { return quat.Conj(); }
  * \mathbf{q} \otimes \mathbf{q}^{-1} = \mathbf{q}^{-1} \otimes \mathbf{q} =
  *    \mathbf{q}_1
  * @f]
- * and therefore it can be computed with:
+ * being @f$\mathbf{q}_1@f$ the quaternion identity, and therefore it can be computed with:
  * @f[
  * \mathbf{q}^{-1} = \mathbf{q}^* / \|\mathbf{q}\|^2
  * @f]
- * @param quat The original quaternion.
+ * @note For unit quaternions, it holds @f$\mathbf{q}^{-1} = \mathbf{q}^*@f$, being
+ * @f$\|\mathbf{q}\| = 1@f$.
+ * @param[in] quat The original quaternion.
  * @return The inverse quaternion @f$\mathbf{q}^{-1}@f$.
  */
 Quaternion QuatInverse(const Quaternion& quat) { return quat.Inv(); }
@@ -453,9 +465,9 @@ Quaternion QuatInverse(const Quaternion& quat) { return quat.Inv(); }
 /**
  * @brief Calculate the norm of a quaternion.
  *
- * The norm of a quaternion is the standard L2 norm of the 4-vector @f$\mathbf{q}@f$.
- * @param quat A quaternion.
- * @return The norm of @a quat.
+ * The norm of a quaternion is the standard L2-norm of the 4-vector @f$\mathbf{q}@f$.
+ * @param[in] quat A quaternion.
+ * @return The norm of @c quat.
  * @see QuatNormalized()
  */
 double QuatNorm(const Quaternion& quat) { return quat.Norm(); }
@@ -463,34 +475,202 @@ double QuatNorm(const Quaternion& quat) { return quat.Norm(); }
 /**
  * @brief Returns the normalized version of a quaternion.
  *
- * Normalizing a quaternion is done by diving all its elements by its norm. The result is a
- * unitary quaternion.
+ * Normalizing a quaternion is done by dividing all its elements by its norm. The result is a
+ * unit quaternion.
+ * @param[in] quat A quaternion.
  * @return The normalized quaternion.
  * @see QuatNorm()
  */
 Quaternion QuatNormalized(const Quaternion& quat) { return quat.Normalized(); }
 
 /**
- * @brief Determines the rotation matrix corresponding to a given quaternion.
+ * @brief Determines the rotation matrix corresponding to a given unit quaternion.
  *
- * @param[in] quaternion The orientation expressed by a unitary quaternion
+ * @param[in] quaternion The orientation expressed by a unit quaternion
  * @f$(q_w, q_x, q_y, q_z)@f$.
  * @return A 3x3 orthogonal matrix (double).
+ * @see Rot2Quat()
  */
 grabnum::Matrix3d Quat2Rot(const Quaternion& quaternion);
 
 /**
- * @brief Determines the quaternion corresponding to a given rotation matrix.
+ * @brief Obtain _Tait-Bryan_ angles (Euler with @f$X_1Y_2Z_3@f$ order) out of a unit
+ * quaternion.
+ * @param[in] quaternion The orientation expressed by a unit quaternion
+ * @f$(q_w, q_x, q_y, q_z)@f$.
+ * @return A 3D vector with _Tait-Bryan_ angles @f$(\alpha,\beta,\gamma)@f$ in radians.
+ * @see EulerXYZ2Quat()
+ * @todo Do this conversion in a smarter way.
+ */
+grabnum::Vector3d Quat2EulerXYZ(const Quaternion& quaternion)
+{ return Rot2EulerXYZ(Quat2Rot(quaternion)); }
+
+/**
+ * @brief Obtain _Roll, Pitch, Yaw_ angles out of a unit quaternion.
+ * @param[in] quaternion The orientation expressed by a unit quaternion
+ * @f$(q_w, q_x, q_y, q_z)@f$.
+ * @return A 3D vector with _Roll, Pitch, Yaw_ angles @f$(\phi,\theta,\psi)@f$ in radians.
+ * @see RPY2Quat()
+ * @todo Do this conversion in a smarter way.
+ */
+grabnum::Vector3d Quat2RPY(const Quaternion& quaternion)
+{ return Rot2RPY(Quat2Rot(quaternion)); }
+
+/**
+ * @brief Obtain _Euler_ angles (Euler with @f$Z_1Y_2Z_3@f$ order) out of a unit
+ * quaternion.
+ * @param[in] quaternion The orientation expressed by a unit quaternion
+ * @f$(q_w, q_x, q_y, q_z)@f$.
+ * @return A 3D vector with _Euler_ angles @f$(\alpha,\beta,\gamma)@f$ in radians.
+ * @see EulerZYZ2Quat()
+ * @todo Do this conversion in a smarter way.
+ */
+grabnum::Vector3d Quat2EulerZYZ(const Quaternion& quaternion)
+{ return Rot2EulerZYZ(Quat2Rot(quaternion)); }
+
+/**
+ * @brief Obtain _tilt-and-torsion_ angles (Euler variant with @f$Z_1Y_2Z_3@f$ order) out of
+ * a unit quaternion.
+ * @param[in] quaternion The orientation expressed by a unit quaternion
+ * @f$(q_w, q_x, q_y, q_z)@f$.
+ * @return A 3D vector with _tilt-and-torsion_ angles @f$(\phi,\theta,\tau)@f$ in radians.
+ * @see TiltTorsion2Quat()
+ * @todo Do this conversion in a smarter way.
+ */
+grabnum::Vector3d Quat2TiltTorsion(const Quaternion& quaternion)
+{ return Rot2TiltTorsion(Quat2Rot(quaternion)); }
+
+/**
+ * @brief Determines the unit quaternion corresponding to a given rotation matrix.
  * @param[in] rot_mat A rotation matrix.
- * @return A unitary quaternion @f$(q_w, q_x, q_y, q_z)@f$.
+ * @return A unit quaternion @f$(q_w, q_x, q_y, q_z)@f$.
  */
 Quaternion Rot2Quat(const grabnum::Matrix3d& rot_mat);
 
 /**
- * @brief QuatRotate
- * @param quat
- * @param vect
- * @return
+ * @brief Determines the unit quaternion corresponding to a given rotation based on
+ * _Tait-Bryan_ angles convention and @f$X_1Y_2Z_3@f$ order.
+ *
+ * @param[in] alpha [rad] Rotation angle about @f$x_0@f$-axis.
+ * @param[in] beta [rad] Rotation angle about @f$y_1@f$-axis.
+ * @param[in] gamma [rad] Rotation angle about @f$z_2@f$-axis.
+ * @return A unit quaternion.
+ * @see EulerXYZ2Rot() Quat2EulerXYZ()
+ */
+Quaternion EulerXYZ2Quat(const double alpha, const double beta, const double gamma)
+{ return Rot2Quat(EulerXYZ2Rot(alpha, beta, gamma)); }
+/**
+ * @brief Determines the unit quaternion corresponding to a given rotation based on
+ * _Tait-Bryan_ angles convention and @f$X_1Y_2Z_3@f$ order.
+ *
+ * @param[in] angles [rad] _Tait-Bryan_ angles @f$(\alpha,\beta,\gamma)@f$ vector.
+ * @return A unit quaternion.
+ * @see EulerXYZ2Quat()
+ */
+Quaternion EulerXYZ2Quat(const grabnum::Vector3d& angles)
+{
+  return EulerXYZ2Quat(angles(1), angles(2), angles(3));
+}
+
+/**
+ * @brief Determines the unit quaternion corresponding to a given rotation based on
+ * _Roll, Pitch, Yaw_ angles convention (from aviation).
+ *
+ * @param[in] roll [rad] Rolling angle (about @f$x_0@f$-axis).
+ * @param[in] pitch [rad] Pitching angle (about @f$y_0@f$-axis).
+ * @param[in] yaw [rad] Yawing angle (about @f$z_0@f$-axis).
+ * @return A unit quaternion.
+ * @see RPY2Rot() Quat2RPY()
+ */
+Quaternion RPY2Quat(const double roll, const double pitch, const double yaw)
+{ return Rot2Quat(RPY2Rot(roll, pitch, yaw)); }
+/**
+ * @brief Determines the unit quaternion corresponding to a given rotation based on
+ * _Roll, Pitch, Yaw_ angles convention (from aviation).
+ *
+ * @param[in] rpy [rad]  _Roll, pitch, yaw_ angles @f$(\phi,\theta,\psi)@f$ vector.
+ * @return A unit quaternion.
+ * @see RPY2Quat()
+ */
+Quaternion RPY2Quat(const grabnum::Vector3d& rpy)
+{
+  return RPY2Quat(rpy(1), rpy(2), rpy(3));
+}
+
+/**
+ * @brief Determines the unit quaternion corresponding to a given rotation based on _Euler_
+ * angles convention and @f$Z_1Y_2Z_3@f$ order.
+ *
+ * @param[in] alpha [rad] Rotation angle about @f$z_0@f$-axis.
+ * @param[in] beta [rad] Rotation angle about @f$y_1@f$-axis.
+ * @param[in] gamma [rad] Rotation angle about @f$z_2@f$-axis.
+ * @return A unit quaternion.
+ * @see EulerZYZ2Rot() Quat2EulerZYZ()
+ */
+Quaternion EulerZYZ2Quat(const double alpha, const double beta, const double gamma)
+{ return Rot2Quat(EulerZYZ2Rot(alpha, beta, gamma)); }
+/**
+ * @brief Determines the unit quaternion corresponding to a given rotation based on _Euler_
+ * angles convention and @f$Z_1Y_2Z_3@f$ order.
+ *
+ * @param[in] angles [rad] _Euler_ angles @f$(\alpha,\beta,\gamma)@f$ vector.
+ * @return A unit quaternion.
+ * @see EulerZYZ2Quat()
+ */
+Quaternion EulerZYZ2Quat(const grabnum::Vector3d& angles)
+{
+  return EulerZYZ2Quat(angles(1), angles(2), angles(3));
+}
+
+/**
+ * @brief Determines the unit quaternion corresponding to a given rotation based on
+ * _tilt-and-torsion_ angle system.
+ *
+ * @param[in] tilt_azimuth [rad] Tilt-azimuth angle (about @f$z_0@f$-axis).
+ * @param[in] tilt [rad] Tilt angle (about @f$y_1@f$-axis).
+ * @param[in] torsion [rad] Torsion angle (about @f$z_2@f$-axis).
+ * @return A unit quaternion.
+ * @see TiltTorsion2Rot() Quat2TiltTorsion()
+ */
+Quaternion TiltTorsion2Quat(const double tilt_azimuth, const double tilt,
+                                 const double torsion)
+{ return Rot2Quat(TiltTorsion2Rot(tilt_azimuth, tilt, torsion)); }
+/**
+ * @brief Determines the unit quaternion corresponding to a given rotation based on
+ * _tilt-and-torsion_ angle system.
+ *
+ * @param[in] angles [rad] _Tilt-and-torsion_ angles @f$(\phi,\theta,\tau)@f$ vector.
+ * @return A unit quaternion.
+ * @see TiltTorsion2Quat()
+ */
+Quaternion TiltTorsion2Quat(const grabnum::Vector3d& angles)
+{
+  return TiltTorsion2Quat(angles(1), angles(2), angles(3));
+}
+
+/**
+ * @brief Rotate a 3D vector by a rotation quaternion.
+ *
+ * The pure quaternion of a coordinate vector
+ * @f$^\mathcal{B}\mathbf{r} \in \mathbb{R}^3@f$ expressed in frame
+ * @f$\mathcal{B}@f$ is given by
+ * @f[
+ * \mathbf{p}(^\mathcal{B}\mathbf{r}) =
+ * \begin{bmatrix} 0 \\ ^\mathcal{B}\mathbf{r} \end{bmatrix}
+ * @f]
+ * Given the unit quaternion @f$^\mathcal{A}\boldsymbol\varepsilon_\mathcal{B}@f$
+ * representing the orientation of @f$\mathcal{A}@f$ w.r.t. @f$\mathcal{B}@f$, one can
+ * show that
+ * @f[
+ * \mathbf{p}(^\mathcal{A}\mathbf{r}) = ^\mathcal{A}\boldsymbol\varepsilon_\mathcal{B}
+ * \otimes \mathbf{p}(^\mathcal{A}\mathbf{r}) \otimes
+ * (^\mathcal{A}\boldsymbol\varepsilon_\mathcal{B})^{-1}
+ * @f]
+ * @param[in] quat A quaternion representing the rotation.
+ * @param[in] vect The 3D vector to be rotated.
+ * @return A rotated 3D vector.
+ * @note Recall from QuatInverse() that for unit quaternions
+ * @f$\mathbf{q}^{-1} = \mathbf{q}^*@f$.
  */
 grabnum::Vector3d QuatRotate(const Quaternion& quat, const grabnum::Vector3d& vect);
 
