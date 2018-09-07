@@ -77,7 +77,7 @@ grabnum::MatrixXd<3, 4> HtfQuat(const Quaternion& quat)
 {
   grabnum::MatrixXd<3, 4> hmat;
   hmat.SetCol(1, -quat.v());
-  hmat.SetBlock(1, 2, grabnum::Anti(quat.v()) + grabnum::Matrix3d(quat.w));
+  hmat.SetBlock(1, 2, grabnum::Skew(quat.v()) + grabnum::Matrix3d(quat.w));
   return 2. * hmat;
 }
 

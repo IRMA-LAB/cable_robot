@@ -144,9 +144,9 @@ void UpdatePlatformAcc(const grabnum::Vector3d& acceleration,
   // Update platform velocities.
   platform->UpdateAcc(acceleration, orientation_ddot);
   // Calculate platform baricenter velocity expressed in global frame.
-  grabnum::Matrix3d Omega = grabnum::Anti(platform->angular_vel);
+  grabnum::Matrix3d Omega = grabnum::Skew(platform->angular_vel);
   platform->acc_OG_glob =
-    acceleration + (grabnum::Anti(platform->angular_acc) + Omega * Omega) * pos_PG_glob;
+    acceleration + (grabnum::Skew(platform->angular_acc) + Omega * Omega) * pos_PG_glob;
 }
 
 template <class OrientationType, class PlatformVarsType>
@@ -161,10 +161,10 @@ template <class PlatformVarsType>
 void UpdateAccA(const grabnum::Vector3d& pos_PA_glob, const PlatformVarsType* platform,
                 CableVars* cable)
 {
-  grabnum::Matrix3d Omega = grabnum::Anti(platform->angular_vel);
+  grabnum::Matrix3d Omega = grabnum::Skew(platform->angular_vel);
   cable->acc_OA_glob =
     platform->acceleration +
-    (grabnum::Anti(platform->angular_acc) + Omega * Omega) * pos_PA_glob;
+    (grabnum::Skew(platform->angular_acc) + Omega * Omega) * pos_PA_glob;
 }
 
 template <class PlatformVarsType>

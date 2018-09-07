@@ -1,7 +1,7 @@
 /**
  * @file matrix.h
  * @author Edoardo Idà, Simone Comari
- * @date 06 Sep 2018
+ * @date 07 Sep 2018
  * @brief File containing matrix class and utilities to be included in the GRAB numeric
  * library.
  *
@@ -25,6 +25,8 @@
 #include <cmath>
 #include <typeinfo>
 
+#include "common.h"
+
 #if (MCU_TARGET == 0)
 #include <iostream>
 #include <iomanip>
@@ -39,23 +41,6 @@
  */
 namespace grabnum
 {
-
-static constexpr double EPSILON = 1e-7; /**< tolerance for floating point comparison */
-
-/**
- * @brief Check whether two floating numbers are close within a certain tolerance.
- *
- * This function is safer when comparing two floating numbers than using the standard `==`
- * operator, which could deliver misleading result due to numerical errors.
- * @param[in] a First floating point value to be compared.
- * @param[in] b Second floating point value to be compared.
- * @param[in] tol (Optional) Maximum tolerance on the absolute difference in order to
- * consider the two values close (aka "equal").
- * return _True_ if their absolute difference is within the threshold.
- * @see EPSILON
- */
-template <typename T>
-bool IsClose(const T a, const T b, const double tol = EPSILON) { return fabs(a - b) <= tol; }
 
 /**
  * A Matlab-alike implementation of a matrix class to simplify and speed up standard
@@ -781,12 +766,12 @@ template <typename T>
 Vector3<T> Cross(const Vector3<T>& vvect3d1, const Vector3<T>& vvect3d2);
 
 /**
- * Computes the anti-symmetric matrix of a 3D vector.
+ * Computes the skew-symmetric matrix of a 3D vector.
  *
  * @param[in] vvect3d A 3-dimensional vertical vector.
  * @return A 3x3 matrix.
  */
-template <typename T> Matrix3<T> Anti(const Vector3<T>& vvect3d);
+template <typename T> Matrix3<T> Skew(const Vector3<T>& vvect3d);
 
 } //  end namespace grabnum
 

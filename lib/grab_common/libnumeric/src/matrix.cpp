@@ -1,7 +1,7 @@
 /**
  * @file matrix.cpp
  * @author Edoardo Idà, Simone Comari
- * @date 06 Sep 2018
+ * @date 07 Sep 2018
  * @brief File containing definitions and implementation of matrix class and utilities.
  */
 
@@ -720,10 +720,10 @@ template <typename T, uint8_t dim> double Norm(const Matrix<T, 1, dim>& hvect)
 template <typename T>
 Vector3<T> Cross(const Vector3<T>& vvect3d1, const Vector3<T>& vvect3d2)
 {
-  return Anti(vvect3d1) * vvect3d2;
+  return Skew(vvect3d1) * vvect3d2;
 }
 
-template <typename T> Matrix3<T> Anti(const Vector3<T>& vvect3d)
+template <typename T> Matrix3<T> Skew(const Vector3<T>& vvect3d)
 {
   Matrix3<T> result;
   result(1, 1) = 0;

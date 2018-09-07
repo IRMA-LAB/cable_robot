@@ -1,5 +1,6 @@
 
-HEADERS += inc/matrix.h inc/solvers.h
+HEADERS += inc/matrix.h inc/solvers.h \
+    inc/common.h
 
 SOURCES += src/matrix.cpp src/solvers.cpp
 
