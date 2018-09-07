@@ -1,7 +1,7 @@
 /**
  * @file types.h
  * @author Edoardo Idà, Simone Comari
- * @date 06 Sep 2018
+ * @date 07 Sep 2018
  * @brief File containing kinematics-related types to be included in the GRAB CDPR
  * library.
  *
@@ -152,14 +152,14 @@ namespace grabcdpr
 *
 * Defines the way a rotation matrix is determined according to the convention used.
 */
-typedef enum RotParametrizationEnum
+enum RotParametrization
 {
   EULER_ZYZ,    /**< _Euler_ angles convention with @f$Z_1Y_2Z_3@f$ order. */
   TAIT_BRYAN,   /**< _Tait-Bryan_ angles convention and @f$X_1Y_2Z_3@f$. */
   RPY,          /**< _Roll, Pitch, Yaw_ angles convention (from aviation). */
   TILT_TORSION, /**< _Tilt-and-torsion_ angles, a variation of _Euler_ angles convention.
                    */
-} RotParametrization;
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Structs
@@ -170,7 +170,7 @@ typedef enum RotParametrizationEnum
  * @see PlatformVarsStruct PlatformQuatVarsStruct
  * @note See @ref legend for symbols reference.
  */
-typedef struct PlatformVarsBaseStruct
+struct PlatformVarsBase
 {
   /** @addtogroup ZeroOrderKinematics
    * @{
@@ -204,7 +204,7 @@ typedef struct PlatformVarsBaseStruct
   grabnum::Vector3d
     acc_OG_glob; /**< [_m/s<sup>2</sup>_] vector @f$\ddot{\mathbf{r}}@f$.*/
   /** @} */      // end of SecondOrderKinematics group
-} PlatformBaseVars;
+};
 
 /**
  * @brief Structure collecting all variables related to minimal orientation
@@ -212,7 +212,7 @@ typedef struct PlatformVarsBaseStruct
  * @see PlatformQuatVarsStruct
  * @note See @ref legend for symbols reference.
  */
-typedef struct PlatformVarsStruct : PlatformBaseVars
+struct PlatformVars : PlatformVarsBase
 {
   RotParametrization angles_type = TILT_TORSION; /**< rotation parametrization used. */
 
@@ -245,7 +245,7 @@ typedef struct PlatformVarsStruct : PlatformBaseVars
    * @brief Constructor to explicitly declare rotation parametrization desired only.
    * @param[in] _angles_type Desired rotation parametrization.
    */
-  PlatformVarsStruct(const RotParametrization _angles_type)
+  PlatformVars(const RotParametrization _angles_type)
   {
     angles_type = _angles_type;
   }
@@ -268,7 +268,7 @@ typedef struct PlatformVarsStruct : PlatformBaseVars
    * @note See @ref legend for more details.
    * @see Update()
    */
-  PlatformVarsStruct(const grabnum::Vector3d& _position,
+  PlatformVars(const grabnum::Vector3d& _position,
                      const grabnum::Vector3d& _velocity,
                      const grabnum::Vector3d& _acceleration,
                      const grabnum::Vector3d& _orientation,
@@ -452,7 +452,7 @@ typedef struct PlatformVarsStruct : PlatformBaseVars
     UpdateVel(_velocity, _orientation_dot);
     UpdateAcc(_acceleration, _orientation_ddot);
   }
-} PlatformVars;
+};
 
 /**
  * @brief Structure collecting all variables related to non-minimal orientation
@@ -460,7 +460,7 @@ typedef struct PlatformVarsStruct : PlatformBaseVars
  * @see PlatformVarsQuatStruct
  * @note See @ref legend for symbols reference.
  */
-typedef struct PlatformQuatVarsStruct : PlatformBaseVars
+struct PlatformQuatVars : PlatformVarsBase
 {
   /** @addtogroup ZeroOrderKinematics
    * @{
@@ -503,7 +503,7 @@ typedef struct PlatformQuatVarsStruct : PlatformBaseVars
    * @note See @ref legend for more details.
    * @see Update()
    */
-  PlatformQuatVarsStruct(const grabnum::Vector3d& _position,
+  PlatformQuatVars(const grabnum::Vector3d& _position,
                          const grabnum::Vector3d& _velocity,
                          const grabnum::Vector3d& _acceleration,
                          const grabgeom::Quaternion& _orientation,
@@ -642,13 +642,13 @@ typedef struct PlatformQuatVarsStruct : PlatformBaseVars
     UpdateVel(_velocity, _orientation_dot);
     UpdateAcc(_acceleration, _orientation_ddot);
   }
-} PlatformQuatVars;
+};
 
 /**
  * @brief Structure collecting variable related to a single generic cable of a CDPR.
  * @note See @ref legend for symbols reference.
  */
-typedef struct CableVarsStruct
+struct CableVars
 {
   /** @addtogroup ZeroOrderKinematics
    * @{
@@ -701,7 +701,7 @@ typedef struct CableVarsStruct
     acc_OA_glob; /**< [_m/s<sup>2</sup>_] vector @f$\ddot{\mathbf{a}}_i@f$. */
   /** @} */      // end of SecondOrderKinematics group
 
-} CableVars;
+};
 
 /**
  * @brief Structure collecting all variables related to a generic 6DoF CDPR.
@@ -709,28 +709,29 @@ typedef struct CableVarsStruct
  * This structure employs 3-angle parametrization for the orientation of the platform.
  * @see VarsQuatStruct
  */
-typedef struct VarsStruct
+struct Vars
 {
   PlatformVars* platform;        /**< variables of a generic 6DoF platform with angles. */
   std::vector<CableVars> cables; /**< vector of variables of a single cables in a CDPR. */
-} Vars;
+};
+
 /**
  * @brief Structure collecting all variables related to a generic 6DoF CDPR.
  *
  * This structure employs quaternion parametrization for the orientation of the platform.
  * @see VarsStruct
  */
-typedef struct VarsQuatStruct
+struct VarsQuat
 {
   PlatformQuatVars*
     platform; /**< variables of a generic 6DoF platform with quaternions. */
   std::vector<CableVars> cables; /**< vector of variables of a single cables in a CDPR. */
-} VarsQuat;
+};
 
 /**
  * @brief Structure collecting parameters related to a generic 6DoF platform.
  */
-typedef struct PlatformParamsStruct
+struct PlatformParams
 {
   double mass = 0.0; /**< [Kg] platform mass (@f$m@f$). */
   grabnum::Vector3d
@@ -739,12 +740,12 @@ typedef struct PlatformParamsStruct
     ext_force_loc; /**< [N] external force vector expressed in the local frame. */
   grabnum::Vector3d pos_PG_loc;        /**< [m] vector @f$^\mathcal{P}\mathbf{r}'@f$. */
   grabnum::Matrix3d inertia_mat_G_loc; /**< inertia matrix. */
-} PlatformParams;
+};
 
 /**
  * @brief Structure collecting parameters related to a single generic cable of a CDPR.
  */
-typedef struct CableParamsStruct
+struct CableParams
 {
   double l0 = 0.0; /**< [m] length between @f$D_i@f$ and the exit point of the _i-th_
                       cable from the corresponding winch. */
@@ -762,17 +763,17 @@ typedef struct CableParamsStruct
                                expressed in global frame. */
   grabnum::Vector3d vers_k; /**< versor @f$\hat{\mathbf{k}}_i@f$ of _i-th_ swivel pulley
                                expressed in global frame. */
-} CableParams;
+};
 
 /**
  * @brief Structure collecting all parameters related to a generic 6DoF CDPR.
  */
-typedef struct ParamsStruct
+struct Params
 {
   PlatformParams* platform; /**< parameters of a generic 6DoF platform. */
   std::vector<CableParams>
     cables; /**< vector of parameters of a single cables in a CDPR. */
-} Params;
+};
 
 } // end namespace grabcdpr
 
