@@ -8,14 +8,31 @@
 #include <errno.h>
 #include <sys/syscall.h>
 #include <iostream>
+#include <vector>
+#include <limits.h>
 
 namespace grabrt
 {
 
+[[noreturn]] void HandleErrorEn(const int en, const char* msg);
+
+cpu_set_t BuildCPUSet(const int cpu_core = 0);
+
+cpu_set_t BuildCPUSet(const std::vector<size_t>& cpu_cores);
+
+void SetThreadCPUs(const cpu_set_t& cpu_set, const pthread_t thread_id = pthread_self());
+
+void SetThreadPolicy(const int policy, const int priority = -1,
+                     const pthread_t thread_id = pthread_self());
+
 class ThreadClock
 {
 public:
-  ThreadClock(const uint64_t cycle_time_nsec = 1000LL) : period_nsec_(cycle_time_nsec) {}
+  ThreadClock(const uint64_t cycle_time_nsec = 1000LL,
+              const std::string& clk_name = "ThreadClock")
+    : name_(clk_name), period_nsec_(cycle_time_nsec)
+  {
+  }
 
   void SetCycleTime(const uint64_t cycle_time_nsec) { period_nsec_ = cycle_time_nsec; }
   void Reset() { clock_gettime(CLOCK_MONOTONIC, &time_); }
@@ -25,22 +42,30 @@ public:
 private:
   static constexpr uint64_t kNanoSec2Sec_ = 1000000000L;
 
+  std::string name_;
   struct timespec time_;
   uint64_t period_nsec_;
+
+  [[noreturn]] void HandleErrorEnWrapper(const int en, const char* msg) const;
 };
 
 class Thread
 {
 public:
-  Thread() { InitDefault(); }
-  Thread(pthread_attr_t* attr) { SetAttr(attr); }
-  Thread(const cpu_set_t* cpu_set);
-  Thread(const int policy, const int priority = -1);
-  Thread(const cpu_set_t* cpu_set, const int policy, const int priority = -1);
+  Thread(const std::string& thread_name = "Thread") : name_(thread_name) { InitDefault(); }
+  Thread(pthread_attr_t& attr, const std::string& thread_name = "Thread")
+    : name_(thread_name) { SetAttr(attr); }
+  Thread(const cpu_set_t& cpu_set, const std::string& thread_name = "Thread");
+  Thread(const int policy, const int priority = -1,
+         const std::string& thread_name = "Thread");
+  Thread(const cpu_set_t& cpu_set, const int policy, const int priority = -1,
+         const std::string& thread_name = "Thread");
   ~Thread();
 
-  void SetAttr(const pthread_attr_t* attr);
-  void SetCPUs(const cpu_set_t* cpu_set);
+  void SetAttr(const pthread_attr_t& attr);
+  void SetCPUs(const cpu_set_t& cpu_set);
+  void SetCPUs(const int cpu_core = 0);
+  void SetCPUs(const std::vector<size_t>& cpu_cores);
   void SetPolicy(const int policy, int priority = -1);
 
   void SetInitFunc(void (*fun_ptr)(void*), void* args);
@@ -66,6 +91,7 @@ public:
 private:
   static constexpr unsigned long kStackSize_ = 10 * 1024 * 1024; // 10 Mb
 
+  std::string name_;
   long tid_;
   pthread_t thread_id_;
   pthread_attr_t attr_;
@@ -86,7 +112,6 @@ private:
   pthread_mutex_t mutex_ = PTHREAD_MUTEX_INITIALIZER;
 
   void InitDefault();
-  void HandleError(const int en, const char* msg) const;
   void TargetFun();
 
   static void* StaticTargetFun(void* args)
@@ -94,6 +119,8 @@ private:
     static_cast<Thread*>(args)->TargetFun();
     return NULL;
   }
+
+  [[noreturn]] void HandleErrorEnWrapper(const int en, const char* msg) const;
 };
 
 } // end namespace grabrt

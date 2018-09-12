@@ -3,6 +3,81 @@
 namespace grabrt
 {
 
+[[noreturn]] void HandleErrorEn(const int en, const char* msg)
+{
+  errno = en;
+  perror(msg);
+  exit(EXIT_FAILURE);
+}
+
+cpu_set_t BuildCPUSet(const int cpu_core /*= 0*/)
+{
+  // init
+  cpu_set_t cpu_set;
+  CPU_ZERO(&cpu_set);
+  // validity check
+  if (cpu_core < -1 || cpu_core >= CPU_SETSIZE)
+    HandleErrorEn(EINVAL, "BuildCPUSet ");
+  // set affine single core
+  if (cpu_core == -1)
+    CPU_SET(CPU_SETSIZE - 1, &cpu_set); // last core
+  else
+    CPU_SET(static_cast<size_t>(cpu_core), &cpu_set);
+  return cpu_set;
+}
+
+cpu_set_t BuildCPUSet(const std::vector<size_t>& cpu_cores)
+{
+  // init
+  cpu_set_t cpu_set;
+  CPU_ZERO(&cpu_set);
+  // validity check on set size
+  if (cpu_cores.size() >= CPU_SETSIZE)
+    HandleErrorEn(EINVAL, "BuildCPUSet ");
+  // set affine cores
+  for (auto const& core : cpu_cores)
+  {
+    // validity check on single core
+    if (core >= CPU_SETSIZE)
+      HandleErrorEn(EINVAL, "BuildCPUSet ");
+
+    CPU_SET(core, &cpu_set);
+  }
+  return cpu_set;
+}
+
+void SetThreadCPUs(const cpu_set_t& cpu_set,
+                   const pthread_t thread_id /*= pthread_self()*/)
+{
+  int ret = pthread_setaffinity_np(thread_id, sizeof(cpu_set_t), &cpu_set);
+  if (ret != 0)
+    HandleErrorEn(ret, "pthread_setaffinity_np ");
+}
+
+void SetThreadPolicy(const int policy, const int priority /*= -1*/,
+                     const pthread_t thread_id /*= pthread_self()*/)
+{
+  struct sched_param param;
+  if (priority < 0)
+  {
+    // Default priority value depends on policy type
+    if (policy == SCHED_FIFO || policy == SCHED_RR)
+      param.sched_priority = 1;
+    else
+      param.sched_priority = 0;
+  }
+  else
+    param.sched_priority = priority;
+
+  int ret = pthread_setschedparam(thread_id, policy, &param);
+  if (ret != 0)
+    HandleErrorEn(ret, "pthread_setschedparam ");
+}
+
+/////////////////////////////////////////////////
+/// ThreadClock Class Methods
+/////////////////////////////////////////////////
+
 void ThreadClock::Next()
 {
   time_.tv_sec = (static_cast<uint64_t>(time_.tv_nsec) + period_nsec_) / kNanoSec2Sec_;
@@ -14,44 +89,41 @@ void ThreadClock::WaitUntilNext()
   Next();
   int ret = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &time_, NULL);
   if (ret != 0)
-  {
-    std::string err, msg;
-    switch (ret)
-    {
-    case EFAULT:
-      err = "EFAULT";
-      msg = "invalid address";
-      break;
-    case EINTR:
-      err = "EINTR";
-      msg = "received interrupt";
-      break;
-    case EINVAL:
-      err = "EFAULT";
-      msg = "invalid value";
-      break;
-    default:
-      err = "Unknown";
-      msg = "???";
-    }
-    printf("%s error: %s\n", err.c_str(), msg.c_str());
-  }
+    HandleErrorEnWrapper(ret, "clock_nanosleep ");
 }
 
-Thread::Thread(const cpu_set_t* cpu_set)
+[[noreturn]] void ThreadClock::HandleErrorEnWrapper(const int en, const char* msg) const
 {
+  std::string full_msg = "[";
+  full_msg.append(name_);
+  full_msg.append("] ");
+  full_msg.append(msg);
+  HandleErrorEn(en, full_msg.c_str());
+}
+
+/////////////////////////////////////////////////
+/// Thread Class Methods
+/////////////////////////////////////////////////
+
+Thread::Thread(const cpu_set_t& cpu_set, const std::string& thread_name /*= "Thread"*/)
+{
+  name_ = thread_name;
   InitDefault();
   SetCPUs(cpu_set);
 }
 
-Thread::Thread(const int policy, const int priority /*= -1*/)
+Thread::Thread(const int policy, const int priority /*= -1*/,
+               const std::string& thread_name /*= "Thread"*/)
 {
+  name_ = thread_name;
   InitDefault();
   SetPolicy(policy, priority);
 }
 
-Thread::Thread(const cpu_set_t* cpu_set, const int policy, const int priority /*= -1*/)
+Thread::Thread(const cpu_set_t& cpu_set, const int policy, const int priority /*= -1*/,
+               const std::string& thread_name /*= "Thread"*/)
 {
+  name_ = thread_name;
   InitDefault();
   SetCPUs(cpu_set);
   SetPolicy(policy, priority);
@@ -61,41 +133,48 @@ Thread::~Thread()
 {
   Close();
   pthread_attr_destroy(&attr_);
-  free(init_fun_args_ptr_);
-  free(loop_fun_args_ptr_);
-  free(end_fun_args_ptr_);
 }
 
-void Thread::SetAttr(const pthread_attr_t* attr)
+void Thread::SetAttr(const pthread_attr_t& attr)
 {
-  int s;
-  attr_ = *attr; // copy values
+  int ret;
+  attr_ = attr; // copy values
   // Update class members
-  s = pthread_attr_getaffinity_np(&attr_, sizeof(cpu_set_t), &cpu_set_);
-  if (s != 0)
-    HandleError(s, "pthread_attr_getaffinity_np ");
-  s = pthread_attr_getschedparam(&attr_, &sched_param_);
-  if (s != 0)
-    HandleError(s, "pthread_attr_getschedparam ");
+  ret = pthread_attr_getaffinity_np(&attr_, sizeof(cpu_set_t), &cpu_set_);
+  if (ret != 0)
+    HandleErrorEnWrapper(ret, "pthread_attr_getaffinity_np ");
+  ret = pthread_attr_getschedparam(&attr_, &sched_param_);
+  if (ret != 0)
+    HandleErrorEnWrapper(ret, "pthread_attr_getschedparam ");
 }
 
-void Thread::SetCPUs(const cpu_set_t* cpu_set)
+void Thread::SetCPUs(const cpu_set_t& cpu_set)
 {
-  cpu_set_ = *cpu_set;
+  cpu_set_ = cpu_set;
   if (IsActive())
-  {
-    int s = pthread_setaffinity_np(thread_id_, sizeof(cpu_set_t), &cpu_set_);
-    if (s != 0)
-      HandleError(s, "pthread_setaffinity_np ");
-  }
+    SetThreadCPUs(cpu_set_, thread_id_);
+}
+
+void Thread::SetCPUs(const int cpu_core /*= 0*/)
+{
+  cpu_set_ = BuildCPUSet(cpu_core);
+  if (IsActive())
+    SetThreadCPUs(cpu_set_, thread_id_);
+}
+
+void Thread::SetCPUs(const std::vector<size_t>& cpu_cores)
+{
+  cpu_set_ = BuildCPUSet(cpu_cores);
+  if (IsActive())
+    SetThreadCPUs(cpu_set_, thread_id_);
 }
 
 void Thread::SetPolicy(const int policy, const int priority /*= -1*/)
 {
-  int s;
-  s = pthread_attr_setschedpolicy(&attr_, policy);
-  if (s != 0)
-    HandleError(s, "pthread_attr_setschedpolicy ");
+  int ret;
+  ret = pthread_attr_setschedpolicy(&attr_, policy);
+  if (ret != 0)
+    HandleErrorEnWrapper(ret, "pthread_attr_setschedpolicy ");
 
   if (priority < 0)
   {
@@ -108,9 +187,9 @@ void Thread::SetPolicy(const int policy, const int priority /*= -1*/)
   else
     sched_param_.sched_priority = priority;
 
-  s = pthread_attr_setschedparam(&attr_, &sched_param_);
-  if (s != 0)
-    HandleError(s, "pthread_attr_setschedparam ");
+  ret = pthread_attr_setschedparam(&attr_, &sched_param_);
+  if (ret != 0)
+    HandleErrorEnWrapper(ret, "pthread_attr_setschedparam ");
 }
 
 void Thread::SetInitFunc(void (*fun_ptr)(void*), void* args)
@@ -160,9 +239,9 @@ pthread_t Thread::GetPID() const
 int Thread::GetPolicy() const
 {
   int policy;
-  int s = pthread_attr_getschedpolicy(&attr_, &policy);
-  if (s != 0)
-    HandleError(s, "pthread_attr_getschedpolicy ");
+  int ret = pthread_attr_getschedpolicy(&attr_, &policy);
+  if (ret != 0)
+    HandleErrorEnWrapper(ret, "pthread_attr_getschedpolicy ");
   return policy;
 }
 
@@ -171,9 +250,9 @@ void Thread::Start(const uint64_t cycle_time_nsec /*= 1000LL*/)
   cycle_time_nsec_ = cycle_time_nsec;
   active_ = true;
   run_ = true;
-  int s = pthread_create(&thread_id_, &attr_, StaticTargetFun, NULL);
-  if (s != 0)
-    HandleError(s, "pthread_create ");
+  int ret = pthread_create(&thread_id_, &attr_, StaticTargetFun, NULL);
+  if (ret != 0)
+    HandleErrorEnWrapper(ret, "pthread_create ");
 }
 
 void Thread::Close()
@@ -185,38 +264,38 @@ void Thread::Close()
 
 void Thread::DispAttr() const
 {
-  int s, i;
+  int ret, i;
   size_t v;
   void* stkaddr;
   const char* prefix = "\t";
 
-  s = pthread_attr_getdetachstate(&attr_, &i);
-  if (s != 0)
-    HandleError(s, "pthread_attr_getdetachstate");
+  ret = pthread_attr_getdetachstate(&attr_, &i);
+  if (ret != 0)
+    HandleErrorEnWrapper(ret, "pthread_attr_getdetachstate");
   printf("%sDetach state        = %s\n", prefix,
          (i == PTHREAD_CREATE_DETACHED)
            ? "PTHREAD_CREATE_DETACHED"
            : (i == PTHREAD_CREATE_JOINABLE) ? "PTHREAD_CREATE_JOINABLE" : "???");
 
-  s = pthread_attr_getscope(&attr_, &i);
-  if (s != 0)
-    HandleError(s, "pthread_attr_getscope");
+  ret = pthread_attr_getscope(&attr_, &i);
+  if (ret != 0)
+    HandleErrorEnWrapper(ret, "pthread_attr_getscope");
   printf("%sScope               = %s\n", prefix,
          (i == PTHREAD_SCOPE_SYSTEM)
            ? "PTHREAD_SCOPE_SYSTEM"
            : (i == PTHREAD_SCOPE_PROCESS) ? "PTHREAD_SCOPE_PROCESS" : "???");
 
-  s = pthread_attr_getinheritsched(&attr_, &i);
-  if (s != 0)
-    HandleError(s, "pthread_attr_getinheritsched");
+  ret = pthread_attr_getinheritsched(&attr_, &i);
+  if (ret != 0)
+    HandleErrorEnWrapper(ret, "pthread_attr_getinheritsched");
   printf("%sInherit scheduler   = %s\n", prefix,
          (i == PTHREAD_INHERIT_SCHED)
            ? "PTHREAD_INHERIT_SCHED"
            : (i == PTHREAD_EXPLICIT_SCHED) ? "PTHREAD_EXPLICIT_SCHED" : "???");
 
-  s = pthread_attr_getschedpolicy(&attr_, &i);
-  if (s != 0)
-    HandleError(s, "pthread_attr_getschedpolicy");
+  ret = pthread_attr_getschedpolicy(&attr_, &i);
+  if (ret != 0)
+    HandleErrorEnWrapper(ret, "pthread_attr_getschedpolicy");
   printf("%sScheduling policy   = %s\n", prefix,
          (i == SCHED_OTHER) ? "SCHED_OTHER" : (i == SCHED_FIFO)
                                                 ? "SCHED_FIFO"
@@ -224,35 +303,33 @@ void Thread::DispAttr() const
 
   printf("%sScheduling priority = %d\n", prefix, sched_param_.sched_priority);
 
-  s = pthread_attr_getguardsize(&attr_, &v);
-  if (s != 0)
-    HandleError(s, "pthread_attr_getguardsize");
+  ret = pthread_attr_getguardsize(&attr_, &v);
+  if (ret != 0)
+    HandleErrorEnWrapper(ret, "pthread_attr_getguardsize");
   printf("%sGuard size          = %d bytes\n", prefix, static_cast<int>(v));
 
-  s = pthread_attr_getstack(&attr_, &stkaddr, &v);
-  if (s != 0)
-    HandleError(s, "pthread_attr_getstack");
+  ret = pthread_attr_getstack(&attr_, &stkaddr, &v);
+  if (ret != 0)
+    HandleErrorEnWrapper(ret, "pthread_attr_getstack");
   printf("%sStack address       = %p\n", prefix, stkaddr);
   printf("%sStack size          = 0x%zx bytes\n", prefix, v);
 }
 
 void Thread::InitDefault()
 {
-  int s;
-  s = pthread_attr_init(&attr_);
-  if (s != 0)
-    HandleError(s, "pthread_attr_init ");
+  int ret;
+  ret = pthread_attr_init(&attr_);
+  if (ret != 0)
+    HandleErrorEnWrapper(ret, "pthread_attr_init ");
 
-  s = pthread_attr_setstacksize(&attr_, PTHREAD_STACK_MIN + kStackSize_);
-  if (s != 0)
-    HandleError(s, "pthread_attr_setstacksize ");
+  ret = pthread_attr_setstacksize(&attr_, PTHREAD_STACK_MIN + kStackSize_);
+  if (ret != 0)
+    HandleErrorEnWrapper(ret, "pthread_attr_setstacksize ");
 }
 
 void Thread::TargetFun()
 {
-  int s = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpu_set_);
-  if (s != 0)
-    HandleError(s, "pthread_setaffinity_np ");
+  SetThreadCPUs(cpu_set_);
 
   ThreadClock clock(cycle_time_nsec_);
   clock.Reset();
@@ -271,11 +348,21 @@ void Thread::TargetFun()
       loop_fun_ptr_(loop_fun_args_ptr_);
       pthread_mutex_unlock(&mutex_);
     }
+    clock.Reset();
   }
 
   pthread_mutex_lock(&mutex_);
   end_fun_ptr_(end_fun_args_ptr_);
   pthread_mutex_unlock(&mutex_);
+}
+
+[[noreturn]] void Thread::HandleErrorEnWrapper(const int en, const char* msg) const
+{
+  std::string full_msg = "[";
+  full_msg.append(name_);
+  full_msg.append("] ");
+  full_msg.append(msg);
+  HandleErrorEn(en, full_msg.c_str());
 }
 
 } // end namespace grabrt
