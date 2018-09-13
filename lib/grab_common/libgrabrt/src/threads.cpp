@@ -1,7 +1,25 @@
 #include "threads.h"
 
+#define ANSI_COLOR_RED "\x1b[31m"
+#define ANSI_COLOR_GREEN "\x1b[32m"
+#define ANSI_COLOR_YELLOW "\x1b[33m"
+#define ANSI_COLOR_BLUE "\x1b[34m"
+#define ANSI_COLOR_MAGENTA "\x1b[35m"
+#define ANSI_COLOR_CYAN "\x1b[36m"
+#define ANSI_COLOR_RESET "\x1b[0m"
+
 namespace grabrt
 {
+
+uint64_t Sec2NanoSec(const double seconds)
+{
+  return static_cast<uint64_t>(seconds * 1000000000);
+}
+
+double NanoSec2Sec(const long nanoseconds)
+{
+  return static_cast<double>(nanoseconds) * 0.000000001;
+}
 
 [[noreturn]] void HandleErrorEn(const int en, const char* msg)
 {
@@ -10,19 +28,27 @@ namespace grabrt
   exit(EXIT_FAILURE);
 }
 
-cpu_set_t BuildCPUSet(const int cpu_core /*= 0*/)
+cpu_set_t BuildCPUSet(const int cpu_core /*= ALL_CORES*/)
 {
   // init
   cpu_set_t cpu_set;
   CPU_ZERO(&cpu_set);
   // validity check
-  if (cpu_core < -1 || cpu_core >= CPU_SETSIZE)
+  if (cpu_core < ALL_CORES || cpu_core >= static_cast<int>(CPU_CORES_NUM))
     HandleErrorEn(EINVAL, "BuildCPUSet ");
-  // set affine single core
-  if (cpu_core == -1)
-    CPU_SET(CPU_SETSIZE - 1, &cpu_set); // last core
-  else
+  switch (cpu_core)
+  {
+  case ALL_CORES: // set all cores
+    for (size_t i = 0; i < static_cast<size_t>(CPU_CORES_NUM); i++)
+      CPU_SET(i, &cpu_set);
+    break;
+  case END_CORE:                                               // set affine single core
+    CPU_SET(static_cast<size_t>(CPU_CORES_NUM) - 1, &cpu_set); // last core
+    break;
+  default: // set affine single core
     CPU_SET(static_cast<size_t>(cpu_core), &cpu_set);
+    break;
+  }
   return cpu_set;
 }
 
@@ -32,13 +58,13 @@ cpu_set_t BuildCPUSet(const std::vector<size_t>& cpu_cores)
   cpu_set_t cpu_set;
   CPU_ZERO(&cpu_set);
   // validity check on set size
-  if (cpu_cores.size() >= CPU_SETSIZE)
+  if (cpu_cores.size() > static_cast<size_t>(CPU_CORES_NUM))
     HandleErrorEn(EINVAL, "BuildCPUSet ");
   // set affine cores
   for (auto const& core : cpu_cores)
   {
     // validity check on single core
-    if (core >= CPU_SETSIZE)
+    if (core >= static_cast<size_t>(CPU_CORES_NUM))
       HandleErrorEn(EINVAL, "BuildCPUSet ");
 
     CPU_SET(core, &cpu_set);
@@ -67,21 +93,74 @@ void SetThreadPolicy(const int policy, const int priority /*= -1*/,
       param.sched_priority = 0;
   }
   else
-    param.sched_priority = priority;
+  {
+    if (policy == SCHED_OTHER)
+    {
+      printf(ANSI_COLOR_YELLOW
+             "WARNING: Priority for SCHED_OTHER policy must be 0. Ignoring invalid "
+             "user-set priority: %d." ANSI_COLOR_RESET "\n",
+             priority);
+      param.sched_priority = 0;
+    }
+    else
+      param.sched_priority = priority;
+  }
 
   int ret = pthread_setschedparam(thread_id, policy, &param);
   if (ret != 0)
     HandleErrorEn(ret, "pthread_setschedparam ");
 }
 
+void displayThreadAffinitySet()
+{
+  cpu_set_t cpuset;
+  int s = pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
+  if (s != 0)
+    HandleErrorEn(s, "pthread_getaffinity_np ");
+
+  printf("Set returned by pthread_getaffinity_np() contained:\n");
+  for (size_t j = 0; j < CPU_SETSIZE; j++)
+    if (CPU_ISSET(j, &cpuset))
+      printf("    CPU %lu\n", j);
+}
+
+void displaySchedAttr(const int policy, const struct sched_param& param)
+{
+  printf("    policy=%s, priority=%d\n",
+         (policy == SCHED_FIFO)
+           ? "SCHED_FIFO"
+           : (policy == SCHED_RR) ? "SCHED_RR" : (policy == SCHED_OTHER) ? "SCHED_OTHER"
+                                                                         : "???",
+         param.sched_priority);
+}
+
+void displayThreadSchedAttr(const std::string& msg)
+{
+  int policy, s;
+  struct sched_param param;
+
+  s = pthread_getschedparam(pthread_self(), &policy, &param);
+  if (s != 0)
+    HandleErrorEn(s, "pthread_getschedparam ");
+
+  printf("%s\n", msg.c_str());
+  displaySchedAttr(policy, param);
+}
+
 /////////////////////////////////////////////////
 /// ThreadClock Class Methods
 /////////////////////////////////////////////////
 
+void ThreadClock::Reset()
+{
+  //  printf("[%s] RESET\n", name_.c_str());
+  clock_gettime(CLOCK_MONOTONIC, &time_);
+}
+
 void ThreadClock::Next()
 {
-  time_.tv_sec = (static_cast<uint64_t>(time_.tv_nsec) + period_nsec_) / kNanoSec2Sec_;
-  time_.tv_nsec = (static_cast<uint64_t>(time_.tv_nsec) + period_nsec_) % kNanoSec2Sec_;
+  time_.tv_sec += (static_cast<uint64_t>(time_.tv_nsec) + period_nsec_) / kNanoSec2Sec;
+  time_.tv_nsec = (static_cast<uint64_t>(time_.tv_nsec) + period_nsec_) % kNanoSec2Sec;
 }
 
 void ThreadClock::WaitUntilNext()
@@ -90,6 +169,24 @@ void ThreadClock::WaitUntilNext()
   int ret = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &time_, NULL);
   if (ret != 0)
     HandleErrorEnWrapper(ret, "clock_nanosleep ");
+}
+
+struct timespec ThreadClock::GetNextTime()
+{
+  Next();
+  return GetCurrentTime();
+}
+
+void ThreadClock::DispCurrentTime() const
+{
+  printf("%s status:\n\ttime =\t%lu.%ld sec\n\tperiod =\t%lu\n", name_.c_str(),
+         time_.tv_sec, time_.tv_nsec, period_nsec_);
+}
+
+void ThreadClock::DispNextTime()
+{
+  Next();
+  DispCurrentTime();
 }
 
 [[noreturn]] void ThreadClock::HandleErrorEnWrapper(const int en, const char* msg) const
@@ -131,7 +228,7 @@ Thread::Thread(const cpu_set_t& cpu_set, const int policy, const int priority /*
 
 Thread::~Thread()
 {
-  Close();
+  Stop();
   pthread_attr_destroy(&attr_);
 }
 
@@ -150,23 +247,29 @@ void Thread::SetAttr(const pthread_attr_t& attr)
 
 void Thread::SetCPUs(const cpu_set_t& cpu_set)
 {
+  pthread_mutex_lock(&mutex_);
   cpu_set_ = cpu_set;
   if (IsActive())
     SetThreadCPUs(cpu_set_, thread_id_);
+  pthread_mutex_unlock(&mutex_);
 }
 
-void Thread::SetCPUs(const int cpu_core /*= 0*/)
+void Thread::SetCPUs(const int cpu_core /*= ALL_CORES*/)
 {
+  pthread_mutex_lock(&mutex_);
   cpu_set_ = BuildCPUSet(cpu_core);
   if (IsActive())
     SetThreadCPUs(cpu_set_, thread_id_);
+  pthread_mutex_unlock(&mutex_);
 }
 
 void Thread::SetCPUs(const std::vector<size_t>& cpu_cores)
 {
+  pthread_mutex_lock(&mutex_);
   cpu_set_ = BuildCPUSet(cpu_cores);
   if (IsActive())
     SetThreadCPUs(cpu_set_, thread_id_);
+  pthread_mutex_unlock(&mutex_);
 }
 
 void Thread::SetPolicy(const int policy, const int priority /*= -1*/)
@@ -185,18 +288,34 @@ void Thread::SetPolicy(const int policy, const int priority /*= -1*/)
       sched_param_.sched_priority = 0;
   }
   else
-    sched_param_.sched_priority = priority;
+  {
+    if (policy == SCHED_OTHER)
+    {
+      printf(ANSI_COLOR_YELLOW
+             "WARNING: Priority for SCHED_OTHER policy must be 0. Ignoring invalid "
+             "user-set priority: %d." ANSI_COLOR_RESET "\n",
+             priority);
+      sched_param_.sched_priority = 0;
+    }
+    else
+      sched_param_.sched_priority = priority;
+  }
 
   ret = pthread_attr_setschedparam(&attr_, &sched_param_);
   if (ret != 0)
     HandleErrorEnWrapper(ret, "pthread_attr_setschedparam ");
+
+  if (IsActive())
+    SetThreadPolicy(policy, sched_param_.sched_priority, thread_id_);
 }
 
 void Thread::SetInitFunc(void (*fun_ptr)(void*), void* args)
 {
   if (IsRunning())
-    std::cerr << "[WARNING] Thread is running. New InitFunc set but not effective!"
-              << std::endl;
+    printf(
+      ANSI_COLOR_YELLOW
+      "WARNING: Thread is running. New InitFunc set but not effective!" ANSI_COLOR_RESET
+      "\n");
 
   init_fun_ptr_ = fun_ptr;
   init_fun_args_ptr_ = args;
@@ -205,7 +324,11 @@ void Thread::SetInitFunc(void (*fun_ptr)(void*), void* args)
 void Thread::SetLoopFunc(void (*fun_ptr)(void*), void* args)
 {
   if (IsRunning())
-    std::cerr << "[WARNING] Thread is running. Cannot set new LoopFunc now!" << std::endl;
+  {
+    printf(ANSI_COLOR_YELLOW
+           "WARNING: Thread is running. Cannot set new LoopFunc now!" ANSI_COLOR_RESET
+           "\n");
+  }
   else
   {
     loop_fun_ptr_ = fun_ptr;
@@ -216,9 +339,12 @@ void Thread::SetLoopFunc(void (*fun_ptr)(void*), void* args)
 void Thread::SetEndFunc(void (*fun_ptr)(void*), void* args)
 {
   if (IsActive())
-    std::cerr << "[WARNING] Thread is closed. New EndFunc set but not effective!"
-              << std::endl;
-
+  {
+    printf(
+      ANSI_COLOR_YELLOW
+      "WARNING: Thread is closed. New EndFunc set but not effective!" ANSI_COLOR_RESET
+      "\n");
+  }
   end_fun_ptr_ = fun_ptr;
   end_fun_args_ptr_ = args;
 }
@@ -231,9 +357,17 @@ pthread_t Thread::GetPID() const
     return thread_id_;
   else
   {
-    std::cerr << "[WARNING] Thread is not running!" << std::endl;
+    printf(ANSI_COLOR_YELLOW "WARNING: Thread is not running!" ANSI_COLOR_RESET "\n");
     return 0;
   }
+}
+
+cpu_set_t Thread::GetCPUs()
+{
+  pthread_mutex_lock(&mutex_);
+  cpu_set_t cpu_set_copy = cpu_set_;
+  pthread_mutex_unlock(&mutex_);
+  return cpu_set_copy;
 }
 
 int Thread::GetPolicy() const
@@ -245,21 +379,31 @@ int Thread::GetPolicy() const
   return policy;
 }
 
-void Thread::Start(const uint64_t cycle_time_nsec /*= 1000LL*/)
+int Thread::GetReady(const uint64_t cycle_time_nsec /*= 1000LL*/)
 {
+  if (loop_fun_ptr_ == NULL)
+    return EFAULT;
+
   cycle_time_nsec_ = cycle_time_nsec;
   active_ = true;
   run_ = true;
-  int ret = pthread_create(&thread_id_, &attr_, StaticTargetFun, NULL);
-  if (ret != 0)
-    HandleErrorEnWrapper(ret, "pthread_create ");
+  return 0;
 }
 
-void Thread::Close()
+void Thread::Unpause()
 {
-  Stop();
-  active_ = false;
-  pthread_join(thread_id_, NULL);
+  if (IsActive())
+    run_ = true;
+}
+
+void Thread::Stop()
+{
+  if (IsActive())
+  {
+    Pause();
+    active_ = false;
+    pthread_join(thread_id_, NULL);
+  }
 }
 
 void Thread::DispAttr() const
@@ -325,18 +469,28 @@ void Thread::InitDefault()
   ret = pthread_attr_setstacksize(&attr_, PTHREAD_STACK_MIN + kStackSize_);
   if (ret != 0)
     HandleErrorEnWrapper(ret, "pthread_attr_setstacksize ");
+
+  ret = pthread_attr_setinheritsched(&attr_, PTHREAD_EXPLICIT_SCHED);
+  if (ret != 0)
+    HandleErrorEnWrapper(ret, "pthread_attr_setinheritsched ");
+
+  cpu_set_ = BuildCPUSet(); // using all cores by default
 }
 
 void Thread::TargetFun()
 {
+  pthread_mutex_lock(&mutex_);
   SetThreadCPUs(cpu_set_);
-
+  pthread_mutex_unlock(&mutex_);
   ThreadClock clock(cycle_time_nsec_);
   clock.Reset();
 
-  pthread_mutex_lock(&mutex_);
-  init_fun_ptr_(init_fun_args_ptr_);
-  pthread_mutex_unlock(&mutex_);
+  if (init_fun_ptr_ != NULL)
+  {
+    pthread_mutex_lock(&mutex_);
+    init_fun_ptr_(init_fun_args_ptr_);
+    pthread_mutex_unlock(&mutex_);
+  }
 
   while (active_)
   {
@@ -351,9 +505,12 @@ void Thread::TargetFun()
     clock.Reset();
   }
 
-  pthread_mutex_lock(&mutex_);
-  end_fun_ptr_(end_fun_args_ptr_);
-  pthread_mutex_unlock(&mutex_);
+  if (end_fun_ptr_ != NULL)
+  {
+    pthread_mutex_lock(&mutex_);
+    end_fun_ptr_(end_fun_args_ptr_);
+    pthread_mutex_unlock(&mutex_);
+  }
 }
 
 [[noreturn]] void Thread::HandleErrorEnWrapper(const int en, const char* msg) const
