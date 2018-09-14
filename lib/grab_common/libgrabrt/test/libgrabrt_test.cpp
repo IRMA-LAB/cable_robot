@@ -1,29 +1,53 @@
+/**
+ * @file libgrabrt_test.cpp
+ * @author Simone Comari
+ * @date 14 Sep 2018
+ * @brief ...
+ */
+
 #include <QString>
 #include <QtTest>
 
 #include "common.h"
 #include "threads.h"
+#include "clocks.h"
 
+/**
+ * @brief The LibgrabrtTest class
+ */
 class LibgrabrtTest : public QObject
 {
   Q_OBJECT
 
 private Q_SLOTS:
+  /**
+   * @brief testCPUSetBuilders
+   */
   void testCPUSetBuilders();
-
+  /**
+   * @brief testSetThisThread
+   */
   void testSetThisThread();
-
+  /**
+   * @brief testThreadClock
+   */
   void testThreadClock();
-
+  /**
+   * @brief testNewThread
+   */
   void testNewThread();
 
-public:
+private:
+  /**
+   * @brief loopFun
+   * @param obj
+   */
   static void loopFun(void* obj)
   {
     static uint counter = 1;
     char msg[50];
     sprintf(msg, "New thread %s scheduler attributes:",
-            static_cast<grabrt::Thread*>(obj)->GetName().c_str());
+            static_cast<grabrt::Thread*>(obj)->GetNameCstr());
     grabrt::displayThreadSchedAttr(msg);
     grabrt::displayThreadAffinitySet();
     printf("counter:\n\t%d\n\n", counter++);
@@ -126,6 +150,7 @@ void LibgrabrtTest::testNewThread()
   t.Unpause();
   QVERIFY(t.IsRunning());
   sleep(1);
+  printf("%s IDs:\n\tPID = %lu\n\tTID = %ld\n", t.GetNameCstr(), t.GetPID(), t.GetTID());
   t.Stop();
   QVERIFY(!t.IsActive());
 }

@@ -1,8 +1,11 @@
 
-HEADERS += inc/threads.h
+HEADERS += inc/threads.h \
+    inc/clocks.h \
+    grabcommon.h
 
 SOURCES += test/libgrabrt_test.cpp \
-      src/threads.cpp
+      src/threads.cpp \
+    src/clocks.cpp
 
 INCLUDEPATH += inc \
       ../libnumeric/inc

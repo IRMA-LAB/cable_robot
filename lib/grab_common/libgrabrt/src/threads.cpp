@@ -1,32 +1,14 @@
-#include "threads.h"
+/**
+ * @file threads.cpp
+ * @author Simone Comari
+ * @date 14 Sep 2018
+ * @brief File containing definitions of functions and class declared in threads.h.
+ */
 
-#define ANSI_COLOR_RED "\x1b[31m"
-#define ANSI_COLOR_GREEN "\x1b[32m"
-#define ANSI_COLOR_YELLOW "\x1b[33m"
-#define ANSI_COLOR_BLUE "\x1b[34m"
-#define ANSI_COLOR_MAGENTA "\x1b[35m"
-#define ANSI_COLOR_CYAN "\x1b[36m"
-#define ANSI_COLOR_RESET "\x1b[0m"
+#include "threads.h"
 
 namespace grabrt
 {
-
-uint64_t Sec2NanoSec(const double seconds)
-{
-  return static_cast<uint64_t>(seconds * 1000000000);
-}
-
-double NanoSec2Sec(const long nanoseconds)
-{
-  return static_cast<double>(nanoseconds) * 0.000000001;
-}
-
-[[noreturn]] void HandleErrorEn(const int en, const char* msg)
-{
-  errno = en;
-  perror(msg);
-  exit(EXIT_FAILURE);
-}
 
 cpu_set_t BuildCPUSet(const int cpu_core /*= ALL_CORES*/)
 {
@@ -145,57 +127,6 @@ void displayThreadSchedAttr(const std::string& msg)
 
   printf("%s\n", msg.c_str());
   displaySchedAttr(policy, param);
-}
-
-/////////////////////////////////////////////////
-/// ThreadClock Class Methods
-/////////////////////////////////////////////////
-
-void ThreadClock::Reset()
-{
-  //  printf("[%s] RESET\n", name_.c_str());
-  clock_gettime(CLOCK_MONOTONIC, &time_);
-}
-
-void ThreadClock::Next()
-{
-  time_.tv_sec += (static_cast<uint64_t>(time_.tv_nsec) + period_nsec_) / kNanoSec2Sec;
-  time_.tv_nsec = (static_cast<uint64_t>(time_.tv_nsec) + period_nsec_) % kNanoSec2Sec;
-}
-
-void ThreadClock::WaitUntilNext()
-{
-  Next();
-  int ret = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &time_, NULL);
-  if (ret != 0)
-    HandleErrorEnWrapper(ret, "clock_nanosleep ");
-}
-
-struct timespec ThreadClock::GetNextTime()
-{
-  Next();
-  return GetCurrentTime();
-}
-
-void ThreadClock::DispCurrentTime() const
-{
-  printf("%s status:\n\ttime =\t%lu.%ld sec\n\tperiod =\t%lu\n", name_.c_str(),
-         time_.tv_sec, time_.tv_nsec, period_nsec_);
-}
-
-void ThreadClock::DispNextTime()
-{
-  Next();
-  DispCurrentTime();
-}
-
-[[noreturn]] void ThreadClock::HandleErrorEnWrapper(const int en, const char* msg) const
-{
-  std::string full_msg = "[";
-  full_msg.append(name_);
-  full_msg.append("] ");
-  full_msg.append(msg);
-  HandleErrorEn(en, full_msg.c_str());
 }
 
 /////////////////////////////////////////////////
@@ -466,7 +397,7 @@ void Thread::InitDefault()
   if (ret != 0)
     HandleErrorEnWrapper(ret, "pthread_attr_init ");
 
-  ret = pthread_attr_setstacksize(&attr_, PTHREAD_STACK_MIN + kStackSize_);
+  ret = pthread_attr_setstacksize(&attr_, PTHREAD_STACK_MIN + kStackSize);
   if (ret != 0)
     HandleErrorEnWrapper(ret, "pthread_attr_setstacksize ");
 
@@ -480,6 +411,7 @@ void Thread::InitDefault()
 void Thread::TargetFun()
 {
   pthread_mutex_lock(&mutex_);
+  tid_ = syscall(__NR_gettid);
   SetThreadCPUs(cpu_set_);
   pthread_mutex_unlock(&mutex_);
   ThreadClock clock(cycle_time_nsec_);
