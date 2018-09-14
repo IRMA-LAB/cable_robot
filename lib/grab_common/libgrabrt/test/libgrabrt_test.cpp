@@ -45,11 +45,8 @@ private:
   static void loopFun(void* obj)
   {
     static uint counter = 1;
-    char msg[50];
-    sprintf(msg, "New thread %s scheduler attributes:",
-            static_cast<grabrt::Thread*>(obj)->GetNameCstr());
-    grabrt::displayThreadSchedAttr(msg);
-    grabrt::displayThreadAffinitySet();
+    grabrt::DisplayThreadSchedAttr(static_cast<grabrt::Thread*>(obj)->GetPID());
+    grabrt::DisplayThreadAffinitySet();
     printf("counter:\n\t%d\n\n", counter++);
   }
 };
@@ -85,19 +82,19 @@ void LibgrabrtTest::testCPUSetBuilders()
 
 void LibgrabrtTest::testSetThisThread()
 {
-  grabrt::displayThreadSchedAttr(
-    std::string("Original scheduler settings of this thread"));
-  grabrt::displayThreadAffinitySet();
+  printf("ORIGINAL\n");
+  grabrt::DisplayThreadSchedAttr();
+  grabrt::DisplayThreadAffinitySet();
+  printf("MODIFIED (RT)\n");
   grabrt::SetThreadCPUs(grabrt::BuildCPUSet(2));
-  grabrt::SetThreadPolicy(SCHED_RR, 25);
-  grabrt::displayThreadSchedAttr(
-    std::string("\nModified scheduler settings of this thread (RT)"));
-  grabrt::displayThreadAffinitySet();
+  grabrt::SetThreadSchedAttr(SCHED_RR, 25);
+  grabrt::DisplayThreadSchedAttr();
+  grabrt::DisplayThreadAffinitySet();
+  printf("MODIFIED (Non-RT)\n");
   grabrt::SetThreadCPUs(grabrt::BuildCPUSet(3));
-  grabrt::SetThreadPolicy(SCHED_OTHER, 4);
-  grabrt::displayThreadSchedAttr(
-    std::string("\nModified scheduler settings of this thread (Non-RT)"));
-  grabrt::displayThreadAffinitySet();
+  grabrt::SetThreadSchedAttr(SCHED_OTHER, 4);
+  grabrt::DisplayThreadSchedAttr();
+  grabrt::DisplayThreadAffinitySet();
 }
 
 void LibgrabrtTest::testThreadClock()
@@ -131,8 +128,11 @@ void LibgrabrtTest::testThreadClock()
 void LibgrabrtTest::testNewThread()
 {
   grabrt::Thread t("TestSubThread");
+  t.DispAttr();
+  grabrt::DisplayThreadAffinitySet();
+  return;
   t.SetCPUs(std::vector<size_t>{2, 3});
-  t.SetPolicy(SCHED_RR, 25);
+  t.SetSchedAttr(SCHED_RR, 25);
   t.DispAttr();
   QCOMPARE(t.GetPID(), 0UL);
   QCOMPARE(t.GetTID(), -1L);
@@ -142,7 +142,7 @@ void LibgrabrtTest::testNewThread()
   QVERIFY(t.IsRunning());
   sleep(1);
   t.SetCPUs(1);
-  t.SetPolicy(SCHED_FIFO, 15);
+  t.SetSchedAttr(SCHED_FIFO, 15);
   sleep(1);
   t.Pause();
   QVERIFY(!t.IsRunning());

@@ -49,7 +49,10 @@ cpu_set_t BuildCPUSet(const std::vector<size_t>& cpu_cores)
     if (core >= static_cast<size_t>(CPU_CORES_NUM))
       HandleErrorEn(EINVAL, "BuildCPUSet ");
 
-    CPU_SET(core, &cpu_set);
+    if (core == static_cast<size_t>(END_CORE))
+      CPU_SET(static_cast<size_t>(CPU_CORES_NUM) - 1, &cpu_set); // last core
+    else
+      CPU_SET(core, &cpu_set);
   }
   return cpu_set;
 }
@@ -62,7 +65,7 @@ void SetThreadCPUs(const cpu_set_t& cpu_set,
     HandleErrorEn(ret, "pthread_setaffinity_np ");
 }
 
-void SetThreadPolicy(const int policy, const int priority /*= -1*/,
+void SetThreadSchedAttr(const int policy, const int priority /*= -1*/,
                      const pthread_t thread_id /*= pthread_self()*/)
 {
   struct sched_param param;
@@ -93,20 +96,20 @@ void SetThreadPolicy(const int policy, const int priority /*= -1*/,
     HandleErrorEn(ret, "pthread_setschedparam ");
 }
 
-void displayThreadAffinitySet()
+void DisplayThreadAffinitySet(const pthread_t thread_id /*= pthread_self()*/)
 {
   cpu_set_t cpuset;
-  int s = pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
+  int s = pthread_getaffinity_np(thread_id, sizeof(cpu_set_t), &cpuset);
   if (s != 0)
     HandleErrorEn(s, "pthread_getaffinity_np ");
 
-  printf("Set returned by pthread_getaffinity_np() contained:\n");
+  printf("CPU set of thread %lu:\n", thread_id);
   for (size_t j = 0; j < CPU_SETSIZE; j++)
     if (CPU_ISSET(j, &cpuset))
       printf("    CPU %lu\n", j);
 }
 
-void displaySchedAttr(const int policy, const struct sched_param& param)
+void DisplaySchedAttr(const int policy, const struct sched_param& param)
 {
   printf("    policy=%s, priority=%d\n",
          (policy == SCHED_FIFO)
@@ -116,7 +119,7 @@ void displaySchedAttr(const int policy, const struct sched_param& param)
          param.sched_priority);
 }
 
-void displayThreadSchedAttr(const std::string& msg)
+void DisplayThreadSchedAttr(const pthread_t thread_id /*= pthread_self()*/)
 {
   int policy, s;
   struct sched_param param;
@@ -125,8 +128,8 @@ void displayThreadSchedAttr(const std::string& msg)
   if (s != 0)
     HandleErrorEn(s, "pthread_getschedparam ");
 
-  printf("%s\n", msg.c_str());
-  displaySchedAttr(policy, param);
+  printf("Scheduling attributes of thread %lu:\n", thread_id);
+  DisplaySchedAttr(policy, param);
 }
 
 /////////////////////////////////////////////////
@@ -145,7 +148,7 @@ Thread::Thread(const int policy, const int priority /*= -1*/,
 {
   name_ = thread_name;
   InitDefault();
-  SetPolicy(policy, priority);
+  SetSchedAttr(policy, priority);
 }
 
 Thread::Thread(const cpu_set_t& cpu_set, const int policy, const int priority /*= -1*/,
@@ -154,7 +157,7 @@ Thread::Thread(const cpu_set_t& cpu_set, const int policy, const int priority /*
   name_ = thread_name;
   InitDefault();
   SetCPUs(cpu_set);
-  SetPolicy(policy, priority);
+  SetSchedAttr(policy, priority);
 }
 
 Thread::~Thread()
@@ -173,7 +176,13 @@ void Thread::SetAttr(const pthread_attr_t& attr)
     HandleErrorEnWrapper(ret, "pthread_attr_getaffinity_np ");
   ret = pthread_attr_getschedparam(&attr_, &sched_param_);
   if (ret != 0)
-    HandleErrorEnWrapper(ret, "pthread_attr_getschedparam ");
+    HandleErrorEnWrapper(ret, "pthread_attr_getschedparam ");  
+
+  if (IsActive())
+    printf(
+      ANSI_COLOR_YELLOW
+      "WARNING: Thread is active. New attributes set but not effective!" ANSI_COLOR_RESET
+      "\n");
 }
 
 void Thread::SetCPUs(const cpu_set_t& cpu_set)
@@ -203,7 +212,7 @@ void Thread::SetCPUs(const std::vector<size_t>& cpu_cores)
   pthread_mutex_unlock(&mutex_);
 }
 
-void Thread::SetPolicy(const int policy, const int priority /*= -1*/)
+void Thread::SetSchedAttr(const int policy, const int priority /*= -1*/)
 {
   int ret;
   ret = pthread_attr_setschedpolicy(&attr_, policy);
@@ -237,7 +246,7 @@ void Thread::SetPolicy(const int policy, const int priority /*= -1*/)
     HandleErrorEnWrapper(ret, "pthread_attr_setschedparam ");
 
   if (IsActive())
-    SetThreadPolicy(policy, sched_param_.sched_priority, thread_id_);
+    SetThreadSchedAttr(policy, sched_param_.sched_priority, thread_id_);
 }
 
 void Thread::SetInitFunc(void (*fun_ptr)(void*), void* args)
@@ -404,6 +413,11 @@ void Thread::InitDefault()
   ret = pthread_attr_setinheritsched(&attr_, PTHREAD_EXPLICIT_SCHED);
   if (ret != 0)
     HandleErrorEnWrapper(ret, "pthread_attr_setinheritsched ");
+
+  sched_param_.sched_priority = 0;
+  ret = pthread_attr_setschedparam(&attr_, &sched_param_);
+  if (ret != 0)
+    HandleErrorEnWrapper(ret, "pthread_attr_setschedparam ");
 
   cpu_set_ = BuildCPUSet(); // using all cores by default
 }
