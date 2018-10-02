@@ -1,16 +1,16 @@
 
 HEADERS = \
-    inc/servomotor.h \
     inc/winch.h \
     inc/cablerobotmaster.h \
     inc/cablerobot.h \
-    inc/types.h
+    inc/types.h \
+    inc/actuator.h
 
 SOURCES = \
-    src/servomotor.cpp \
     src/winch.cpp \
     src/cablerobotmaster.cpp \
-    src/cablerobot.cpp
+    src/cablerobot.cpp \
+    src/actuator.cpp
 
 INCLUDEPATH += \
     inc \
