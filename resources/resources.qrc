@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/img">
+        <file>img/grab.jpg</file>
+    </qresource>
+    <qresource prefix="/users">
+        <file>.users.json</file>
+    </qresource>
+    <qresource prefix="/config">
+        <file>default.json</file>
+    </qresource>
+</RCC>

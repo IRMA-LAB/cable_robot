@@ -5,11 +5,12 @@
 #include "libgrabrt/inc/clocks.h"
 
 #include "winch.h"
+#include "pulleys_system.h"
 
 /**
  * @brief The Actuator class
  */
-class Actuator : StateMachine
+class Actuator : public StateMachine
 {
 public:
   /**
@@ -97,7 +98,7 @@ public:
 private:
   static constexpr double kMaxTransitionTimeSec_ = 0.010;
   // clang-format off
-  static constexpr char* kStatesStr[] = {
+  static constexpr char* kStatesStr_[] = {
     const_cast<char*>("IDLE"),
     const_cast<char*>("ENABLED"),
     const_cast<char*>("FAULT"),

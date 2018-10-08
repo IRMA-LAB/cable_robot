@@ -1,8 +1,11 @@
-#include "actuator.h"
+#include "robot/components/actuator.h"
 
 ////////////////////////////////////////////////////////////////
 /// Actuator Class
 ////////////////////////////////////////////////////////////////
+
+// Must provide redundant definition of the static member as well as the declaration.
+constexpr char* Actuator::kStatesStr_[];
 
 Actuator::Actuator(const uint8_t slave_position, ActuatorParams* const params)
   : StateMachine(ST_MAX_STATES), slave_position_(slave_position),
@@ -166,5 +169,5 @@ void Actuator::PrintStateTransition(const States current_state) const
   if (current_state == prev_state_)
     return;
   printf("Actuator %u state transition: %s --> %s\n", slave_position_,
-         kStatesStr[prev_state_], kStatesStr[current_state]);
+         kStatesStr_[prev_state_], kStatesStr_[current_state]);
 }
