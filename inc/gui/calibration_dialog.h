@@ -12,13 +12,22 @@ class CalibrationDialog : public QDialog
     Q_OBJECT
 
 public:
-    CalibrationDialog(QWidget *parent = 0);
+    CalibrationDialog(QWidget *parent, QString &config_filename);
     ~CalibrationDialog();
 
+signals:
+    void enableMainGUI();
+    void calibrationEnd();
+
 private slots:
+    void on_buttonBox_accepted();
+
+    void on_buttonBox_rejected();
 
 private:
     Ui::CalibrationDialog *ui;
+
+    QString config_filename_;
 };
 
 #endif // CALIBRATION_DIALOG_H

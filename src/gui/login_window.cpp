@@ -25,11 +25,13 @@ void LoginWindow::on_pushButton_login_clicked()
 
   if (IsValidUser(username_, password))
   {
-    QMessageBox::information(this, "Login Success",
-                             "Username and password are correct.\n"
-                             "Please load a configuration file or use default one.");
+//    QMessageBox::information(this, "Login Success",
+//                             "Username and password are correct.\n"
+//                             "Please load a configuration file or use default one.");
     ui->groupBox_config->setEnabled(true);
     ui->groupBox_signIn->setDisabled(true);
+    //debug
+    ui->pushButton_loadDefault->click();
   }
   else
   {

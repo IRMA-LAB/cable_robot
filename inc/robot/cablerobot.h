@@ -9,11 +9,17 @@ class CableRobot : public QObject, public StateMachine
 {
   Q_OBJECT
 public:
-  explicit CableRobot(QObject* parent = nullptr);
+  explicit CableRobot(QObject* parent, QString& config_filename);
 
 signals:
+  void printToQConsole(const QString&) const;
 
 public slots:
+  void EventSuccess();
+  void EventFailure();
+  void StartCalibration() { InternalEvent(ST_CALIBRATION); }
+  void StartHoming() { InternalEvent(ST_HOMING); }
+  void Stop();
 
 private:
   // clang-format off

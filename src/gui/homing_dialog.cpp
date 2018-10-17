@@ -1,14 +1,24 @@
 #include "gui/homing_dialog.h"
 #include "ui_homing_dialog.h"
 
-HomingDialog::HomingDialog(QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::HomingDialog)
+HomingDialog::HomingDialog(QWidget* parent, QString& config_filename)
+  : QDialog(parent), ui(new Ui::HomingDialog), config_filename_(config_filename)
 {
-    ui->setupUi(this);
+  ui->setupUi(this);
 }
 
-HomingDialog::~HomingDialog()
+HomingDialog::~HomingDialog() { delete ui; }
+
+void HomingDialog::on_buttonBox_accepted()
 {
-    delete ui;
+  emit homingSuccess();
+  emit enableMainGUI(true);
+  close();
+}
+
+void HomingDialog::on_buttonBox_rejected()
+{
+  emit homingFailed();
+  emit enableMainGUI(false);
+  close();
 }

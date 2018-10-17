@@ -1,14 +1,24 @@
 #include "gui/calibration_dialog.h"
 #include "ui_calibration_dialog.h"
 
-CalibrationDialog::CalibrationDialog(QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::CalibrationDialog)
+CalibrationDialog::CalibrationDialog(QWidget* parent, QString& config_filename)
+  : QDialog(parent), ui(new Ui::CalibrationDialog), config_filename_(config_filename)
 {
-    ui->setupUi(this);
+  ui->setupUi(this);
 }
 
-CalibrationDialog::~CalibrationDialog()
+CalibrationDialog::~CalibrationDialog() { delete ui; }
+
+void CalibrationDialog::on_buttonBox_accepted()
 {
-    delete ui;
+  //emit enableMainGUI();
+  emit calibrationEnd();
+  close();
+}
+
+void CalibrationDialog::on_buttonBox_rejected()
+{
+  emit calibrationEnd();
+  emit enableMainGUI();
+  close();
 }
