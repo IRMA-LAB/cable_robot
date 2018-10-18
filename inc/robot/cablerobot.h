@@ -9,7 +9,10 @@ class CableRobot : public QObject, public StateMachine
 {
   Q_OBJECT
 public:
-  explicit CableRobot(QObject* parent, QString& config_filename);
+  explicit CableRobot(QObject* parent, QString&);
+
+  void EnterCalibrationMode();
+  void EnterHomingMode();
 
 signals:
   void printToQConsole(const QString&) const;
@@ -17,8 +20,6 @@ signals:
 public slots:
   void EventSuccess();
   void EventFailure();
-  void StartCalibration() { InternalEvent(ST_CALIBRATION); }
-  void StartHoming() { InternalEvent(ST_HOMING); }
   void Stop();
 
 private:

@@ -11,8 +11,8 @@ CalibrationDialog::~CalibrationDialog() { delete ui; }
 
 void CalibrationDialog::on_buttonBox_accepted()
 {
-  //emit enableMainGUI();
   emit calibrationEnd();
+  emit enableMainGUI();
   close();
 }
 

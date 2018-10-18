@@ -44,6 +44,8 @@ void MainGUI::on_pushButton_calib_clicked()
   ui->groupBox_app->setDisabled(true);
   ui->frame_manualControl->setDisabled(true);
 
+  robot_.EnterCalibrationMode();
+
   calib_dialog_ = new CalibrationDialog(this, config_filename_);
   connect(calib_dialog_, SIGNAL(enableMainGUI()), this, SLOT(EnableInterface()));
   connect(calib_dialog_, SIGNAL(calibrationEnd()), &robot_, SLOT(EventSuccess()));
@@ -56,6 +58,8 @@ void MainGUI::on_pushButton_homing_clicked()
   ui->pushButton_calib->setDisabled(true);
   ui->groupBox_app->setDisabled(true);
   ui->frame_manualControl->setDisabled(true);
+
+  robot_.EnterHomingMode();
 
   homing_dialog_ = new HomingDialog(this, config_filename_);
   connect(homing_dialog_, SIGNAL(enableMainGUI(bool)), this, SLOT(EnableInterface(bool)));

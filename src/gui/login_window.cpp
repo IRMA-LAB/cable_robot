@@ -18,26 +18,32 @@ bool LoginWindow::IsValidUser(QString& username, QString& password) const
   return username == "test" && password == "test";
 }
 
+//debug
 void LoginWindow::on_pushButton_login_clicked()
 {
-  username_ = ui->lineEdit_username->text();
-  QString password = ui->lineEdit_password->text();
+  ui->groupBox_config->setEnabled(true);
+  ui->pushButton_loadDefault->click();
+}
 
-  if (IsValidUser(username_, password))
-  {
+// void LoginWindow::on_pushButton_login_clicked()
+//{
+//  username_ = ui->lineEdit_username->text();
+//  QString password = ui->lineEdit_password->text();
+
+//  if (IsValidUser(username_, password))
+//  {
 //    QMessageBox::information(this, "Login Success",
 //                             "Username and password are correct.\n"
 //                             "Please load a configuration file or use default one.");
-    ui->groupBox_config->setEnabled(true);
-    ui->groupBox_signIn->setDisabled(true);
-    //debug
-    ui->pushButton_loadDefault->click();
-  }
-  else
-  {
-    QMessageBox::warning(this, "Login Error", "Username and/or password is not correct");
-  }
-}
+//    ui->groupBox_config->setEnabled(true);
+//    ui->groupBox_signIn->setDisabled(true);
+//  }
+//  else
+//  {
+//    QMessageBox::warning(this, "Login Error", "Username and/or password is not
+//    correct");
+//  }
+//}
 
 void LoginWindow::on_pushButton_inputFile_clicked()
 {
@@ -70,8 +76,7 @@ void LoginWindow::on_pushButton_load_clicked()
 void LoginWindow::on_pushButton_loadDefault_clicked()
 {
   hide();
-  QString default_config_filename("../../resources/default.json");
-  main_gui = new MainGUI(this, default_config_filename);
-//  main_gui = new MainGUI(this, QResource(":/config/default.json"));
+  QString default_filename = ":/config/default.json";
+  main_gui = new MainGUI(this, default_filename);
   main_gui->show();
 }

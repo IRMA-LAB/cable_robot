@@ -2,11 +2,41 @@
 
 constexpr char* CableRobot::kStatesStr[];
 
-CableRobot::CableRobot(QObject* parent, QString& config_filename)
-  : QObject(parent), StateMachine(ST_MAX_STATES)
+CableRobot::CableRobot(QObject* parent, QString& /*config_filename*/)
+  : QObject(parent), StateMachine(ST_MAX_STATES), prev_state_(ST_MAX_STATES)
 {
-  prev_state_ = ST_MAX_STATES;
-  InternalEvent(ST_IDLE);
+  PrintStateTransition(prev_state_, ST_IDLE);
+  prev_state_ = ST_IDLE;
+}
+
+void CableRobot::EnterCalibrationMode()
+{
+  // clang-format off
+  BEGIN_TRANSITION_MAP			              			// - Current State -
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_IDLE
+      TRANSITION_MAP_ENTRY (ST_CALIBRATION)                    // ST_ENABLED
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_CALIBRATION
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_HOMING
+      TRANSITION_MAP_ENTRY (ST_CALIBRATION)                    // ST_READY
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_OPERATIONAL
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_ERROR
+  END_TRANSITION_MAP(NULL)
+  // clang-format on
+}
+
+void CableRobot::EnterHomingMode()
+{
+  // clang-format off
+  BEGIN_TRANSITION_MAP			              			// - Current State -
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_IDLE
+      TRANSITION_MAP_ENTRY (ST_HOMING)                            // ST_ENABLED
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_CALIBRATION
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_HOMING
+      TRANSITION_MAP_ENTRY (ST_HOMING)                            // ST_READY
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_OPERATIONAL
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_ERROR
+  END_TRANSITION_MAP(NULL)
+  // clang-format on
 }
 
 ////////////////////////////////////////////////////////////////////////////
