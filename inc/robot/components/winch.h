@@ -1,7 +1,7 @@
 #ifndef CABLE_ROBOT_WINCH_H
 #define CABLE_ROBOT_WINCH_H
 
-#include "libgrabec/inc/slaves/goldsolowhistledrive.h"
+#include "slaves/goldsolowhistledrive.h"
 #include "types.h"
 
 /**

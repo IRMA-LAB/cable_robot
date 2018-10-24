@@ -7,8 +7,8 @@ HEADERS = \
     $$PWD/inc/gui/main_gui.h \
     $$PWD/inc/gui/login_window.h \
     $$PWD/inc/robot/cablerobot.h \
-    inc/gui/calibration_dialog.h \
-    inc/gui/homing_dialog.h
+    $$PWD/inc/gui/calibration_dialog.h \
+    $$PWD/inc/gui/homing_dialog.h
 
 SOURCES = \
     $$PWD/src/robot/components/winch.cpp \
@@ -19,8 +19,8 @@ SOURCES = \
     $$PWD/src/types.cpp \
     $$PWD/src/main.cpp \
     $$PWD/src/robot/cablerobot.cpp \
-    src/gui/homing_dialog.cpp \
-    src/gui/calibration_dialog.cpp
+    $$PWD/src/gui/homing_dialog.cpp \
+    $$PWD/src/gui/calibration_dialog.cpp
 
 INCLUDEPATH += \
     $$PWD/inc \
@@ -43,18 +43,18 @@ TARGET = CableRobotApp
 DEFINES += QT_DEPRECATED_WARNINGS
 
 # GRAB Ethercat lib
-unix:!macx: LIBS += -L$$PWD/lib/grab_common/libgrabec/build/ -lgrabec
-INCLUDEPATH += $$PWD/lib/grab_common/libgrabec/build \
+unix:!macx: LIBS += -L$$PWD/lib/grab_common/libgrabec/lib/ -lgrabec
+INCLUDEPATH += $$PWD/lib/grab_common/libgrabec \
     lib/grab_common/libgrabec/inc
-DEPENDPATH += $$PWD/lib/grab_common/libgrabec/build
-unix:!macx: PRE_TARGETDEPS += $$PWD/lib/grab_common/libgrabec/build/libgrabec.a
+DEPENDPATH += $$PWD/lib/grab_common/libgrabec
+unix:!macx: PRE_TARGETDEPS += $$PWD/lib/grab_common/libgrabec/lib/libgrabec.a
 
 # GRAB Real-time lib
-unix:!macx: LIBS += -L$$PWD/lib/grab_common/libgrabrt/build/ -lgrabrt
-INCLUDEPATH += $$PWD/lib/grab_common/libgrabrt/build \
+unix:!macx: LIBS += -L$$PWD/lib/grab_common/libgrabrt/lib/ -lgrabrt
+INCLUDEPATH += $$PWD/lib/grab_common/libgrabrt \
     lib/grab_common/libgrabrt/inc
-DEPENDPATH += $$PWD/lib/grab_common/libgrabrt/build
-unix:!macx: PRE_TARGETDEPS += $$PWD/lib/grab_common/libgrabrt/build/libgrabrt.a
+DEPENDPATH += $$PWD/lib/grab_common/libgrabrt
+unix:!macx: PRE_TARGETDEPS += $$PWD/lib/grab_common/libgrabrt/lib/libgrabrt.a
 
 # EtherCAT lib
 INCLUDEPATH += /opt/etherlab/include
@@ -62,10 +62,18 @@ DEPENDPATH  += /opt/etherlab/lib/
 LIBS        += /opt/etherlab/lib/libethercat.a
 
 # State machine lib
-unix:!macx: LIBS += -L$$PWD/lib/grab_common/state_machine/lib/ -lstate_machine
-INCLUDEPATH += $$PWD/lib/grab_common/state_machine
-DEPENDPATH += $$PWD/lib/grab_common/state_machine
-unix:!macx: PRE_TARGETDEPS += $$PWD/lib/grab_common/state_machine/lib/libstate_machine.a
+unix:!macx: LIBS += -L$$PWD/lib/state_machine/lib/ -lstate_machine
+INCLUDEPATH += $$PWD/lib/state_machine $$PWD/lib/state_machine/inc
+DEPENDPATH += $$PWD/lib/state_machine
+unix:!macx: PRE_TARGETDEPS += $$PWD/lib/state_machine/lib/libstate_machine.a
+
+# GRAB CDPR
+unix:!macx: LIBS += -L$$PWD/lib/grab_common/libcdpr/lib/ -lcdpr
+INCLUDEPATH += $$PWD/lib/grab_common/libcdpr \
+    $$PWD/lib/grab_common/libcdpr/inc \
+    $$PWD/lib/grab_common/libcdpr/tools
+DEPENDPATH += $$PWD/lib/grab_common/libcdpr
+unix:!macx: PRE_TARGETDEPS += $$PWD/lib/grab_common/libcdpr/lib/libcdpr.a
 
 FORMS += \
     gui/sub_win/actuatorinterface.ui \
@@ -84,3 +92,4 @@ FORMS += \
 
 RESOURCES += \
     resources/resources.qrc
+

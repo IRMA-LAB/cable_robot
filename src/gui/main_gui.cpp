@@ -79,6 +79,7 @@ void MainGUI::on_pushButton_startApp_clicked()
 void MainGUI::on_pushButton_enable_clicked()
 {
   manual_ctrl_enabled_ = !manual_ctrl_enabled_;
+  robot_.Stop();
 
   if (manual_ctrl_enabled_)
     ui->pushButton_enable->setText(tr("Disable"));

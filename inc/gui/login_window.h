@@ -2,7 +2,18 @@
 #define CABLE_ROBOT_LOGIN_WINDOW_H
 
 #include <QMainWindow>
+#include <QMessageBox>
+#include <QFileDialog>
+#include <QResource>
+#include <QStorageInfo>
+
+#include <iostream>
+#include <fstream>
+
 #include "main_gui.h"
+#include "json.hpp"
+
+using json = nlohmann::json;
 
 namespace Ui
 {
@@ -31,7 +42,14 @@ private:
   QString username_;
   QString config_filename_;
 
-  bool IsValidUser(QString& username, QString& password) const;
+  enum RetVal
+  {
+    OK,
+    ERR_IO,
+    ERR_INVAL
+  };
+
+  RetVal IsValidUser(QString& username, QString& password) const;
   bool IsConfigFileValid() const { return true; }
 };
 

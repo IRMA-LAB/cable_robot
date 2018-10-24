@@ -1,8 +1,8 @@
 #ifndef CABLE_ROBOT_ACTUATOR_H
 #define CABLE_ROBOT_ACTUATOR_H
 
-#include "state_machine/inc/StateMachine.h"
-#include "libgrabrt/inc/clocks.h"
+#include "StateMachine.h"
+#include "clocks.h"
 
 #include "winch.h"
 #include "pulleys_system.h"

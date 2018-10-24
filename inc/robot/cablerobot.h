@@ -3,7 +3,7 @@
 
 #include <QObject>
 
-#include "state_machine/inc/StateMachine.h"
+#include "StateMachine.h"
 
 class CableRobot : public QObject, public StateMachine
 {
