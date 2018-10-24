@@ -1,3 +1,6 @@
 [submodule "lib/grab_common"]
 	path = lib/grab_common
 	url = git@github.com:UNIBO-GRABLab/grab_common.git
+[submodule "lib/state_machine"]
+	path = lib/state_machine
+	url = git@github.com:UNIBO-GRABLab/state_machine.git
