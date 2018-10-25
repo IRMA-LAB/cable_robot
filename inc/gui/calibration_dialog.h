@@ -3,6 +3,8 @@
 
 #include <QDialog>
 
+#include "libcdpr/inc/types.h"
+
 namespace Ui {
 class CalibrationDialog;
 }
@@ -12,7 +14,7 @@ class CalibrationDialog : public QDialog
     Q_OBJECT
 
 public:
-    CalibrationDialog(QWidget *parent, QString &config_filename);
+    CalibrationDialog(QWidget *parent, const grabcdpr::Params& config);
     ~CalibrationDialog();
 
 signals:
@@ -27,7 +29,7 @@ private slots:
 private:
     Ui::CalibrationDialog *ui;
 
-    QString config_filename_;
+    const grabcdpr::Params config_;
 };
 
 #endif // CALIBRATION_DIALOG_H

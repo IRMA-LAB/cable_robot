@@ -7,6 +7,7 @@
 #include "homing_dialog.h"
 
 #include "robot/cablerobot.h"
+#include "libcdpr/inc/types.h"
 
 namespace Ui
 {
@@ -18,7 +19,7 @@ class MainGUI : public QDialog
   Q_OBJECT
 
 public:
-  MainGUI(QWidget* parent, QString& config_filename);
+  MainGUI(QWidget* parent, const grabcdpr::Params& config);
   ~MainGUI();
 
 private slots:
@@ -44,7 +45,7 @@ private:
   CalibrationDialog* calib_dialog_ = NULL;
   HomingDialog* homing_dialog_ = NULL;
 
-  QString config_filename_;
+  const grabcdpr::Params& config_;
   bool manual_ctrl_enabled_ = false;
 
   CableRobot robot_;

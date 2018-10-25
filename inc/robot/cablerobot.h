@@ -4,12 +4,13 @@
 #include <QObject>
 
 #include "StateMachine.h"
+#include "libcdpr/inc/types.h"
 
 class CableRobot : public QObject, public StateMachine
 {
   Q_OBJECT
 public:
-  explicit CableRobot(QObject* parent, QString&);
+  explicit CableRobot(QObject* parent, const grabcdpr::Params&);
 
   void EnterCalibrationMode();
   void EnterHomingMode();

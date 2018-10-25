@@ -1,9 +1,9 @@
 #include "gui/main_gui.h"
 #include "ui_main_gui.h"
 
-MainGUI::MainGUI(QWidget* parent, QString& config_filename)
-  : QDialog(parent), ui(new Ui::MainGUI), config_filename_(config_filename),
-    robot_(this, config_filename)
+MainGUI::MainGUI(QWidget* parent, const grabcdpr::Params &config)
+  : QDialog(parent), ui(new Ui::MainGUI), config_(config),
+    robot_(this, config)
 {
   ui->setupUi(this);
 
@@ -46,7 +46,7 @@ void MainGUI::on_pushButton_calib_clicked()
 
   robot_.EnterCalibrationMode();
 
-  calib_dialog_ = new CalibrationDialog(this, config_filename_);
+  calib_dialog_ = new CalibrationDialog(this, config_);
   connect(calib_dialog_, SIGNAL(enableMainGUI()), this, SLOT(EnableInterface()));
   connect(calib_dialog_, SIGNAL(calibrationEnd()), &robot_, SLOT(EventSuccess()));
   calib_dialog_->show();
@@ -61,7 +61,7 @@ void MainGUI::on_pushButton_homing_clicked()
 
   robot_.EnterHomingMode();
 
-  homing_dialog_ = new HomingDialog(this, config_filename_);
+  homing_dialog_ = new HomingDialog(this, config_);
   connect(homing_dialog_, SIGNAL(enableMainGUI(bool)), this, SLOT(EnableInterface(bool)));
   connect(homing_dialog_, SIGNAL(homingSuccess()), &robot_, SLOT(EventSuccess()));
   connect(homing_dialog_, SIGNAL(homingFailed()), &robot_, SLOT(EventFailure()));

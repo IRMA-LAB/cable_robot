@@ -5,12 +5,12 @@
       "swivel_pulley_encoder_res": 262144,
       "motor_cable_tau": 2,
       "l0": 1,
-      "pos_glob_D": [
+      "pos_OD_glob": [
         [0.1597],
         [-0.8359],
         [-0.023]
       ],
-      "pos_loc_A": [
+      "pos_PA_loc": [
         [0],
         [-0.2668],
         [0.27]
@@ -37,12 +37,12 @@
       "swivel_pulley_encoder_res": 262144,
       "motor_cable_tau": 2,
       "l0": 1,
-      "pos_glob_D": [
+      "pos_OD_glob": [
         [2.1753],
         [0.1817],
         [-0.0351]
       ],
-      "pos_loc_A": [
+      "pos_PA_loc": [
         [0.2311],
         [0.1334],
         [0.27]
@@ -69,12 +69,12 @@
       "swivel_pulley_encoder_res": 262144,
       "motor_cable_tau": 2,
       "l0": 1,
-      "pos_glob_D": [
+      "pos_OD_glob": [
         [0.2591],
         [1.2883],
         [-0.043]
       ],
-      "pos_loc_A": [
+      "pos_PA_loc": [
         [-0.2311],
         [0.1334],
         [0.27]
@@ -99,13 +99,13 @@
     }
   ],
   "platform": {
-    "ext_moments_loc": [
-      [0],
-      [0],
-      [0]
+    "ext_torque_loc": [
+      [0.1],
+      [0.2],
+      [0.3]
     ],
     "mass": 8.0064014,
-    "inertia_mat_loc_G": [
+    "inertia_mat_G_loc": [
       [
         0.13974096,
         0,
@@ -122,15 +122,15 @@
         0.21622689
       ]
     ],
-    "pos_loc_G": [
-      [0],
-      [0],
-      [0.18185573]
+    "pos_PG_loc": [
+      [0.4],
+      [0.5],
+      [0.6]
     ],
     "ext_force_loc": [
-      [0],
-      [0],
-      [0]
+      [0.7],
+      [0.8],
+      [0.9]
     ]
   }
 }

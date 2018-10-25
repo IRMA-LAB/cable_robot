@@ -3,6 +3,8 @@
 
 #include <QDialog>
 
+#include "libcdpr/inc/types.h"
+
 namespace Ui {
 class HomingDialog;
 }
@@ -12,7 +14,7 @@ class HomingDialog : public QDialog
     Q_OBJECT
 
 public:
-    HomingDialog(QWidget *parent, QString &config_filename);
+    HomingDialog(QWidget *parent, const grabcdpr::Params& config);
     ~HomingDialog();
 
 signals:
@@ -28,7 +30,7 @@ private slots:
 private:
     Ui::HomingDialog *ui;
 
-    QString config_filename_;
+    const grabcdpr::Params& config_;
 };
 
 #endif // HOMING_DIALOG_H

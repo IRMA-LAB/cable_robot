@@ -2,7 +2,7 @@
 
 constexpr char* CableRobot::kStatesStr[];
 
-CableRobot::CableRobot(QObject* parent, QString& /*config_filename*/)
+CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& /*config*/)
   : QObject(parent), StateMachine(ST_MAX_STATES), prev_state_(ST_MAX_STATES)
 {
   PrintStateTransition(prev_state_, ST_IDLE);
@@ -78,7 +78,7 @@ void CableRobot::Stop()
   // clang-format off
   BEGIN_TRANSITION_MAP			              			// - Current State -
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_IDLE
-      TRANSITION_MAP_ENTRY (ST_IDLE)                                  // ST_ENABLED
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)                    // ST_ENABLED
       TRANSITION_MAP_ENTRY (ST_ENABLED)				// ST_CALIBRATION
       TRANSITION_MAP_ENTRY (ST_ENABLED)				// ST_HOMING
       TRANSITION_MAP_ENTRY (ST_ENABLED)                           // ST_READY

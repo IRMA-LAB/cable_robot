@@ -1,8 +1,8 @@
 #include "gui/homing_dialog.h"
 #include "ui_homing_dialog.h"
 
-HomingDialog::HomingDialog(QWidget* parent, QString& config_filename)
-  : QDialog(parent), ui(new Ui::HomingDialog), config_filename_(config_filename)
+HomingDialog::HomingDialog(QWidget* parent, const grabcdpr::Params& config)
+  : QDialog(parent), ui(new Ui::HomingDialog), config_(config)
 {
   ui->setupUi(this);
 }

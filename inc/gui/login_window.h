@@ -11,7 +11,9 @@
 #include <fstream>
 
 #include "main_gui.h"
+#include "robotconfigjsonparser.h"
 #include "json.hpp"
+#include "libcdpr/inc/types.h"
 
 using json = nlohmann::json;
 
@@ -40,7 +42,7 @@ private:
   MainGUI* main_gui;
 
   QString username_;
-  QString config_filename_;
+  grabcdpr::Params config_;
 
   enum RetVal
   {
@@ -50,7 +52,7 @@ private:
   };
 
   RetVal IsValidUser(QString& username, QString& password) const;
-  bool IsConfigFileValid() const { return true; }
+  bool ParseConfigFile(QString& config_filename);
 };
 
 #endif // CABLE_ROBOT_LOGIN_WINDOW_H

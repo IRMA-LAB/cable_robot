@@ -1,8 +1,8 @@
 #include "gui/calibration_dialog.h"
 #include "ui_calibration_dialog.h"
 
-CalibrationDialog::CalibrationDialog(QWidget* parent, QString& config_filename)
-  : QDialog(parent), ui(new Ui::CalibrationDialog), config_filename_(config_filename)
+CalibrationDialog::CalibrationDialog(QWidget* parent, const grabcdpr::Params& config)
+  : QDialog(parent), ui(new Ui::CalibrationDialog), config_(config)
 {
   ui->setupUi(this);
 }

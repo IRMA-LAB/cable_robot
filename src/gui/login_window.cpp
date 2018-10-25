@@ -6,6 +6,8 @@ LoginWindow::LoginWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::Logi
 {
   ui->setupUi(this);
   setFixedHeight(this->geometry().height());
+  // debug
+  //ui->groupBox_config->setEnabled(true);
 }
 
 LoginWindow::~LoginWindow() { delete ui; }
@@ -23,7 +25,7 @@ LoginWindow::RetVal LoginWindow::IsValidUser(QString& username, QString& passwor
   }
 
   // Open file
-  std::ifstream ifile(usb_path+"/.users.json");
+  std::ifstream ifile(usb_path + "/.users.json");
   if (!ifile.is_open())
   {
     return ERR_IO;
@@ -59,9 +61,10 @@ void LoginWindow::on_pushButton_login_clicked()
   switch (ret)
   {
   case OK:
-//    QMessageBox::information(this, "Login Success",
-//                             "Username and password are correct.\n"
-//                             "Please load a configuration file or use default one.");
+    //    QMessageBox::information(this, "Login Success",
+    //                             "Username and password are correct.\n"
+    //                             "Please load a configuration file or use default
+    //                             one.");
     ui->groupBox_config->setEnabled(true);
     ui->groupBox_signIn->setDisabled(true);
     break;
@@ -77,36 +80,49 @@ void LoginWindow::on_pushButton_login_clicked()
 
 void LoginWindow::on_pushButton_inputFile_clicked()
 {
-  config_filename_ =
+  QString config_filename =
     QFileDialog::getOpenFileName(this, tr("Load Configuration File"), tr("../../config"),
                                  tr("Configuration File (*.json)"));
-  if (config_filename_.isEmpty())
+  if (config_filename.isEmpty())
   {
-    QMessageBox::warning(this, "File Error", "Configuration file is empty");
+    QMessageBox::warning(this, "File Error", "Configuration filename is empty");
     return;
   }
-  ui->lineEdit_inputFile->setText(config_filename_);
+  ui->lineEdit_inputFile->setText(config_filename);
 }
 
 void LoginWindow::on_pushButton_load_clicked()
 {
-  config_filename_ = ui->lineEdit_inputFile->text();
-  while (config_filename_.isEmpty())
+  QString config_filename = ui->lineEdit_inputFile->text();
+  if (config_filename.isEmpty())
+  {
     ui->pushButton_inputFile->click();
-  if (!IsConfigFileValid())
+    config_filename = ui->lineEdit_inputFile->text();
+    if (config_filename.isEmpty())
+      return;
+  }
+  if (!ParseConfigFile(config_filename))
   {
     QMessageBox::warning(this, "File Error", "Configuration file is not valid");
     return;
   }
+  main_gui = new MainGUI(this, config_);
   hide();
-  main_gui = new MainGUI(this, config_filename_);
   main_gui->show();
 }
 
 void LoginWindow::on_pushButton_loadDefault_clicked()
 {
+  QString default_filename(SRCDIR);
+  default_filename.append("config/default.json");
+  ParseConfigFile(default_filename);
+  main_gui = new MainGUI(this, config_);
   hide();
-  QString default_filename = ":/config/default.json";
-  main_gui = new MainGUI(this, default_filename);
   main_gui->show();
+}
+
+bool LoginWindow::ParseConfigFile(QString& config_filename)
+{
+  RobotConfigJsonParser parser;
+  return parser.ParseFile(config_filename, &config_);
 }

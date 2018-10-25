@@ -67,13 +67,26 @@ INCLUDEPATH += $$PWD/lib/state_machine $$PWD/lib/state_machine/inc
 DEPENDPATH += $$PWD/lib/state_machine
 unix:!macx: PRE_TARGETDEPS += $$PWD/lib/state_machine/lib/libstate_machine.a
 
-# GRAB CDPR
+# GRAB CDPR lib
 unix:!macx: LIBS += -L$$PWD/lib/grab_common/libcdpr/lib/ -lcdpr
 INCLUDEPATH += $$PWD/lib/grab_common/libcdpr \
     $$PWD/lib/grab_common/libcdpr/inc \
     $$PWD/lib/grab_common/libcdpr/tools
 DEPENDPATH += $$PWD/lib/grab_common/libcdpr
 unix:!macx: PRE_TARGETDEPS += $$PWD/lib/grab_common/libcdpr/lib/libcdpr.a
+
+# Geometric lib
+unix:!macx: LIBS += -L$$PWD/lib/grab_common/libgeom/lib/ -lgeom
+INCLUDEPATH += $$PWD/lib/grab_common/libgeom $$PWD/lib/grab_common/libgeom/inc/
+DEPENDPATH += $$PWD/lib/grab_common/libgeom
+unix:!macx: PRE_TARGETDEPS += $$PWD/lib/grab_common/libgeom/lib/libgeom.a
+
+# Numeric lib
+unix:!macx: LIBS += -L$$PWD/lib/grab_common/libnumeric/lib/ -lnumeric
+INCLUDEPATH += $$PWD/lib/grab_common/libnumeric \
+    $$PWD/lib/grab_common/libnumeric/inc/
+DEPENDPATH += $$PWD/lib/grab_common/libnumeric
+unix:!macx: PRE_TARGETDEPS += $$PWD/lib/grab_common/libnumeric/lib/libnumeric.a
 
 FORMS += \
     gui/sub_win/actuatorinterface.ui \
@@ -93,3 +106,4 @@ FORMS += \
 RESOURCES += \
     resources/resources.qrc
 
+DEFINES += SRCDIR=\\\"$$PWD/\\\"
