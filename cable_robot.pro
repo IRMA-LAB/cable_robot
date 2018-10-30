@@ -89,19 +89,20 @@ DEPENDPATH += $$PWD/lib/grab_common/libnumeric
 unix:!macx: PRE_TARGETDEPS += $$PWD/lib/grab_common/libnumeric/lib/libnumeric.a
 
 FORMS += \
-    gui/sub_win/actuatorinterface.ui \
-    gui/sub_win/actuatorpvtinterface33.ui \
-    gui/sub_win/calibrationinterface.ui \
-    gui/sub_win/demointerface33.ui \
-    gui/sub_win/demointerface66.ui \
-    gui/sub_win/hominginterface.ui \
-    gui/sub_win/manualinterface33.ui \
-    gui/sub_win/manualinterface66.ui \
-    gui/cablerobotinterface.ui \
-    widgets/main_gui.ui \
-    widgets/login_window.ui \
-    widgets/calibration_dialog.ui \
-    widgets/homing_dialog.ui
+    $$PWD/gui/sub_win/actuatorinterface.ui \
+    $$PWD/gui/sub_win/actuatorpvtinterface33.ui \
+    $$PWD/gui/sub_win/calibrationinterface.ui \
+    $$PWD/gui/sub_win/demointerface33.ui \
+    $$PWD/gui/sub_win/demointerface66.ui \
+    $$PWD/gui/sub_win/hominginterface.ui \
+    $$PWD/gui/sub_win/manualinterface33.ui \
+    $$PWD/gui/sub_win/manualinterface66.ui \
+    $$PWD/gui/cablerobotinterface.ui \
+    $$PWD/widgets/main_gui.ui \
+    $$PWD/widgets/login_window.ui \
+    $$PWD/widgets/calib/calibration_dialog.ui \
+    $$PWD/widgets/homing/homing_dialog.ui \
+    $$PWD/widgets/homing/homing_interface.ui
 
 RESOURCES += \
     resources/resources.qrc
