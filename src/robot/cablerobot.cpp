@@ -2,11 +2,21 @@
 
 constexpr char* CableRobot::kStatesStr[];
 
-CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& /*config*/)
+CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
   : QObject(parent), StateMachine(ST_MAX_STATES), prev_state_(ST_MAX_STATES)
 {
   PrintStateTransition(prev_state_, ST_IDLE);
   prev_state_ = ST_IDLE;
+
+  uint8_t slave_pos = 0;
+  easycat_slaves_.push_back(grabec::EasyCatSlave(slave_pos));
+  ec_slaves_ptrs_.push_back(&easycat_slaves_[slave_pos++]);
+
+  for (size_t i = 0; i < config.cables.size(); i++)
+  {
+    actuators_.push_back(Actuator(slave_pos, config.cables[i]));
+    ec_slaves_ptrs_.push_back(actuators_[slave_pos++].GetWinch()->GetServo());
+  }
 }
 
 void CableRobot::EnterCalibrationMode()
@@ -152,3 +162,9 @@ void CableRobot::PrintStateTransition(const States current_state,
   printf("%s\n", msg.toStdString().c_str());
   emit printToQConsole(msg);
 }
+
+////////////////////////////////////////////////////////////////////////////
+//// Ethercat related functions
+////////////////////////////////////////////////////////////////////////////
+
+void CableRobot::LoopFunction() {}

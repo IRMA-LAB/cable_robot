@@ -1,9 +1,7 @@
 #include "robot/components/pulleys_system.h"
 
-PulleysSystem::PulleysSystem(PulleyParams * const params)
+PulleysSystem::PulleysSystem(const PulleyParams &params)
 {
-  if (params == NULL)
-    exit(EXIT_FAILURE);
   params_ = params;
 }
 

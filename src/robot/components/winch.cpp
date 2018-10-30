@@ -13,10 +13,8 @@ void Cable::UpdateCableLen(const double delta_length)
 /// Winch Class
 ////////////////////////////////////////////////////////////////
 
-Winch::Winch(const uint8_t slave_position, WinchParams * const params): servo_(slave_position)
+Winch::Winch(const uint8_t slave_position, const WinchParams &params): servo_(slave_position)
 {
-  if (params == NULL)
-    exit(EXIT_FAILURE);
   params_ = params;
 }
 

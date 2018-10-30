@@ -44,7 +44,7 @@ public:
    * @param slave_position
    * @param params
    */
-  Winch(const uint8_t slave_position, WinchParams* const params);
+  Winch(const uint8_t slave_position, const WinchParams& params);
 
   /**
    * @brief GetServo
@@ -90,7 +90,7 @@ public:
   void UpdateConfig();
 
 private:
-  WinchParams* params_;
+  WinchParams params_;
   Cable cable_;
   grabec::GoldSoloWhistleDrive servo_;
   int servo_home_pos_ = 0;
@@ -98,12 +98,12 @@ private:
 
   inline double CountsToLength(const int counts) const
   {
-    return counts * params_->kCountsToLengthFactor;
+    return counts * params_.kCountsToLengthFactor;
   }
 
   inline int LengthToCounts(const double length) const
   {
-    return static_cast<int>(length / params_->kCountsToLengthFactor);
+    return static_cast<int>(length / params_.kCountsToLengthFactor);
   }
 };
 

@@ -3,6 +3,7 @@
 
 #include "StateMachine.h"
 #include "clocks.h"
+#include "libcdpr/inc/types.h"
 
 #include "winch.h"
 #include "pulleys_system.h"
@@ -15,9 +16,10 @@ class Actuator : public StateMachine
 public:
   /**
    * @brief Actuator
-   * @param slave_position
+   * @param[in] slave_position
+   * @param[in] params
    */
-  Actuator(const uint8_t slave_position, ActuatorParams* const params);
+  Actuator(const uint8_t slave_position, const grabcdpr::CableParams &params);
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   //// External events
@@ -39,12 +41,17 @@ public:
    * @brief GetWinch
    * @return
    */
-  const Winch* GetWinch() const { return &winch_; }
+  const Winch* GetWinch() const { return winch_; }
+  /**
+   * @brief GetWinch
+   * @return
+   */
+  Winch* GetWinch() { return winch_; }
   /**
    * @brief GetPulley
    * @return
    */
-  const PulleysSystem* GetPulley() const { return &pulley_; }
+  const PulleysSystem* GetPulley() const { return pulley_; }
 
   /**
    * @brief SetCableLength
@@ -116,8 +123,8 @@ private:
 
   uint8_t slave_position_;
 
-  Winch winch_;
-  PulleysSystem pulley_;
+  Winch* winch_;
+  PulleysSystem* pulley_;
 
   grabrt::ThreadClock clock_;
   States prev_state_ = ST_IDLE;

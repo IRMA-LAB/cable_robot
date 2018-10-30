@@ -5,23 +5,27 @@
 
 #include "StateMachine.h"
 #include "libcdpr/inc/types.h"
+#include "ethercatmaster.h"
+#include "slaves/easycatslave.h"
+#include "components/actuator.h"
 
-class CableRobot : public QObject, public StateMachine
+class CableRobot : public QObject, public StateMachine, public virtual grabec::EthercatMaster
 {
   Q_OBJECT
 public:
-  explicit CableRobot(QObject* parent, const grabcdpr::Params&);
+  explicit CableRobot(QObject* parent, const grabcdpr::Params& config);
+  ~CableRobot() {}
 
   void EnterCalibrationMode();
   void EnterHomingMode();
-
-signals:
-  void printToQConsole(const QString&) const;
 
 public slots:
   void EventSuccess();
   void EventFailure();
   void Stop();
+
+signals:
+  void printToQConsole(const QString&) const;
 
 private:
   // clang-format off
@@ -70,6 +74,14 @@ private:
   END_STATE_MAP
 
   void PrintStateTransition(const States current_state, const States new_state) const;
+
+  // Ethercat related
+  std::vector<grabec::EasyCatSlave> easycat_slaves_;
+  std::vector<Actuator> actuators_;
+  std::vector<grabec::EthercatSlave*> ec_slaves_ptrs_;
+
+  void StartUpFunction() override final {}
+  void LoopFunction() override final;
 };
 
 #endif // CABLEROBOT_H
