@@ -7,8 +7,11 @@ HEADERS = \
     $$PWD/inc/gui/main_gui.h \
     $$PWD/inc/gui/login_window.h \
     $$PWD/inc/robot/cablerobot.h \
-    $$PWD/inc/gui/calibration_dialog.h \
-    $$PWD/inc/gui/homing_dialog.h
+    $$PWD/inc/gui/calib/calibration_dialog.h \
+    $$PWD/inc/gui/homing/homing_dialog.h \
+    $$PWD/inc/gui/homing/homing_interface.h \
+    $$PWD/inc/gui/homing/homing_interface_proprioceptive.h \
+    $$PWD/inc/homing/homing_proprioceptive.h
 
 SOURCES = \
     $$PWD/src/robot/components/winch.cpp \
@@ -19,8 +22,10 @@ SOURCES = \
     $$PWD/src/types.cpp \
     $$PWD/src/main.cpp \
     $$PWD/src/robot/cablerobot.cpp \
-    $$PWD/src/gui/homing_dialog.cpp \
-    $$PWD/src/gui/calibration_dialog.cpp
+    $$PWD/src/gui/calib/calibration_dialog.cpp \
+    $$PWD/src/gui/homing/homing_dialog.cpp \
+    $$PWD/src/gui/homing/homing_interface_proprioceptive.cpp \
+    $$PWD/src/homing/homing_proprioceptive.cpp
 
 INCLUDEPATH += \
     $$PWD/inc \
@@ -97,12 +102,13 @@ FORMS += \
     $$PWD/gui/sub_win/hominginterface.ui \
     $$PWD/gui/sub_win/manualinterface33.ui \
     $$PWD/gui/sub_win/manualinterface66.ui \
-    $$PWD/gui/cablerobotinterface.ui \
+    $$PWD/gui/cablerobotinterface.ui
+FORMS += \
     $$PWD/widgets/main_gui.ui \
     $$PWD/widgets/login_window.ui \
     $$PWD/widgets/calib/calibration_dialog.ui \
     $$PWD/widgets/homing/homing_dialog.ui \
-    $$PWD/widgets/homing/homing_interface.ui
+    $$PWD/widgets/homing/homing_interface_proprioceptive.ui
 
 RESOURCES += \
     resources/resources.qrc

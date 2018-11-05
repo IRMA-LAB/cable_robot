@@ -61,7 +61,7 @@ void MainGUI::on_pushButton_homing_clicked()
 
   robot_.EnterHomingMode();
 
-  homing_dialog_ = new HomingDialog(this, config_);
+  homing_dialog_ = new HomingDialog(this, &config_);
   connect(homing_dialog_, SIGNAL(enableMainGUI(bool)), this, SLOT(EnableInterface(bool)));
   connect(homing_dialog_, SIGNAL(homingSuccess()), &robot_, SLOT(EventSuccess()));
   connect(homing_dialog_, SIGNAL(homingFailed()), &robot_, SLOT(EventFailure()));

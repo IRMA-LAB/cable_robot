@@ -20,7 +20,7 @@
    <string>Homing Window</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../resources/resources.qrc">
+   <iconset resource="../../resources/resources.qrc">
     <normaloff>:/img/img/grab.jpg</normaloff>:/img/img/grab.jpg</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -72,12 +72,7 @@
        </property>
        <item>
         <property name="text">
-         <string>Import From Matlab</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Internal</string>
+         <string>Proprioceptive-based</string>
         </property>
        </item>
        <item>
@@ -107,7 +102,7 @@
   </layout>
  </widget>
  <resources>
-  <include location="../resources/resources.qrc"/>
+  <include location="../../resources/resources.qrc"/>
  </resources>
  <connections>
   <connection>

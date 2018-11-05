@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>HomingInterface</class>
- <widget class="QWidget" name="HomingInterface">
+ <class>HomingInterfaceProprioceptive</class>
+ <widget class="QWidget" name="HomingInterfaceProprioceptive">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -99,7 +99,7 @@
            </spacer>
           </item>
           <item>
-           <widget class="QPushButton" name="HomingClearFaultsButton">
+           <widget class="QPushButton" name="pushButton_clearFaults">
             <property name="enabled">
              <bool>false</bool>
             </property>
@@ -263,7 +263,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QTextBrowser" name="RobotLogBrowser">
+      <widget class="QTextBrowser" name="textBrowser_logs">
        <property name="sizePolicy">
         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Expanding">
          <horstretch>0</horstretch>
@@ -370,6 +370,9 @@
             <width>16777215</width>
             <height>30</height>
            </size>
+          </property>
+          <property name="readOnly">
+           <bool>true</bool>
           </property>
          </widget>
         </item>

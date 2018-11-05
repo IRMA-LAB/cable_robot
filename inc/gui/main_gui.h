@@ -3,11 +3,11 @@
 
 #include <QDialog>
 
-#include "calibration_dialog.h"
-#include "homing_dialog.h"
-
-#include "robot/cablerobot.h"
 #include "libcdpr/inc/types.h"
+
+#include "gui/calib/calibration_dialog.h"
+#include "gui/homing/homing_dialog.h"
+#include "robot/cablerobot.h"
 
 namespace Ui
 {
@@ -45,7 +45,7 @@ private:
   CalibrationDialog* calib_dialog_ = NULL;
   HomingDialog* homing_dialog_ = NULL;
 
-  const grabcdpr::Params& config_;
+  const grabcdpr::Params config_;
   bool manual_ctrl_enabled_ = false;
 
   CableRobot robot_;
