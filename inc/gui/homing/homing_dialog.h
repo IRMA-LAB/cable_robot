@@ -17,7 +17,7 @@ class HomingDialog : public QDialog
   Q_OBJECT
 
 public:
-  explicit HomingDialog(QWidget* parent, const grabcdpr::Params* config);
+  explicit HomingDialog(QWidget* parent, CableRobot* robot);
   ~HomingDialog();
 
 signals:
@@ -44,6 +44,7 @@ private:
 
   const grabcdpr::Params* config_ptr_;
   HomingInterface* interface_ = NULL;
+  CableRobot* robot_ptr_ = NULL;
 };
 
 #endif // HOMING_DIALOG_H

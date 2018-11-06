@@ -1,8 +1,8 @@
 #include "gui/homing/homing_dialog.h"
 #include "ui_homing_dialog.h"
 
-HomingDialog::HomingDialog(QWidget* parent, const grabcdpr::Params* config)
-  : QDialog(parent), ui(new Ui::HomingDialog), config_ptr_(config)
+HomingDialog::HomingDialog(QWidget* parent, CableRobot* robot)
+  : QDialog(parent), ui(new Ui::HomingDialog), robot_ptr_(robot)
 {
   ui->setupUi(this);
 }
@@ -11,32 +11,34 @@ HomingDialog::~HomingDialog()
 {
   if (interface_ != NULL)
   {
-    disconnect(interface_, SIGNAL(HomingInterface::homingSuccess()), this,
-               SLOT(HomingSuccessCb()));
-    disconnect(interface_, SIGNAL(HomingInterface::homingFailed()), this,
-               SLOT(HomingFailedCb()));
+    disconnect(interface_, SIGNAL(homingSuccess()), this, SLOT(HomingSuccessCb()));
+    disconnect(interface_, SIGNAL(homingFailed()), this, SLOT(HomingFailedCb()));
+    delete interface_;
   }
   delete ui;
 }
 
 void HomingDialog::on_buttonBox_accepted()
 {
+  if (interface_ != NULL)
+    delete interface_;
+
   switch (ui->comboBox_homingMethod->currentIndex())
   {
   case PROPRIOCEPTIVE:
-    interface_ = new HomingInterfaceProprioceptive(this, config_ptr_);
+    interface_ = new HomingInterfaceProprioceptive(parentWidget(), robot_ptr_);
     break;
   case VISION:
+    interface_ = NULL;
     HomingSuccessCb(); // replace with homing vision interface
-    break;
+    return;
   case FUSION:
+    interface_ = NULL;
     HomingSuccessCb(); // replace with homing fusion interface
-    break;
+    return;
   }
-  connect(interface_, SIGNAL(HomingInterface::homingSuccess()), this,
-          SLOT(HomingSuccessCb()));
-  connect(interface_, SIGNAL(HomingInterface::homingFailed()), this,
-          SLOT(HomingFailedCb()));
+  connect(interface_, SIGNAL(homingSuccess()), this, SLOT(HomingSuccessCb()));
+  connect(interface_, SIGNAL(homingFailed()), this, SLOT(HomingFailedCb()));
   interface_->show();
   hide();
 }

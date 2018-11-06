@@ -17,19 +17,14 @@ class HomingInterfaceProprioceptive : public HomingInterface
   Q_OBJECT
 
 public:
-  explicit HomingInterfaceProprioceptive(QWidget* parent, const grabcdpr::Params* config);
+  explicit HomingInterfaceProprioceptive(QWidget* parent, CableRobot* robot);
   ~HomingInterfaceProprioceptive();
-
-signals:
-  void homingFailed();
-  void homingSuccess();
 
 public slots:
   void FaultPresent(const bool);
   void AcquisitionCompleteCb();
 
 private slots:
-
   void on_pushButton_enable_clicked();
   void on_pushButton_clearFaults_clicked();
   void on_pushButton_start_clicked();

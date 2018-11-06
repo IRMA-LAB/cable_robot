@@ -3,12 +3,13 @@
 constexpr char* HomingProprioceptive::kStatesStr[];
 
 HomingProprioceptive::HomingProprioceptive(QObject* parent,
-                                           const grabcdpr::Params* config)
-  : QObject(parent), StateMachine(ST_MAX_STATES), config_ptr_(config)
+                                           CableRobot *robot)
+  : QObject(parent), StateMachine(ST_MAX_STATES), robot_(robot)
 {
+  // init with default values
+  num_meas_ = kNumMeasMin;
+  prev_state_ = ST_MAX_STATES;
 }
-
-HomingProprioceptive::~HomingProprioceptive() {}
 
 ////////////////////////////////////////////////////////////////////////////
 //// External Events
@@ -110,6 +111,11 @@ void HomingProprioceptive::FaultReset()
   // clang-format on
 }
 
+void HomingProprioceptive::SetNumMeasurements(const uint8_t num_meas)
+{
+  num_meas_ = num_meas;
+}
+
 bool HomingProprioceptive::IsCollectingData()
 {
   States current_state = static_cast<States>(GetCurrentState());
@@ -199,10 +205,10 @@ void HomingProprioceptive::PrintStateTransition(const States current_state,
     return;
   QString msg;
   if (current_state != ST_MAX_STATES)
-    msg = QString("State transition: %1 --> %2")
+    msg = QString("Homing state transition: %1 --> %2")
             .arg(kStatesStr[current_state], kStatesStr[new_state]);
   else
-    msg = QString("Intial state: %1").arg(kStatesStr[new_state]);
+    msg = QString("Homing initial state: %1").arg(kStatesStr[new_state]);
   printf("%s\n", msg.toStdString().c_str());
   emit printToQConsole(msg);
 }

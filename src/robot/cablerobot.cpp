@@ -8,15 +8,22 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
   PrintStateTransition(prev_state_, ST_IDLE);
   prev_state_ = ST_IDLE;
 
-  uint8_t slave_pos = 0;
-  easycat_slaves_.push_back(grabec::EasyCatSlave(slave_pos));
-  ec_slaves_ptrs_.push_back(&easycat_slaves_[slave_pos++]);
+  //  uint8_t slave_pos = 0;
+  //  grabec::EasyCatSlave temp(slave_pos);
+  //  easycat_slaves_.push_back(temp);
+  //  ec_slaves_ptrs_.push_back(&easycat_slaves_[slave_pos++]);
 
-  for (size_t i = 0; i < config.cables.size(); i++)
-  {
-    actuators_.push_back(Actuator(slave_pos, config.cables[i]));
-    ec_slaves_ptrs_.push_back(actuators_[slave_pos++].GetWinch()->GetServo());
-  }
+  //  for (size_t i = 0; i < config.cables.size(); i++)
+  //  {
+  //    actuators_.push_back(Actuator(slave_pos++, config.cables[i]));
+  //    ec_slaves_ptrs_.push_back(actuators_[i].GetWinch()->GetServo());
+  //  }
+
+  // todo: is this necessary? maybe fix ethercatmaster directly
+  num_slaves_ = static_cast<int>(ec_slaves_ptrs_.size());
+  slave_ = &ec_slaves_ptrs_[0];
+  for (int i = 0; i < num_slaves_; i++)
+    num_domain_elements_ += ec_slaves_ptrs_[i]->GetDomainEntriesNum();
 }
 
 void CableRobot::EnterCalibrationMode()
@@ -167,4 +174,11 @@ void CableRobot::PrintStateTransition(const States current_state,
 //// Ethercat related functions
 ////////////////////////////////////////////////////////////////////////////
 
-void CableRobot::LoopFunction() {}
+void CableRobot::LoopFunction()
+{
+  for (size_t i = 0; i < ec_slaves_ptrs_.size(); i++)
+    ec_slaves_ptrs_[i]->ReadInputs();      // read pdos, act accordingly
+
+  for (size_t i = 0; i < ec_slaves_ptrs_.size(); i++)
+    ec_slaves_ptrs_[i]->WriteOutputs();   // write all the necessary pdos
+}

@@ -1,10 +1,10 @@
 #include "gui/homing/homing_interface_proprioceptive.h"
 #include "ui_homing_interface_proprioceptive.h"
 
-HomingInterfaceProprioceptive::HomingInterfaceProprioceptive(
-  QWidget* parent, const grabcdpr::Params* config)
-  : HomingInterface(parent, config), ui(new Ui::HomingInterfaceProprioceptive),
-    app_(this, config)
+HomingInterfaceProprioceptive::HomingInterfaceProprioceptive(QWidget* parent,
+                                                             CableRobot* robot)
+  : HomingInterface(parent, robot), ui(new Ui::HomingInterfaceProprioceptive),
+    app_(this, robot)
 {
   ui->setupUi(this);
 
@@ -18,6 +18,7 @@ HomingInterfaceProprioceptive::~HomingInterfaceProprioceptive()
   disconnect(&app_, SIGNAL(printToQConsole(QString)), this,
              SLOT(AppendText2Browser(QString)));
   disconnect(&app_, SIGNAL(acquisitionComplete()), this, SLOT(AcquisitionCompleteCb()));
+
   delete ui;
 }
 
@@ -52,8 +53,10 @@ void HomingInterfaceProprioceptive::AcquisitionCompleteCb()
 void HomingInterfaceProprioceptive::on_pushButton_enable_clicked()
 {
   if (app_.IsCollectingData())
-  {
     ui->pushButton_start->click(); // stop
+
+  if (ui->pushButton_enable->text() == "Disable") // robot enabled?
+  {
     // robot.Disable();
     ui->pushButton_enable->setText(tr("Enable"));
     ui->pushButton_start->setDisabled(true);
@@ -81,6 +84,7 @@ void HomingInterfaceProprioceptive::on_pushButton_start_clicked()
   }
   else
   {
+    app_.SetNumMeasurements(static_cast<uint8_t>(ui->spinBox_numMeas->value()));
     app_.Start();
     ui->pushButton_start->setText(tr("Stop"));
     ui->pushButton_acquire->setEnabled(true);
@@ -92,14 +96,14 @@ void HomingInterfaceProprioceptive::on_pushButton_acquire_clicked() { app_.Next(
 void HomingInterfaceProprioceptive::on_radioButton_internal_clicked()
 {
   ui->radioButton_external->toggled(false);
-  ui->lineEdit->setDisabled(true);
+  ui->lineEdit_extFile->setDisabled(true);
   ui->pushButton_extFile->setDisabled(true);
 }
 
 void HomingInterfaceProprioceptive::on_radioButton_external_clicked()
 {
   ui->radioButton_internal->toggled(false);
-  ui->lineEdit->setEnabled(true);
+  ui->lineEdit_extFile->setEnabled(true);
   ui->pushButton_extFile->setEnabled(true);
 }
 
@@ -113,7 +117,7 @@ void HomingInterfaceProprioceptive::on_pushButton_extFile_clicked()
     QMessageBox::warning(this, "File Error", "file name is empty");
     return;
   }
-  ui->lineEdit->setText(config_filename);
+  ui->lineEdit_extFile->setText(config_filename);
 }
 
 void HomingInterfaceProprioceptive::on_pushButton_ok_clicked() { app_.Optimize(); }
@@ -130,7 +134,7 @@ void HomingInterfaceProprioceptive::on_pushButton_cancel_clicked()
       QMessageBox::question(this, "Optimization in progress",
                             "The application is still evaluating data to complete the "
                             "homing procedure. If you quit now all progress will be "
-                            "lost.\n Are you sure you want to abort the operation?",
+                            "lost.\nAre you sure you want to abort the operation?",
                             QMessageBox::Yes | QMessageBox::No);
     if (reply == QMessageBox::No)
       return;
@@ -140,7 +144,7 @@ void HomingInterfaceProprioceptive::on_pushButton_cancel_clicked()
   {
     QMessageBox::StandardButton reply = QMessageBox::question(
       this, "Homing in progress", "The robot is moving to the homing position. If you "
-                                  "quit now all progress will be lost.\n Are you sure "
+                                  "quit now all progress will be lost.\nAre you sure "
                                   "you want to abort the operation?",
       QMessageBox::Yes | QMessageBox::No);
     if (reply == QMessageBox::No)
@@ -156,10 +160,9 @@ void HomingInterfaceProprioceptive::on_pushButton_cancel_clicked()
   default:
   {
     QMessageBox::StandardButton reply = QMessageBox::question(
-      this, "Acquisition in progress", "The application is still acquiring data from "
-                                       "the robot for the homing procedure. If you "
-                                       "quit now all progress will be lost.\n Are you "
-                                       "sure you want to abort the operation?",
+      this, "Acquisition in progress",
+      "The application is still acquiring data from the robot. If you quit now all "
+      "progress will be lost.\nAre you sure you want to abort the operation?",
       QMessageBox::Yes | QMessageBox::No);
     if (reply == QMessageBox::No)
       return;

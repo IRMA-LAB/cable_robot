@@ -5,15 +5,14 @@
 #include <QString>
 
 #include "StateMachine.h"
-#include "libcdpr/inc/types.h"
+#include "robot/cablerobot.h"
 
 class HomingProprioceptive : public QObject, public StateMachine
 {
   Q_OBJECT
 
 public:
-  explicit HomingProprioceptive(QObject* parent, const grabcdpr::Params* config);
-  ~HomingProprioceptive();
+  explicit HomingProprioceptive(QObject* parent, CableRobot* robot);
 
   enum States : BYTE
   {
@@ -28,6 +27,11 @@ public:
     ST_MAX_STATES
   };
 
+  void SetNumMeasurements(const uint8_t num_meas);
+
+  bool IsCollectingData();
+
+public:
   void Start();
   void Stop();
   void Next();
@@ -35,15 +39,17 @@ public:
   void FaultTrigger();
   void FaultReset();
 
-  bool IsCollectingData();
-
 signals:
   void printToQConsole(const QString&) const;
   void acquisitionComplete() const;
 
 private:
-  const grabcdpr::Params* config_ptr_;
+  static constexpr uint8_t kNumMeasMin = 1U;
 
+  CableRobot* robot_ = NULL;
+  uint8_t num_meas_ = kNumMeasMin;
+
+private:
   // clang-format off
   static constexpr char* kStatesStr[] = {
     const_cast<char*>("IDLE"),

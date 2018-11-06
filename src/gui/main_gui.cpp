@@ -1,9 +1,8 @@
 #include "gui/main_gui.h"
 #include "ui_main_gui.h"
 
-MainGUI::MainGUI(QWidget* parent, const grabcdpr::Params &config)
-  : QDialog(parent), ui(new Ui::MainGUI), config_(config),
-    robot_(this, config)
+MainGUI::MainGUI(QWidget* parent, const grabcdpr::Params& config)
+  : QDialog(parent), ui(new Ui::MainGUI), config_(config), robot_(this, config)
 {
   ui->setupUi(this);
 
@@ -22,6 +21,7 @@ MainGUI::~MainGUI()
   {
     disconnect(calib_dialog_, SIGNAL(enableMainGUI()), this, SLOT(EnableInterface()));
     disconnect(calib_dialog_, SIGNAL(calibrationEnd()), &robot_, SLOT(EventSuccess()));
+    delete calib_dialog_;
   }
   if (homing_dialog_ != NULL)
   {
@@ -29,6 +29,7 @@ MainGUI::~MainGUI()
                SLOT(EnableInterface(bool)));
     disconnect(homing_dialog_, SIGNAL(homingSuccess()), &robot_, SLOT(EventSuccess()));
     disconnect(homing_dialog_, SIGNAL(homingFailed()), &robot_, SLOT(EventFailure()));
+    delete homing_dialog_;
   }
   delete ui;
 }
@@ -61,23 +62,39 @@ void MainGUI::on_pushButton_homing_clicked()
 
   robot_.EnterHomingMode();
 
-  homing_dialog_ = new HomingDialog(this, &config_);
-  connect(homing_dialog_, SIGNAL(enableMainGUI(bool)), this, SLOT(EnableInterface(bool)));
-  connect(homing_dialog_, SIGNAL(homingSuccess()), &robot_, SLOT(EventSuccess()));
-  connect(homing_dialog_, SIGNAL(homingFailed()), &robot_, SLOT(EventFailure()));
+  if (homing_dialog_ == NULL)
+  {
+    homing_dialog_ = new HomingDialog(this, &robot_);
+    connect(homing_dialog_, SIGNAL(enableMainGUI(bool)), this,
+            SLOT(EnableInterface(bool)));
+    connect(homing_dialog_, SIGNAL(homingSuccess()), &robot_, SLOT(EventSuccess()));
+    connect(homing_dialog_, SIGNAL(homingFailed()), &robot_, SLOT(EventFailure()));
+  }
   homing_dialog_->show();
 }
 
 void MainGUI::on_pushButton_startApp_clicked()
 {
-  ui->pushButton_homing->setDisabled(true);
-  ui->pushButton_calib->setDisabled(true);
-  ui->groupBox_app->setDisabled(true);
-  ui->frame_manualControl->setDisabled(true);
+  //  ui->pushButton_homing->setDisabled(true);
+  //  ui->pushButton_calib->setDisabled(true);
+  //  ui->groupBox_app->setDisabled(true);
+  //  ui->frame_manualControl->setDisabled(true);
 }
 
 void MainGUI::on_pushButton_enable_clicked()
 {
+  if (robot_.GetCurrentState() == CableRobot::ST_READY)
+  {
+    QMessageBox::StandardButton reply = QMessageBox::question(
+      this, "Robot ready", "If you proceed with direct manual motor control all homing "
+                           "results will be lost and you will have to repeat the "
+                           "procedure before starting a new application.\nAre you sure "
+                           "you want to continue?",
+      QMessageBox::Yes | QMessageBox::No);
+    if (reply == QMessageBox::No)
+      return;
+  }
+
   manual_ctrl_enabled_ = !manual_ctrl_enabled_;
   robot_.Stop();
 

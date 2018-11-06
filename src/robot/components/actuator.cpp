@@ -7,7 +7,7 @@
 // Must provide redundant definition of the static member as well as the declaration.
 constexpr char* Actuator::kStatesStr_[];
 
-Actuator::Actuator(const uint8_t slave_position, const grabcdpr::CableParams &params)
+Actuator::Actuator(const uint8_t slave_position, const grabcdpr::CableParams &/*params*/)
   : StateMachine(ST_MAX_STATES), slave_position_(slave_position)
 {
   // todo: distribute params to components

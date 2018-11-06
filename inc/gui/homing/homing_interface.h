@@ -3,23 +3,22 @@
 
 #include <QDialog>
 
-#include "libcdpr/inc/types.h"
+#include "robot/cablerobot.h"
 
 class HomingInterface : public QDialog
 {
   Q_OBJECT
 
 public:
-  explicit HomingInterface(QWidget* parent, const grabcdpr::Params* config)
-    : QDialog(parent), config_ptr_(config) {}
-  virtual ~HomingInterface() {}
+  explicit HomingInterface(QWidget* parent, CableRobot* robot);
+  virtual ~HomingInterface() = 0;
 
 signals:
-  void homingFailed();
-  void homingSuccess();
+  void homingFailed() const;
+  void homingSuccess() const;
 
 protected:
-  const grabcdpr::Params* config_ptr_;
+  CableRobot* robot_ptr_ = NULL;
 };
 
 #endif // HOMING_INTERFACE_H

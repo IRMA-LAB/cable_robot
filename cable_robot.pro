@@ -25,7 +25,8 @@ SOURCES = \
     $$PWD/src/gui/calib/calibration_dialog.cpp \
     $$PWD/src/gui/homing/homing_dialog.cpp \
     $$PWD/src/gui/homing/homing_interface_proprioceptive.cpp \
-    $$PWD/src/homing/homing_proprioceptive.cpp
+    $$PWD/src/homing/homing_proprioceptive.cpp \
+    src/gui/homing/homing_interface.cpp
 
 INCLUDEPATH += \
     $$PWD/inc \

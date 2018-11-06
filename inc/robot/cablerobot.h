@@ -16,6 +16,18 @@ public:
   explicit CableRobot(QObject* parent, const grabcdpr::Params& config);
   ~CableRobot() {}
 
+  enum States : BYTE
+  {
+    ST_IDLE,
+    ST_ENABLED,
+    ST_CALIBRATION,
+    ST_HOMING,
+    ST_READY,
+    ST_OPERATIONAL,
+    ST_ERROR,
+    ST_MAX_STATES
+  };
+
   void EnterCalibrationMode();
   void EnterHomingMode();
 
@@ -26,6 +38,15 @@ public slots:
 
 signals:
   void printToQConsole(const QString&) const;
+
+private:
+  // Ethercat related
+  std::vector<grabec::EasyCatSlave> easycat_slaves_;
+  std::vector<Actuator> actuators_;
+  std::vector<grabec::EthercatSlave*> ec_slaves_ptrs_;
+
+  void StartUpFunction() override final {}
+  void LoopFunction() override final;
 
 private:
   // clang-format off
@@ -39,17 +60,7 @@ private:
     const_cast<char*>("ERROR")};
   // clang-format on
 
-  enum States : BYTE
-  {
-    ST_IDLE,
-    ST_ENABLED,
-    ST_CALIBRATION,
-    ST_HOMING,
-    ST_READY,
-    ST_OPERATIONAL,
-    ST_ERROR,
-    ST_MAX_STATES
-  } prev_state_;
+  States prev_state_;
 
   // Define the state machine state functions with event data type
   STATE_DECLARE(CableRobot, Idle, NoEventData)
@@ -74,14 +85,6 @@ private:
   END_STATE_MAP
 
   void PrintStateTransition(const States current_state, const States new_state) const;
-
-  // Ethercat related
-  std::vector<grabec::EasyCatSlave> easycat_slaves_;
-  std::vector<Actuator> actuators_;
-  std::vector<grabec::EthercatSlave*> ec_slaves_ptrs_;
-
-  void StartUpFunction() override final {}
-  void LoopFunction() override final;
 };
 
 #endif // CABLEROBOT_H
