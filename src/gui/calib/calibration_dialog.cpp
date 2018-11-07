@@ -1,8 +1,8 @@
 #include "gui/calib/calibration_dialog.h"
 #include "ui_calibration_dialog.h"
 
-CalibrationDialog::CalibrationDialog(QWidget* parent, const grabcdpr::Params& config)
-  : QDialog(parent), ui(new Ui::CalibrationDialog), config_(config)
+CalibrationDialog::CalibrationDialog(QWidget* parent, CableRobot *robot)
+  : QDialog(parent), ui(new Ui::CalibrationDialog), robot_(robot)
 {
   ui->setupUi(this);
 }

@@ -61,6 +61,11 @@ public:
    * @return
    */
   const Cable* GetCable() const { return &cable_; }
+  /**
+   * @brief GetServoStatus
+   * @return
+   */
+  MotorStatus GetServoStatus() const;
 
   /**
    * @brief SetServoPosByCableLen
@@ -77,6 +82,11 @@ public:
    * @param target_torque
    */
   void SetServoTorque(const int16_t target_torque);
+  /**
+   * @brief SetServoOpMode
+   * @param op_mode
+   */
+  void SetServoOpMode(const int8_t op_mode);
 
   /**
    * @brief UpdateHomeConfig

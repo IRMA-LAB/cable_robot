@@ -8,8 +8,11 @@
 #include "ethercatmaster.h"
 #include "slaves/easycatslave.h"
 #include "components/actuator.h"
+#include "controller/controller_base.h"
 
-class CableRobot : public QObject, public StateMachine, public virtual grabec::EthercatMaster
+class CableRobot : public QObject,
+                   public StateMachine,
+                   public virtual grabec::EthercatMaster
 {
   Q_OBJECT
 public:
@@ -28,6 +31,13 @@ public:
     ST_MAX_STATES
   };
 
+  bool EnableMotors(const std::vector<uint8_t>& motors_id);
+  bool DisableMotors(const std::vector<uint8_t>& motors_id);
+  void SetMotorOpMode(const uint8_t motor_id, const int8_t op_mode);
+  MotorStatus GetMotorStatus(const uint8_t motor_id) const;
+
+  void SetController(ControllerBase* controller) { controller_ = controller; }
+
   void EnterCalibrationMode();
   void EnterHomingMode();
 
@@ -40,6 +50,9 @@ signals:
   void printToQConsole(const QString&) const;
 
 private:
+  grabcdpr::PlatformVars platform_;
+  grabcdpr::Vars status_;
+
   // Ethercat related
   std::vector<grabec::EasyCatSlave> easycat_slaves_;
   std::vector<Actuator> actuators_;
@@ -48,6 +61,12 @@ private:
   void StartUpFunction() override final {}
   void LoopFunction() override final;
 
+  // Control related
+  ControllerBase* controller_;
+
+  void ControlStep();
+
+// State machine
 private:
   // clang-format off
   static constexpr char* kStatesStr[] = {

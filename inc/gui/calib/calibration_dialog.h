@@ -4,6 +4,7 @@
 #include <QDialog>
 
 #include "libcdpr/inc/types.h"
+#include "robot/cablerobot.h"
 
 namespace Ui {
 class CalibrationDialog;
@@ -14,7 +15,7 @@ class CalibrationDialog : public QDialog
     Q_OBJECT
 
 public:
-    CalibrationDialog(QWidget *parent, const grabcdpr::Params& config);
+    CalibrationDialog(QWidget *parent, CableRobot* robot);
     ~CalibrationDialog();
 
 signals:
@@ -29,7 +30,7 @@ private slots:
 private:
     Ui::CalibrationDialog *ui;
 
-    const grabcdpr::Params config_;
+    CableRobot* robot_;
 };
 
 #endif // CALIBRATION_DIALOG_H

@@ -11,7 +11,9 @@ HEADERS = \
     $$PWD/inc/gui/homing/homing_dialog.h \
     $$PWD/inc/gui/homing/homing_interface.h \
     $$PWD/inc/gui/homing/homing_interface_proprioceptive.h \
-    $$PWD/inc/homing/homing_proprioceptive.h
+    $$PWD/inc/homing/homing_proprioceptive.h \
+    $$PWD/inc/controller/controller_base.h \
+    $$PWD/inc/controller/controller_basic.h
 
 SOURCES = \
     $$PWD/src/robot/components/winch.cpp \
@@ -26,7 +28,9 @@ SOURCES = \
     $$PWD/src/gui/homing/homing_dialog.cpp \
     $$PWD/src/gui/homing/homing_interface_proprioceptive.cpp \
     $$PWD/src/homing/homing_proprioceptive.cpp \
-    src/gui/homing/homing_interface.cpp
+    $$PWD/src/gui/homing/homing_interface.cpp \
+    $$PWD/src/controller/controller_base.cpp \
+    $$PWD/src/controller/controller_basic.cpp
 
 INCLUDEPATH += \
     $$PWD/inc \

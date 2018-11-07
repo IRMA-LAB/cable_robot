@@ -2,14 +2,19 @@
 #include "ui_main_gui.h"
 
 MainGUI::MainGUI(QWidget* parent, const grabcdpr::Params& config)
-  : QDialog(parent), ui(new Ui::MainGUI), config_(config), robot_(this, config)
+  : QDialog(parent), ui(new Ui::MainGUI), robot_(this, config)
 {
   ui->setupUi(this);
+
+  for (size_t i = 0; i < config.cables.size(); i++)
+    ui->comboBox_motorAxis->addItem(QString(static_cast<char>(i + 1)));
 
   connect(&robot_, SIGNAL(printToQConsole(QString)), this,
           SLOT(AppendText2Browser(QString)));
 
   robot_.EventSuccess(); // pwd & config OK --> robot ENABLED
+  if (robot_.GetCurrentState() == CableRobot::ST_ENABLED)
+    robot_.Start();
 }
 
 MainGUI::~MainGUI()
@@ -35,7 +40,7 @@ MainGUI::~MainGUI()
 }
 
 ////////////////////////////////////////
-/// SLOTS
+/// SLOTS GUI
 ////////////////////////////////////////
 
 void MainGUI::on_pushButton_calib_clicked()
@@ -47,7 +52,7 @@ void MainGUI::on_pushButton_calib_clicked()
 
   robot_.EnterCalibrationMode();
 
-  calib_dialog_ = new CalibrationDialog(this, config_);
+  calib_dialog_ = new CalibrationDialog(this, &robot_);
   connect(calib_dialog_, SIGNAL(enableMainGUI()), this, SLOT(EnableInterface()));
   connect(calib_dialog_, SIGNAL(calibrationEnd()), &robot_, SLOT(EventSuccess()));
   calib_dialog_->show();
@@ -96,10 +101,12 @@ void MainGUI::on_pushButton_enable_clicked()
   }
 
   manual_ctrl_enabled_ = !manual_ctrl_enabled_;
-  robot_.Stop();
 
   if (manual_ctrl_enabled_)
+  {
+    motor_id_ = static_cast<uint8_t>(ui->comboBox_motorAxis->currentIndex());
     ui->pushButton_enable->setText(tr("Disable"));
+  }
   else
     ui->pushButton_enable->setText(tr("Enable"));
 
@@ -111,6 +118,8 @@ void MainGUI::on_pushButton_enable_clicked()
   DisableVelCtrlButtons(!(manual_ctrl_enabled_ && ui->radioButton_velMode->isChecked()));
   DisableTorqueCtrlButtons(
     !(manual_ctrl_enabled_ && ui->radioButton_torqueMode->isChecked()));
+
+  SetupDirectDriveCtrl();
 }
 
 void MainGUI::on_pushButton_faultReset_clicked() {}
@@ -157,6 +166,10 @@ void MainGUI::on_radioButton_torqueMode_clicked()
   }
 }
 
+////////////////////////////////////////
+/// SLOTS
+////////////////////////////////////////
+
 void MainGUI::EnableInterface(const bool op_outcome /*= false*/)
 {
   ui->pushButton_homing->setEnabled(true);
@@ -171,7 +184,7 @@ void MainGUI::AppendText2Browser(const QString& text)
 }
 
 ////////////////////////////////////////
-/// Private methods
+/// GUI private methods
 ////////////////////////////////////////
 
 void MainGUI::DisablePosCtrlButtons(const bool value)
@@ -192,4 +205,43 @@ void MainGUI::DisableTorqueCtrlButtons(const bool value)
 {
   ui->pushButton_torqueMinus->setDisabled(value);
   ui->pushButton_torquePlus->setDisabled(value);
+}
+
+////////////////////////////////////////
+/// Private methods
+////////////////////////////////////////
+
+void MainGUI::SetupDirectDriveCtrl()
+{
+  robot_.Stop(); // robot: READY | ENABLED --> ENABLED
+
+  if (manual_ctrl_enabled_)
+  {
+    // Setup controller before enabling the motor
+    man_ctrl_ptr_ = new ControllerBasic(motor_id_);
+    MotorStatus current_status = robot_.GetMotorStatus(motor_id_);
+    if (ui->radioButton_posMode->isChecked())
+    {
+      man_ctrl_ptr_->SetMode(grabec::CYCLIC_POSITION);
+      man_ctrl_ptr_->SetCableLenTarget(current_status.length_target);
+    }
+    if (ui->radioButton_velMode->isChecked())
+    {
+      man_ctrl_ptr_->SetMode(grabec::CYCLIC_VELOCITY);
+      man_ctrl_ptr_->SetMotorSpeedTarget(current_status.speed_target);
+    }
+    if (ui->radioButton_torqueMode->isChecked())
+    {
+      man_ctrl_ptr_->SetMode(grabec::CYCLIC_TORQUE);
+      man_ctrl_ptr_->SetMotorTorqueTarget(current_status.torque_target);
+    }
+    robot_.SetController(man_ctrl_ptr_);
+
+    robot_.EnableMotors(std::vector<uint8_t>(1, motor_id_));
+  }
+  else
+  {
+    delete man_ctrl_ptr_;
+    robot_.DisableMotors(std::vector<uint8_t>(1, motor_id_));
+  }
 }

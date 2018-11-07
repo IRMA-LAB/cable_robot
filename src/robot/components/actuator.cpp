@@ -17,6 +17,12 @@ Actuator::Actuator(const uint8_t slave_position, const grabcdpr::CableParams &/*
   pulley_ = new PulleysSystem(pp);
 }
 
+Actuator::~Actuator()
+{
+  delete winch_;
+  delete pulley_;
+}
+
 void Actuator::Enable()
 {
   // clang-format off
@@ -55,14 +61,19 @@ void Actuator::SetCableLength(const double target_length)
   winch_->SetServoPosByCableLen(target_length);
 }
 
-void Actuator::SetCableSpeed(const int32_t target_speed)
+void Actuator::SetMotorSpeed(const int32_t target_speed)
 {
   winch_->SetServoSpeed(target_speed);
 }
 
-void Actuator::SetCableTorque(const int16_t target_torque)
+void Actuator::SetMotorTorque(const int16_t target_torque)
 {
   winch_->SetServoTorque(target_torque);
+}
+
+void Actuator::SetMotorOpMode(const int8_t op_mode)
+{
+  winch_->SetServoOpMode(op_mode);
 }
 
 void Actuator::UpdateHomeConfig(const double cable_len, const double cable_len_true,

@@ -3,21 +3,26 @@
 constexpr char* CableRobot::kStatesStr[];
 
 CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
-  : QObject(parent), StateMachine(ST_MAX_STATES), prev_state_(ST_MAX_STATES)
+  : QObject(parent), StateMachine(ST_MAX_STATES), platform_(grabcdpr::TILT_TORSION),
+    prev_state_(ST_MAX_STATES)
 {
   PrintStateTransition(prev_state_, ST_IDLE);
   prev_state_ = ST_IDLE;
+
+  status_.platform = &platform_;
 
   //  uint8_t slave_pos = 0;
   //  grabec::EasyCatSlave temp(slave_pos);
   //  easycat_slaves_.push_back(temp);
   //  ec_slaves_ptrs_.push_back(&easycat_slaves_[slave_pos++]);
 
-  //  for (size_t i = 0; i < config.cables.size(); i++)
-  //  {
-  //    actuators_.push_back(Actuator(slave_pos++, config.cables[i]));
-  //    ec_slaves_ptrs_.push_back(actuators_[i].GetWinch()->GetServo());
-  //  }
+  for (size_t i = 0; i < config.cables.size(); i++)
+  {
+    grabcdpr::CableVars cable;
+    status_.cables.push_back(cable);
+    //    actuators_.push_back(Actuator(slave_pos++, config.cables[i]));
+    //    ec_slaves_ptrs_.push_back(actuators_[i].GetWinch()->GetServo());
+  }
 
   // todo: is this necessary? maybe fix ethercatmaster directly
   num_slaves_ = static_cast<int>(ec_slaves_ptrs_.size());
@@ -25,6 +30,46 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
   for (int i = 0; i < num_slaves_; i++)
     num_domain_elements_ += ec_slaves_ptrs_[i]->GetDomainEntriesNum();
 }
+
+////////////////////////////////////////////////////////////////////////////
+//// Public functions
+////////////////////////////////////////////////////////////////////////////
+
+bool CableRobot::EnableMotors(const std::vector<uint8_t>& motors_id)
+{
+  for (uint8_t motor_id : motors_id)
+  {
+    actuators_[motor_id].Enable();
+    if (!actuators_[motor_id].IsEnabled())
+      return false;
+  }
+  return true;
+}
+
+bool CableRobot::DisableMotors(const std::vector<uint8_t>& motors_id)
+{
+  for (uint8_t motor_id : motors_id)
+  {
+    actuators_[motor_id].Disable();
+    if (actuators_[motor_id].IsEnabled())
+      return false;
+  }
+  return true;
+}
+
+void CableRobot::SetMotorOpMode(const uint8_t motor_id, const int8_t op_mode)
+{
+  actuators_[motor_id].SetMotorOpMode(op_mode);
+}
+
+MotorStatus CableRobot::GetMotorStatus(const uint8_t motor_id) const
+{
+  return actuators_[motor_id].GetMotorStatus();
+}
+
+////////////////////////////////////////////////////////////////////////////
+//// External events public
+////////////////////////////////////////////////////////////////////////////
 
 void CableRobot::EnterCalibrationMode()
 {
@@ -55,10 +100,6 @@ void CableRobot::EnterHomingMode()
   END_TRANSITION_MAP(NULL)
   // clang-format on
 }
-
-////////////////////////////////////////////////////////////////////////////
-//// External events
-////////////////////////////////////////////////////////////////////////////
 
 void CableRobot::EventSuccess()
 {
@@ -106,7 +147,7 @@ void CableRobot::Stop()
 }
 
 ////////////////////////////////////////////////////////////////////////////
-//// States actions
+//// States actions private
 ////////////////////////////////////////////////////////////////////////////
 
 STATE_DEFINE(CableRobot, Idle, NoEventData)
@@ -119,6 +160,8 @@ STATE_DEFINE(CableRobot, Enabled, NoEventData)
 {
   PrintStateTransition(prev_state_, ST_ENABLED);
   prev_state_ = ST_ENABLED;
+
+  ControlStep();  // take care of manual control when a motor is active, skip otherwise
 }
 
 STATE_DEFINE(CableRobot, Calibration, NoEventData)
@@ -152,7 +195,7 @@ STATE_DEFINE(CableRobot, Error, NoEventData)
 }
 
 ////////////////////////////////////////////////////////////////////////////
-//// Miscellaneous
+//// Miscellaneous private
 ////////////////////////////////////////////////////////////////////////////
 
 void CableRobot::PrintStateTransition(const States current_state,
@@ -171,14 +214,55 @@ void CableRobot::PrintStateTransition(const States current_state,
 }
 
 ////////////////////////////////////////////////////////////////////////////
-//// Ethercat related functions
+//// Ethercat related private functions
 ////////////////////////////////////////////////////////////////////////////
 
 void CableRobot::LoopFunction()
 {
   for (size_t i = 0; i < ec_slaves_ptrs_.size(); i++)
-    ec_slaves_ptrs_[i]->ReadInputs();      // read pdos, act accordingly
+    ec_slaves_ptrs_[i]->ReadInputs(); // read pdos, act accordingly
 
-  for (size_t i = 0; i < ec_slaves_ptrs_.size(); i++)
-    ec_slaves_ptrs_[i]->WriteOutputs();   // write all the necessary pdos
+  // clang-format off
+  BEGIN_TRANSITION_MAP			              			// - Current State -
+      TRANSITION_MAP_ENTRY (ST_IDLE)                                  // ST_IDLE
+      TRANSITION_MAP_ENTRY (ST_ENABLED)                          // ST_ENABLED
+      TRANSITION_MAP_ENTRY (ST_CALIBRATION)                    // ST_CALIBRATION
+      TRANSITION_MAP_ENTRY (ST_HOMING)                            // ST_HOMING
+      TRANSITION_MAP_ENTRY (ST_READY)                               // ST_READY
+      TRANSITION_MAP_ENTRY (ST_OPERATIONAL)			// ST_OPERATIONAL
+      TRANSITION_MAP_ENTRY (ST_ERROR)                              // ST_ERROR
+  END_TRANSITION_MAP(NULL)
+    // clang-format on
+
+    for (size_t i = 0; i < ec_slaves_ptrs_.size(); i++)
+      ec_slaves_ptrs_[i]->WriteOutputs(); // write all the necessary pdos
+}
+
+////////////////////////////////////////////////////////////////////////////
+//// Control related private functions
+////////////////////////////////////////////////////////////////////////////
+
+void CableRobot::ControlStep()
+{
+  std::vector<MotorStatus> res = controller_->CalcCableSetPoint(status_);
+  for (MotorStatus& ctrl_output : res)
+  {
+    if (!actuators_[ctrl_output.motor_id].IsEnabled()) // safety check
+      continue;
+
+    switch (ctrl_output.op_mode)
+    {
+    case grabec::CYCLIC_POSITION:
+      actuators_[ctrl_output.motor_id].SetCableLength(ctrl_output.length_target);
+      break;
+    case grabec::CYCLIC_VELOCITY:
+      actuators_[ctrl_output.motor_id].SetMotorSpeed(ctrl_output.speed_target);
+      break;
+    case grabec::CYCLIC_TORQUE:
+      actuators_[ctrl_output.motor_id].SetMotorTorque(ctrl_output.torque_target);
+      break;
+    default:
+      break;
+    }
+  }
 }

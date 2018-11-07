@@ -8,6 +8,7 @@
 #include "gui/calib/calibration_dialog.h"
 #include "gui/homing/homing_dialog.h"
 #include "robot/cablerobot.h"
+#include "controller/controller_basic.h"
 
 namespace Ui
 {
@@ -45,14 +46,18 @@ private:
   CalibrationDialog* calib_dialog_ = NULL;
   HomingDialog* homing_dialog_ = NULL;
 
-  const grabcdpr::Params config_;
-  bool manual_ctrl_enabled_ = false;
-
   CableRobot robot_;
+
+  bool manual_ctrl_enabled_ = false;
+  uint8_t motor_id_;
+  ControllerBasic* man_ctrl_ptr_;
+
 
   void DisablePosCtrlButtons(const bool value);
   void DisableVelCtrlButtons(const bool value);
   void DisableTorqueCtrlButtons(const bool value);
+
+  void SetupDirectDriveCtrl();
 };
 
 #endif // MAIN_GUI_H

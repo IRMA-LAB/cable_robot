@@ -20,6 +20,7 @@ public:
    * @param[in] params
    */
   Actuator(const uint8_t slave_position, const grabcdpr::CableParams &params);
+  ~Actuator();
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   //// External events
@@ -52,6 +53,11 @@ public:
    * @return
    */
   const PulleysSystem* GetPulley() const { return pulley_; }
+  /**
+   * @brief GetOpMode
+   * @return
+   */
+  MotorStatus GetMotorStatus() const { return winch_->GetServoStatus(); }
 
   /**
    * @brief SetCableLength
@@ -62,12 +68,17 @@ public:
    * @brief SetCableSpeed
    * @param target_speed
    */
-  void SetCableSpeed(const int32_t target_speed);
+  void SetMotorSpeed(const int32_t target_speed);
   /**
    * @brief SetCableTorque
    * @param target_torque
    */
-  void SetCableTorque(const int16_t target_torque);
+  void SetMotorTorque(const int16_t target_torque);
+  /**
+   * @brief SetOpMode
+   * @param op_mode
+   */
+  void SetMotorOpMode(const int8_t op_mode);
 
   /**
    * @brief UpdateHomeConfig

@@ -2,6 +2,7 @@
 #define CABLE_ROBOT_TYPES_H
 
 #include <cmath>
+#include <stdint.h>
 
 struct PulleyParams
 {
@@ -26,6 +27,17 @@ struct ActuatorParams
 {
   WinchParams winch;
   PulleyParams pulley;
+};
+
+/**
+ * @brief The DriveStatus struct
+ */
+struct MotorStatus {
+  uint8_t motor_id;
+  int8_t op_mode;
+  double length_target;
+  int32_t speed_target;
+  int16_t torque_target;
 };
 
 #endif // CABLE_ROBOT_TYPES_H
