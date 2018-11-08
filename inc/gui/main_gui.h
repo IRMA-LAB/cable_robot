@@ -8,7 +8,7 @@
 #include "gui/calib/calibration_dialog.h"
 #include "gui/homing/homing_dialog.h"
 #include "robot/cablerobot.h"
-#include "controller/controller_basic.h"
+#include "ctrl/controller_singledrive_naive.h"
 
 namespace Ui
 {
@@ -37,9 +37,25 @@ private slots:
   void on_radioButton_velMode_clicked();
   void on_radioButton_torqueMode_clicked();
 
-  void EnableInterface(const bool op_outcome = false);
+#if ECNTW
+  void on_pushButton_posPlus_pressed();
+  void on_pushButton_posPlus_released();
+  void on_pushButton_posMinus_pressed();
+  void on_pushButton_posMinus_released();
+  void on_pushButton_posMicroPlus_pressed();
+  void on_pushButton_posMicroPlus_released();
+  void on_pushButton_posMicroMinus_pressed();
+  void on_pushButton_posMicroMinus_released();
+  void on_pushButton_speedPlus_clicked();
+  void on_pushButton_speedMinus_clicked();
+  void on_pushButton_torquePlus_clicked();
+  void on_pushButton_torqueMinus_clicked();
+#endif
 
+private slots:
+  void EnableInterface(const bool op_outcome = false);
   void AppendText2Browser(const QString& text);
+  void UpdateDriveStatusTable(const quint8 id, const grabec::GSWDriveInPdos& status);
 
 private:
   Ui::MainGUI* ui = NULL;
@@ -50,14 +66,14 @@ private:
 
   bool manual_ctrl_enabled_ = false;
   uint8_t motor_id_;
-  ControllerBasic* man_ctrl_ptr_;
-
+  ControllerSingleDriveNaive* man_ctrl_ptr_;
 
   void DisablePosCtrlButtons(const bool value);
   void DisableVelCtrlButtons(const bool value);
   void DisableTorqueCtrlButtons(const bool value);
+  bool ExitReadyStateRequest();
 
-  void SetupDirectDriveCtrl();
+  void SetupDirectMotorCtrl();
 };
 
 #endif // MAIN_GUI_H

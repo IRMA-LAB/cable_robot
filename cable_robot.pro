@@ -12,8 +12,8 @@ HEADERS = \
     $$PWD/inc/gui/homing/homing_interface.h \
     $$PWD/inc/gui/homing/homing_interface_proprioceptive.h \
     $$PWD/inc/homing/homing_proprioceptive.h \
-    $$PWD/inc/controller/controller_base.h \
-    $$PWD/inc/controller/controller_basic.h
+    $$PWD/inc/ctrl/controller_base.h \
+    $$PWD/inc/ctrl/controller_singledrive_naive.h
 
 SOURCES = \
     $$PWD/src/robot/components/winch.cpp \
@@ -29,8 +29,8 @@ SOURCES = \
     $$PWD/src/gui/homing/homing_interface_proprioceptive.cpp \
     $$PWD/src/homing/homing_proprioceptive.cpp \
     $$PWD/src/gui/homing/homing_interface.cpp \
-    $$PWD/src/controller/controller_base.cpp \
-    $$PWD/src/controller/controller_basic.cpp
+    $$PWD/src/ctrl/controller_base.cpp \
+    $$PWD/src/ctrl/controller_singledrive_naive.cpp
 
 INCLUDEPATH += \
     $$PWD/inc \
@@ -119,3 +119,4 @@ RESOURCES += \
     resources/resources.qrc
 
 DEFINES += SRCDIR=\\\"$$PWD/\\\"
+DEFINES += ECNTW=0

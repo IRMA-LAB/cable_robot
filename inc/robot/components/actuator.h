@@ -54,10 +54,10 @@ public:
    */
   const PulleysSystem* GetPulley() const { return pulley_; }
   /**
-   * @brief GetOpMode
+   * @brief GetWinchStatus
    * @return
    */
-  MotorStatus GetMotorStatus() const { return winch_->GetServoStatus(); }
+  MotorStatus GetWinchStatus() const { return winch_->GetServoStatus(); }
 
   /**
    * @brief SetCableLength

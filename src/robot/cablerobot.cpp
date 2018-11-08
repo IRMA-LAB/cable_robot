@@ -11,24 +11,30 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
 
   status_.platform = &platform_;
 
-  //  uint8_t slave_pos = 0;
-  //  grabec::EasyCatSlave temp(slave_pos);
-  //  easycat_slaves_.push_back(temp);
-  //  ec_slaves_ptrs_.push_back(&easycat_slaves_[slave_pos++]);
+#if ECNTW
+  uint8_t slave_pos = 0;
+  grabec::EasyCatSlave temp(slave_pos);
+  easycat_slaves_.push_back(temp);
+  ec_slaves_ptrs_.push_back(&easycat_slaves_[slave_pos++]);
+#endif
 
   for (size_t i = 0; i < config.cables.size(); i++)
   {
     grabcdpr::CableVars cable;
     status_.cables.push_back(cable);
-    //    actuators_.push_back(Actuator(slave_pos++, config.cables[i]));
-    //    ec_slaves_ptrs_.push_back(actuators_[i].GetWinch()->GetServo());
+#if ECNTW
+    actuators_.push_back(Actuator(slave_pos++, config.cables[i]));
+    ec_slaves_ptrs_.push_back(actuators_[i].GetWinch()->GetServo());
+#endif
   }
 
   // todo: is this necessary? maybe fix ethercatmaster directly
   num_slaves_ = static_cast<int>(ec_slaves_ptrs_.size());
+#if ECNTW
   slave_ = &ec_slaves_ptrs_[0];
   for (int i = 0; i < num_slaves_; i++)
     num_domain_elements_ += ec_slaves_ptrs_[i]->GetDomainEntriesNum();
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -64,7 +70,7 @@ void CableRobot::SetMotorOpMode(const uint8_t motor_id, const int8_t op_mode)
 
 MotorStatus CableRobot::GetMotorStatus(const uint8_t motor_id) const
 {
-  return actuators_[motor_id].GetMotorStatus();
+  return actuators_[motor_id].GetWinchStatus();
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -161,7 +167,8 @@ STATE_DEFINE(CableRobot, Enabled, NoEventData)
   PrintStateTransition(prev_state_, ST_ENABLED);
   prev_state_ = ST_ENABLED;
 
-  ControlStep();  // take care of manual control when a motor is active, skip otherwise
+  if (controller_ != NULL)
+    ControlStep(); // take care of manual control when a motor is active, skip otherwise
 }
 
 STATE_DEFINE(CableRobot, Calibration, NoEventData)
@@ -247,6 +254,10 @@ void CableRobot::ControlStep()
   std::vector<MotorStatus> res = controller_->CalcCableSetPoint(status_);
   for (MotorStatus& ctrl_output : res)
   {
+    emit motorStatus(
+      ctrl_output.motor_id,
+      actuators_[ctrl_output.motor_id].GetWinch()->GetServo()->GetDriveStatus());
+
     if (!actuators_[ctrl_output.motor_id].IsEnabled()) // safety check
       continue;
 

@@ -1,4 +1,4 @@
-#include "controller/controller_base.h"
+#include "ctrl/controller_base.h"
 
 ControllerBase::ControllerBase(const vect<uint8_t>& motors_id)
   : motors_id_(motors_id)
@@ -31,5 +31,5 @@ int8_t ControllerBase::GetMode(const uint8_t motor_id) const
   for (uint8_t i = 0; i < motors_id_.size(); i++)
     if (motor_id == motors_id_[i])
       return modes_[i];
-  return grabec::NULL_OPERATION;
+  return grabec::NONE;
 }

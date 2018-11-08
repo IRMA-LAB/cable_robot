@@ -8,7 +8,7 @@
 #include "ethercatmaster.h"
 #include "slaves/easycatslave.h"
 #include "components/actuator.h"
-#include "controller/controller_base.h"
+#include "ctrl/controller_base.h"
 
 class CableRobot : public QObject,
                    public StateMachine,
@@ -48,6 +48,7 @@ public slots:
 
 signals:
   void printToQConsole(const QString&) const;
+  void motorStatus(const quint8, const grabec::GSWDriveInPdos&) const;
 
 private:
   grabcdpr::PlatformVars platform_;
@@ -62,7 +63,7 @@ private:
   void LoopFunction() override final;
 
   // Control related
-  ControllerBase* controller_;
+  ControllerBase* controller_ = NULL;
 
   void ControlStep();
 
