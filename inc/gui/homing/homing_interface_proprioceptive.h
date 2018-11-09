@@ -40,6 +40,8 @@ private slots:
 
   void AppendText2Browser(const QString& text);
 
+  void on_checkBox_stateChanged(int arg1);
+
 private:
   Ui::HomingInterfaceProprioceptive* ui;
 

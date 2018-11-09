@@ -12,7 +12,7 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
   status_.platform = &platform_;
 
 #if ECNTW
-  uint8_t slave_pos = 0;
+  quint8 slave_pos = 0;
   grabec::EasyCatSlave temp(slave_pos);
   easycat_slaves_.push_back(temp);
   ec_slaves_ptrs_.push_back(&easycat_slaves_[slave_pos++]);
@@ -23,7 +23,7 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
     grabcdpr::CableVars cable;
     status_.cables.push_back(cable);
 #if ECNTW
-    actuators_.push_back(Actuator(slave_pos++, config.cables[i]));
+    actuators_.push_back(Actuator(i, slave_pos++, config.cables[i]));
     ec_slaves_ptrs_.push_back(actuators_[i].GetWinch()->GetServo());
 #endif
   }
@@ -41,9 +41,28 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
 //// Public functions
 ////////////////////////////////////////////////////////////////////////////
 
-bool CableRobot::EnableMotors(const std::vector<uint8_t>& motors_id)
+bool CableRobot::EnableMotor(const quint8 motor_id)
 {
-  for (uint8_t motor_id : motors_id)
+  actuators_[motor_id].Enable();
+  if (!actuators_[motor_id].IsEnabled())
+    return false;
+  return true;
+}
+
+bool CableRobot::EnableMotors()
+{
+  for (Actuator& actuator : actuators_)
+  {
+    actuator.Enable();
+    if (!actuator.IsEnabled())
+      return false;
+  }
+  return true;
+}
+
+bool CableRobot::EnableMotors(const std::vector<quint8>& motors_id)
+{
+  for (const quint8& motor_id : motors_id)
   {
     actuators_[motor_id].Enable();
     if (!actuators_[motor_id].IsEnabled())
@@ -52,9 +71,28 @@ bool CableRobot::EnableMotors(const std::vector<uint8_t>& motors_id)
   return true;
 }
 
-bool CableRobot::DisableMotors(const std::vector<uint8_t>& motors_id)
+bool CableRobot::DisableMotor(const quint8 motor_id)
 {
-  for (uint8_t motor_id : motors_id)
+  actuators_[motor_id].Disable();
+  if (actuators_[motor_id].IsEnabled())
+    return false;
+  return true;
+}
+
+bool CableRobot::DisableMotors()
+{
+  for (Actuator& actuator : actuators_)
+  {
+    actuator.Disable();
+    if (actuator.IsEnabled())
+      return false;
+  }
+  return true;
+}
+
+bool CableRobot::DisableMotors(const std::vector<quint8>& motors_id)
+{
+  for (const quint8& motor_id : motors_id)
   {
     actuators_[motor_id].Disable();
     if (actuators_[motor_id].IsEnabled())
@@ -63,14 +101,35 @@ bool CableRobot::DisableMotors(const std::vector<uint8_t>& motors_id)
   return true;
 }
 
-void CableRobot::SetMotorOpMode(const uint8_t motor_id, const int8_t op_mode)
+void CableRobot::SetMotorOpMode(const quint8 motor_id, const qint8 op_mode)
 {
-  actuators_[motor_id].SetMotorOpMode(op_mode);
+  actuators_[static_cast<quint8>(motor_id)].SetMotorOpMode(op_mode);
 }
 
-MotorStatus CableRobot::GetMotorStatus(const uint8_t motor_id) const
+void CableRobot::SetMotorsOpMode(const qint8 op_mode)
+{
+  for (Actuator& actuator : actuators_)
+    actuator.SetMotorOpMode(op_mode);
+}
+
+void CableRobot::SetMotorsOpMode(const std::vector<quint8>& motors_id,
+                                 const qint8 op_mode)
+{
+  for (const quint8& motor_id : motors_id)
+    actuators_[static_cast<quint8>(motor_id)].SetMotorOpMode(op_mode);
+}
+
+MotorStatus CableRobot::GetMotorStatus(const quint8 motor_id) const
 {
   return actuators_[motor_id].GetWinchStatus();
+}
+
+std::vector<quint8> CableRobot::GetMotorsID() const
+{
+  std::vector<quint8> motors_id;
+  for (const Actuator& actuator : actuators_)
+    motors_id.push_back(actuator.GetActuatorID());
+  return motors_id;
 }
 
 ////////////////////////////////////////////////////////////////////////////

@@ -2,8 +2,7 @@
 
 constexpr char* HomingProprioceptive::kStatesStr[];
 
-HomingProprioceptive::HomingProprioceptive(QObject* parent,
-                                           CableRobot *robot)
+HomingProprioceptive::HomingProprioceptive(QObject* parent, CableRobot* robot)
   : QObject(parent), StateMachine(ST_MAX_STATES), robot_(robot)
 {
   // init with default values
@@ -111,7 +110,7 @@ void HomingProprioceptive::FaultReset()
   // clang-format on
 }
 
-void HomingProprioceptive::SetNumMeasurements(const uint8_t num_meas)
+void HomingProprioceptive::SetNumMeasurements(const quint8 num_meas)
 {
   num_meas_ = num_meas;
 }
@@ -142,12 +141,37 @@ STATE_DEFINE(HomingProprioceptive, Idle, NoEventData)
 {
   PrintStateTransition(prev_state_, ST_IDLE);
   prev_state_ = ST_IDLE;
+
+  robot_->DisableMotors();
 }
 
 STATE_DEFINE(HomingProprioceptive, StartUp, NoEventData)
 {
   PrintStateTransition(prev_state_, ST_START_UP);
   prev_state_ = ST_START_UP;
+
+  if (robot_->EnableMotors())
+  {
+    robot_->SetMotorsOpMode(grabec::CYCLIC_TORQUE);
+    vect<quint8> motors_id = robot_->GetMotorsID();
+    quint8 i = 0;
+    quint8 current_id = motors_id[i];
+    controller_.SetMotorID(current_id);
+    controller_.SetMotorTorqueTarget(400);  // passa numero da args
+    while (1)
+    {
+      // fai una funzione che controlli se il target è stato raggiunto
+      if (controller_.GetMotorTorqueTarget() ==
+          robot_->GetMotorStatus(current_id).torque_target)
+      {
+        if (++i >= motors_id.size())
+          break;
+        current_id = motors_id[i];
+        controller_.SetMotorID(current_id);
+        controller_.SetMotorTorqueTarget(400);
+      }
+    }
+  }
 }
 
 GUARD_DEFINE(HomingProprioceptive, GuardCoiling, NoEventData) { return true; }

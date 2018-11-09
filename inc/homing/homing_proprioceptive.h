@@ -6,6 +6,7 @@
 
 #include "StateMachine.h"
 #include "robot/cablerobot.h"
+#include "ctrl/controller_singledrive_naive.h"
 
 class HomingProprioceptive : public QObject, public StateMachine
 {
@@ -27,7 +28,7 @@ public:
     ST_MAX_STATES
   };
 
-  void SetNumMeasurements(const uint8_t num_meas);
+  void SetNumMeasurements(const quint8 num_meas);
 
   bool IsCollectingData();
 
@@ -44,10 +45,11 @@ signals:
   void acquisitionComplete() const;
 
 private:
-  static constexpr uint8_t kNumMeasMin = 1U;
+  static constexpr quint8 kNumMeasMin = 1U;
 
   CableRobot* robot_ = NULL;
-  uint8_t num_meas_ = kNumMeasMin;
+  ControllerSingleDriveNaive controller_;
+  quint8 num_meas_ = kNumMeasMin;
 
 private:
   // clang-format off

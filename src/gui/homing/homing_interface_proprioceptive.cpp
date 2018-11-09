@@ -185,3 +185,8 @@ void HomingInterfaceProprioceptive::AppendText2Browser(const QString& text)
 {
   ui->textBrowser_logs->append(text);
 }
+
+void HomingInterfaceProprioceptive::on_checkBox_stateChanged(int arg1)
+{
+    ui->retranslateUi()
+}

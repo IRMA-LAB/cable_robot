@@ -19,7 +19,8 @@ public:
    * @param[in] slave_position
    * @param[in] params
    */
-  Actuator(const uint8_t slave_position, const grabcdpr::CableParams &params);
+  explicit Actuator(const uint8_t id, const uint8_t slave_position,
+                    const grabcdpr::CableParams& params);
   ~Actuator();
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -58,6 +59,11 @@ public:
    * @return
    */
   MotorStatus GetWinchStatus() const { return winch_->GetServoStatus(); }
+  /**
+   * @brief GetActuatorID
+   * @return
+   */
+  uint8_t GetActuatorID() const { return id_; }
 
   /**
    * @brief SetCableLength
@@ -114,6 +120,13 @@ public:
   bool IsInFault() { return GetCurrentState() == ST_FAULT; }
 
 private:
+  uint8_t id_;
+  uint8_t slave_position_;
+
+  Winch* winch_;
+  PulleysSystem* pulley_;
+
+private:
   static constexpr double kMaxTransitionTimeSec_ = 0.010;
   // clang-format off
   static constexpr char* kStatesStr_[] = {
@@ -132,13 +145,8 @@ private:
     ST_MAX_STATES
   };
 
-  uint8_t slave_position_;
-
-  Winch* winch_;
-  PulleysSystem* pulley_;
-
-  grabrt::ThreadClock clock_;
   States prev_state_ = ST_IDLE;
+  grabrt::ThreadClock clock_;
 
   // Define the state machine state functions with event data type
   STATE_DECLARE(Actuator, Idle, NoEventData)

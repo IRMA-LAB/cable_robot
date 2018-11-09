@@ -18,11 +18,16 @@ template <typename T> T operator*(const Sign& sign, const T value)
 class ControllerSingleDriveNaive : public ControllerBase
 {
 public:
+  ControllerSingleDriveNaive() { Clear(); }
   explicit ControllerSingleDriveNaive(const uint8_t motor_id);
 
   void SetCableLenTarget(const double target);
   void SetMotorSpeedTarget(const int32_t target);
   void SetMotorTorqueTarget(const int16_t target);
+
+  double GetCableLenTarget() const { return length_target_; }
+  int32_t GetMotorSpeedTarget() const { return speed_target_; }
+  int16_t GetMotorTorqueTarget() const { return torque_target_; }
 
   void CableLenIncrement(const bool active, const Sign sign = Sign::POS,
                          const bool micromove = true);

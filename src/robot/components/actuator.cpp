@@ -7,8 +7,9 @@
 // Must provide redundant definition of the static member as well as the declaration.
 constexpr char* Actuator::kStatesStr_[];
 
-Actuator::Actuator(const uint8_t slave_position, const grabcdpr::CableParams &/*params*/)
-  : StateMachine(ST_MAX_STATES), slave_position_(slave_position)
+Actuator::Actuator(const uint8_t id, const uint8_t slave_position,
+                   const grabcdpr::CableParams& /*params*/)
+  : StateMachine(ST_MAX_STATES), id_(id), slave_position_(slave_position)
 {
   // todo: distribute params to components
   WinchParams wp;
@@ -71,10 +72,7 @@ void Actuator::SetMotorTorque(const int16_t target_torque)
   winch_->SetServoTorque(target_torque);
 }
 
-void Actuator::SetMotorOpMode(const int8_t op_mode)
-{
-  winch_->SetServoOpMode(op_mode);
-}
+void Actuator::SetMotorOpMode(const int8_t op_mode) { winch_->SetServoOpMode(op_mode); }
 
 void Actuator::UpdateHomeConfig(const double cable_len, const double cable_len_true,
                                 const double pulley_angle)
@@ -96,7 +94,7 @@ GUARD_DEFINE(Actuator, GuardIdle, NoEventData)
 {
   if (prev_state_ == ST_ENABLED)
     winch_->GetServo()->Shutdown();   // disable drive completely
-  else                               // ST_FAULT
+  else                                // ST_FAULT
     winch_->GetServo()->FaultReset(); // clear fault and disable drive completely
   clock_.Reset();
   while (1)

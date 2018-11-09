@@ -31,10 +31,17 @@ public:
     ST_MAX_STATES
   };
 
-  bool EnableMotors(const std::vector<uint8_t>& motors_id);
-  bool DisableMotors(const std::vector<uint8_t>& motors_id);
-  void SetMotorOpMode(const uint8_t motor_id, const int8_t op_mode);
-  MotorStatus GetMotorStatus(const uint8_t motor_id) const;
+  bool EnableMotor(const quint8 motor_id);
+  bool EnableMotors();
+  bool EnableMotors(const std::vector<quint8>& motors_id);
+  bool DisableMotor(const quint8 motor_id);
+  bool DisableMotors();
+  bool DisableMotors(const std::vector<quint8>& motors_id);
+  void SetMotorOpMode(const quint8 motor_id, const qint8 op_mode);
+  void SetMotorsOpMode(const qint8 op_mode);
+  void SetMotorsOpMode(const std::vector<quint8>& motors_id, const qint8 op_mode);
+  MotorStatus GetMotorStatus(const quint8 motor_id) const;
+  std::vector<quint8> GetMotorsID() const;
 
   void SetController(ControllerBase* controller) { controller_ = controller; }
 
@@ -67,7 +74,7 @@ private:
 
   void ControlStep();
 
-// State machine
+  // State machine
 private:
   // clang-format off
   static constexpr char* kStatesStr[] = {
