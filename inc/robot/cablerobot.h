@@ -31,6 +31,9 @@ public:
     ST_MAX_STATES
   };
 
+  bool MotorEnabled(const quint8 motor_id) { return actuators_[motor_id].IsEnabled(); }
+  bool AnyMotorEnabled();
+  bool MotorsEnabled();
   bool EnableMotor(const quint8 motor_id);
   bool EnableMotors();
   bool EnableMotors(const std::vector<quint8>& motors_id);

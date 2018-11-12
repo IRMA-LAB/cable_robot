@@ -13,7 +13,8 @@ HEADERS = \
     $$PWD/inc/gui/homing/homing_interface_proprioceptive.h \
     $$PWD/inc/homing/homing_proprioceptive.h \
     $$PWD/inc/ctrl/controller_base.h \
-    $$PWD/inc/ctrl/controller_singledrive_naive.h
+    $$PWD/inc/ctrl/controller_singledrive_naive.h \
+    $$PWD/inc/gui/homing/init_torque_form.h
 
 SOURCES = \
     $$PWD/src/robot/components/winch.cpp \
@@ -30,7 +31,8 @@ SOURCES = \
     $$PWD/src/homing/homing_proprioceptive.cpp \
     $$PWD/src/gui/homing/homing_interface.cpp \
     $$PWD/src/ctrl/controller_base.cpp \
-    $$PWD/src/ctrl/controller_singledrive_naive.cpp
+    $$PWD/src/ctrl/controller_singledrive_naive.cpp \
+    $$PWD/src/gui/homing/init_torque_form.cpp
 
 INCLUDEPATH += \
     $$PWD/inc \
@@ -113,7 +115,8 @@ FORMS += \
     $$PWD/widgets/login_window.ui \
     $$PWD/widgets/calib/calibration_dialog.ui \
     $$PWD/widgets/homing/homing_dialog.ui \
-    $$PWD/widgets/homing/homing_interface_proprioceptive.ui
+    $$PWD/widgets/homing/homing_interface_proprioceptive.ui\
+    $$PWD/widgets/homing/init_torque_form.ui
 
 RESOURCES += \
     resources/resources.qrc

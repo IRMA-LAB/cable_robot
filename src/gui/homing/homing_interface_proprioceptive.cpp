@@ -8,17 +8,32 @@ HomingInterfaceProprioceptive::HomingInterfaceProprioceptive(QWidget* parent,
 {
   ui->setupUi(this);
 
+  quint8 i = 3;
+  //  for (quint8 motor_id = 0; motor_id < 8; motor_id++) // debug
+  for (quint8 motor_id : robot->GetMotorsID())
+  {
+    init_torque_forms_.append(new InitTorqueForm(motor_id, this));
+    ui->verticalLayout_2->insertWidget(i++, init_torque_forms_.last());
+  }
+
+  connect(robot_ptr_, SIGNAL(printToQConsole(QString)), this,
+          SLOT(AppendText2Browser(QString)));
   connect(&app_, SIGNAL(printToQConsole(QString)), this,
           SLOT(AppendText2Browser(QString)));
   connect(&app_, SIGNAL(acquisitionComplete()), this, SLOT(AcquisitionCompleteCb()));
+  app_.Stop(); // make sure we start in IDLE mode
 }
 
 HomingInterfaceProprioceptive::~HomingInterfaceProprioceptive()
 {
+  disconnect(robot_ptr_, SIGNAL(printToQConsole(QString)), this,
+             SLOT(AppendText2Browser(QString)));
   disconnect(&app_, SIGNAL(printToQConsole(QString)), this,
              SLOT(AppendText2Browser(QString)));
   disconnect(&app_, SIGNAL(acquisitionComplete()), this, SLOT(AcquisitionCompleteCb()));
 
+  for (InitTorqueForm* form : init_torque_forms_)
+    delete form;
   delete ui;
 }
 
@@ -50,22 +65,35 @@ void HomingInterfaceProprioceptive::AcquisitionCompleteCb()
 //// Private slots
 ///////////////////////////
 
+void HomingInterfaceProprioceptive::closeEvent(QCloseEvent *)
+{
+  ui->pushButton_cancel->click();
+}
+
 void HomingInterfaceProprioceptive::on_pushButton_enable_clicked()
 {
   if (app_.IsCollectingData())
-    ui->pushButton_start->click(); // stop
+    ui->pushButton_start->click(); // any --> ENABLED
 
   if (ui->pushButton_enable->text() == "Disable") // robot enabled?
   {
-    // robot.Disable();
-    ui->pushButton_enable->setText(tr("Enable"));
-    ui->pushButton_start->setDisabled(true);
+    app_.Stop(); // ENABLED --> IDLE
+
+    if (app_.GetCurrentState() == HomingProprioceptive::ST_IDLE)
+    {
+      ui->pushButton_enable->setText(tr("Enable"));
+      ui->pushButton_start->setDisabled(true);
+    }
   }
   else
   {
-    // robot.Enable();
-    ui->pushButton_enable->setText(tr("Disable"));
-    ui->pushButton_start->setEnabled(true);
+    app_.Start(NULL); // IDLE --> ENABLED
+
+    if (app_.GetCurrentState() == HomingProprioceptive::ST_ENABLED)
+    {
+      ui->pushButton_enable->setText(tr("Disable"));
+      ui->pushButton_start->setEnabled(true);
+    }
   }
 }
 
@@ -74,18 +102,33 @@ void HomingInterfaceProprioceptive::on_pushButton_clearFaults_clicked()
   app_.FaultReset();
 }
 
+void HomingInterfaceProprioceptive::on_checkBox_stateChanged(int)
+{
+  for (auto& init_torque_form : init_torque_forms_)
+    init_torque_form->setDisabled(ui->checkBox->isChecked());
+}
+
 void HomingInterfaceProprioceptive::on_pushButton_start_clicked()
 {
   if (app_.IsCollectingData())
   {
-    app_.Stop();
-    ui->pushButton_start->setText(tr("Start"));
-    ui->pushButton_acquire->setDisabled(true);
+    app_.Stop(); // any --> ENABLED
+
+    if (app_.GetCurrentState() == HomingProprioceptive::ST_ENABLED)
+    {
+      ui->pushButton_start->setText(tr("Start"));
+      ui->pushButton_acquire->setDisabled(true);
+    }
   }
   else
   {
-    app_.SetNumMeasurements(static_cast<uint8_t>(ui->spinBox_numMeas->value()));
-    app_.Start();
+    HomingProprioceptiveStartData* data = new HomingProprioceptiveStartData();
+    data->num_meas = static_cast<quint8>(ui->spinBox_numMeas->value());
+    if (!ui->checkBox->isChecked())
+      for (InitTorqueForm* form : init_torque_forms_)
+        data->init_torques.push_back(form->GetInitTorque());
+    app_.Start(data);
+
     ui->pushButton_start->setText(tr("Stop"));
     ui->pushButton_acquire->setEnabled(true);
   }
@@ -184,9 +227,4 @@ void HomingInterfaceProprioceptive::on_pushButton_done_clicked()
 void HomingInterfaceProprioceptive::AppendText2Browser(const QString& text)
 {
   ui->textBrowser_logs->append(text);
-}
-
-void HomingInterfaceProprioceptive::on_checkBox_stateChanged(int arg1)
-{
-    ui->retranslateUi()
 }

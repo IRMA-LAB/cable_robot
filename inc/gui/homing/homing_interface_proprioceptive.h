@@ -4,6 +4,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 
+#include "gui/homing/init_torque_form.h"
 #include "gui/homing/homing_interface.h"
 #include "homing/homing_proprioceptive.h"
 
@@ -25,8 +26,10 @@ public slots:
   void AcquisitionCompleteCb();
 
 private slots:
+  void closeEvent(QCloseEvent *);
   void on_pushButton_enable_clicked();
   void on_pushButton_clearFaults_clicked();
+  void on_checkBox_stateChanged(int);
   void on_pushButton_start_clicked();
   void on_pushButton_acquire_clicked();
 
@@ -40,10 +43,10 @@ private slots:
 
   void AppendText2Browser(const QString& text);
 
-  void on_checkBox_stateChanged(int arg1);
 
 private:
   Ui::HomingInterfaceProprioceptive* ui;
+  QVector<InitTorqueForm*> init_torque_forms_;
 
   HomingProprioceptive app_;
 };

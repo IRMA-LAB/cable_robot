@@ -41,23 +41,49 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
 //// Public functions
 ////////////////////////////////////////////////////////////////////////////
 
+bool CableRobot::AnyMotorEnabled()
+{
+  for (Actuator& actuator : actuators_)
+    if (actuator.IsEnabled())
+      return true;
+  return false;
+}
+
+bool CableRobot::MotorsEnabled()
+{
+  for (Actuator& actuator : actuators_)
+    if (!actuator.IsEnabled())
+      return false;
+  return true;
+}
+
 bool CableRobot::EnableMotor(const quint8 motor_id)
 {
   actuators_[motor_id].Enable();
-  if (!actuators_[motor_id].IsEnabled())
+  if (!MotorEnabled(motor_id))
+  {
+    emit printToQConsole(QString("WARNING: Could not enable motor %1").arg(motor_id));
     return false;
+  }
+  emit printToQConsole(QString("Motor %1 enabled").arg(motor_id));
   return true;
 }
 
 bool CableRobot::EnableMotors()
 {
+  bool ret = false;
   for (Actuator& actuator : actuators_)
   {
     actuator.Enable();
-    if (!actuator.IsEnabled())
-      return false;
+    ret = actuator.IsEnabled();
+    if (!ret)
+      break;
   }
-  return true;
+  if (ret)
+    emit printToQConsole("All motors enabled");
+  else
+    emit printToQConsole("WARNING: Could not enable all motors");
+  return ret;
 }
 
 bool CableRobot::EnableMotors(const std::vector<quint8>& motors_id)
@@ -65,8 +91,12 @@ bool CableRobot::EnableMotors(const std::vector<quint8>& motors_id)
   for (const quint8& motor_id : motors_id)
   {
     actuators_[motor_id].Enable();
-    if (!actuators_[motor_id].IsEnabled())
+    if (!MotorEnabled(motor_id))
+    {
+      emit printToQConsole(QString("WARNING: Could not enable motor %1").arg(motor_id));
       return false;
+    }
+    emit printToQConsole(QString("Motor %1 enabled").arg(motor_id));
   }
   return true;
 }
@@ -74,8 +104,9 @@ bool CableRobot::EnableMotors(const std::vector<quint8>& motors_id)
 bool CableRobot::DisableMotor(const quint8 motor_id)
 {
   actuators_[motor_id].Disable();
-  if (actuators_[motor_id].IsEnabled())
+  if (MotorEnabled(motor_id))
     return false;
+  emit printToQConsole(QString("Motor %1 disabled").arg(motor_id));
   return true;
 }
 
@@ -86,7 +117,8 @@ bool CableRobot::DisableMotors()
     actuator.Disable();
     if (actuator.IsEnabled())
       return false;
-  }
+  }  
+  emit printToQConsole("All motors disabled");
   return true;
 }
 
@@ -95,8 +127,9 @@ bool CableRobot::DisableMotors(const std::vector<quint8>& motors_id)
   for (const quint8& motor_id : motors_id)
   {
     actuators_[motor_id].Disable();
-    if (actuators_[motor_id].IsEnabled())
-      return false;
+    if (MotorEnabled(motor_id))
+      return false;    
+    emit printToQConsole(QString("Motor %1 disabled").arg(motor_id));
   }
   return true;
 }

@@ -13,7 +13,7 @@ template <typename T> using vect = std::vector<T>;
 class ControllerBase
 {
 public:
-  ControllerBase();
+  ControllerBase() {}
   explicit ControllerBase(const uint8_t motor_id);
   explicit ControllerBase(const vect<uint8_t>& motors_id);
   virtual ~ControllerBase();

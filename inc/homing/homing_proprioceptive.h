@@ -8,6 +8,16 @@
 #include "robot/cablerobot.h"
 #include "ctrl/controller_singledrive_naive.h"
 
+class HomingProprioceptiveStartData: public EventData
+{
+public:
+  HomingProprioceptiveStartData();
+  HomingProprioceptiveStartData(const vect<qint16>& _init_torques, const quint8 _num_meas);
+
+  vect<qint16> init_torques;
+  quint8 num_meas;
+};
+
 class HomingProprioceptive : public QObject, public StateMachine
 {
   Q_OBJECT
@@ -18,6 +28,7 @@ public:
   enum States : BYTE
   {
     ST_IDLE,
+    ST_ENABLED,
     ST_START_UP,
     ST_COILING,
     ST_UNCOILING,
@@ -28,12 +39,10 @@ public:
     ST_MAX_STATES
   };
 
-  void SetNumMeasurements(const quint8 num_meas);
-
   bool IsCollectingData();
 
 public:
-  void Start();
+  void Start(HomingProprioceptiveStartData* data);
   void Stop();
   void Next();
   void Optimize();
@@ -55,6 +64,7 @@ private:
   // clang-format off
   static constexpr char* kStatesStr[] = {
     const_cast<char*>("IDLE"),
+    const_cast<char*>("ENABLED"),
     const_cast<char*>("START_UP"),
     const_cast<char*>("COILING"),
     const_cast<char*>("UNCOILING"),
@@ -68,7 +78,9 @@ private:
 
   // Define the state machine state functions with event data type
   STATE_DECLARE(HomingProprioceptive, Idle, NoEventData)
-  STATE_DECLARE(HomingProprioceptive, StartUp, NoEventData)
+  GUARD_DECLARE(HomingProprioceptive, GuardEnabled, NoEventData)
+  STATE_DECLARE(HomingProprioceptive, Enabled, NoEventData)
+  STATE_DECLARE(HomingProprioceptive, StartUp, HomingProprioceptiveStartData)
   GUARD_DECLARE(HomingProprioceptive, GuardCoiling, NoEventData)
   STATE_DECLARE(HomingProprioceptive, Coiling, NoEventData)
   EXIT_DECLARE(HomingProprioceptive, CollectMeas)
@@ -84,6 +96,7 @@ private:
   BEGIN_STATE_MAP_EX
   // clang-format off
     STATE_MAP_ENTRY_EX(&Idle)
+    STATE_MAP_ENTRY_ALL_EX(&Enabled, &GuardEnabled, 0, 0)
     STATE_MAP_ENTRY_EX(&StartUp)
     STATE_MAP_ENTRY_ALL_EX(&Coiling, &GuardCoiling, 0, &CollectMeas)
     STATE_MAP_ENTRY_ALL_EX(&Uncoiling, &GuardUncoiling, 0, &CollectMeas)

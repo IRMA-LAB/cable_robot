@@ -18,7 +18,7 @@ template <typename T> T operator*(const Sign& sign, const T value)
 class ControllerSingleDriveNaive : public ControllerBase
 {
 public:
-  ControllerSingleDriveNaive() { Clear(); }
+  ControllerSingleDriveNaive(): ControllerBase() { Clear(); }
   explicit ControllerSingleDriveNaive(const uint8_t motor_id);
 
   void SetCableLenTarget(const double target);
