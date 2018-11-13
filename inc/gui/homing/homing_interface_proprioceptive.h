@@ -27,9 +27,11 @@ public slots:
 
 private slots:
   void closeEvent(QCloseEvent *);
+
   void on_pushButton_enable_clicked();
   void on_pushButton_clearFaults_clicked();
-  void on_checkBox_stateChanged(int);
+  void on_checkBox_useCurrentTorque_stateChanged(int);
+  void on_checkBox_maxTorque_stateChanged(int);
   void on_pushButton_start_clicked();
   void on_pushButton_acquire_clicked();
 

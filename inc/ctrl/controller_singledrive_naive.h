@@ -34,7 +34,11 @@ public:
   void MotorSpeedIncrement(const Sign sign);
   void MotorTorqueIncrement(const Sign sign);
 
-  vect<MotorStatus> CalcCableSetPoint(const grabcdpr::Vars& robot_status) override;
+  bool CableLenTargetReached(const double target);
+  bool MotorSpeedTargetReached(const int32_t target);
+  bool MotorTorqueTargetReached(const int16_t target);
+
+  vect<ActuatorStatus> CalcCableSetPoint(const grabcdpr::Vars& robot_status) override;
 
 private:
   static constexpr double kDeltaLengthMicro = 0.001;

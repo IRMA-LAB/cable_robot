@@ -7,8 +7,9 @@
 HomingProprioceptiveStartData::HomingProprioceptiveStartData() {}
 
 HomingProprioceptiveStartData::HomingProprioceptiveStartData(
-  const vect<qint16>& _init_torques, const quint8 _num_meas)
-  : init_torques(_init_torques), num_meas(_num_meas)
+  const vect<qint16>& _init_torques, const vect<qint16>& _max_torques,
+  const quint8 _num_meas)
+  : init_torques(_init_torques), max_torques(_max_torques), num_meas(_num_meas)
 {
 }
 
@@ -37,9 +38,9 @@ void HomingProprioceptive::Start(HomingProprioceptiveStartData* data)
       TRANSITION_MAP_ENTRY (ST_ENABLED)                          // ST_IDLE
       TRANSITION_MAP_ENTRY (ST_START_UP)                         // ST_ENABLED
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)                    // ST_START_UP
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_SWITCH_CABLE
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_COILING
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_UNCOILING
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_SWITCH_CABLE
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_OPTIMIZING
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_GO_HOME
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_FAULT
@@ -53,10 +54,10 @@ void HomingProprioceptive::Stop()
   BEGIN_TRANSITION_MAP			              			// - Current State -
       TRANSITION_MAP_ENTRY (ST_IDLE)                                  // ST_IDLE
       TRANSITION_MAP_ENTRY (ST_ENABLED)                          // ST_ENABLED
+      TRANSITION_MAP_ENTRY (ST_ENABLED)                          // ST_SWITCH_CABLE
       TRANSITION_MAP_ENTRY (ST_ENABLED)                          // ST_START_UP
       TRANSITION_MAP_ENTRY (ST_ENABLED)                          // ST_COILING
       TRANSITION_MAP_ENTRY (ST_ENABLED)                          // ST_UNCOILING
-      TRANSITION_MAP_ENTRY (ST_ENABLED)                          // ST_SWITCH_CABLE
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_OPTIMIZING
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)                   // ST_GO_HOME
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_FAULT
@@ -70,10 +71,10 @@ void HomingProprioceptive::Next()
   BEGIN_TRANSITION_MAP			              			// - Current State -
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)                   // ST_IDLE
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)                   // ST_ENABLED
-      TRANSITION_MAP_ENTRY (ST_COILING)                            // ST_START_UP
-      TRANSITION_MAP_ENTRY (ST_UNCOILING)			// ST_COILING
-      TRANSITION_MAP_ENTRY (ST_SWITCH_CABLE)			// ST_UNCOILING
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)                    // ST_SWITCH_CABLE
+      TRANSITION_MAP_ENTRY (ST_SWITCH_CABLE)                 // ST_START_UP
+      TRANSITION_MAP_ENTRY (ST_COILING)                            // ST_SWITCH_CABLE
+      TRANSITION_MAP_ENTRY (ST_COILING)                            // ST_COILING
+      TRANSITION_MAP_ENTRY (ST_UNCOILING)			// ST_UNCOILING
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_OPTIMIZING
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_GO_HOME
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_FAULT
@@ -88,9 +89,9 @@ void HomingProprioceptive::Optimize()
       TRANSITION_MAP_ENTRY (ST_OPTIMIZING)                      // ST_IDLE
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)                    // ST_ENABLED
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)                    // ST_START_UP
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)                    // ST_SWITCH_CABLE
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_COILING
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_UNCOILING
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)                    // ST_SWITCH_CABLE
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_OPTIMIZING
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_GO_HOME
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_FAULT
@@ -105,9 +106,9 @@ void HomingProprioceptive::FaultTrigger()
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)                   // ST_IDLE
       TRANSITION_MAP_ENTRY (ST_FAULT)                               // ST_ENABLED
       TRANSITION_MAP_ENTRY (ST_FAULT)                               // ST_START_UP
+      TRANSITION_MAP_ENTRY (ST_FAULT)                               // ST_SWITCH_CABLE
       TRANSITION_MAP_ENTRY (ST_FAULT)                               // ST_COILING
       TRANSITION_MAP_ENTRY (ST_FAULT)                               // ST_UNCOILING
-      TRANSITION_MAP_ENTRY (ST_FAULT)                               // ST_SWITCH_CABLE
       TRANSITION_MAP_ENTRY (ST_FAULT)                               // ST_OPTIMIZING
       TRANSITION_MAP_ENTRY (ST_FAULT)                               // ST_GO_HOME
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_FAULT
@@ -122,9 +123,9 @@ void HomingProprioceptive::FaultReset()
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)                   // ST_IDLE
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)                   // ST_ENABLED
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)                   // ST_START_UP
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)                   // ST_SWITCH_CABLE
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_COILING
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_UNCOILING
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)                   // ST_SWITCH_CABLE
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_OPTIMIZING
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_GO_HOME
       TRANSITION_MAP_ENTRY (ST_IDLE)                                  // ST_FAULT
@@ -188,49 +189,140 @@ STATE_DEFINE(HomingProprioceptive, StartUp, HomingProprioceptiveStartData)
   QString msg("Start up phase complete\nRobot in predefined configuration\nInitial "
               "torque values:");
 
+  num_meas_ = data->num_meas;
+  init_torques_.clear();
+  max_torques_ = data->max_torques;
+  torques_.reserve(num_meas_);
+
   vect<quint8> motors_id = robot_->GetMotorsID();
   for (quint8 i = 0; i < motors_id.size(); ++i)
   {
+    qint16 current_torque = robot_->GetActuatorStatus(motors_id[i]).motor_torque;
     // Use current torque values if not given
     if (!data->init_torques.empty())
     {
+      init_torques_.push_back(data->init_torques[i]);
+      // Wait until all motors reached user-given initial torque setpoint
       controller_.SetMotorID(motors_id[i]);
-      controller_.SetMotorTorqueTarget(data->init_torques[i]);
-      while (controller_.GetMotorTorqueTarget() !=
-             robot_->GetMotorStatus(motors_id[i]).torque_target)
-        continue; // inserisci un tempo di attesa qui magari
+      controller_.SetMotorTorqueTarget(init_torques_.back());
+      while (1)
+      {
+        if (controller_.MotorTorqueTargetReached(current_torque))
+          break;
+        current_torque = robot_->GetActuatorStatus(motors_id[i]).motor_torque;
+        // todo: inserisci un tempo di attesa qui magari
+      }
     }
-    msg.append(
-      QString("\n\t%1 [Nm]").arg(robot_->GetMotorStatus(motors_id[i]).torque_target));
-    num_meas_ = data->num_meas;
+    else
+      init_torques_.push_back(current_torque);
+    msg.append(QString("\n\t%1 %").arg(current_torque)); // todo: unità di misura??
   }
   emit printToQConsole(msg);
 }
 
-GUARD_DEFINE(HomingProprioceptive, GuardCoiling, NoEventData) { return true; }
-
-STATE_DEFINE(HomingProprioceptive, Coiling, NoEventData)
+GUARD_DEFINE(HomingProprioceptive, GuardSwitch, NoEventData)
 {
-  PrintStateTransition(prev_state_, ST_COILING);
-  prev_state_ = ST_COILING;
+  if (prev_state_ == ST_START_UP)
+    return true;
+
+  if (controller_.GetMotorsID().front() !=
+      robot_->GetMotorsID().back()) // we are not done ==> move to next cable
+    return true;
+
+  emit acquisitionComplete();
+  InternalEvent(ST_ENABLED); // todo: funzionerà?
+  return false;
 }
-
-EXIT_DEFINE(HomingProprioceptive, CollectMeas) {}
-
-GUARD_DEFINE(HomingProprioceptive, GuardUncoiling, NoEventData) { return true; }
-
-STATE_DEFINE(HomingProprioceptive, Uncoiling, NoEventData)
-{
-  PrintStateTransition(prev_state_, ST_UNCOILING);
-  prev_state_ = ST_UNCOILING;
-}
-
-GUARD_DEFINE(HomingProprioceptive, GuardSwitch, NoEventData) { return true; }
 
 STATE_DEFINE(HomingProprioceptive, SwitchCable, NoEventData)
 {
+  static quint8 motor_id = 0;
+
   PrintStateTransition(prev_state_, ST_SWITCH_CABLE);
   prev_state_ = ST_SWITCH_CABLE;
+
+  qint16 delta_torque =
+    (max_torques_[motor_id] - init_torques_[motor_id]) / (num_meas_ - 1);
+  for (quint8 i = 0; i < num_meas_ - 1; ++i)
+    torques_[i] = init_torques_[motor_id] + i * delta_torque;
+  torques_.back() = max_torques_[motor_id]; // last element is forced to be = max torque
+
+  controller_.SetMotorID(motor_id);
+  controller_.SetMotorTorqueTarget(torques_.front());
+
+  emit printToQConsole(
+    QString("Switched to actuator #%1.\nInitial torque setpoint = %2 ‰")
+      .arg(motor_id, torques_.front()));
+  motor_id++;
+}
+
+GUARD_DEFINE(HomingProprioceptive, GuardCoiling, NoEventData)
+{
+  if (controller_.MotorTorqueTargetReached(
+        robot_->GetActuatorStatus(controller_.GetMotorsID().front()).motor_torque))
+  {
+    robot_->CollectMeas();
+    robot_->DumpMeas();
+    return true;
+  }
+
+  emit printToQConsole("Torque target not reached yet! Please wait...");
+  return false;
+}
+
+STATE_DEFINE(HomingProprioceptive, Coiling, NoEventData)
+{
+  static quint8 counter = 0;
+
+  PrintStateTransition(prev_state_, ST_COILING);
+  prev_state_ = ST_COILING;
+
+  quint8 meas_step = ++counter % num_meas_;
+  if (meas_step == 0)
+  {
+    InternalEvent(ST_UNCOILING);
+    return;
+  }
+
+  controller_.SetMotorTorqueTarget(torques_[meas_step]);
+  emit printToQConsole(QString("Next torque setpoint = %1 ‰").arg(torques_[meas_step]));
+}
+
+GUARD_DEFINE(HomingProprioceptive, GuardUncoiling, NoEventData)
+{
+  if (prev_state_ == ST_COILING)
+    return true;
+
+  if (controller_.MotorTorqueTargetReached(
+        robot_->GetActuatorStatus(controller_.GetMotorsID().front()).motor_torque))
+  {
+    robot_->CollectMeas();
+    robot_->DumpMeas();
+    return true;
+  }
+
+  emit printToQConsole("Torque target not reached yet! Please wait...");
+  return false;
+}
+
+STATE_DEFINE(HomingProprioceptive, Uncoiling, NoEventData)
+{
+  static qint16 meas_step = num_meas_ - 2;
+
+  PrintStateTransition(prev_state_, ST_UNCOILING);
+  prev_state_ = ST_UNCOILING;
+
+  if (meas_step < 0)
+  {
+    InternalEvent(ST_SWITCH_CABLE);
+    meas_step = num_meas_ - 2;  // reset if transition is successful
+    return;
+  }
+
+  controller_.SetMotorTorqueTarget(torques_[static_cast<quint8>(meas_step)]);
+  emit printToQConsole(
+    QString("Next torque setpoint = %1 ‰").arg(controller_.GetMotorTorqueTarget()));
+  meas_step--;
 }
 
 STATE_DEFINE(HomingProprioceptive, Optimizing, NoEventData)

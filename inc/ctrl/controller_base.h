@@ -27,7 +27,7 @@ public:
   int8_t GetMode(const uint8_t motor_id) const;
   vect<int8_t> GetModes() const { return modes_; }
 
-  virtual vect<MotorStatus> CalcCableSetPoint(const grabcdpr::Vars& robot_status) = 0;
+  virtual vect<ActuatorStatus> CalcCableSetPoint(const grabcdpr::Vars& robot_status) = 0;
 
 protected:
   vect<uint8_t> motors_id_;

@@ -4,6 +4,9 @@
 #include <cmath>
 #include <stdint.h>
 
+/**
+ * @brief The PulleyParams struct
+ */
 struct PulleyParams
 {
   static const double kPulleyResolution;
@@ -23,6 +26,9 @@ struct WinchParams
   static const double kCountsToLengthFactor;
 };
 
+/**
+ * @brief The ActuatorParams struct
+ */
 struct ActuatorParams
 {
   WinchParams winch;
@@ -30,14 +36,29 @@ struct ActuatorParams
 };
 
 /**
- * @brief The DriveStatus struct
+ * @brief The MotorStatus struct
  */
 struct MotorStatus {
-  uint8_t motor_id;
   int8_t op_mode;
-  double length_target;
-  int32_t speed_target;
-  int16_t torque_target;
+  int32_t motor_position;
+  int32_t motor_speed;
+  int16_t motor_torque;
+};
+
+/**
+ * @brief The WinchStatus struct
+ */
+struct WinchStatus: MotorStatus {
+  double cable_length;
+  int aux_position;
+};
+
+/**
+ * @brief The ActuatorStatus struct
+ */
+struct ActuatorStatus: WinchStatus {
+  uint8_t id;
+  double pulley_angle;
 };
 
 #endif // CABLE_ROBOT_TYPES_H

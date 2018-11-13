@@ -8,13 +8,15 @@
 #include "robot/cablerobot.h"
 #include "ctrl/controller_singledrive_naive.h"
 
-class HomingProprioceptiveStartData: public EventData
+class HomingProprioceptiveStartData : public EventData
 {
 public:
   HomingProprioceptiveStartData();
-  HomingProprioceptiveStartData(const vect<qint16>& _init_torques, const quint8 _num_meas);
+  HomingProprioceptiveStartData(const vect<qint16>& _init_torques,
+                                const vect<qint16>& _max_torques, const quint8 _num_meas);
 
   vect<qint16> init_torques;
+  vect<qint16> max_torques;
   quint8 num_meas;
 };
 
@@ -30,9 +32,9 @@ public:
     ST_IDLE,
     ST_ENABLED,
     ST_START_UP,
+    ST_SWITCH_CABLE,
     ST_COILING,
     ST_UNCOILING,
-    ST_SWITCH_CABLE,
     ST_OPTIMIZING,
     ST_GO_HOME,
     ST_FAULT,
@@ -59,6 +61,9 @@ private:
   CableRobot* robot_ = NULL;
   ControllerSingleDriveNaive controller_;
   quint8 num_meas_ = kNumMeasMin;
+  vect<qint16> init_torques_;
+  vect<qint16> max_torques_;
+  vect<qint16> torques_;
 
 private:
   // clang-format off
@@ -66,9 +71,9 @@ private:
     const_cast<char*>("IDLE"),
     const_cast<char*>("ENABLED"),
     const_cast<char*>("START_UP"),
+    const_cast<char*>("SWITCH_CABLE"),
     const_cast<char*>("COILING"),
     const_cast<char*>("UNCOILING"),
-    const_cast<char*>("SWITCH_CABLE"),
     const_cast<char*>("OPTIMIZING"),
     const_cast<char*>("GO_HOME"),
     const_cast<char*>("FAULT")};
@@ -81,13 +86,12 @@ private:
   GUARD_DECLARE(HomingProprioceptive, GuardEnabled, NoEventData)
   STATE_DECLARE(HomingProprioceptive, Enabled, NoEventData)
   STATE_DECLARE(HomingProprioceptive, StartUp, HomingProprioceptiveStartData)
-  GUARD_DECLARE(HomingProprioceptive, GuardCoiling, NoEventData)
-  STATE_DECLARE(HomingProprioceptive, Coiling, NoEventData)
-  EXIT_DECLARE(HomingProprioceptive, CollectMeas)
-  GUARD_DECLARE(HomingProprioceptive, GuardUncoiling, NoEventData)
-  STATE_DECLARE(HomingProprioceptive, Uncoiling, NoEventData)
   GUARD_DECLARE(HomingProprioceptive, GuardSwitch, NoEventData)
   STATE_DECLARE(HomingProprioceptive, SwitchCable, NoEventData)
+  GUARD_DECLARE(HomingProprioceptive, GuardCoiling, NoEventData)
+  STATE_DECLARE(HomingProprioceptive, Coiling, NoEventData)
+  GUARD_DECLARE(HomingProprioceptive, GuardUncoiling, NoEventData)
+  STATE_DECLARE(HomingProprioceptive, Uncoiling, NoEventData)
   STATE_DECLARE(HomingProprioceptive, Optimizing, NoEventData)
   STATE_DECLARE(HomingProprioceptive, GoHome, NoEventData)
   STATE_DECLARE(HomingProprioceptive, Fault, NoEventData)
@@ -98,9 +102,9 @@ private:
     STATE_MAP_ENTRY_EX(&Idle)
     STATE_MAP_ENTRY_ALL_EX(&Enabled, &GuardEnabled, 0, 0)
     STATE_MAP_ENTRY_EX(&StartUp)
-    STATE_MAP_ENTRY_ALL_EX(&Coiling, &GuardCoiling, 0, &CollectMeas)
-    STATE_MAP_ENTRY_ALL_EX(&Uncoiling, &GuardUncoiling, 0, &CollectMeas)
     STATE_MAP_ENTRY_ALL_EX(&SwitchCable, &GuardSwitch, 0, 0)
+    STATE_MAP_ENTRY_ALL_EX(&Coiling, &GuardCoiling, 0, 0)
+    STATE_MAP_ENTRY_ALL_EX(&Uncoiling, &GuardUncoiling, 0, 0)
     STATE_MAP_ENTRY_EX(&Optimizing)
     STATE_MAP_ENTRY_EX(&GoHome)
     STATE_MAP_ENTRY_EX(&Fault)

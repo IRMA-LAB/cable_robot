@@ -43,15 +43,17 @@ public:
   void SetMotorOpMode(const quint8 motor_id, const qint8 op_mode);
   void SetMotorsOpMode(const qint8 op_mode);
   void SetMotorsOpMode(const std::vector<quint8>& motors_id, const qint8 op_mode);
-  MotorStatus GetMotorStatus(const quint8 motor_id) const;
-  std::vector<quint8> GetMotorsID() const;
+  ActuatorStatus GetActuatorStatus(const quint8 motor_id) const;
+  vect<quint8> GetMotorsID() const;
+
+  void CollectMeas();
+  void DumpMeas() const;
 
   void SetController(ControllerBase* controller) { controller_ = controller; }
 
+public slots:
   void EnterCalibrationMode();
   void EnterHomingMode();
-
-public slots:
   void EventSuccess();
   void EventFailure();
   void Stop();
@@ -63,11 +65,12 @@ signals:
 private:
   grabcdpr::PlatformVars platform_;
   grabcdpr::Vars status_;
+  vect<ActuatorStatus> meas_;
 
   // Ethercat related
-  std::vector<grabec::EasyCatSlave> easycat_slaves_;
-  std::vector<Actuator> actuators_;
-  std::vector<grabec::EthercatSlave*> ec_slaves_ptrs_;
+  vect<grabec::EasyCatSlave> easycat_slaves_;
+  vect<Actuator> actuators_;
+  vect<grabec::EthercatSlave*> ec_slaves_ptrs_;
 
   void StartUpFunction() override final {}
   void LoopFunction() override final;

@@ -8,9 +8,9 @@ HomingInterfaceProprioceptive::HomingInterfaceProprioceptive(QWidget* parent,
 {
   ui->setupUi(this);
 
-  quint8 i = 3;
-  //  for (quint8 motor_id = 0; motor_id < 8; motor_id++) // debug
-  for (quint8 motor_id : robot->GetMotorsID())
+  quint8 i = 4;
+  for (quint8 motor_id = 0; motor_id < 8; motor_id++) // debug
+  //  for (quint8 motor_id : robot->GetMotorsID())
   {
     init_torque_forms_.append(new InitTorqueForm(motor_id, this));
     ui->verticalLayout_2->insertWidget(i++, init_torque_forms_.last());
@@ -65,7 +65,7 @@ void HomingInterfaceProprioceptive::AcquisitionCompleteCb()
 //// Private slots
 ///////////////////////////
 
-void HomingInterfaceProprioceptive::closeEvent(QCloseEvent *)
+void HomingInterfaceProprioceptive::closeEvent(QCloseEvent*)
 {
   ui->pushButton_cancel->click();
 }
@@ -102,10 +102,29 @@ void HomingInterfaceProprioceptive::on_pushButton_clearFaults_clicked()
   app_.FaultReset();
 }
 
-void HomingInterfaceProprioceptive::on_checkBox_stateChanged(int)
+void HomingInterfaceProprioceptive::on_checkBox_useCurrentTorque_stateChanged(int)
 {
+  std::vector<quint8> motors_id = {0, 1, 2, 3, 4, 5, 6, 7}; // robot_ptr_->GetMotorsID();
+  for (quint8 motor_id : motors_id)
+  {
+    if (ui->checkBox_useCurrentTorque->isChecked())
+      init_torque_forms_[motor_id]->SetInitTorque(300 + motor_id * 100);
+    // robot_ptr_->GetMotorStatus(motor_id).torque_target);
+    init_torque_forms_[motor_id]->EnableInitTorque(
+      !ui->checkBox_useCurrentTorque->isChecked());
+  }
+}
+
+void HomingInterfaceProprioceptive::on_checkBox_maxTorque_stateChanged(int)
+{
+  qint16 max_init_torque = 0;
   for (auto& init_torque_form : init_torque_forms_)
-    init_torque_form->setDisabled(ui->checkBox->isChecked());
+  {
+    init_torque_form->EnableMaxTorque(!ui->checkBox_maxTorque->isChecked());
+    max_init_torque = std::max(max_init_torque, init_torque_form->GetInitTorque());
+  }
+  ui->spinBox_maxTorque->setMinimum(max_init_torque);
+  ui->spinBox_maxTorque->setEnabled(ui->checkBox_maxTorque->isChecked());
 }
 
 void HomingInterfaceProprioceptive::on_pushButton_start_clicked()
@@ -124,9 +143,15 @@ void HomingInterfaceProprioceptive::on_pushButton_start_clicked()
   {
     HomingProprioceptiveStartData* data = new HomingProprioceptiveStartData();
     data->num_meas = static_cast<quint8>(ui->spinBox_numMeas->value());
-    if (!ui->checkBox->isChecked())
-      for (InitTorqueForm* form : init_torque_forms_)
+    for (InitTorqueForm* form : init_torque_forms_)
+    {
+      if (!ui->checkBox_useCurrentTorque->isChecked())
         data->init_torques.push_back(form->GetInitTorque());
+
+      data->max_torques.push_back(ui->checkBox_maxTorque->isChecked()
+                                    ? static_cast<qint16>(ui->spinBox_maxTorque->value())
+                                    : form->GetMaxTorque());
+    }
     app_.Start(data);
 
     ui->pushButton_start->setText(tr("Stop"));

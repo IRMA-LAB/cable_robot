@@ -18,6 +18,7 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
   ec_slaves_ptrs_.push_back(&easycat_slaves_[slave_pos++]);
 #endif
 
+  meas_.reserve(config.cables.size());
   for (size_t i = 0; i < config.cables.size(); i++)
   {
     grabcdpr::CableVars cable;
@@ -117,7 +118,7 @@ bool CableRobot::DisableMotors()
     actuator.Disable();
     if (actuator.IsEnabled())
       return false;
-  }  
+  }
   emit printToQConsole("All motors disabled");
   return true;
 }
@@ -128,7 +129,7 @@ bool CableRobot::DisableMotors(const std::vector<quint8>& motors_id)
   {
     actuators_[motor_id].Disable();
     if (MotorEnabled(motor_id))
-      return false;    
+      return false;
     emit printToQConsole(QString("Motor %1 disabled").arg(motor_id));
   }
   return true;
@@ -152,17 +153,30 @@ void CableRobot::SetMotorsOpMode(const std::vector<quint8>& motors_id,
     actuators_[static_cast<quint8>(motor_id)].SetMotorOpMode(op_mode);
 }
 
-MotorStatus CableRobot::GetMotorStatus(const quint8 motor_id) const
+ActuatorStatus CableRobot::GetActuatorStatus(const quint8 motor_id) const
 {
-  return actuators_[motor_id].GetWinchStatus();
+  return actuators_[motor_id].GetStatus();
 }
 
-std::vector<quint8> CableRobot::GetMotorsID() const
+vect<quint8> CableRobot::GetMotorsID() const
 {
   std::vector<quint8> motors_id;
   for (const Actuator& actuator : actuators_)
     motors_id.push_back(actuator.GetActuatorID());
   return motors_id;
+}
+
+void CableRobot::CollectMeas()
+{
+  for (quint8 i = 0; i < meas_.size(); ++i)
+    meas_[i] = actuators_[i].GetStatus();
+
+  emit printToQConsole("Measurements collected");
+}
+
+void CableRobot::DumpMeas() const
+{
+  emit printToQConsole("Measurements dumped onto log file");
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -343,26 +357,25 @@ void CableRobot::LoopFunction()
 
 void CableRobot::ControlStep()
 {
-  std::vector<MotorStatus> res = controller_->CalcCableSetPoint(status_);
-  for (MotorStatus& ctrl_output : res)
+  std::vector<ActuatorStatus> res = controller_->CalcCableSetPoint(status_);
+  for (ActuatorStatus& ctrl_output : res)
   {
-    emit motorStatus(
-      ctrl_output.motor_id,
-      actuators_[ctrl_output.motor_id].GetWinch()->GetServo()->GetDriveStatus());
+    emit motorStatus(ctrl_output.id,
+                     actuators_[ctrl_output.id].GetWinch()->GetServo()->GetDriveStatus());
 
-    if (!actuators_[ctrl_output.motor_id].IsEnabled()) // safety check
+    if (!actuators_[ctrl_output.id].IsEnabled()) // safety check
       continue;
 
     switch (ctrl_output.op_mode)
     {
     case grabec::CYCLIC_POSITION:
-      actuators_[ctrl_output.motor_id].SetCableLength(ctrl_output.length_target);
+      actuators_[ctrl_output.id].SetCableLength(ctrl_output.cable_length);
       break;
     case grabec::CYCLIC_VELOCITY:
-      actuators_[ctrl_output.motor_id].SetMotorSpeed(ctrl_output.speed_target);
+      actuators_[ctrl_output.id].SetMotorSpeed(ctrl_output.motor_speed);
       break;
     case grabec::CYCLIC_TORQUE:
-      actuators_[ctrl_output.motor_id].SetMotorTorque(ctrl_output.torque_target);
+      actuators_[ctrl_output.id].SetMotorTorque(ctrl_output.motor_torque);
       break;
     default:
       break;

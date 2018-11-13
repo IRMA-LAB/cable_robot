@@ -55,10 +55,10 @@ public:
    */
   const PulleysSystem* GetPulley() const { return pulley_; }
   /**
-   * @brief GetWinchStatus
+   * @brief GetStatus
    * @return
    */
-  MotorStatus GetWinchStatus() const { return winch_->GetServoStatus(); }
+  ActuatorStatus GetStatus() const;
   /**
    * @brief GetActuatorID
    * @return

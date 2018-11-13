@@ -65,7 +65,7 @@ public:
    * @brief GetServoStatus
    * @return
    */
-  MotorStatus GetServoStatus() const;
+  WinchStatus GetStatus() const;
 
   /**
    * @brief SetServoPosByCableLen

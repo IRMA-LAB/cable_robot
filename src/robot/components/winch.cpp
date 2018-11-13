@@ -18,13 +18,15 @@ Winch::Winch(const uint8_t slave_position, const WinchParams &params): servo_(sl
   params_ = params;
 }
 
-MotorStatus Winch::GetServoStatus() const
+WinchStatus Winch::GetStatus() const
 {
-  MotorStatus status;
+  WinchStatus status;
   status.op_mode = servo_.GetOpMode();
-  status.length_target = CountsToLength(servo_.GetPosition() - servo_start_pos_);
-  status.speed_target = servo_.GetVelocity();
-  status.torque_target = servo_.GetTorque();
+  status.motor_position = servo_.GetPosition();
+  status.motor_speed = servo_.GetVelocity();
+  status.motor_torque = servo_.GetTorque();
+  status.cable_length = CountsToLength(status.motor_position - servo_start_pos_);
+  status.aux_position = servo_.GetAuxPosition();
   return status;
 }
 

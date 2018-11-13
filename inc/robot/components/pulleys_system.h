@@ -28,13 +28,6 @@ public:
    */
   void UpdateConfig(const int counts);
 
-private:
-  PulleyParams params_;
-
-  int home_counts_ = 0;
-  double home_angle_ = 0.0;
-  double angle_ = 0.0;
-
   inline double CountsToPulleyAngleDeg(const int counts) const
   {
     return counts * params_.kPulleyAngleFactorDeg;
@@ -44,6 +37,13 @@ private:
   {
     return counts * params_.kPulleyAngleFactorRad;
   }
+
+private:
+  PulleyParams params_;
+
+  int home_counts_ = 0;
+  double home_angle_ = 0.0;
+  double angle_ = 0.0;
 };
 
 #endif // CABLE_ROBOT_PULLEYS_SYSTEM_H

@@ -57,6 +57,21 @@ void Actuator::FaultReset()
   // clang-format on
 }
 
+ActuatorStatus Actuator::GetStatus() const
+{
+  WinchStatus winch_status = winch_->GetStatus();
+  ActuatorStatus status;
+  status.op_mode = winch_status.op_mode;
+  status.motor_position = winch_status.motor_position;
+  status.motor_speed = winch_status.motor_speed;
+  status.motor_torque = winch_status.motor_torque;
+  status.cable_length = winch_status.cable_length;
+  status.aux_position = winch_status.aux_position;
+  status.id = id_;
+  status.pulley_angle = pulley_->CountsToPulleyAngleDeg(status.aux_position);
+  return status;
+}
+
 void Actuator::SetCableLength(const double target_length)
 {
   winch_->SetServoPosByCableLen(target_length);
