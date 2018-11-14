@@ -42,6 +42,23 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
 //// Public functions
 ////////////////////////////////////////////////////////////////////////////
 
+ActuatorStatus CableRobot::GetActuatorStatus(const quint8 motor_id) const
+{
+  return actuators_[motor_id].GetStatus();
+}
+
+void CableRobot::UpdateHomeConfig(const double cable_len, const double pulley_angle)
+{
+  for (Actuator& actuator : actuators_)
+    actuator.UpdateHomeConfig(cable_len, pulley_angle);
+}
+
+void CableRobot::UpdateHomeConfig(const quint8 motor_id, const double cable_len,
+                                  const double pulley_angle)
+{
+  actuators_[motor_id].UpdateHomeConfig(cable_len, pulley_angle);
+}
+
 bool CableRobot::AnyMotorEnabled()
 {
   for (Actuator& actuator : actuators_)
@@ -153,11 +170,6 @@ void CableRobot::SetMotorsOpMode(const std::vector<quint8>& motors_id,
     actuators_[static_cast<quint8>(motor_id)].SetMotorOpMode(op_mode);
 }
 
-ActuatorStatus CableRobot::GetActuatorStatus(const quint8 motor_id) const
-{
-  return actuators_[motor_id].GetStatus();
-}
-
 vect<quint8> CableRobot::GetMotorsID() const
 {
   std::vector<quint8> motors_id;
@@ -177,6 +189,33 @@ void CableRobot::CollectMeas()
 void CableRobot::DumpMeas() const
 {
   emit printToQConsole("Measurements dumped onto log file");
+}
+
+bool CableRobot::GoHome()
+{
+  if (!MotorsEnabled())
+  {
+    emit printToQConsole("Cannot move to home position: not all motors enabled");
+    return false;
+  }  
+  emit printToQConsole("Moving to home position...");
+
+  ControllerSingleDriveNaive controller;
+  // temporarly switch to local controller for moving to home pos
+  ControllerBase* prev_controller = controller_;
+  controller_ = &controller;
+
+  for (Actuator& actuator : actuators_)
+  {
+    controller.SetMotorID(actuator.ID());
+    controller.SetMotorPosTarget(actuator.GetWinch()->GetServoHomePos());
+    while (!controller.MotorPosTargetReached(actuator.GetStatus().motor_position))
+      continue; // todo: inserisci un tempo di attesa qui
+  }
+  controller_ = prev_controller; // restore original controller
+
+  emit printToQConsole("Daddy, I'm home!");
+  return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -357,27 +396,31 @@ void CableRobot::LoopFunction()
 
 void CableRobot::ControlStep()
 {
-  std::vector<ActuatorStatus> res = controller_->CalcCableSetPoint(status_);
-  for (ActuatorStatus& ctrl_output : res)
+  std::vector<ControlAction> res = controller_->CalcCableSetPoint(status_);
+  for (ControlAction& ctrl_action : res)
   {
-    emit motorStatus(ctrl_output.id,
-                     actuators_[ctrl_output.id].GetWinch()->GetServo()->GetDriveStatus());
+    emit motorStatus(
+      ctrl_action.motor_id,
+      actuators_[ctrl_action.motor_id].GetWinch()->GetServo()->GetDriveStatus());
 
-    if (!actuators_[ctrl_output.id].IsEnabled()) // safety check
+    if (!actuators_[ctrl_action.motor_id].IsEnabled()) // safety check
       continue;
 
-    switch (ctrl_output.op_mode)
+    switch (ctrl_action.ctrl_mode)
     {
-    case grabec::CYCLIC_POSITION:
-      actuators_[ctrl_output.id].SetCableLength(ctrl_output.cable_length);
+    case CABLE_LENGTH:
+      actuators_[ctrl_action.motor_id].SetCableLength(ctrl_action.cable_length);
       break;
-    case grabec::CYCLIC_VELOCITY:
-      actuators_[ctrl_output.id].SetMotorSpeed(ctrl_output.motor_speed);
+    case MOTOR_POSITION:
+      actuators_[ctrl_action.motor_id].SetMotorPos(ctrl_action.motor_position);
       break;
-    case grabec::CYCLIC_TORQUE:
-      actuators_[ctrl_output.id].SetMotorTorque(ctrl_output.motor_torque);
+    case MOTOR_SPEED:
+      actuators_[ctrl_action.motor_id].SetMotorSpeed(ctrl_action.motor_speed);
       break;
-    default:
+    case MOTOR_TORQUE:
+      actuators_[ctrl_action.motor_id].SetMotorTorque(ctrl_action.motor_torque);
+      break;
+    case NONE:
       break;
     }
   }

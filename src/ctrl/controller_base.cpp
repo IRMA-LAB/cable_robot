@@ -35,7 +35,7 @@ void ControllerBase::SetMotorsID(const vect<uint8_t>& motors_id)
   modes_.reserve(motors_id.size());
 }
 
-void ControllerBase::SetMode(const int8_t mode)
+void ControllerBase::SetMode(const ControlMode mode)
 {
   if (motors_id_.empty())
     std::cerr << "[ControllerBase] WARNING: no motor ID defined: cannot set motor "
@@ -44,7 +44,7 @@ void ControllerBase::SetMode(const int8_t mode)
     modes_[i] = mode;
 }
 
-void ControllerBase::SetMode(const uint8_t motor_id, const int8_t mode)
+void ControllerBase::SetMode(const uint8_t motor_id, const ControlMode mode)
 {
   if (motors_id_.empty())
     std::cerr << "[ControllerBase] WARNING: no motor ID defined: cannot set motor "

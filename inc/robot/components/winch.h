@@ -15,11 +15,23 @@ public:
    * @param length
    */
   void SetHomeLength(const double length) { home_length_ = length; }
+
   /**
-   * @brief SetHomeLengthTrue
-   * @param length
+   * @brief GetHomeLength
+   * @return
    */
-  void SetHomeLengthTrue(const double length) { home_length_true_ = length; }
+  double GetHomeLength() const { return home_length_; }
+  /**
+   * @brief GetLength
+   * @return
+   */
+  double GetLength() const { return length_; }
+  /**
+   * @brief GetLength
+   * @param delta_length
+   * @return
+   */
+  double GetLength(const double delta_length);
 
   /**
    * @brief UpdateCableLen
@@ -30,7 +42,6 @@ public:
 private:
   double home_length_ = 0.0;
   double length_ = 0.0;
-  double home_length_true_ = 0.0;
 };
 
 /**
@@ -65,8 +76,18 @@ public:
    * @brief GetServoStatus
    * @return
    */
-  WinchStatus GetStatus() const;
+  WinchStatus GetStatus();
+  /**
+   * @brief GetServoHomePos
+   * @return
+   */
+  int32_t GetServoHomePos() const { return servo_home_pos_; }
 
+  /**
+   * @brief SetServoPos
+   * @param target_pos
+   */
+  void SetServoPos(const int32_t target_pos) { servo_.ChangePosition(target_pos); }
   /**
    * @brief SetServoPosByCableLen
    * @param target_length
@@ -93,18 +114,22 @@ public:
    * @param cable_len
    * @param cable_len_true
    */
-  void UpdateHomeConfig(const double cable_len, const double cable_len_true);
+  void UpdateHomeConfig(const double cable_len);
   /**
    * @brief UpdateConfig
    */
-  void UpdateConfig();
+  void UpdateConfig() { UpdateConfig(servo_.GetPosition()); }
+  /**
+   * @brief UpdateConfig
+   * @param servo_pos
+   */
+  void UpdateConfig(const int32_t servo_pos);
 
 private:
   WinchParams params_;
   Cable cable_;
   grabec::GoldSoloWhistleDrive servo_;
-  int servo_home_pos_ = 0;
-  int servo_start_pos_ = 0;
+  int32_t servo_home_pos_ = 0;
 
   inline double CountsToLength(const int counts) const
   {

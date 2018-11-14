@@ -24,6 +24,7 @@ public:
 public slots:
   void FaultPresent(const bool);
   void AcquisitionCompleteCb();
+  void HomingCompleteCb();
 
 private slots:
   void closeEvent(QCloseEvent *);
@@ -43,14 +44,16 @@ private slots:
   void on_pushButton_cancel_clicked();
   void on_pushButton_done_clicked();
 
+private slots:
   void AppendText2Browser(const QString& text);
-
 
 private:
   Ui::HomingInterfaceProprioceptive* ui;
   QVector<InitTorqueForm*> init_torque_forms_;
 
   HomingProprioceptive app_;
+
+  bool ParseExtFile(HomingProprioceptiveHomeData* res);
 };
 
 #endif // HOMING_INTERFACE_PROPRIOCEPTIVE_H

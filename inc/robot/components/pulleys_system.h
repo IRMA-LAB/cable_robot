@@ -17,6 +17,29 @@ public:
   PulleysSystem(const PulleyParams& params);
 
   /**
+   * @brief GetAngleRad
+   * @return
+   */
+  double GetAngleRad() const { return angle_; }
+  /**
+   * @brief GetAngleRad
+   * @param counts
+   * @return
+   */
+  double GetAngleRad(const int counts);
+  /**
+   * @brief GetAngleRad
+   * @return
+   */
+  double GetAngleDeg() const { return angle_ * 180.0 / M_PI; }
+  /**
+   * @brief GetAngleRad
+   * @param counts
+   * @return
+   */
+  double GetAngleDeg(const int counts) { return GetAngleRad(counts) * 180.0 / M_PI; }
+
+  /**
    * @brief UpdateHomeConfig
    * @param _home_counts
    * @param _home_angle
@@ -28,15 +51,19 @@ public:
    */
   void UpdateConfig(const int counts);
 
-  inline double CountsToPulleyAngleDeg(const int counts) const
-  {
-    return counts * params_.kPulleyAngleFactorDeg;
-  }
+  /**
+   * @brief CountsToPulleyAngleDeg
+   * @param counts
+   * @return
+   */
+  inline double CountsToPulleyAngleDeg(const int counts) const;
 
-  inline double CountsToPulleyAngleRad(const int counts) const
-  {
-    return counts * params_.kPulleyAngleFactorRad;
-  }
+  /**
+   * @brief CountsToPulleyAngleRad
+   * @param counts
+   * @return
+   */
+  inline double CountsToPulleyAngleRad(const int counts) const;
 
 private:
   PulleyParams params_;

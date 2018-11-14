@@ -39,6 +39,12 @@ public:
    */
   void FaultReset();
 
+public:
+  /**
+   * @brief ID
+   * @return
+   */
+  uint8_t ID() const {return id_; }
   /**
    * @brief GetWinch
    * @return
@@ -71,6 +77,11 @@ public:
    */
   void SetCableLength(const double target_length);
   /**
+   * @brief SetMotorPos
+   * @param target_speed
+   */
+  void SetMotorPos(const int32_t target_pos);
+  /**
    * @brief SetCableSpeed
    * @param target_speed
    */
@@ -92,12 +103,7 @@ public:
    * @param cable_len_true
    * @param pulley_angle
    */
-  void UpdateHomeConfig(const double cable_len, const double cable_len_true,
-                        const double pulley_angle);
-  /**
-   * @brief UpdateStartConfig
-   */
-  void UpdateStartConfig();
+  void UpdateHomeConfig(const double cable_len, const double pulley_angle);
   /**
    * @brief UpdateConfig
    */

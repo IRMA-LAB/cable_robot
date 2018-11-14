@@ -1,9 +1,5 @@
 #include "robot/components/actuator.h"
 
-////////////////////////////////////////////////////////////////
-/// Actuator Class
-////////////////////////////////////////////////////////////////
-
 // Must provide redundant definition of the static member as well as the declaration.
 constexpr char* Actuator::kStatesStr_[];
 
@@ -23,6 +19,10 @@ Actuator::~Actuator()
   delete winch_;
   delete pulley_;
 }
+
+////////////////////////////////////////////////////////////////////////////
+//// External events public
+////////////////////////////////////////////////////////////////////////////
 
 void Actuator::Enable()
 {
@@ -57,6 +57,10 @@ void Actuator::FaultReset()
   // clang-format on
 }
 
+////////////////////////////////////////////////////////////////////////////
+//// Public functions
+////////////////////////////////////////////////////////////////////////////
+
 ActuatorStatus Actuator::GetStatus() const
 {
   WinchStatus winch_status = winch_->GetStatus();
@@ -68,13 +72,18 @@ ActuatorStatus Actuator::GetStatus() const
   status.cable_length = winch_status.cable_length;
   status.aux_position = winch_status.aux_position;
   status.id = id_;
-  status.pulley_angle = pulley_->CountsToPulleyAngleDeg(status.aux_position);
+  status.pulley_angle = pulley_->GetAngleRad(status.aux_position);
   return status;
 }
 
 void Actuator::SetCableLength(const double target_length)
 {
   winch_->SetServoPosByCableLen(target_length);
+}
+
+void Actuator::SetMotorPos(const int32_t target_pos)
+{
+  winch_->SetServoPos(target_pos);
 }
 
 void Actuator::SetMotorSpeed(const int32_t target_speed)
@@ -89,20 +98,21 @@ void Actuator::SetMotorTorque(const int16_t target_torque)
 
 void Actuator::SetMotorOpMode(const int8_t op_mode) { winch_->SetServoOpMode(op_mode); }
 
-void Actuator::UpdateHomeConfig(const double cable_len, const double cable_len_true,
-                                const double pulley_angle)
+void Actuator::UpdateHomeConfig(const double cable_len, const double pulley_angle)
 {
   pulley_->UpdateHomeConfig(winch_->GetServo()->GetAuxPosition(), pulley_angle);
-  winch_->UpdateHomeConfig(cable_len, cable_len_true);
+  winch_->UpdateHomeConfig(cable_len);
 }
-
-void Actuator::UpdateStartConfig() {}
 
 void Actuator::UpdateConfig()
 {
   winch_->UpdateConfig();
   pulley_->UpdateConfig(winch_->GetServo()->GetAuxPosition());
 }
+
+////////////////////////////////////////////////////////////////////////////
+//// States actions private
+////////////////////////////////////////////////////////////////////////////
 
 // Guard condition to detemine whether Idle state is executed.
 GUARD_DEFINE(Actuator, GuardIdle, NoEventData)

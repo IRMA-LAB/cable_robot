@@ -21,6 +21,7 @@ HomingInterfaceProprioceptive::HomingInterfaceProprioceptive(QWidget* parent,
   connect(&app_, SIGNAL(printToQConsole(QString)), this,
           SLOT(AppendText2Browser(QString)));
   connect(&app_, SIGNAL(acquisitionComplete()), this, SLOT(AcquisitionCompleteCb()));
+  connect(&app_, SIGNAL(homingComplete()), this, SLOT(HomingCompleteCb()));
   app_.Stop(); // make sure we start in IDLE mode
 }
 
@@ -31,6 +32,7 @@ HomingInterfaceProprioceptive::~HomingInterfaceProprioceptive()
   disconnect(&app_, SIGNAL(printToQConsole(QString)), this,
              SLOT(AppendText2Browser(QString)));
   disconnect(&app_, SIGNAL(acquisitionComplete()), this, SLOT(AcquisitionCompleteCb()));
+  disconnect(&app_, SIGNAL(homingComplete()), this, SLOT(HomingCompleteCb()));
 
   for (InitTorqueForm* form : init_torque_forms_)
     delete form;
@@ -61,9 +63,15 @@ void HomingInterfaceProprioceptive::AcquisitionCompleteCb()
   ui->pushButton_start->click(); // stop
 }
 
-///////////////////////////
-//// Private slots
-///////////////////////////
+void HomingInterfaceProprioceptive::HomingCompleteCb()
+{
+  ui->groupBox_dataCollection->setEnabled(true);
+  ui->pushButton_done->setEnabled(true);
+}
+
+///////////////////////////////////
+//// Private GUI slots
+///////////////////////////////////
 
 void HomingInterfaceProprioceptive::closeEvent(QCloseEvent*)
 {
@@ -182,13 +190,31 @@ void HomingInterfaceProprioceptive::on_pushButton_extFile_clicked()
                                  tr("Optimization results (*.txt)"));
   if (config_filename.isEmpty())
   {
-    QMessageBox::warning(this, "File Error", "file name is empty");
+    QMessageBox::warning(this, "File Error", "File name is empty!");
     return;
   }
   ui->lineEdit_extFile->setText(config_filename);
 }
 
-void HomingInterfaceProprioceptive::on_pushButton_ok_clicked() { app_.Optimize(); }
+void HomingInterfaceProprioceptive::on_pushButton_ok_clicked()
+{
+  if (ui->radioButton_internal->isChecked())
+  {
+    ui->groupBox_dataCollection->setEnabled(false);
+    app_.Optimize();
+    return;
+  }
+
+  HomingProprioceptiveHomeData* res = new HomingProprioceptiveHomeData;
+  if (!ParseExtFile(res))
+  {
+    QMessageBox::warning(this, "File Error",
+                         "File content is not valid!\nPlease load a different file.");
+    return;
+  }
+  ui->groupBox_dataCollection->setEnabled(false);
+  app_.GoHome(res);
+}
 
 void HomingInterfaceProprioceptive::on_pushButton_cancel_clicked()
 {
@@ -208,7 +234,7 @@ void HomingInterfaceProprioceptive::on_pushButton_cancel_clicked()
       return;
     break;
   }
-  case HomingProprioceptive::ST_GO_HOME:
+  case HomingProprioceptive::ST_HOME:
   {
     QMessageBox::StandardButton reply = QMessageBox::question(
       this, "Homing in progress", "The robot is moving to the homing position. If you "
@@ -244,12 +270,25 @@ void HomingInterfaceProprioceptive::on_pushButton_cancel_clicked()
 
 void HomingInterfaceProprioceptive::on_pushButton_done_clicked()
 {
-  ui->pushButton_enable->click();
   emit homingSuccess();
   close();
 }
 
+///////////////////////////////////
+//// Private slots
+///////////////////////////////////
+
 void HomingInterfaceProprioceptive::AppendText2Browser(const QString& text)
 {
   ui->textBrowser_logs->append(text);
+}
+
+///////////////////////////////////
+//// Private functions
+///////////////////////////////////
+
+bool HomingInterfaceProprioceptive::ParseExtFile(HomingProprioceptiveHomeData* res)
+{
+  // Read external file and fill res struct
+  return true;  // dummy
 }

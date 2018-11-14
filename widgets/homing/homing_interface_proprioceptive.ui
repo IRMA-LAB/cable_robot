@@ -50,7 +50,7 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_7" stretch="0,1">
      <item>
-      <widget class="QGroupBox" name="StartProcessControlBox">
+      <widget class="QGroupBox" name="groupBox_dataCollection">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
          <horstretch>0</horstretch>
@@ -489,7 +489,7 @@
     </layout>
    </item>
    <item>
-    <widget class="QGroupBox" name="groupBox">
+    <widget class="QGroupBox" name="groupBox_optimization">
      <property name="font">
       <font>
        <pointsize>16</pointsize>

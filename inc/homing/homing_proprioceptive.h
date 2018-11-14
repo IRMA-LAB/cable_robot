@@ -8,6 +8,7 @@
 #include "robot/cablerobot.h"
 #include "ctrl/controller_singledrive_naive.h"
 
+
 class HomingProprioceptiveStartData : public EventData
 {
 public:
@@ -18,6 +19,13 @@ public:
   vect<qint16> init_torques;
   vect<qint16> max_torques;
   quint8 num_meas;
+};
+
+class HomingProprioceptiveHomeData : public EventData
+{
+public:
+  vect<double> init_lengths;
+  vect<double> init_angles;
 };
 
 class HomingProprioceptive : public QObject, public StateMachine
@@ -36,7 +44,7 @@ public:
     ST_COILING,
     ST_UNCOILING,
     ST_OPTIMIZING,
-    ST_GO_HOME,
+    ST_HOME,
     ST_FAULT,
     ST_MAX_STATES
   };
@@ -48,12 +56,14 @@ public:
   void Stop();
   void Next();
   void Optimize();
+  void GoHome(HomingProprioceptiveHomeData *data);
   void FaultTrigger();
   void FaultReset();
 
 signals:
   void printToQConsole(const QString&) const;
   void acquisitionComplete() const;
+  void homingComplete() const;
 
 private:
   static constexpr quint8 kNumMeasMin = 1U;
@@ -61,6 +71,7 @@ private:
   CableRobot* robot_ = NULL;
   ControllerSingleDriveNaive controller_;
   quint8 num_meas_ = kNumMeasMin;
+  quint16 meas_step_;
   vect<qint16> init_torques_;
   vect<qint16> max_torques_;
   vect<qint16> torques_;
@@ -93,7 +104,7 @@ private:
   GUARD_DECLARE(HomingProprioceptive, GuardUncoiling, NoEventData)
   STATE_DECLARE(HomingProprioceptive, Uncoiling, NoEventData)
   STATE_DECLARE(HomingProprioceptive, Optimizing, NoEventData)
-  STATE_DECLARE(HomingProprioceptive, GoHome, NoEventData)
+  STATE_DECLARE(HomingProprioceptive, Home, HomingProprioceptiveHomeData)
   STATE_DECLARE(HomingProprioceptive, Fault, NoEventData)
 
   // State map to define state object order. Each state map entry defines a state object.
@@ -106,7 +117,7 @@ private:
     STATE_MAP_ENTRY_ALL_EX(&Coiling, &GuardCoiling, 0, 0)
     STATE_MAP_ENTRY_ALL_EX(&Uncoiling, &GuardUncoiling, 0, 0)
     STATE_MAP_ENTRY_EX(&Optimizing)
-    STATE_MAP_ENTRY_EX(&GoHome)
+    STATE_MAP_ENTRY_EX(&Home)
     STATE_MAP_ENTRY_EX(&Fault)
   // clang-format on
   END_STATE_MAP_EX

@@ -13,13 +13,23 @@ ControllerSingleDriveNaive::ControllerSingleDriveNaive(const uint8_t motor_id)
 void ControllerSingleDriveNaive::SetCableLenTarget(const double target)
 {
   Clear();
+  SetMode(CABLE_LENGTH);
   length_target_ = target;
   target_flags_.Set(LENGTH);
+}
+
+void ControllerSingleDriveNaive::SetMotorPosTarget(const int32_t target)
+{
+  Clear();
+  SetMode(MOTOR_POSITION);
+  pos_target_ = target;
+  target_flags_.Set(POSITION);
 }
 
 void ControllerSingleDriveNaive::SetMotorSpeedTarget(const int32_t target)
 {
   Clear();
+  SetMode(MOTOR_SPEED);
   speed_target_ = target;
   target_flags_.Set(SPEED);
 }
@@ -27,6 +37,7 @@ void ControllerSingleDriveNaive::SetMotorSpeedTarget(const int32_t target)
 void ControllerSingleDriveNaive::SetMotorTorqueTarget(const int16_t target)
 {
   Clear();
+  SetMode(MOTOR_TORQUE);
   torque_target_ = target;
   target_flags_.Set(TORQUE);
 }
@@ -56,6 +67,12 @@ bool ControllerSingleDriveNaive::CableLenTargetReached(const double current_valu
   return grabnum::IsClose(length_target_, current_value, tol);
 }
 
+bool ControllerSingleDriveNaive::MotorPosTargetReached(const int32_t current_value)
+{
+  static const int32_t tol = 1; // inserisci una tolleranza vera..
+  return abs(pos_target_ - current_value) < tol;
+}
+
 bool ControllerSingleDriveNaive::MotorSpeedTargetReached(const int32_t current_value)
 {
   static const int32_t tol = 1; // inserisci una tolleranza vera..
@@ -68,14 +85,14 @@ bool ControllerSingleDriveNaive::MotorTorqueTargetReached(const int16_t current_
   return abs(torque_target_ - current_value) < tol;
 }
 
-vect<ActuatorStatus> ControllerSingleDriveNaive::CalcCableSetPoint(const grabcdpr::Vars&)
+vect<ControlAction> ControllerSingleDriveNaive::CalcCableSetPoint(const grabcdpr::Vars&)
 {
-  ActuatorStatus res;
-  res.op_mode = modes_[0];
-  res.id = motors_id_[0];
-  switch (res.op_mode)
+  ControlAction res;
+  res.ctrl_mode = modes_[0];
+  res.motor_id = motors_id_[0];
+  switch (res.ctrl_mode)
   {
-  case grabec::CYCLIC_POSITION:
+  case CABLE_LENGTH:
     if (target_flags_.CheckBit(LENGTH))
     {
       if (change_length_target_)
@@ -83,25 +100,31 @@ vect<ActuatorStatus> ControllerSingleDriveNaive::CalcCableSetPoint(const grabcdp
       res.cable_length = length_target_;
     }
     else
-      res.op_mode = grabec::NONE;
+      res.ctrl_mode = NONE;
     break;
-  case grabec::CYCLIC_VELOCITY:
+  case MOTOR_POSITION:
+    if (target_flags_.CheckBit(POSITION))
+      res.motor_position = pos_target_;
+    else
+      res.ctrl_mode = NONE;
+    break;
+  case MOTOR_SPEED:
     if (target_flags_.CheckBit(SPEED))
       res.motor_speed = speed_target_;
     else
-      res.op_mode = grabec::NONE;
+      res.ctrl_mode = NONE;
     break;
-  case grabec::CYCLIC_TORQUE:
+  case MOTOR_TORQUE:
     if (target_flags_.CheckBit(TORQUE))
       res.motor_torque = torque_target_;
     else
-      res.op_mode = grabec::NONE;
+      res.ctrl_mode = NONE;
     break;
-  default:
-    res.op_mode = grabec::NONE;
+  case NONE:
+    res.ctrl_mode = NONE;
     break;
   }
-  return vect<ActuatorStatus>(1, res);
+  return vect<ControlAction>(1, res);
 }
 
 ////////////////////////////////////////////////////////////////////////////

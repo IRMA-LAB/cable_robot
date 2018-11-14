@@ -5,6 +5,12 @@ PulleysSystem::PulleysSystem(const PulleyParams &params)
   params_ = params;
 }
 
+double PulleysSystem::GetAngleRad(const int counts)
+{
+  UpdateConfig(counts);
+  return angle_;
+}
+
 void PulleysSystem::UpdateHomeConfig(const int _home_counts, const double _home_angle)
 {
   home_counts_ = _home_counts;
@@ -14,4 +20,14 @@ void PulleysSystem::UpdateHomeConfig(const int _home_counts, const double _home_
 void PulleysSystem::UpdateConfig(const int counts)
 {
   angle_ = home_angle_ + CountsToPulleyAngleRad(counts - home_counts_);
+}
+
+double PulleysSystem::CountsToPulleyAngleDeg(const int counts) const
+{
+  return counts * params_.kPulleyAngleFactorDeg;
+}
+
+double PulleysSystem::CountsToPulleyAngleRad(const int counts) const
+{
+  return counts * params_.kPulleyAngleFactorRad;
 }

@@ -9,6 +9,7 @@
 #include "slaves/easycatslave.h"
 #include "components/actuator.h"
 #include "ctrl/controller_base.h"
+#include "ctrl/controller_singledrive_naive.h"
 
 class CableRobot : public QObject,
                    public StateMachine,
@@ -31,6 +32,11 @@ public:
     ST_MAX_STATES
   };
 
+  ActuatorStatus GetActuatorStatus(const quint8 motor_id) const;
+  void UpdateHomeConfig(const double cable_len, const double pulley_angle);
+  void UpdateHomeConfig(const quint8 motor_id, const double cable_len,
+                        const double pulley_angle);
+
   bool MotorEnabled(const quint8 motor_id) { return actuators_[motor_id].IsEnabled(); }
   bool AnyMotorEnabled();
   bool MotorsEnabled();
@@ -43,11 +49,11 @@ public:
   void SetMotorOpMode(const quint8 motor_id, const qint8 op_mode);
   void SetMotorsOpMode(const qint8 op_mode);
   void SetMotorsOpMode(const std::vector<quint8>& motors_id, const qint8 op_mode);
-  ActuatorStatus GetActuatorStatus(const quint8 motor_id) const;
   vect<quint8> GetMotorsID() const;
 
   void CollectMeas();
   void DumpMeas() const;
+  bool GoHome();
 
   void SetController(ControllerBase* controller) { controller_ = controller; }
 
