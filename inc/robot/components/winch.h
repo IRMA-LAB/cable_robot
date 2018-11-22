@@ -2,7 +2,7 @@
 #define CABLE_ROBOT_WINCH_H
 
 #include "slaves/goldsolowhistledrive.h"
-#include "types.h"
+#include "utils/types.h"
 
 /**
  * @brief The Cable class

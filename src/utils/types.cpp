@@ -1,4 +1,4 @@
-#include "types.h"
+#include "utils/types.h"
 
 /* Pulley params */
 // 18 bit, change if the encoder is different

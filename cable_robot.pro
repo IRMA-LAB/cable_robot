@@ -1,7 +1,7 @@
 
 HEADERS = \
     $$PWD/inc/robot/components/winch.h \
-    $$PWD/inc/types.h \
+    $$PWD/inc/utils/types.h \
     $$PWD/inc/robot/components/actuator.h \
     $$PWD/inc/robot/components/pulleys_system.h \
     $$PWD/inc/gui/main_gui.h \
@@ -22,7 +22,7 @@ SOURCES = \
     $$PWD/src/robot/components/pulleys_system.cpp \
     $$PWD/src/gui/main_gui.cpp \
     $$PWD/src/gui/login_window.cpp \
-    $$PWD/src/types.cpp \
+    $$PWD/src/utils/types.cpp \
     $$PWD/src/main.cpp \
     $$PWD/src/robot/cablerobot.cpp \
     $$PWD/src/gui/calib/calibration_dialog.cpp \

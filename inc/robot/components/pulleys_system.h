@@ -2,7 +2,7 @@
 #define CABLE_ROBOT_PULLEYS_SYSTEM_H
 
 #include <stdlib.h>
-#include "types.h"
+#include "utils/types.h"
 
 /**
  * @brief The PulleysSystem class
