@@ -14,31 +14,6 @@
   QByteArray serialize(const _MsgType##Msg& data);
 #endif
 
-#ifndef MSG_SERIALIZATION_DEFINE
-#define MSG_SERIALIZATION_DEFINE(_MSG_TYPE, _BodyType)                                   \
-  QByteArray _BodyType##Msg::serialized() const { return serialize(*this); }             \
-                                                                                         \
-  void _BodyType##Msg::deserialize(QByteArray data)                                      \
-  {                                                                                      \
-    QDataStream stream(&data, QIODevice::ReadOnly);                                      \
-    stream.setVersion(QDataStream::Qt_4_5);                                              \
-    HeaderMsg tmp_header;                                                                \
-    stream >> tmp_header;                                                                \
-    if (header.msg_type != _MSG_TYPE)                                                    \
-      return;                                                                            \
-    stream >> body;                                                                      \
-    header = tmp_header;                                                                 \
-  }                                                                                      \
-                                                                                         \
-  QByteArray serialize(const _BodyType##Msg& data)                                       \
-  {                                                                                      \
-    QByteArray buf;                                                                      \
-    QDataStream strm(&buf, QIODevice::WriteOnly);                                        \
-    strm.setVersion(QDataStream::Qt_4_5);                                                \
-    strm << data.header << data.body;                                                    \
-    return buf;                                                                          \
-  }
-#endif
 
 #ifndef MSG_STRUCT_DECLARE
 #define MSG_STRUCT_DECLARE(_MSG_TYPE, _BodyType)                                         \
@@ -59,16 +34,23 @@
 
 //----------------------  MESSAGE LIST -------------------------//
 
+/**
+ * @brief The MsgType enum
+ */
 enum MsgType : quint32
 {
   NONE,
   MOTOR_STATUS,
   WINCH_STATUS,
-  ACTUATOR_STATUS
+  ACTUATOR_STATUS,
+  // ... add new message type here, e.g. MY_TYPE, ...
 };
 
 //----------------------  MESSAGE HEADER -------------------------//
 
+/**
+ * @brief The HeaderMsg struct
+ */
 struct HeaderMsg
 {
   HeaderMsg() : timestamp(-1.0), msg_type(NONE) {}
@@ -88,6 +70,9 @@ QDataStream& operator>>(QDataStream& istream, HeaderMsg& data);
 
 //----------------------  MESSAGES -------------------------//
 
+/**
+ * @brief The BaseMsg struct
+ */
 struct BaseMsg
 {
   BaseMsg(const MsgType msg_t) : header(msg_t) {}
@@ -96,12 +81,16 @@ struct BaseMsg
   HeaderMsg header;
 };
 
+extern const size_t kMaxMsgSize;
+
 MSG_STRUCT_DECLARE(MOTOR_STATUS, MotorStatus)
 MSG_STRUCT_DECLARE(WINCH_STATUS, WinchStatus)
 MSG_STRUCT_DECLARE(ACTUATOR_STATUS, ActuatorStatus)
+// ... and here, e.g. MSG_STRUCT_DECLARE(MY_TYPE, MyTypeStruct), ...
 
 MSG_SERIALIZATION_DECLARE(MotorStatus)
 MSG_SERIALIZATION_DECLARE(WinchStatus)
 MSG_SERIALIZATION_DECLARE(ActuatorStatus)
+// ... and here, e.g. MSG_SERIALIZATION_DECLARE(MyTypeStruct)
 
 #endif // MSGS_H

@@ -40,16 +40,18 @@ struct ActuatorParams
  */
 struct MotorStatus
 {
-  MotorStatus() : op_mode(0), motor_position(0), motor_speed(0), motor_torque(0) {}
+  MotorStatus() : motor_position(0), motor_speed(0), motor_torque(0), op_mode(0) {}
   MotorStatus(const int8_t _op_mode, const int32_t motor_pos, const int32_t _motor_speed,
               const int16_t _motor_torque)
-    : op_mode(_op_mode), motor_position(motor_pos), motor_speed(_motor_speed),
-      motor_torque(_motor_torque) {}
+    : motor_position(motor_pos), motor_speed(_motor_speed), motor_torque(_motor_torque),
+      op_mode(_op_mode)
+  {
+  }
 
-  int8_t op_mode;
   int32_t motor_position;
   int32_t motor_speed;
   int16_t motor_torque;
+  int8_t op_mode;
 };
 
 /**
@@ -57,14 +59,16 @@ struct MotorStatus
  */
 struct WinchStatus : MotorStatus
 {
-  WinchStatus() : cable_length(0.0), aux_position(0) {}
+  WinchStatus() : aux_position(0), cable_length(0.0) {}
   WinchStatus(const int8_t _op_mode, const int32_t motor_pos, const int32_t _motor_speed,
               const int16_t _motor_torque, const double cable_len, const int aux_pos)
     : MotorStatus(_op_mode, motor_pos, _motor_speed, _motor_torque),
-      cable_length(cable_len), aux_position(aux_pos) {}
+      aux_position(aux_pos), cable_length(cable_len)
+  {
+  }
 
-  double cable_length;
   int aux_position;
+  double cable_length;
 };
 
 /**
@@ -78,7 +82,9 @@ struct ActuatorStatus : WinchStatus
                  const double cable_len, const int aux_pos, const uint8_t _id,
                  const double pulley_ang)
     : WinchStatus(_op_mode, motor_pos, _motor_speed, _motor_torque, cable_len, aux_pos),
-      id(_id), pulley_angle(pulley_ang) {}
+      id(_id), pulley_angle(pulley_ang)
+  {
+  }
 
   uint8_t id;
   double pulley_angle;
