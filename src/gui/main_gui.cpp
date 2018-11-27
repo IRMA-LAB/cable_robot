@@ -6,7 +6,7 @@ MainGUI::MainGUI(QWidget* parent, const grabcdpr::Params& config)
 {
   ui->setupUi(this);
 
-  for (size_t i = 0; i < config.cables.size(); i++)
+  for (size_t i = 0; i < config.actuators.size(); i++)
     ui->comboBox_motorAxis->addItem(QString::number(i + 1));
 
   connect(&robot_, SIGNAL(printToQConsole(QString)), this,
@@ -138,8 +138,8 @@ void MainGUI::on_radioButton_posMode_clicked()
     DisableVelCtrlButtons(true);
     DisableTorqueCtrlButtons(true);
 #if ECNTW
-    man_ctrl_ptr_->SetCableLenTarget(robot_.GetMotorStatus(motor_id_).length_target);
-    man_ctrl_ptr_->SetMode(grabec::CYCLIC_POSITION);
+    man_ctrl_ptr_->SetCableLenTarget(robot_.GetActuatorStatus(motor_id_).cable_length);
+    man_ctrl_ptr_->SetMode(ControlMode::CABLE_LENGTH);
 #endif
   }
 }
@@ -156,8 +156,8 @@ void MainGUI::on_radioButton_velMode_clicked()
     DisableVelCtrlButtons(false);
     DisableTorqueCtrlButtons(true);
 #if ECNTW
-    man_ctrl_ptr_->SetMotorSpeedTarget(robot_.GetMotorStatus(motor_id_).speed_target);
-    man_ctrl_ptr_->SetMode(grabec::CYCLIC_VELOCITY);
+    man_ctrl_ptr_->SetMotorSpeedTarget(robot_.GetActuatorStatus(motor_id_).motor_speed);
+    man_ctrl_ptr_->SetMode(ControlMode::MOTOR_SPEED);
 #endif
   }
 }
@@ -174,8 +174,8 @@ void MainGUI::on_radioButton_torqueMode_clicked()
     DisableVelCtrlButtons(true);
     DisableTorqueCtrlButtons(false);
 #if ECNTW
-    man_ctrl_ptr_->SetMotorTorqueTarget(robot_.GetMotorStatus(motor_id_).torque_target);
-    man_ctrl_ptr_->SetMode(grabec::CYCLIC_TORQUE);
+    man_ctrl_ptr_->SetMotorTorqueTarget(robot_.GetActuatorStatus(motor_id_).motor_torque);
+    man_ctrl_ptr_->SetMode(ControlMode::MOTOR_TORQUE);
 #endif
   }
 }
@@ -372,22 +372,22 @@ void MainGUI::SetupDirectMotorCtrl()
   if (manual_ctrl_enabled_)
   {
     // Setup controller before enabling the motor
-    man_ctrl_ptr_ = new ControllerBasic(motor_id_);
-    MotorStatus current_status = robot_.GetMotorStatus(motor_id_);
+    man_ctrl_ptr_ = new ControllerSingleDriveNaive(motor_id_);
+    ActuatorStatus current_status = robot_.GetActuatorStatus(motor_id_);
     if (ui->radioButton_posMode->isChecked())
     {
-      man_ctrl_ptr_->SetMode(grabec::CYCLIC_POSITION);
-      man_ctrl_ptr_->SetCableLenTarget(current_status.length_target);
+      man_ctrl_ptr_->SetMode(ControlMode::CABLE_LENGTH);
+      man_ctrl_ptr_->SetCableLenTarget(current_status.cable_length);
     }
     if (ui->radioButton_velMode->isChecked())
     {
-      man_ctrl_ptr_->SetMode(grabec::CYCLIC_VELOCITY);
-      man_ctrl_ptr_->SetMotorSpeedTarget(current_status.speed_target);
+      man_ctrl_ptr_->SetMode(ControlMode::MOTOR_SPEED);
+      man_ctrl_ptr_->SetMotorSpeedTarget(current_status.motor_speed);
     }
     if (ui->radioButton_torqueMode->isChecked())
     {
-      man_ctrl_ptr_->SetMode(grabec::CYCLIC_TORQUE);
-      man_ctrl_ptr_->SetMotorTorqueTarget(current_status.torque_target);
+      man_ctrl_ptr_->SetMode(ControlMode::MOTOR_TORQUE);
+      man_ctrl_ptr_->SetMotorTorqueTarget(current_status.motor_torque);
     }
     robot_.SetController(man_ctrl_ptr_);
 

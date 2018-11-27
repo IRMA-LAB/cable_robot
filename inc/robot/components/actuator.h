@@ -19,8 +19,8 @@ public:
    * @param[in] slave_position
    * @param[in] params
    */
-  explicit Actuator(const uint8_t id, const uint8_t slave_position,
-                    const grabcdpr::CableParams& params);
+  explicit Actuator(const size_t id, const uint8_t slave_position,
+                    const grabcdpr::ActuatorParams& params);
   ~Actuator();
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -69,7 +69,7 @@ public:
    * @brief GetActuatorID
    * @return
    */
-  uint8_t GetActuatorID() const { return id_; }
+  size_t GetActuatorID() const { return id_; }
 
   /**
    * @brief SetCableLength
@@ -126,7 +126,7 @@ public:
   bool IsInFault() { return GetCurrentState() == ST_FAULT; }
 
 private:
-  uint8_t id_;
+  size_t id_;
   uint8_t slave_position_;
 
   Winch* winch_;

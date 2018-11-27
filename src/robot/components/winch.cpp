@@ -19,7 +19,7 @@ double Cable::GetLength(const double delta_length)
 /// Winch Class
 ////////////////////////////////////////////////////////////////
 
-Winch::Winch(const uint8_t slave_position, const WinchParams& params)
+Winch::Winch(const uint8_t slave_position, const grabcdpr::WinchParams& params)
   : servo_(slave_position)
 {
   params_ = params;

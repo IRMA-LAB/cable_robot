@@ -2,6 +2,7 @@
 #define CABLE_ROBOT_WINCH_H
 
 #include "slaves/goldsolowhistledrive.h"
+#include "libcdpr/inc/types.h"
 #include "utils/types.h"
 
 /**
@@ -55,7 +56,7 @@ public:
    * @param slave_position
    * @param params
    */
-  Winch(const uint8_t slave_position, const WinchParams& params);
+  Winch(const uint8_t slave_position, const grabcdpr::WinchParams& params);
 
   /**
    * @brief GetServo
@@ -126,19 +127,19 @@ public:
   void UpdateConfig(const int32_t servo_pos);
 
 private:
-  WinchParams params_;
+  grabcdpr::WinchParams params_;
   Cable cable_;
   grabec::GoldSoloWhistleDrive servo_;
   int32_t servo_home_pos_ = 0;
 
-  inline double CountsToLength(const int counts) const
+  double CountsToLength(const int counts)
   {
-    return counts * params_.kCountsToLengthFactor;
+    return counts * params_.CountsToLengthFactor();
   }
 
-  inline int LengthToCounts(const double length) const
+  int LengthToCounts(const double length)
   {
-    return static_cast<int>(length / params_.kCountsToLengthFactor);
+    return static_cast<int>(length / params_.CountsToLengthFactor());
   }
 };
 

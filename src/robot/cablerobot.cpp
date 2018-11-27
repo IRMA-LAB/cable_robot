@@ -18,13 +18,13 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
   ec_slaves_ptrs_.push_back(&easycat_slaves_[slave_pos++]);
 #endif
 
-  meas_.reserve(config.cables.size());
-  for (size_t i = 0; i < config.cables.size(); i++)
+  meas_.reserve(config.actuators.size());
+  for (size_t i = 0; i < config.actuators.size(); i++)
   {
     grabcdpr::CableVars cable;
     status_.cables.push_back(cable);
 #if ECNTW
-    actuators_.push_back(Actuator(i, slave_pos++, config.cables[i]));
+    actuators_.push_back(Actuator(i, slave_pos++, config.actuators[i]));
     ec_slaves_ptrs_.push_back(actuators_[i].GetWinch()->GetServo());
 #endif
   }

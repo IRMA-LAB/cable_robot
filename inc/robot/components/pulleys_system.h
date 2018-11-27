@@ -2,6 +2,8 @@
 #define CABLE_ROBOT_PULLEYS_SYSTEM_H
 
 #include <stdlib.h>
+
+#include "libcdpr/inc/types.h"
 #include "utils/types.h"
 
 /**
@@ -14,7 +16,7 @@ public:
    * @brief PulleysSystem
    * @param params
    */
-  PulleysSystem(const PulleyParams& params);
+  PulleysSystem(const grabcdpr::PulleyParams& params);
 
   /**
    * @brief GetAngleRad
@@ -66,7 +68,7 @@ public:
   inline double CountsToPulleyAngleRad(const int counts) const;
 
 private:
-  PulleyParams params_;
+  grabcdpr::PulleyParams params_;
 
   int home_counts_ = 0;
   double home_angle_ = 0.0;

@@ -1,6 +1,6 @@
 #include "robot/components/pulleys_system.h"
 
-PulleysSystem::PulleysSystem(const PulleyParams &params)
+PulleysSystem::PulleysSystem(const grabcdpr::PulleyParams &params)
 {
   params_ = params;
 }
@@ -24,10 +24,10 @@ void PulleysSystem::UpdateConfig(const int counts)
 
 double PulleysSystem::CountsToPulleyAngleDeg(const int counts) const
 {
-  return counts * params_.kPulleyAngleFactorDeg;
+  return counts * params_.PulleyAngleFactorDeg();
 }
 
 double PulleysSystem::CountsToPulleyAngleRad(const int counts) const
 {
-  return counts * params_.kPulleyAngleFactorRad;
+  return counts * params_.PulleyAngleFactorRad();
 }
