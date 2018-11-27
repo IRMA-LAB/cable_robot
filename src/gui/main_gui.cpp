@@ -256,6 +256,7 @@ void MainGUI::EnableInterface(const bool op_outcome /*= false*/)
 
 void MainGUI::AppendText2Browser(const QString& text)
 {
+  CLOG(INFO, "browser") << text;
   ui->textBrowser_logs->append(text);
 }
 

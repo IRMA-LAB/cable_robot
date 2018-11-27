@@ -42,7 +42,7 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
 //// Public functions
 ////////////////////////////////////////////////////////////////////////////
 
-ActuatorStatus CableRobot::GetActuatorStatus(const quint8 motor_id) const
+const ActuatorStatus CableRobot::GetActuatorStatus(const quint8 motor_id)
 {
   return actuators_[motor_id].GetStatus();
 }
@@ -208,7 +208,7 @@ bool CableRobot::GoHome()
   for (Actuator& actuator : actuators_)
   {
     controller.SetMotorID(actuator.ID());
-    controller.SetMotorPosTarget(actuator.GetWinch()->GetServoHomePos());
+    controller.SetMotorPosTarget(actuator.GetWinch().GetServoHomePos());
     while (!controller.MotorPosTargetReached(actuator.GetStatus().motor_position))
       continue; // todo: inserisci un tempo di attesa qui
   }
@@ -401,7 +401,7 @@ void CableRobot::ControlStep()
   {
     emit motorStatus(
       ctrl_action.motor_id,
-      actuators_[ctrl_action.motor_id].GetWinch()->GetServo()->GetDriveStatus());
+      actuators_[ctrl_action.motor_id].GetWinch().GetServo()->GetDriveStatus());
 
     if (!actuators_[ctrl_action.motor_id].IsEnabled()) // safety check
       continue;

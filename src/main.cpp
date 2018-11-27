@@ -1,4 +1,5 @@
 #include <QApplication>
+#include <QtDebug>
 
 #include "lib/easyloggingpp/src/easylogging++.h"
 #include "gui/login_window.h"
@@ -12,16 +13,16 @@ INITIALIZE_EASYLOGGINGPP
 int main(int argc, char *argv[])
 {
     START_EASYLOGGINGPP(argc, argv);
-    // Load configuration from file
-    el::Configurations conf("config/log_conf.conf");
-    // Reconfigure single logger
-    el::Loggers::reconfigureLogger("default", conf);
+    // Configure all loggers
+    el::Loggers::configureFromGlobal("../../config/logs.conf");
 
     QApplication a(argc, argv);
     qRegisterMetaType<grabec::GSWDriveInPdos>("grabec::GSWDriveInPdos");
+    CLOG(INFO, "event") << "App START";
 
     LoginWindow w;
     w.show();
+    CLOG(INFO, "event") << "Prompt login in window";
 
     return a.exec();
 }

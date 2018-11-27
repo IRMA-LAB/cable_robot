@@ -4,6 +4,7 @@
 #include <QDialog>
 
 #include "libcdpr/inc/types.h"
+#include "easylogging++.h"
 
 #include "gui/calib/calibration_dialog.h"
 #include "gui/homing/homing_dialog.h"

@@ -5,16 +5,9 @@ constexpr char* Actuator::kStatesStr_[];
 
 Actuator::Actuator(const size_t id, const uint8_t slave_position,
                    const grabcdpr::ActuatorParams& params)
-  : StateMachine(ST_MAX_STATES), id_(id), slave_position_(slave_position)
+  : StateMachine(ST_MAX_STATES), id_(id), slave_position_(slave_position),
+    winch_(slave_position, params.winch), pulley_(params.pulley)
 {
-  winch_ = new Winch(slave_position, params.winch);
-  pulley_ = new PulleysSystem(params.pulley);
-}
-
-Actuator::~Actuator()
-{
-  delete winch_;
-  delete pulley_;
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -58,9 +51,9 @@ void Actuator::FaultReset()
 //// Public functions
 ////////////////////////////////////////////////////////////////////////////
 
-ActuatorStatus Actuator::GetStatus() const
+const ActuatorStatus Actuator::GetStatus()
 {
-  WinchStatus winch_status = winch_->GetStatus();
+  WinchStatus winch_status = winch_.GetStatus();
   ActuatorStatus status;
   status.op_mode = winch_status.op_mode;
   status.motor_position = winch_status.motor_position;
@@ -69,42 +62,39 @@ ActuatorStatus Actuator::GetStatus() const
   status.cable_length = winch_status.cable_length;
   status.aux_position = winch_status.aux_position;
   status.id = id_;
-  status.pulley_angle = pulley_->GetAngleRad(status.aux_position);
+  status.pulley_angle = pulley_.GetAngleRad(status.aux_position);
   return status;
 }
 
 void Actuator::SetCableLength(const double target_length)
 {
-  winch_->SetServoPosByCableLen(target_length);
+  winch_.SetServoPosByCableLen(target_length);
 }
 
-void Actuator::SetMotorPos(const int32_t target_pos)
-{
-  winch_->SetServoPos(target_pos);
-}
+void Actuator::SetMotorPos(const int32_t target_pos) { winch_.SetServoPos(target_pos); }
 
 void Actuator::SetMotorSpeed(const int32_t target_speed)
 {
-  winch_->SetServoSpeed(target_speed);
+  winch_.SetServoSpeed(target_speed);
 }
 
 void Actuator::SetMotorTorque(const int16_t target_torque)
 {
-  winch_->SetServoTorque(target_torque);
+  winch_.SetServoTorque(target_torque);
 }
 
-void Actuator::SetMotorOpMode(const int8_t op_mode) { winch_->SetServoOpMode(op_mode); }
+void Actuator::SetMotorOpMode(const int8_t op_mode) { winch_.SetServoOpMode(op_mode); }
 
 void Actuator::UpdateHomeConfig(const double cable_len, const double pulley_angle)
 {
-  pulley_->UpdateHomeConfig(winch_->GetServo()->GetAuxPosition(), pulley_angle);
-  winch_->UpdateHomeConfig(cable_len);
+  pulley_.UpdateHomeConfig(winch_.GetServo()->GetAuxPosition(), pulley_angle);
+  winch_.UpdateHomeConfig(cable_len);
 }
 
 void Actuator::UpdateConfig()
 {
-  winch_->UpdateConfig();
-  pulley_->UpdateConfig(winch_->GetServo()->GetAuxPosition());
+  winch_.UpdateConfig();
+  pulley_.UpdateConfig(winch_.GetServo()->GetAuxPosition());
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -115,13 +105,13 @@ void Actuator::UpdateConfig()
 GUARD_DEFINE(Actuator, GuardIdle, NoEventData)
 {
   if (prev_state_ == ST_ENABLED)
-    winch_->GetServo()->Shutdown();   // disable drive completely
-  else                                // ST_FAULT
-    winch_->GetServo()->FaultReset(); // clear fault and disable drive completely
+    winch_.GetServo()->Shutdown();   // disable drive completely
+  else                               // ST_FAULT
+    winch_.GetServo()->FaultReset(); // clear fault and disable drive completely
   clock_.Reset();
   while (1)
   {
-    if (winch_->GetServo()->GetCurrentState() == grabec::ST_SWITCH_ON_DISABLED)
+    if (winch_.GetServo()->GetCurrentState() == grabec::ST_SWITCH_ON_DISABLED)
       return TRUE; // drive is disabled
     if (clock_.Elapsed() > kMaxTransitionTimeSec_)
       return FALSE; // taking too long to disable drive. Something's wrong.
@@ -138,33 +128,33 @@ STATE_DEFINE(Actuator, Idle, NoEventData)
 // Guard condition to detemine whether Enable state is executed.
 GUARD_DEFINE(Actuator, GuardEnabled, NoEventData)
 {
-  winch_->GetServo()->Shutdown(); // prepare to switch on
+  winch_.GetServo()->Shutdown(); // prepare to switch on
   clock_.Reset();
   while (1)
   {
-    if (winch_->GetServo()->GetCurrentState() == grabec::ST_READY_TO_SWITCH_ON)
+    if (winch_.GetServo()->GetCurrentState() == grabec::ST_READY_TO_SWITCH_ON)
       break;
     if (clock_.Elapsed() > kMaxTransitionTimeSec_)
       return FALSE; // taking too long to disable drive. Something's wrong.
     clock_.Reset();
   }
 
-  winch_->GetServo()->SwitchOn(); // switch on voltage
+  winch_.GetServo()->SwitchOn(); // switch on voltage
   clock_.Reset();
   while (1)
   {
-    if (winch_->GetServo()->GetCurrentState() == grabec::ST_SWITCHED_ON)
+    if (winch_.GetServo()->GetCurrentState() == grabec::ST_SWITCHED_ON)
       break;
     if (clock_.Elapsed() > kMaxTransitionTimeSec_)
       return FALSE; // taking too long to disable drive. Something's wrong.
     clock_.Reset();
   }
 
-  winch_->GetServo()->EnableOperation(); // enable drive
+  winch_.GetServo()->EnableOperation(); // enable drive
   clock_.Reset();
   while (1)
   {
-    if (winch_->GetServo()->GetCurrentState() == grabec::ST_OPERATION_ENABLED)
+    if (winch_.GetServo()->GetCurrentState() == grabec::ST_OPERATION_ENABLED)
       return TRUE; // drive is enabled
     if (clock_.Elapsed() > kMaxTransitionTimeSec_)
       return FALSE; // taking too long to enable drive. Something's wrong.
@@ -181,11 +171,11 @@ STATE_DEFINE(Actuator, Enabled, NoEventData)
 // Guard condition to detemine whether Idle state is executed.
 GUARD_DEFINE(Actuator, GuardFault, NoEventData)
 {
-  winch_->GetServo()->FaultReset(); // clear fault and disable drive completely
+  winch_.GetServo()->FaultReset(); // clear fault and disable drive completely
   clock_.Reset();
   while (1)
   {
-    if (winch_->GetServo()->GetCurrentState() == grabec::ST_SWITCH_ON_DISABLED)
+    if (winch_.GetServo()->GetCurrentState() == grabec::ST_SWITCH_ON_DISABLED)
       return TRUE; // drive is disabled
     if (clock_.Elapsed() > kMaxTransitionTimeSec_)
       return FALSE; // taking too long to disable drive. Something's wrong.

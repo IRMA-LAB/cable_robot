@@ -32,7 +32,7 @@ public:
     ST_MAX_STATES
   };
 
-  ActuatorStatus GetActuatorStatus(const quint8 motor_id) const;
+  const ActuatorStatus GetActuatorStatus(const quint8 motor_id);
   void UpdateHomeConfig(const double cable_len, const double pulley_angle);
   void UpdateHomeConfig(const quint8 motor_id, const double cable_len,
                         const double pulley_angle);

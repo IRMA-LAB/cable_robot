@@ -65,14 +65,17 @@ void LoginWindow::on_pushButton_login_clicked()
     //                             "Username and password are correct.\n"
     //                             "Please load a configuration file or use default
     //                             one.");
+    CLOG(INFO, "event") << "Login in success. Current user: " << username_;
     ui->groupBox_config->setEnabled(true);
     ui->groupBox_signIn->setDisabled(true);
     break;
   case ERR_IO:
-    QMessageBox::warning(const_cast<LoginWindow*>(this), "I/O Error",
+    CLOG(WARNING, "event") << "Login in failed: error " << ret;
+    QMessageBox::warning(this, "I/O Error",
                          "Please insert authentication usb stick and try again");
     break;
   case ERR_INVAL:
+    CLOG(WARNING, "event") << "Login in failed: error " << ret;
     QMessageBox::warning(this, "Login Error", "Username and/or password is not correct");
     break;
   }
@@ -85,6 +88,7 @@ void LoginWindow::on_pushButton_inputFile_clicked()
                                  tr("Configuration File (*.json)"));
   if (config_filename.isEmpty())
   {
+    CLOG(WARNING, "event") << "Configuration filename is empty";
     QMessageBox::warning(this, "File Error", "Configuration filename is empty");
     return;
   }
@@ -103,22 +107,27 @@ void LoginWindow::on_pushButton_load_clicked()
   }
   if (!ParseConfigFile(config_filename))
   {
+    CLOG(WARNING, "event") << "Configuration file is not valid";
     QMessageBox::warning(this, "File Error", "Configuration file is not valid");
     return;
   }
+  CLOG(INFO, "event") << "Loaded configuration file '" << config_filename << "'";
   main_gui = new MainGUI(this, config_);
   hide();
   main_gui->show();
+  CLOG(INFO, "event") << "Prompt main window";
 }
 
 void LoginWindow::on_pushButton_loadDefault_clicked()
 {
   QString default_filename(SRCDIR);
   default_filename.append("config/default.json");
+  CLOG(INFO, "event") << "Loaded default configuration file '" << default_filename << "'";
   ParseConfigFile(default_filename);
   main_gui = new MainGUI(this, config_);
   hide();
   main_gui->show();
+  CLOG(INFO, "event") << "Prompt main window";
 }
 
 bool LoginWindow::ParseConfigFile(QString& config_filename)

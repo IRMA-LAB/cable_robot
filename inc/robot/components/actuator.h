@@ -21,7 +21,6 @@ public:
    */
   explicit Actuator(const size_t id, const uint8_t slave_position,
                     const grabcdpr::ActuatorParams& params);
-  ~Actuator();
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   //// External events
@@ -44,27 +43,27 @@ public:
    * @brief ID
    * @return
    */
-  uint8_t ID() const {return id_; }
+  size_t ID() const {return id_; }
   /**
    * @brief GetWinch
    * @return
    */
-  const Winch* GetWinch() const { return winch_; }
+  const Winch& GetWinch() const { return winch_; }
   /**
    * @brief GetWinch
    * @return
    */
-  Winch* GetWinch() { return winch_; }
+  Winch& GetWinch() { return winch_; }
   /**
    * @brief GetPulley
    * @return
    */
-  const PulleysSystem* GetPulley() const { return pulley_; }
+  const PulleysSystem& GetPulley() const { return pulley_; }
   /**
    * @brief GetStatus
    * @return
    */
-  ActuatorStatus GetStatus() const;
+  const ActuatorStatus GetStatus();
   /**
    * @brief GetActuatorID
    * @return
@@ -129,8 +128,8 @@ private:
   size_t id_;
   uint8_t slave_position_;
 
-  Winch* winch_;
-  PulleysSystem* pulley_;
+  Winch winch_;
+  PulleysSystem pulley_;
 
 private:
   static constexpr double kMaxTransitionTimeSec_ = 0.010;

@@ -55,3 +55,6 @@ build
 /lib/grab_common/libgrabrt/doc*
 /lib/grab_common/libgrabec/doc*
 Doxyfile
+
+# Logs
+logs

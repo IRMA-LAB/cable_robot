@@ -4,6 +4,5 @@
     </qresource>
     <qresource prefix="/config">
         <file>default.json</file>
-        <file>log_conf.conf</file>
     </qresource>
 </RCC>
