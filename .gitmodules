@@ -4,3 +4,6 @@
 [submodule "lib/state_machine"]
 	path = lib/state_machine
 	url = git@github.com:UNIBO-GRABLab/state_machine.git
+[submodule "lib/easyloggingpp"]
+	path = lib/easyloggingpp
+	url = git@github.com:zuhd-org/easyloggingpp.git

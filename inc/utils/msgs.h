@@ -1,36 +1,10 @@
-#ifndef MSGS_H
-#define MSGS_H
+#ifndef CABLE_ROBOT_MSGS_H
+#define CABLE_ROBOT_MSGS_H
 
 #include <QDataStream>
 
-#include "types.h"
-
-//----------------------  MACROS -------------------------//
-
-#ifndef MSG_SERIALIZATION_DECLARE
-#define MSG_SERIALIZATION_DECLARE(_MsgType)                                              \
-  QDataStream& operator<<(QDataStream& ostream, const _MsgType& data);                   \
-  QDataStream& operator>>(QDataStream& istream, _MsgType& data);                         \
-  QByteArray serialize(const _MsgType##Msg& data);
-#endif
-
-
-#ifndef MSG_STRUCT_DECLARE
-#define MSG_STRUCT_DECLARE(_MSG_TYPE, _BodyType)                                         \
-  struct _BodyType##Msg : BaseMsg                                                        \
-  {                                                                                      \
-    _BodyType##Msg() : BaseMsg(_MSG_TYPE) {}                                             \
-    _BodyType##Msg(const _BodyType& data) : BaseMsg(_MSG_TYPE), body(data) {}            \
-    _BodyType##Msg(const double time_sec, const _BodyType& data)                         \
-      : BaseMsg(time_sec, _MSG_TYPE), body(data)                                         \
-    {                                                                                    \
-    }                                                                                    \
-    _BodyType##Msg(const QByteArray data) : BaseMsg(_MSG_TYPE) { deserialize(data); }    \
-    QByteArray serialized() const;                                                       \
-    void deserialize(QByteArray data);                                                   \
-    _BodyType body;                                                                      \
-  };
-#endif
+#include "utils/types.h"
+#include "utils/macros.h"
 
 //----------------------  MESSAGE LIST -------------------------//
 
@@ -39,7 +13,7 @@
  */
 enum MsgType : quint32
 {
-  NONE,
+  NULL_MSG,
   MOTOR_STATUS,
   WINCH_STATUS,
   ACTUATOR_STATUS,
@@ -53,8 +27,8 @@ enum MsgType : quint32
  */
 struct HeaderMsg
 {
-  HeaderMsg() : timestamp(-1.0), msg_type(NONE) {}
-  HeaderMsg(const double time_sec) : timestamp(time_sec), msg_type(NONE) {}
+  HeaderMsg() : timestamp(-1.0), msg_type(NULL_MSG) {}
+  HeaderMsg(const double time_sec) : timestamp(time_sec), msg_type(NULL_MSG) {}
   HeaderMsg(const MsgType msg_t) : timestamp(-1.0), msg_type(msg_t) {}
   HeaderMsg(const double time_sec, const MsgType msg_t)
     : timestamp(time_sec), msg_type(msg_t)
@@ -93,4 +67,4 @@ MSG_SERIALIZATION_DECLARE(WinchStatus)
 MSG_SERIALIZATION_DECLARE(ActuatorStatus)
 // ... and here, e.g. MSG_SERIALIZATION_DECLARE(MyTypeStruct)
 
-#endif // MSGS_H
+#endif // CABLE_ROBOT_MSGS_H

@@ -1,64 +1,27 @@
 #include "utils/msgs.h"
 
-//----------------------  MACROS -------------------------//
+//----------------------  QDataStream operators for basic types -------------------------//
 
-// Make a FOREACH macro
-#define FE_1(WHAT, X) WHAT(X)
-#define FE_2(WHAT, X, ...) WHAT(X) FE_1(WHAT, __VA_ARGS__)
-#define FE_3(WHAT, X, ...) WHAT(X) FE_2(WHAT, __VA_ARGS__)
-#define FE_4(WHAT, X, ...) WHAT(X) FE_3(WHAT, __VA_ARGS__)
-#define FE_5(WHAT, X, ...) WHAT(X) FE_4(WHAT, __VA_ARGS__)
-#define FE_6(WHAT, X, ...) WHAT(X) FE_5(WHAT, __VA_ARGS__)
-#define FE_7(WHAT, X, ...) WHAT(X) FE_6(WHAT, __VA_ARGS__)
-#define FE_8(WHAT, X, ...) WHAT(X) FE_7(WHAT, __VA_ARGS__)
-//... repeat as needed
-#define GET_MACRO(_1, _2, _3, _4, _5, _6, _7, _8, NAME, ...) NAME
-#define FOR_EACH(action, ...)                                                            \
-  GET_MACRO(__VA_ARGS__, FE_8, FE_7, FE_6, FE_5, FE_4, FE_3, FE_2, FE_1)(action,         \
-                                                                         __VA_ARGS__)
-// Actions (WHAT)
-#define OSTREAM_MSG_FIELD(_field) << data._field
-#define ISTREAM_MSG_FIELD(_field) >> data._field
+QDataStream& operator<<(QDataStream& ostream, const size_t& value)
+{
+  return ostream << static_cast<quint16>(value);
+}
 
-#ifndef MSG_FIELDS_ORDER_DEFINE
-#define MSG_FIELDS_ORDER_DEFINE(_MsgType, ...)                                           \
-  QDataStream& operator<<(QDataStream& ostream, const _MsgType& data)                    \
-  {                                                                                      \
-    return ostream FOR_EACH(OSTREAM_MSG_FIELD, __VA_ARGS__);                             \
-  }                                                                                      \
-                                                                                         \
-  QDataStream& operator>>(QDataStream& istream, _MsgType& data)                          \
-  {                                                                                      \
-    istream FOR_EACH(ISTREAM_MSG_FIELD, __VA_ARGS__);                                    \
-    return istream;                                                                      \
-  }
-#endif
+QDataStream& operator>>(QDataStream& istream, size_t& value)
+{
+  quint32 qvalue;
+  istream >> qvalue;
+  value = static_cast<size_t>(qvalue);
+  return istream;
+}
 
-#ifndef MSG_SERIALIZATION_DEFINE
-#define MSG_SERIALIZATION_DEFINE(_MSG_TYPE, _BodyType)                                   \
-  QByteArray _BodyType##Msg::serialized() const { return serialize(*this); }             \
-                                                                                         \
-  void _BodyType##Msg::deserialize(QByteArray data)                                      \
-  {                                                                                      \
-    QDataStream stream(&data, QIODevice::ReadOnly);                                      \
-    stream.setVersion(QDataStream::Qt_4_5);                                              \
-    HeaderMsg tmp_header;                                                                \
-    stream >> tmp_header;                                                                \
-    if (header.msg_type != _MSG_TYPE)                                                    \
-      return;                                                                            \
-    stream >> body;                                                                      \
-    header = tmp_header;                                                                 \
-  }                                                                                      \
-                                                                                         \
-  QByteArray serialize(const _BodyType##Msg& data)                                       \
-  {                                                                                      \
-    QByteArray buf;                                                                      \
-    QDataStream strm(&buf, QIODevice::WriteOnly);                                        \
-    strm.setVersion(QDataStream::Qt_4_5);                                                \
-    strm << data.header << data.body;                                                    \
-    return buf;                                                                          \
-  }
-#endif
+QDataStream& operator>>(QDataStream& istream, MsgType& value)
+{
+  quint32 qvalue;
+  istream >> qvalue;
+  value = static_cast<MsgType>(qvalue);
+  return istream;
+}
 
 //----------------------  MESSAGE HEADER -------------------------//
 
@@ -69,9 +32,7 @@ QDataStream& operator<<(QDataStream& ostream, const HeaderMsg& data)
 
 QDataStream& operator>>(QDataStream& istream, HeaderMsg& data)
 {
-  quint32 msg_type;
-  istream >> msg_type >> data.timestamp;
-  data.msg_type = static_cast<MsgType>(msg_type);
+  istream >>  data.msg_type >> data.timestamp;
   return istream;
 }
 

@@ -1,47 +1,55 @@
 
 HEADERS = \
-    $$PWD/inc/robot/components/winch.h \
-    $$PWD/inc/utils/types.h \
+    $$PWD/inc/robot/cablerobot.h \
     $$PWD/inc/robot/components/actuator.h \
+    $$PWD/inc/robot/components/winch.h \
     $$PWD/inc/robot/components/pulleys_system.h \
     $$PWD/inc/gui/main_gui.h \
     $$PWD/inc/gui/login_window.h \
-    $$PWD/inc/robot/cablerobot.h \
     $$PWD/inc/gui/calib/calibration_dialog.h \
     $$PWD/inc/gui/homing/homing_dialog.h \
     $$PWD/inc/gui/homing/homing_interface.h \
     $$PWD/inc/gui/homing/homing_interface_proprioceptive.h \
+    $$PWD/inc/gui/homing/init_torque_form.h \
     $$PWD/inc/homing/homing_proprioceptive.h \
     $$PWD/inc/ctrl/controller_base.h \
     $$PWD/inc/ctrl/controller_singledrive_naive.h \
-    $$PWD/inc/gui/homing/init_torque_form.h
+    $$PWD/inc/utils/types.h \
+    $$PWD/inc/utils/macros.h \
+    $$PWD/inc/utils/msgs.h \
+    $$PWD/inc/utils/easylog_wrapper.h \
+    $$PWD/lib/easyloggingpp/src/easylogging++.h \
+    $$PWD/lib/grab_common/grabcommon.h
 
 SOURCES = \
-    $$PWD/src/robot/components/winch.cpp \
+    $$PWD/src/main.cpp \
+    $$PWD/src/robot/cablerobot.cpp \
     $$PWD/src/robot/components/actuator.cpp \
+    $$PWD/src/robot/components/winch.cpp \
     $$PWD/src/robot/components/pulleys_system.cpp \
     $$PWD/src/gui/main_gui.cpp \
     $$PWD/src/gui/login_window.cpp \
-    $$PWD/src/utils/types.cpp \
-    $$PWD/src/main.cpp \
-    $$PWD/src/robot/cablerobot.cpp \
     $$PWD/src/gui/calib/calibration_dialog.cpp \
     $$PWD/src/gui/homing/homing_dialog.cpp \
-    $$PWD/src/gui/homing/homing_interface_proprioceptive.cpp \
-    $$PWD/src/homing/homing_proprioceptive.cpp \
     $$PWD/src/gui/homing/homing_interface.cpp \
+    $$PWD/src/gui/homing/homing_interface_proprioceptive.cpp \
+    $$PWD/src/gui/homing/init_torque_form.cpp \
+    $$PWD/src/homing/homing_proprioceptive.cpp \
     $$PWD/src/ctrl/controller_base.cpp \
     $$PWD/src/ctrl/controller_singledrive_naive.cpp \
-    $$PWD/src/gui/homing/init_torque_form.cpp
+    $$PWD/src/utils/msgs.cpp \
+    $$PWD/src/utils/easylog_wrapper.cpp \
+    $$PWD/lib/easyloggingpp/src/easylogging++.cc
 
 INCLUDEPATH += \
     $$PWD/inc \
-    $$PWD/lib/grab_common
+    $$PWD/lib/grab_common \
+    $$PWD/lib/easyloggingpp/src
 
 
 QT += core gui widgets
 
-CONFIG += c++11 console
+CONFIG += c++11 console static
 CONFIG -= app_bundle
 
 TEMPLATE = app
@@ -53,6 +61,15 @@ TARGET = CableRobotApp
 # depend on your compiler). Please consult the documentation of the
 # deprecated API in order to know how to port your code away from it.
 DEFINES += QT_DEPRECATED_WARNINGS
+
+DEFINES += ELPP_QT_LOGGING    \
+          ELPP_STL_LOGGING   \
+          ELPP_MULTI_LOGGER_SUPPORT \
+          ELPP_THREAD_SAFE \
+          ELPP_FRESH_LOG_FILE
+
+DEFINES += SRCDIR=\\\"$$PWD/\\\"
+DEFINES += ECNTW=0
 
 # GRAB Ethercat lib
 unix:!macx: LIBS += -L$$PWD/lib/grab_common/libgrabec/lib/ -lgrabec
@@ -120,6 +137,3 @@ FORMS += \
 
 RESOURCES += \
     resources/resources.qrc
-
-DEFINES += SRCDIR=\\\"$$PWD/\\\"
-DEFINES += ECNTW=0
