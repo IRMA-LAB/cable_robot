@@ -4,6 +4,7 @@
 #include <QDialog>
 
 #include "libcdpr/inc/types.h"
+#include "easylogging++.h"
 
 #include "gui/homing/homing_interface_proprioceptive.h"
 

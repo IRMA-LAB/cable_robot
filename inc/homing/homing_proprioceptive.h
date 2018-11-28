@@ -1,10 +1,12 @@
-#ifndef HOMING_PROPRIOCEPTIVE_H
-#define HOMING_PROPRIOCEPTIVE_H
+#ifndef CABLE_ROBOT_HOMING_PROPRIOCEPTIVE_H
+#define CABLE_ROBOT_HOMING_PROPRIOCEPTIVE_H
 
 #include <QObject>
 #include <QString>
 
 #include "StateMachine.h"
+#include "easylogging++.h"
+
 #include "robot/cablerobot.h"
 #include "ctrl/controller_singledrive_naive.h"
 
@@ -21,12 +23,16 @@ public:
   quint8 num_meas;
 };
 
+std::ostream& operator<<(std::ostream& stream, const HomingProprioceptiveStartData& data);
+
 class HomingProprioceptiveHomeData : public EventData
 {
 public:
   vect<double> init_lengths;
   vect<double> init_angles;
 };
+
+std::ostream& operator<<(std::ostream& stream, const HomingProprioceptiveHomeData& data);
 
 class HomingProprioceptive : public QObject, public StateMachine
 {
@@ -125,4 +131,4 @@ private:
   void PrintStateTransition(const States current_state, const States new_state) const;
 };
 
-#endif // HOMING_PROPRIOCEPTIVE_H
+#endif // CABLE_ROBOT_HOMING_PROPRIOCEPTIVE_H

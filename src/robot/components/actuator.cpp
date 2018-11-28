@@ -3,19 +3,18 @@
 // Must provide redundant definition of the static member as well as the declaration.
 constexpr char* Actuator::kStatesStr_[];
 
-Actuator::Actuator(const size_t id, const uint8_t slave_position,
+Actuator::Actuator(const ID_t id, const uint8_t slave_position,
                    const grabcdpr::ActuatorParams& params)
   : StateMachine(ST_MAX_STATES), id_(id), slave_position_(slave_position),
-    winch_(slave_position, params.winch), pulley_(params.pulley)
+    winch_(id, slave_position, params.winch), pulley_(id, params.pulley)
 {
 }
 
-////////////////////////////////////////////////////////////////////////////
-//// External events public
-////////////////////////////////////////////////////////////////////////////
+//--------- External Events Public --------------------------------------------------//
 
 void Actuator::Enable()
 {
+  CLOG(TRACE, "event");
   // clang-format off
   BEGIN_TRANSITION_MAP                                       // - Current State -
     TRANSITION_MAP_ENTRY(ST_ENABLED)              // ST_IDLE
@@ -27,6 +26,7 @@ void Actuator::Enable()
 
 void Actuator::Disable()
 {
+  CLOG(TRACE, "event");
   // clang-format off
   BEGIN_TRANSITION_MAP                                       // - Current State -
     TRANSITION_MAP_ENTRY(EVENT_IGNORED)       // ST_IDLE
@@ -38,6 +38,7 @@ void Actuator::Disable()
 
 void Actuator::FaultReset()
 {
+  CLOG(TRACE, "event");
   // clang-format off
   BEGIN_TRANSITION_MAP                                       // - Current State -
     TRANSITION_MAP_ENTRY(EVENT_IGNORED)       // ST_IDLE
@@ -47,9 +48,7 @@ void Actuator::FaultReset()
   // clang-format on
 }
 
-////////////////////////////////////////////////////////////////////////////
-//// Public functions
-////////////////////////////////////////////////////////////////////////////
+//--------- Public Functions --------------------------------------------------//
 
 const ActuatorStatus Actuator::GetStatus()
 {
@@ -97,9 +96,7 @@ void Actuator::UpdateConfig()
   pulley_.UpdateConfig(winch_.GetServo()->GetAuxPosition());
 }
 
-////////////////////////////////////////////////////////////////////////////
-//// States actions private
-////////////////////////////////////////////////////////////////////////////
+//--------- States Actions Private --------------------------------------------------//
 
 // Guard condition to detemine whether Idle state is executed.
 GUARD_DEFINE(Actuator, GuardIdle, NoEventData)
@@ -188,6 +185,8 @@ STATE_DEFINE(Actuator, Fault, NoEventData)
   PrintStateTransition(ST_FAULT);
   prev_state_ = ST_FAULT;
 }
+
+//--------- Miscellaneous private --------------------------------------------------//
 
 void Actuator::PrintStateTransition(const States current_state) const
 {

@@ -19,15 +19,16 @@ double Cable::GetLength(const double delta_length)
 /// Winch Class
 ////////////////////////////////////////////////////////////////
 
-Winch::Winch(const uint8_t slave_position, const grabcdpr::WinchParams& params)
-  : servo_(slave_position)
+Winch::Winch(const ID_t id, const uint8_t slave_position,
+             const grabcdpr::WinchParams& params)
+  : params_(params), servo_(slave_position), id_(id)
 {
-  params_ = params;
 }
 
 WinchStatus Winch::GetStatus()
 {
   WinchStatus status;
+  status.id = id_;
   status.op_mode = servo_.GetOpMode();
   status.motor_position = servo_.GetPosition();
   status.motor_speed = servo_.GetVelocity();

@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
 
     LoginWindow w;
     w.show();
-    CLOG(INFO, "event") << "Prompt login in window";
+    CLOG(INFO, "event") << "Prompt login window";
 
     return a.exec();
 }

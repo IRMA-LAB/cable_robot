@@ -4,7 +4,7 @@ constexpr char* CableRobot::kStatesStr[];
 
 CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
   : QObject(parent), StateMachine(ST_MAX_STATES), platform_(grabcdpr::TILT_TORSION),
-    prev_state_(ST_MAX_STATES)
+    log_buffer_(el::Loggers::getLogger("data")), prev_state_(ST_MAX_STATES)
 {
   PrintStateTransition(prev_state_, ST_IDLE);
   prev_state_ = ST_IDLE;
@@ -18,7 +18,7 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
   ec_slaves_ptrs_.push_back(&easycat_slaves_[slave_pos++]);
 #endif
 
-  meas_.reserve(config.actuators.size());
+  meas_.resize(config.actuators.size());
   for (size_t i = 0; i < config.actuators.size(); i++)
   {
     grabcdpr::CableVars cable;
@@ -36,13 +36,22 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
   for (int i = 0; i < num_slaves_; i++)
     num_domain_elements_ += ec_slaves_ptrs_[i]->GetDomainEntriesNum();
 #endif
+
+  connect(this, SIGNAL(sendMeas(QByteArray)), &log_buffer_,
+          SLOT(CollectMeas(QByteArray)));
+  log_buffer_.start();
 }
 
-////////////////////////////////////////////////////////////////////////////
-//// Public functions
-////////////////////////////////////////////////////////////////////////////
+CableRobot::~CableRobot()
+{
+  log_buffer_.Stop();
+  disconnect(this, SIGNAL(sendMeas(QByteArray)), &log_buffer_,
+             SLOT(CollectMeas(QByteArray)));
+}
 
-const ActuatorStatus CableRobot::GetActuatorStatus(const quint8 motor_id)
+//--------- Public Functions --------------------------------------------------//
+
+const ActuatorStatus CableRobot::GetActuatorStatus(const ID_t motor_id)
 {
   return actuators_[motor_id].GetStatus();
 }
@@ -53,7 +62,7 @@ void CableRobot::UpdateHomeConfig(const double cable_len, const double pulley_an
     actuator.UpdateHomeConfig(cable_len, pulley_angle);
 }
 
-void CableRobot::UpdateHomeConfig(const quint8 motor_id, const double cable_len,
+void CableRobot::UpdateHomeConfig(const ID_t motor_id, const double cable_len,
                                   const double pulley_angle)
 {
   actuators_[motor_id].UpdateHomeConfig(cable_len, pulley_angle);
@@ -75,7 +84,7 @@ bool CableRobot::MotorsEnabled()
   return true;
 }
 
-bool CableRobot::EnableMotor(const quint8 motor_id)
+bool CableRobot::EnableMotor(const ID_t motor_id)
 {
   actuators_[motor_id].Enable();
   if (!MotorEnabled(motor_id))
@@ -104,7 +113,7 @@ bool CableRobot::EnableMotors()
   return ret;
 }
 
-bool CableRobot::EnableMotors(const std::vector<quint8>& motors_id)
+bool CableRobot::EnableMotors(const vect<ID_t>& motors_id)
 {
   for (const quint8& motor_id : motors_id)
   {
@@ -119,7 +128,7 @@ bool CableRobot::EnableMotors(const std::vector<quint8>& motors_id)
   return true;
 }
 
-bool CableRobot::DisableMotor(const quint8 motor_id)
+bool CableRobot::DisableMotor(const ID_t motor_id)
 {
   actuators_[motor_id].Disable();
   if (MotorEnabled(motor_id))
@@ -140,7 +149,7 @@ bool CableRobot::DisableMotors()
   return true;
 }
 
-bool CableRobot::DisableMotors(const std::vector<quint8>& motors_id)
+bool CableRobot::DisableMotors(const vect<ID_t>& motors_id)
 {
   for (const quint8& motor_id : motors_id)
   {
@@ -152,7 +161,7 @@ bool CableRobot::DisableMotors(const std::vector<quint8>& motors_id)
   return true;
 }
 
-void CableRobot::SetMotorOpMode(const quint8 motor_id, const qint8 op_mode)
+void CableRobot::SetMotorOpMode(const ID_t motor_id, const qint8 op_mode)
 {
   actuators_[static_cast<quint8>(motor_id)].SetMotorOpMode(op_mode);
 }
@@ -163,16 +172,15 @@ void CableRobot::SetMotorsOpMode(const qint8 op_mode)
     actuator.SetMotorOpMode(op_mode);
 }
 
-void CableRobot::SetMotorsOpMode(const std::vector<quint8>& motors_id,
-                                 const qint8 op_mode)
+void CableRobot::SetMotorsOpMode(const vect<ID_t>& motors_id, const qint8 op_mode)
 {
   for (const quint8& motor_id : motors_id)
     actuators_[static_cast<quint8>(motor_id)].SetMotorOpMode(op_mode);
 }
 
-vect<quint8> CableRobot::GetMotorsID() const
+vect<ID_t> CableRobot::GetMotorsID() const
 {
-  std::vector<quint8> motors_id;
+  vect<ID_t> motors_id;
   for (const Actuator& actuator : actuators_)
     motors_id.push_back(actuator.GetActuatorID());
   return motors_id;
@@ -180,14 +188,18 @@ vect<quint8> CableRobot::GetMotorsID() const
 
 void CableRobot::CollectMeas()
 {
-  for (quint8 i = 0; i < meas_.size(); ++i)
-    meas_[i] = actuators_[i].GetStatus();
-
+  for (size_t i = 0; i < meas_.size(); ++i)
+  {
+    meas_[i].body = actuators_[i].GetStatus();
+    meas_[i].header.timestamp = clock_.Elapsed();
+  }
   emit printToQConsole("Measurements collected");
 }
 
 void CableRobot::DumpMeas() const
 {
+  for (ActuatorStatusMsg msg : meas_)
+    emit sendMsg(msg.serialized());
   emit printToQConsole("Measurements dumped onto log file");
 }
 
@@ -197,7 +209,7 @@ bool CableRobot::GoHome()
   {
     emit printToQConsole("Cannot move to home position: not all motors enabled");
     return false;
-  }  
+  }
   emit printToQConsole("Moving to home position...");
 
   ControllerSingleDriveNaive controller;
@@ -218,12 +230,11 @@ bool CableRobot::GoHome()
   return true;
 }
 
-////////////////////////////////////////////////////////////////////////////
-//// External events public
-////////////////////////////////////////////////////////////////////////////
+//--------- External Events Public --------------------------------------------------//
 
 void CableRobot::EnterCalibrationMode()
 {
+  CLOG(TRACE, "event");
   // clang-format off
   BEGIN_TRANSITION_MAP			              			// - Current State -
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_IDLE
@@ -239,6 +250,7 @@ void CableRobot::EnterCalibrationMode()
 
 void CableRobot::EnterHomingMode()
 {
+  CLOG(TRACE, "event");
   // clang-format off
   BEGIN_TRANSITION_MAP			              			// - Current State -
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_IDLE
@@ -254,6 +266,7 @@ void CableRobot::EnterHomingMode()
 
 void CableRobot::EventSuccess()
 {
+  CLOG(TRACE, "event");
   // clang-format off
   BEGIN_TRANSITION_MAP			              			// - Current State -
       TRANSITION_MAP_ENTRY (ST_ENABLED)				// ST_IDLE
@@ -269,6 +282,7 @@ void CableRobot::EventSuccess()
 
 void CableRobot::EventFailure()
 {
+  CLOG(TRACE, "event");
   // clang-format off
   BEGIN_TRANSITION_MAP			              			// - Current State -
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_IDLE
@@ -284,6 +298,7 @@ void CableRobot::EventFailure()
 
 void CableRobot::Stop()
 {
+  CLOG(TRACE, "event");
   // clang-format off
   BEGIN_TRANSITION_MAP			              			// - Current State -
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_IDLE
@@ -297,9 +312,7 @@ void CableRobot::Stop()
   // clang-format on
 }
 
-////////////////////////////////////////////////////////////////////////////
-//// States actions private
-////////////////////////////////////////////////////////////////////////////
+//--------- States Actions Private --------------------------------------------------//
 
 STATE_DEFINE(CableRobot, Idle, NoEventData)
 {
@@ -346,9 +359,7 @@ STATE_DEFINE(CableRobot, Error, NoEventData)
   prev_state_ = ST_ERROR;
 }
 
-////////////////////////////////////////////////////////////////////////////
-//// Miscellaneous private
-////////////////////////////////////////////////////////////////////////////
+//--------- Miscellaneous private --------------------------------------------------//
 
 void CableRobot::PrintStateTransition(const States current_state,
                                       const States new_state) const
@@ -361,13 +372,10 @@ void CableRobot::PrintStateTransition(const States current_state,
             .arg(kStatesStr[current_state], kStatesStr[new_state]);
   else
     msg = QString("CableRobot intial state: %1").arg(kStatesStr[new_state]);
-  printf("%s\n", msg.toStdString().c_str());
   emit printToQConsole(msg);
 }
 
-////////////////////////////////////////////////////////////////////////////
-//// Ethercat related private functions
-////////////////////////////////////////////////////////////////////////////
+//--------- Ethercat related private functions ---------------------------------//
 
 void CableRobot::LoopFunction()
 {
@@ -390,9 +398,7 @@ void CableRobot::LoopFunction()
       ec_slaves_ptrs_[i]->WriteOutputs(); // write all the necessary pdos
 }
 
-////////////////////////////////////////////////////////////////////////////
-//// Control related private functions
-////////////////////////////////////////////////////////////////////////////
+//--------- Control related private functions ----------------------------------//
 
 void CableRobot::ControlStep()
 {

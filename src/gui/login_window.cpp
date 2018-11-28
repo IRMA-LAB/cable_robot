@@ -1,4 +1,3 @@
-
 #include "gui/login_window.h"
 #include "ui_login_window.h"
 
@@ -10,7 +9,11 @@ LoginWindow::LoginWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::Logi
   ui->groupBox_config->setEnabled(true);
 }
 
-LoginWindow::~LoginWindow() { delete ui; }
+LoginWindow::~LoginWindow()
+{
+  delete ui;
+  CLOG(INFO, "event") << "Login window closed";
+}
 
 LoginWindow::RetVal LoginWindow::IsValidUser(QString& username, QString& password) const
 {
@@ -45,15 +48,9 @@ LoginWindow::RetVal LoginWindow::IsValidUser(QString& username, QString& passwor
   return ERR_INVAL;
 }
 
-// debug
-// void LoginWindow::on_pushButton_login_clicked()
-//{
-//  ui->groupBox_config->setEnabled(true);
-//  ui->pushButton_loadDefault->click();
-//}
-
 void LoginWindow::on_pushButton_login_clicked()
 {
+  CLOG(TRACE, "event");
   username_ = ui->lineEdit_username->text();
   QString password = ui->lineEdit_password->text();
 
@@ -70,12 +67,12 @@ void LoginWindow::on_pushButton_login_clicked()
     ui->groupBox_signIn->setDisabled(true);
     break;
   case ERR_IO:
-    CLOG(WARNING, "event") << "Login in failed: error " << ret;
+    CLOG(WARNING, "event") << "Login in failed: missing USB stick ";
     QMessageBox::warning(this, "I/O Error",
                          "Please insert authentication usb stick and try again");
     break;
   case ERR_INVAL:
-    CLOG(WARNING, "event") << "Login in failed: error " << ret;
+    CLOG(WARNING, "event") << "Login in failed: invalid user";
     QMessageBox::warning(this, "Login Error", "Username and/or password is not correct");
     break;
   }
@@ -83,6 +80,7 @@ void LoginWindow::on_pushButton_login_clicked()
 
 void LoginWindow::on_pushButton_inputFile_clicked()
 {
+  CLOG(TRACE, "event");
   QString config_filename =
     QFileDialog::getOpenFileName(this, tr("Load Configuration File"), tr("../../config"),
                                  tr("Configuration File (*.json)"));
@@ -97,6 +95,7 @@ void LoginWindow::on_pushButton_inputFile_clicked()
 
 void LoginWindow::on_pushButton_load_clicked()
 {
+  CLOG(TRACE, "event");
   QString config_filename = ui->lineEdit_inputFile->text();
   if (config_filename.isEmpty())
   {
@@ -114,18 +113,21 @@ void LoginWindow::on_pushButton_load_clicked()
   CLOG(INFO, "event") << "Loaded configuration file '" << config_filename << "'";
   main_gui = new MainGUI(this, config_);
   hide();
+  CLOG(INFO, "event") << "Hide login window";
   main_gui->show();
   CLOG(INFO, "event") << "Prompt main window";
 }
 
 void LoginWindow::on_pushButton_loadDefault_clicked()
 {
+  CLOG(TRACE, "event");
   QString default_filename(SRCDIR);
   default_filename.append("config/default.json");
   CLOG(INFO, "event") << "Loaded default configuration file '" << default_filename << "'";
   ParseConfigFile(default_filename);
   main_gui = new MainGUI(this, config_);
   hide();
+  CLOG(INFO, "event") << "Hide login window";
   main_gui->show();
   CLOG(INFO, "event") << "Prompt main window";
 }
@@ -133,5 +135,6 @@ void LoginWindow::on_pushButton_loadDefault_clicked()
 bool LoginWindow::ParseConfigFile(QString& config_filename)
 {
   RobotConfigJsonParser parser;
+  CLOG(INFO, "event") << "Parsing configuration file '" << config_filename << "'...";
   return parser.ParseFile(config_filename, &config_);
 }

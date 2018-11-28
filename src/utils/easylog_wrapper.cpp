@@ -3,9 +3,10 @@
 void LogMotorStatusMsg(el::Logger* data_logger, const MotorStatusMsg& msg)
 {
   // clang-format off
-  data_logger->info("%v,%v,%v,%v,%v,%v",
+  data_logger->info("%v,%v,%v,%v,%v,%v,%v",
                                                                 msg.header.msg_type,
                                                                 msg.header.timestamp,
+                                     static_cast<int>(msg.body.id),
                                      static_cast<int>(msg.body.op_mode),
                                                                 msg.body.motor_position,
                                                                 msg.body.motor_speed,
@@ -16,9 +17,10 @@ void LogMotorStatusMsg(el::Logger* data_logger, const MotorStatusMsg& msg)
 void LogWinchStatusMsg(el::Logger* data_logger, const WinchStatusMsg& msg)
 {
   // clang-format off
-  data_logger->info("%v,%v,%v,%v,%v,%v,%v,%v",
+  data_logger->info("%v,%v,%v,%v,%v,%v,%v,%v,%v",
                                                                 msg.header.msg_type,
                                                                 msg.header.timestamp,
+                                     static_cast<int>(msg.body.id),
                                      static_cast<int>(msg.body.op_mode),
                                                                 msg.body.motor_position,
                                                                 msg.body.motor_speed,
@@ -34,13 +36,13 @@ void LogActuatorStatusMsg(el::Logger* data_logger, const ActuatorStatusMsg& msg)
   data_logger->info("%v,%v,%v,%v,%v,%v,%v,%v,%v,%v",
                                                                 msg.header.msg_type,
                                                                 msg.header.timestamp,
+                                     static_cast<int>(msg.body.id),
                                      static_cast<int>(msg.body.op_mode),
                                                                 msg.body.motor_position,
                                                                 msg.body.motor_speed,
                                                                 msg.body.motor_torque,
                                                                 msg.body.cable_length,
                                                                 msg.body.aux_position,
-                                     static_cast<int>(msg.body.id),
                                                                 msg.body.pulley_angle);
   // clang-format on
 }

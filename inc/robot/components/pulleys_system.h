@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include "libcdpr/inc/types.h"
+
 #include "utils/types.h"
 
 /**
@@ -16,7 +17,7 @@ public:
    * @brief PulleysSystem
    * @param params
    */
-  PulleysSystem(const grabcdpr::PulleyParams& params);
+  PulleysSystem(const ID_t id, const grabcdpr::PulleyParams& params);
 
   /**
    * @brief GetAngleRad
@@ -68,6 +69,7 @@ public:
   inline double CountsToPulleyAngleRad(const int counts) const;
 
 private:
+  ID_t id_;
   grabcdpr::PulleyParams params_;
 
   int home_counts_ = 0;

@@ -1,7 +1,9 @@
-#ifndef HOMING_INTERFACE_H
-#define HOMING_INTERFACE_H
+#ifndef CABLE_ROBOT_HOMING_INTERFACE_H
+#define CABLE_ROBOT_HOMING_INTERFACE_H
 
 #include <QDialog>
+
+#include "easylogging++.h"
 
 #include "robot/cablerobot.h"
 
@@ -21,4 +23,4 @@ protected:
   CableRobot* robot_ptr_ = NULL;
 };
 
-#endif // HOMING_INTERFACE_H
+#endif // CABLE_ROBOT_HOMING_INTERFACE_H

@@ -1,15 +1,19 @@
-#ifndef CABLEROBOT_H
-#define CABLEROBOT_H
+#ifndef CABLE_ROBOT_CABLEROBOT_H
+#define CABLE_ROBOT_CABLEROBOT_H
 
 #include <QObject>
 
+#include "easylogging++.h"
 #include "StateMachine.h"
 #include "libcdpr/inc/types.h"
-#include "ethercatmaster.h"
-#include "slaves/easycatslave.h"
+#include "libgrabec/inc/ethercatmaster.h"
+#include "libgrabec/inc/slaves/easycatslave.h"
+
 #include "components/actuator.h"
 #include "ctrl/controller_base.h"
 #include "ctrl/controller_singledrive_naive.h"
+#include "utils/easylog_wrapper.h"
+
 
 class CableRobot : public QObject,
                    public StateMachine,
@@ -18,7 +22,7 @@ class CableRobot : public QObject,
   Q_OBJECT
 public:
   explicit CableRobot(QObject* parent, const grabcdpr::Params& config);
-  ~CableRobot() {}
+  ~CableRobot();
 
   enum States : BYTE
   {
@@ -32,24 +36,24 @@ public:
     ST_MAX_STATES
   };
 
-  const ActuatorStatus GetActuatorStatus(const quint8 motor_id);
+  const ActuatorStatus GetActuatorStatus(const ID_t motor_id);
   void UpdateHomeConfig(const double cable_len, const double pulley_angle);
-  void UpdateHomeConfig(const quint8 motor_id, const double cable_len,
+  void UpdateHomeConfig(const ID_t motor_id, const double cable_len,
                         const double pulley_angle);
 
-  bool MotorEnabled(const quint8 motor_id) { return actuators_[motor_id].IsEnabled(); }
+  bool MotorEnabled(const ID_t motor_id) { return actuators_[motor_id].IsEnabled(); }
   bool AnyMotorEnabled();
   bool MotorsEnabled();
-  bool EnableMotor(const quint8 motor_id);
+  bool EnableMotor(const ID_t motor_id);
   bool EnableMotors();
-  bool EnableMotors(const std::vector<quint8>& motors_id);
-  bool DisableMotor(const quint8 motor_id);
+  bool EnableMotors(const vect<ID_t>& motors_id);
+  bool DisableMotor(const ID_t motor_id);
   bool DisableMotors();
-  bool DisableMotors(const std::vector<quint8>& motors_id);
-  void SetMotorOpMode(const quint8 motor_id, const qint8 op_mode);
+  bool DisableMotors(const vect<ID_t>& motors_id);
+  void SetMotorOpMode(const ID_t motor_id, const qint8 op_mode);
   void SetMotorsOpMode(const qint8 op_mode);
-  void SetMotorsOpMode(const std::vector<quint8>& motors_id, const qint8 op_mode);
-  vect<quint8> GetMotorsID() const;
+  void SetMotorsOpMode(const vect<ID_t>& motors_id, const qint8 op_mode);
+  vect<ID_t> GetMotorsID() const;
 
   void CollectMeas();
   void DumpMeas() const;
@@ -67,11 +71,14 @@ public slots:
 signals:
   void printToQConsole(const QString&) const;
   void motorStatus(const quint8, const grabec::GSWDriveInPdos&) const;
+  void sendMsg(const QByteArray) const;
 
 private:
   grabcdpr::PlatformVars platform_;
   grabcdpr::Vars status_;
-  vect<ActuatorStatus> meas_;
+  vect<ActuatorStatusMsg> meas_;
+  LogBuffer log_buffer_;
+  grabrt::Clock clock_;
 
   // Ethercat related
   vect<grabec::EasyCatSlave> easycat_slaves_;
@@ -126,4 +133,4 @@ private:
   void PrintStateTransition(const States current_state, const States new_state) const;
 };
 
-#endif // CABLEROBOT_H
+#endif // CABLE_ROBOT_CABLEROBOT_H

@@ -1,8 +1,8 @@
 #include "robot/components/pulleys_system.h"
 
-PulleysSystem::PulleysSystem(const grabcdpr::PulleyParams &params)
+PulleysSystem::PulleysSystem(const ID_t id, const grabcdpr::PulleyParams& params)
+  : id_(id), params_(params)
 {
-  params_ = params;
 }
 
 double PulleysSystem::GetAngleRad(const int counts)

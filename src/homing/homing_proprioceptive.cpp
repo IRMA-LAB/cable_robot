@@ -1,8 +1,8 @@
 #include "homing/homing_proprioceptive.h"
 
-////////////////////////////////////////////////////////////////////////////
-//// Homing proprioceptive data class
-////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------------------------------//
+//--------- Homing proprioceptive data classes ----------------------------------------//
+//----------------------------------------------------------------------------------------------------//
 
 HomingProprioceptiveStartData::HomingProprioceptiveStartData() {}
 
@@ -13,9 +13,33 @@ HomingProprioceptiveStartData::HomingProprioceptiveStartData(
 {
 }
 
-////////////////////////////////////////////////////////////////////////////
-//// Homing proprioceptive class
-////////////////////////////////////////////////////////////////////////////
+std::ostream& operator<<(std::ostream& stream, const HomingProprioceptiveStartData& data)
+{
+  stream << "initial torques=[ ";
+  for (const qint16 value : data.init_torques)
+    stream << value << " ";
+  stream << " ]\tmaximum torques=[ ";
+  for (const qint16 value : data.max_torques)
+    stream << value << " ";
+  stream << " ]\tnumber of measurements=" << data.num_meas;
+  return stream;
+}
+
+std::ostream& operator<<(std::ostream& stream, const HomingProprioceptiveHomeData& data)
+{
+  stream << "initial cable lengths=[ ";
+  for (const double& value : data.init_lengths)
+    stream << value << " ";
+  stream << " ]\tinitial pulley angles=[ ";
+  for (const double& value : data.init_angles)
+    stream << value << " ";
+  stream << " ]";
+  return stream;
+}
+
+//--------------------------------------------------------------------------------------------------//
+//--------- Homing proprioceptive class ------------------------------------------------//
+//--------------------------------------------------------------------------------------------------//
 
 constexpr char* HomingProprioceptive::kStatesStr[];
 
@@ -27,12 +51,11 @@ HomingProprioceptive::HomingProprioceptive(QObject* parent, CableRobot* robot)
   prev_state_ = ST_MAX_STATES;
 }
 
-////////////////////////////////////////////////////////////////////////////
-//// External Events
-////////////////////////////////////////////////////////////////////////////
+//--------- External Events ---------------------------------------------------------//
 
 void HomingProprioceptive::Start(HomingProprioceptiveStartData* data)
 {
+  CLOG(TRACE, "event") << "with " << *data;
   // clang-format off
   BEGIN_TRANSITION_MAP			              			// - Current State -
       TRANSITION_MAP_ENTRY (ST_ENABLED)                          // ST_IDLE
@@ -50,6 +73,7 @@ void HomingProprioceptive::Start(HomingProprioceptiveStartData* data)
 
 void HomingProprioceptive::Stop()
 {
+  CLOG(TRACE, "event");
   // clang-format off
   BEGIN_TRANSITION_MAP			              			// - Current State -
       TRANSITION_MAP_ENTRY (ST_IDLE)                                  // ST_IDLE
@@ -67,6 +91,7 @@ void HomingProprioceptive::Stop()
 
 void HomingProprioceptive::Next()
 {
+  CLOG(TRACE, "event");
   // clang-format off
   BEGIN_TRANSITION_MAP			              			// - Current State -
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)                   // ST_IDLE
@@ -84,6 +109,7 @@ void HomingProprioceptive::Next()
 
 void HomingProprioceptive::Optimize()
 {
+  CLOG(TRACE, "event");
   // clang-format off
   BEGIN_TRANSITION_MAP			              			// - Current State -
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)                   // ST_IDLE
@@ -101,6 +127,7 @@ void HomingProprioceptive::Optimize()
 
 void HomingProprioceptive::GoHome(HomingProprioceptiveHomeData* data)
 {
+  CLOG(TRACE, "event") << "with " << *data;
   // clang-format off
   BEGIN_TRANSITION_MAP			              			// - Current State -
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)                   // ST_IDLE
@@ -118,6 +145,7 @@ void HomingProprioceptive::GoHome(HomingProprioceptiveHomeData* data)
 
 void HomingProprioceptive::FaultTrigger()
 {
+  CLOG(TRACE, "event");
   // clang-format off
   BEGIN_TRANSITION_MAP			              			// - Current State -
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)                   // ST_IDLE
@@ -135,6 +163,7 @@ void HomingProprioceptive::FaultTrigger()
 
 void HomingProprioceptive::FaultReset()
 {
+  CLOG(TRACE, "event");
   // clang-format off
   BEGIN_TRANSITION_MAP			              			// - Current State -
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)                   // ST_IDLE
@@ -150,9 +179,7 @@ void HomingProprioceptive::FaultReset()
   // clang-format on
 }
 
-////////////////////////////////////////////////////////////////////////////
-//// States actions
-////////////////////////////////////////////////////////////////////////////
+//--------- States actions -----------------------------------------------------------//
 
 STATE_DEFINE(HomingProprioceptive, Idle, NoEventData)
 {
@@ -189,19 +216,21 @@ STATE_DEFINE(HomingProprioceptive, StartUp, HomingProprioceptiveStartData)
   num_meas_ = data->num_meas;
   init_torques_.clear();
   max_torques_ = data->max_torques;
-  torques_.reserve(num_meas_);
+  torques_.resize(num_meas_);
 
-  vect<quint8> motors_id = robot_->GetMotorsID();
-  for (quint8 i = 0; i < motors_id.size(); ++i)
+  vect<ID_t> motors_id = robot_->GetMotorsID();
+  for (size_t i = 0; i < motors_id.size(); ++i)
   {
     qint16 current_torque = robot_->GetActuatorStatus(motors_id[i]).motor_torque;
     // Use current torque values if not given
-    if (!data->init_torques.empty())
+    if (data->init_torques.empty())
+      init_torques_.push_back(current_torque);
+    else
     {
       init_torques_.push_back(data->init_torques[i]);
       // Wait until all motors reached user-given initial torque setpoint
       controller_.SetMotorID(motors_id[i]);
-      controller_.SetMotorTorqueTarget(init_torques_.back());
+      controller_.SetMotorTorqueTarget(init_torques_.back()); //  = data->init_torques[i]
       while (1)
       {
         if (controller_.MotorTorqueTargetReached(current_torque))
@@ -210,8 +239,6 @@ STATE_DEFINE(HomingProprioceptive, StartUp, HomingProprioceptiveStartData)
         // todo: inserisci un tempo di attesa qui magari
       }
     }
-    else
-      init_torques_.push_back(current_torque);
     msg.append(QString("\n\t%1 ‰").arg(current_torque));
   }
   // At the beginning we don't know where we are, neither we care.
@@ -260,6 +287,7 @@ STATE_DEFINE(HomingProprioceptive, SwitchCable, NoEventData)
 
 GUARD_DEFINE(HomingProprioceptive, GuardCoiling, NoEventData)
 {
+  // Note: there is only one motor ID at the time in this controller
   if (controller_.MotorTorqueTargetReached(
         robot_->GetActuatorStatus(controller_.GetMotorsID().front()).motor_torque))
   {
@@ -333,13 +361,14 @@ STATE_DEFINE(HomingProprioceptive, Optimizing, NoEventData)
   PrintStateTransition(prev_state_, ST_OPTIMIZING);
   prev_state_ = ST_OPTIMIZING;
 
+  HomingProprioceptiveHomeData* home_data = new HomingProprioceptiveHomeData;
   // do optimization here..
   bool optimization_success = true; // dummy
 
   if (optimization_success)
   {
     emit printToQConsole("Optimization complete");
-    InternalEvent(ST_HOME);
+    InternalEvent(ST_HOME, home_data);
   }
   else
   {
@@ -359,7 +388,7 @@ STATE_DEFINE(HomingProprioceptive, Home, HomingProprioceptiveHomeData)
   if (robot_->GoHome()) // (position control)
   {
     // ...which is done here.
-    for (quint8 motor_id : robot_->GetMotorsID())
+    for (ID_t motor_id : robot_->GetMotorsID())
       robot_->UpdateHomeConfig(motor_id, data->init_lengths[motor_id],
                                data->init_angles[motor_id]);
     emit homingComplete();
@@ -377,9 +406,7 @@ STATE_DEFINE(HomingProprioceptive, Fault, NoEventData)
   prev_state_ = ST_FAULT;
 }
 
-////////////////////////////////////////////////////////////////////////////
-//// Miscellaneous
-////////////////////////////////////////////////////////////////////////////
+//--------- Miscellaneous -----------------------------------------------------------//
 
 bool HomingProprioceptive::IsCollectingData()
 {
@@ -412,6 +439,5 @@ void HomingProprioceptive::PrintStateTransition(const States current_state,
             .arg(kStatesStr[current_state], kStatesStr[new_state]);
   else
     msg = QString("Homing initial state: %1").arg(kStatesStr[new_state]);
-  printf("%s\n", msg.toStdString().c_str());
   emit printToQConsole(msg);
 }

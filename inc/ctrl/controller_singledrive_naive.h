@@ -19,7 +19,7 @@ class ControllerSingleDriveNaive : public ControllerBase
 {
 public:
   ControllerSingleDriveNaive(): ControllerBase() { Clear(); }
-  explicit ControllerSingleDriveNaive(const uint8_t motor_id);
+  explicit ControllerSingleDriveNaive(const ID_t motor_id);
 
   void SetCableLenTarget(const double target);
   void SetMotorPosTarget(const int32_t target);

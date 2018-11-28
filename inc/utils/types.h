@@ -5,19 +5,22 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+using ID_t = size_t;
+
 /**
  * @brief The MotorStatus struct
  */
 struct MotorStatus
 {
-  MotorStatus() : motor_position(0), motor_speed(0), motor_torque(0), op_mode(0) {}
-  MotorStatus(const int8_t _op_mode, const int32_t motor_pos, const int32_t _motor_speed,
-              const int16_t _motor_torque)
-    : motor_position(motor_pos), motor_speed(_motor_speed), motor_torque(_motor_torque),
-      op_mode(_op_mode)
+  MotorStatus() : id(0), motor_position(0), motor_speed(0), motor_torque(0), op_mode(0) {}
+  MotorStatus(const ID_t _id, const int8_t _op_mode, const int32_t motor_pos,
+              const int32_t _motor_speed, const int16_t _motor_torque)
+    : id(_id), motor_position(motor_pos), motor_speed(_motor_speed),
+      motor_torque(_motor_torque), op_mode(_op_mode)
   {
   }
 
+  ID_t id;
   int32_t motor_position;
   int32_t motor_speed;
   int16_t motor_torque;
@@ -30,9 +33,10 @@ struct MotorStatus
 struct WinchStatus : MotorStatus
 {
   WinchStatus() : aux_position(0), cable_length(0.0) {}
-  WinchStatus(const int8_t _op_mode, const int32_t motor_pos, const int32_t _motor_speed,
-              const int16_t _motor_torque, const double cable_len, const int aux_pos)
-    : MotorStatus(_op_mode, motor_pos, _motor_speed, _motor_torque),
+  WinchStatus(const ID_t _id, const int8_t _op_mode, const int32_t motor_pos,
+              const int32_t _motor_speed, const int16_t _motor_torque,
+              const double cable_len, const int aux_pos)
+    : MotorStatus(_id, _op_mode, motor_pos, _motor_speed, _motor_torque),
       aux_position(aux_pos), cable_length(cable_len)
   {
   }
@@ -46,17 +50,16 @@ struct WinchStatus : MotorStatus
  */
 struct ActuatorStatus : WinchStatus
 {
-  ActuatorStatus() : id(0), pulley_angle(0.0) {}
-  ActuatorStatus(const int8_t _op_mode, const int32_t motor_pos,
+  ActuatorStatus() : pulley_angle(0.0) {}
+  ActuatorStatus(const ID_t _id, const int8_t _op_mode, const int32_t motor_pos,
                  const int32_t _motor_speed, const int16_t _motor_torque,
-                 const double cable_len, const int aux_pos, const uint8_t _id,
-                 const double pulley_ang)
-    : WinchStatus(_op_mode, motor_pos, _motor_speed, _motor_torque, cable_len, aux_pos),
-      id(_id), pulley_angle(pulley_ang)
+                 const double cable_len, const int aux_pos, const double pulley_ang)
+    : WinchStatus(_id, _op_mode, motor_pos, _motor_speed, _motor_torque, cable_len,
+                  aux_pos),
+      pulley_angle(pulley_ang)
   {
   }
 
-  size_t id;
   double pulley_angle;
 };
 

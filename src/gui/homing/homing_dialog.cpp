@@ -16,6 +16,7 @@ HomingDialog::~HomingDialog()
     delete interface_;
   }
   delete ui;
+  CLOG(INFO, "event") << "Homing dialog closed";
 }
 
 void HomingDialog::on_buttonBox_accepted()
@@ -40,11 +41,15 @@ void HomingDialog::on_buttonBox_accepted()
   connect(interface_, SIGNAL(homingSuccess()), this, SLOT(HomingSuccessCb()));
   connect(interface_, SIGNAL(homingFailed()), this, SLOT(HomingFailedCb()));
   interface_->show();
+  CLOG(INFO, "event") << "Prompt homing interface "
+                      << ui->comboBox_homingMethod->currentText();
   hide();
+  CLOG(INFO, "event") << "Hide homing dialog";
 }
 
 void HomingDialog::HomingFailedCb()
 {
+  CLOG(INFO, "event") << ui->comboBox_homingMethod->currentText() << " homing failed";
   emit homingFailed();
   emit enableMainGUI(false);
   close();
@@ -52,6 +57,7 @@ void HomingDialog::HomingFailedCb()
 
 void HomingDialog::HomingSuccessCb()
 {
+  CLOG(INFO, "event") << ui->comboBox_homingMethod->currentText() << " homing success";
   emit homingSuccess();
   emit enableMainGUI(true);
   close();

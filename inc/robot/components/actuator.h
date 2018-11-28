@@ -1,8 +1,9 @@
 #ifndef CABLE_ROBOT_ACTUATOR_H
 #define CABLE_ROBOT_ACTUATOR_H
 
+#include "easylogging++.h"
 #include "StateMachine.h"
-#include "clocks.h"
+#include "libgrabrt/inc/clocks.h"
 #include "libcdpr/inc/types.h"
 
 #include "winch.h"
@@ -19,7 +20,7 @@ public:
    * @param[in] slave_position
    * @param[in] params
    */
-  explicit Actuator(const size_t id, const uint8_t slave_position,
+  explicit Actuator(const ID_t id, const uint8_t slave_position,
                     const grabcdpr::ActuatorParams& params);
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -43,7 +44,7 @@ public:
    * @brief ID
    * @return
    */
-  size_t ID() const {return id_; }
+  ID_t ID() const {return id_; }
   /**
    * @brief GetWinch
    * @return
@@ -68,7 +69,7 @@ public:
    * @brief GetActuatorID
    * @return
    */
-  size_t GetActuatorID() const { return id_; }
+  ID_t GetActuatorID() const { return id_; }
 
   /**
    * @brief SetCableLength
@@ -125,7 +126,7 @@ public:
   bool IsInFault() { return GetCurrentState() == ST_FAULT; }
 
 private:
-  size_t id_;
+  ID_t id_;
   uint8_t slave_position_;
 
   Winch winch_;

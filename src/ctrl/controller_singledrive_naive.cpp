@@ -1,7 +1,7 @@
 #include "ctrl/controller_singledrive_naive.h"
 
-ControllerSingleDriveNaive::ControllerSingleDriveNaive(const uint8_t motor_id)
-  : ControllerBase(vect<uint8_t>(1, motor_id))
+ControllerSingleDriveNaive::ControllerSingleDriveNaive(const ID_t motor_id)
+  : ControllerBase(vect<ID_t>(1, motor_id))
 {
   Clear();
 }
