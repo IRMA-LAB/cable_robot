@@ -41,14 +41,39 @@ std::ostream& operator<<(std::ostream& stream, const HomingProprioceptiveHomeDat
 //--------- Homing proprioceptive class ------------------------------------------------//
 //--------------------------------------------------------------------------------------------------//
 
+// For static constexpr passed by reference we need a dummy definition no matter what
+constexpr double HomingProprioceptive::kCycleWaitTimeSec_;
+constexpr double HomingProprioceptive::kCutoffFreq_;
 constexpr char* HomingProprioceptive::kStatesStr[];
 
 HomingProprioceptive::HomingProprioceptive(QObject* parent, CableRobot* robot)
   : QObject(parent), StateMachine(ST_MAX_STATES), robot_(robot)
 {
   // init with default values
-  num_meas_ = kNumMeasMin;
+  num_meas_ = kNumMeasMin_;
   prev_state_ = ST_MAX_STATES;
+}
+
+//--------- Public functions -----------------------------------------------------------//
+
+bool HomingProprioceptive::IsCollectingData()
+{
+  States current_state = static_cast<States>(GetCurrentState());
+  switch (current_state)
+  {
+  case ST_IDLE:
+    return false;
+  case ST_ENABLED:
+    return false;
+  case ST_FAULT:
+    return false;
+  case ST_OPTIMIZING:
+    return false;
+  case ST_HOME:
+    return false;
+  default:
+    return true;
+  }
 }
 
 //--------- External Events ---------------------------------------------------------//
@@ -65,7 +90,7 @@ void HomingProprioceptive::Start(HomingProprioceptiveStartData* data)
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_COILING
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_UNCOILING
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_OPTIMIZING
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_GO_HOME
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_HOME
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_FAULT
   END_TRANSITION_MAP(data)
   // clang-format on
@@ -83,25 +108,7 @@ void HomingProprioceptive::Stop()
       TRANSITION_MAP_ENTRY (ST_ENABLED)                          // ST_COILING
       TRANSITION_MAP_ENTRY (ST_ENABLED)                          // ST_UNCOILING
       TRANSITION_MAP_ENTRY (ST_ENABLED)                          // ST_OPTIMIZING
-      TRANSITION_MAP_ENTRY (ST_ENABLED)                          // ST_GO_HOME
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_FAULT
-  END_TRANSITION_MAP(NULL)
-  // clang-format on
-}
-
-void HomingProprioceptive::Next()
-{
-  CLOG(TRACE, "event");
-  // clang-format off
-  BEGIN_TRANSITION_MAP			              			// - Current State -
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)                   // ST_IDLE
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)                   // ST_ENABLED
-      TRANSITION_MAP_ENTRY (ST_SWITCH_CABLE)                 // ST_START_UP
-      TRANSITION_MAP_ENTRY (ST_COILING)                            // ST_SWITCH_CABLE
-      TRANSITION_MAP_ENTRY (ST_COILING)                            // ST_COILING
-      TRANSITION_MAP_ENTRY (ST_UNCOILING)			// ST_UNCOILING
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_OPTIMIZING
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_GO_HOME
+      TRANSITION_MAP_ENTRY (ST_ENABLED)                          // ST_HOME
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_FAULT
   END_TRANSITION_MAP(NULL)
   // clang-format on
@@ -119,7 +126,7 @@ void HomingProprioceptive::Optimize()
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_COILING
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_UNCOILING
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_OPTIMIZING
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_GO_HOME
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_HOME
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_FAULT
   END_TRANSITION_MAP(NULL)
   // clang-format on
@@ -137,7 +144,7 @@ void HomingProprioceptive::GoHome(HomingProprioceptiveHomeData* data)
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)                   // ST_COILING
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_UNCOILING
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_OPTIMIZING
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_GO_HOME
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_HOME
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_FAULT
   END_TRANSITION_MAP(data)
   // clang-format on
@@ -155,7 +162,7 @@ void HomingProprioceptive::FaultTrigger()
       TRANSITION_MAP_ENTRY (ST_FAULT)                               // ST_COILING
       TRANSITION_MAP_ENTRY (ST_FAULT)                               // ST_UNCOILING
       TRANSITION_MAP_ENTRY (ST_FAULT)                               // ST_OPTIMIZING
-      TRANSITION_MAP_ENTRY (ST_FAULT)                               // ST_GO_HOME
+      TRANSITION_MAP_ENTRY (ST_FAULT)                               // ST_HOME
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_FAULT
   END_TRANSITION_MAP(NULL)
   // clang-format on
@@ -173,7 +180,7 @@ void HomingProprioceptive::FaultReset()
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_COILING
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_UNCOILING
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_OPTIMIZING
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_GO_HOME
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_HOME
       TRANSITION_MAP_ENTRY (ST_IDLE)                                  // ST_FAULT
   END_TRANSITION_MAP(NULL)
   // clang-format on
@@ -246,6 +253,7 @@ STATE_DEFINE(HomingProprioceptive, StartUp, HomingProprioceptiveStartData)
   robot_->UpdateHomeConfig(0.0, 0.0);
 
   emit printToQConsole(msg);
+  InternalEvent(ST_SWITCH_CABLE);
 }
 
 GUARD_DEFINE(HomingProprioceptive, GuardSwitch, NoEventData)
@@ -257,49 +265,41 @@ GUARD_DEFINE(HomingProprioceptive, GuardSwitch, NoEventData)
       robot_->GetMotorsID().back()) // we are not done ==> move to next cable
     return true;
 
+  InternalEvent(ST_ENABLED);
   emit acquisitionComplete();
-  InternalEvent(ST_ENABLED); // todo: funzionerà?
   return false;
 }
 
 STATE_DEFINE(HomingProprioceptive, SwitchCable, NoEventData)
 {
-  static quint8 motor_id = 0;
+  static quint8 motor_id_idx = 0;
+  static vect<ID_t> motors_id = robot_->GetMotorsID();
 
   PrintStateTransition(prev_state_, ST_SWITCH_CABLE);
   prev_state_ = ST_SWITCH_CABLE;
 
   qint16 delta_torque =
-    (max_torques_[motor_id] - init_torques_[motor_id]) / (num_meas_ - 1);
+    (max_torques_[motor_id_idx] - init_torques_[motor_id_idx]) / (num_meas_ - 1);
   for (quint8 i = 0; i < num_meas_ - 1; ++i)
-    torques_[i] = init_torques_[motor_id] + i * delta_torque;
-  torques_.back() = max_torques_[motor_id]; // last element is forced to be = max torque
+    torques_[i] = init_torques_[motor_id_idx] + i * delta_torque;
+  torques_.back() =
+    max_torques_[motor_id_idx]; // last element is forced to be = max torque
 
-  controller_.SetMotorID(motor_id);
+  controller_.SetMotorID(motors_id[motor_id_idx]);
   controller_.SetMotorTorqueTarget(torques_.front());
 
   emit printToQConsole(
     QString("Switched to actuator #%1.\nInitial torque setpoint = %2 ‰")
-      .arg(motor_id, torques_.front()));
-  motor_id++;
+      .arg(motors_id[motor_id_idx])
+      .arg(torques_.front()));
+  motor_id_idx++;
   meas_step_ = 0; // reset
+
+  WaitUntilPlatformSteady();
+  InternalEvent(ST_COILING);
 }
 
-GUARD_DEFINE(HomingProprioceptive, GuardCoiling, NoEventData)
-{
-  // Note: there is only one motor ID at the time in this controller
-  if (controller_.MotorTorqueTargetReached(
-        robot_->GetActuatorStatus(controller_.GetMotorsID().front()).motor_torque))
-  {
-    robot_->CollectMeas();
-    robot_->DumpMeas();
-    meas_step_++;
-    return true;
-  }
-
-  emit printToQConsole("Torque target not reached yet! Please wait...");
-  return false;
-}
+ENTRY_DEFINE(HomingProprioceptive, EntryCoiling, NoEventData) { DumpMeasAndMoveNext(); }
 
 STATE_DEFINE(HomingProprioceptive, Coiling, NoEventData)
 {
@@ -315,28 +315,13 @@ STATE_DEFINE(HomingProprioceptive, Coiling, NoEventData)
   controller_.SetMotorTorqueTarget(torques_[meas_step_]);
   emit printToQConsole(
     QString("Next torque setpoint = %1 ‰").arg(controller_.GetMotorTorqueTarget()));
+
+  WaitUntilPlatformSteady();
+  DumpMeasAndMoveNext();
+  InternalEvent(ST_COILING);
 }
 
-GUARD_DEFINE(HomingProprioceptive, GuardUncoiling, NoEventData)
-{
-  if (prev_state_ == ST_COILING)
-  {
-    meas_step_++;
-    return true;
-  }
-
-  if (controller_.MotorTorqueTargetReached(
-        robot_->GetActuatorStatus(controller_.GetMotorsID().front()).motor_torque))
-  {
-    robot_->CollectMeas();
-    robot_->DumpMeas();
-    meas_step_++;
-    return true;
-  }
-
-  emit printToQConsole("Torque target not reached yet! Please wait...");
-  return false;
-}
+ENTRY_DEFINE(HomingProprioceptive, EntryUncoiling, NoEventData) { meas_step_++; }
 
 STATE_DEFINE(HomingProprioceptive, Uncoiling, NoEventData)
 {
@@ -354,6 +339,10 @@ STATE_DEFINE(HomingProprioceptive, Uncoiling, NoEventData)
   controller_.SetMotorTorqueTarget(torques_[kOffset - meas_step_]);
   emit printToQConsole(
     QString("Next torque setpoint = %1 ‰").arg(controller_.GetMotorTorqueTarget()));
+
+  WaitUntilPlatformSteady();
+  DumpMeasAndMoveNext();
+  InternalEvent(ST_UNCOILING);
 }
 
 STATE_DEFINE(HomingProprioceptive, Optimizing, NoEventData)
@@ -406,26 +395,49 @@ STATE_DEFINE(HomingProprioceptive, Fault, NoEventData)
   prev_state_ = ST_FAULT;
 }
 
-//--------- Miscellaneous -----------------------------------------------------------//
+//--------- Private functions ---------------------------------------------------------//
 
-bool HomingProprioceptive::IsCollectingData()
+void HomingProprioceptive::WaitUntilPlatformSteady()
 {
-  States current_state = static_cast<States>(GetCurrentState());
-  switch (current_state)
+  // Compute these once for all
+  static constexpr size_t kBuffSize =
+    static_cast<size_t>(kBufferingTimeSec_ / kCycleWaitTimeSec_);
+  static const std::vector<ID_t> motors_id = robot_->GetMotorsID();
+
+  // LP filters setup
+  static std::vector<grabnum::LowPassFilter> lp_filters(
+    motors_id.size(), grabnum::LowPassFilter(kCutoffFreq_, kCycleWaitTimeSec_));
+  for (size_t i = 0; i < motors_id.size(); i++)
+    lp_filters[i].Reset();
+
+  // Init
+  ActuatorStatus status;
+  bool swinging = true;
+  std::vector<RingBufferD> pulleys_angles(motors_id.size(), RingBufferD(kBuffSize));
+  grabrt::ThreadClock clock(grabrt::Sec2NanoSec(kCycleWaitTimeSec_));
+  // Start waiting
+  while (swinging)
   {
-  case ST_IDLE:
-    return false;
-  case ST_ENABLED:
-    return false;
-  case ST_FAULT:
-    return false;
-  case ST_OPTIMIZING:
-    return false;
-  case ST_HOME:
-    return false;
-  default:
-    return true;
+    for (size_t i = 0; i < motors_id.size(); i++)
+    {
+      status = robot_->GetActuatorStatus(motors_id[i]);
+      pulleys_angles[i].Add(lp_filters[i].Filter(status.pulley_angle));  // add filtered angle
+      if (!pulleys_angles[i].IsFull())  // wait at least until buffer is full
+        continue;
+      // Conditions to detect steadyness
+      swinging = grabnum::Std(pulleys_angles[i].Data()) > kMaxAngleDeviation_;
+      if (motors_id[i] == controller_.GetMotorsID().front())
+        swinging |= !controller_.MotorTorqueTargetReached(status.motor_torque);
+    }
+    clock.WaitUntilNext();
   }
+}
+
+void HomingProprioceptive::DumpMeasAndMoveNext()
+{
+  robot_->CollectMeas();
+  robot_->DumpMeas();
+  meas_step_++;
 }
 
 void HomingProprioceptive::PrintStateTransition(const States current_state,

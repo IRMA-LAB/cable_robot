@@ -48,7 +48,6 @@ void HomingInterfaceProprioceptive::FaultPresent(const bool value)
   ui->pushButton_clearFaults->setEnabled(value);
   ui->pushButton_enable->setEnabled(!value);
   ui->pushButton_start->setEnabled(!value);
-  ui->pushButton_acquire->setEnabled(!value);
 
   if (app_.IsCollectingData())
     ui->pushButton_enable->setText(tr("Enable"));
@@ -74,6 +73,18 @@ void HomingInterfaceProprioceptive::HomingCompleteCb()
   CLOG(INFO, "event") << "Homing complete";
   ui->groupBox_dataCollection->setEnabled(true);
   ui->pushButton_done->setEnabled(true);
+}
+
+void HomingInterfaceProprioceptive::AcquisitionProgressUpdate(const int value)
+{
+  if (value > ui->progressBar_acquisition->value())
+    ui->progressBar_acquisition->setValue(value);
+}
+
+void HomingInterfaceProprioceptive::OptimizationProgressUpdate(const int value)
+{
+  if (value > ui->progressBar_optimization->value())
+    ui->progressBar_optimization->setValue(value);
 }
 
 //--------- Private GUI slots ------------------------------------------------//
@@ -152,10 +163,7 @@ void HomingInterfaceProprioceptive::on_pushButton_start_clicked()
     app_.Stop(); // any --> ENABLED
 
     if (app_.GetCurrentState() == HomingProprioceptive::ST_ENABLED)
-    {
       ui->pushButton_start->setText(tr("Start"));
-      ui->pushButton_acquire->setDisabled(true);
-    }
   }
   else
   {
@@ -173,14 +181,7 @@ void HomingInterfaceProprioceptive::on_pushButton_start_clicked()
     app_.Start(data);
 
     ui->pushButton_start->setText(tr("Stop"));
-    ui->pushButton_acquire->setEnabled(true);
   }
-}
-
-void HomingInterfaceProprioceptive::on_pushButton_acquire_clicked()
-{
-  CLOG(TRACE, "event");
-  app_.Next();
 }
 
 void HomingInterfaceProprioceptive::on_radioButton_internal_clicked()

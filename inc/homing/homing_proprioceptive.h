@@ -6,6 +6,7 @@
 
 #include "StateMachine.h"
 #include "easylogging++.h"
+#include "inc/filters.h"
 
 #include "robot/cablerobot.h"
 #include "ctrl/controller_singledrive_naive.h"
@@ -60,7 +61,6 @@ public:
 public:
   void Start(HomingProprioceptiveStartData* data);
   void Stop();
-  void Next();
   void Optimize();
   void GoHome(HomingProprioceptiveHomeData *data);
   void FaultTrigger();
@@ -72,15 +72,24 @@ signals:
   void homingComplete() const;
 
 private:
-  static constexpr quint8 kNumMeasMin = 1U;
+  static constexpr quint8 kNumMeasMin_ = 1U;
 
   CableRobot* robot_ = NULL;
   ControllerSingleDriveNaive controller_;
-  quint8 num_meas_ = kNumMeasMin;
+  quint8 num_meas_ = kNumMeasMin_;
   quint16 meas_step_;
   vect<qint16> init_torques_;
   vect<qint16> max_torques_;
   vect<qint16> torques_;
+
+  // Tuning params
+  static constexpr double kBufferingTimeSec_ = 1.0;  // [sec]
+  static constexpr double kCycleWaitTimeSec_ = 0.01; // [sec]
+  static constexpr double kCutoffFreq_ = 15.0; // [Hz]
+  static constexpr double kMaxAngleDeviation_ = 0.1; // [deg]
+  void WaitUntilPlatformSteady();
+
+  void DumpMeasAndMoveNext();
 
 private:
   // clang-format off
@@ -105,9 +114,9 @@ private:
   STATE_DECLARE(HomingProprioceptive, StartUp, HomingProprioceptiveStartData)
   GUARD_DECLARE(HomingProprioceptive, GuardSwitch, NoEventData)
   STATE_DECLARE(HomingProprioceptive, SwitchCable, NoEventData)
-  GUARD_DECLARE(HomingProprioceptive, GuardCoiling, NoEventData)
+  ENTRY_DECLARE(HomingProprioceptive, EntryCoiling, NoEventData)
   STATE_DECLARE(HomingProprioceptive, Coiling, NoEventData)
-  GUARD_DECLARE(HomingProprioceptive, GuardUncoiling, NoEventData)
+  ENTRY_DECLARE(HomingProprioceptive, EntryUncoiling, NoEventData)
   STATE_DECLARE(HomingProprioceptive, Uncoiling, NoEventData)
   STATE_DECLARE(HomingProprioceptive, Optimizing, NoEventData)
   STATE_DECLARE(HomingProprioceptive, Home, HomingProprioceptiveHomeData)
@@ -120,8 +129,8 @@ private:
     STATE_MAP_ENTRY_ALL_EX(&Enabled, &GuardEnabled, 0, 0)
     STATE_MAP_ENTRY_EX(&StartUp)
     STATE_MAP_ENTRY_ALL_EX(&SwitchCable, &GuardSwitch, 0, 0)
-    STATE_MAP_ENTRY_ALL_EX(&Coiling, &GuardCoiling, 0, 0)
-    STATE_MAP_ENTRY_ALL_EX(&Uncoiling, &GuardUncoiling, 0, 0)
+    STATE_MAP_ENTRY_ALL_EX(&Coiling, 0, &EntryCoiling, 0)
+    STATE_MAP_ENTRY_ALL_EX(&Uncoiling, 0, &EntryUncoiling, 0)
     STATE_MAP_ENTRY_EX(&Optimizing)
     STATE_MAP_ENTRY_EX(&Home)
     STATE_MAP_ENTRY_EX(&Fault)

@@ -19,7 +19,8 @@ HEADERS = \
     $$PWD/inc/utils/msgs.h \
     $$PWD/inc/utils/easylog_wrapper.h \
     $$PWD/lib/easyloggingpp/src/easylogging++.h \
-    $$PWD/lib/grab_common/grabcommon.h
+    $$PWD/lib/grab_common/grabcommon.h \
+    $$PWD/lib/grab_common/bitfield.h
 
 SOURCES = \
     $$PWD/src/main.cpp \

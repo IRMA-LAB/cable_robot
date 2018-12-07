@@ -26,6 +26,9 @@ public slots:
   void AcquisitionCompleteCb();
   void HomingCompleteCb();
 
+  void AcquisitionProgressUpdate(const int value);
+  void OptimizationProgressUpdate(const int value);
+
 private slots:
   void closeEvent(QCloseEvent *);
 
@@ -34,7 +37,6 @@ private slots:
   void on_checkBox_useCurrentTorque_stateChanged(int);
   void on_checkBox_maxTorque_stateChanged(int);
   void on_pushButton_start_clicked();
-  void on_pushButton_acquire_clicked();
 
   void on_radioButton_internal_clicked();
   void on_radioButton_external_clicked();
