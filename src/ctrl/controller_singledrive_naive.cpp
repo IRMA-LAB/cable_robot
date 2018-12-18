@@ -48,17 +48,17 @@ void ControllerSingleDriveNaive::CableLenIncrement(const bool active,
 {
   change_length_target_ = active;
   if (change_length_target_)
-    delta_length_ = micromove ? sign * kDeltaLengthMicro : sign * kDeltaLength;
+    delta_length_ = micromove ? sign * kDeltaLengthMicro_ : sign * kDeltaLength_;
 }
 
 void ControllerSingleDriveNaive::MotorSpeedIncrement(const Sign sign)
 {
-  speed_target_ += sign * kDeltaSpeed;
+  speed_target_ += sign * kDeltaSpeed_;
 }
 
 void ControllerSingleDriveNaive::MotorTorqueIncrement(const Sign sign)
 {
-  torque_target_ += sign * kDeltaTorque;
+  torque_target_ += sign * kDeltaTorque_;
 }
 
 bool ControllerSingleDriveNaive::CableLenTargetReached(const double current_value)
@@ -81,7 +81,7 @@ bool ControllerSingleDriveNaive::MotorSpeedTargetReached(const int32_t current_v
 
 bool ControllerSingleDriveNaive::MotorTorqueTargetReached(const int16_t current_value)
 {
-  static const int16_t tol = 1; // inserisci una tolleranza vera..
+  static const int16_t tol = 5;  // per thousand points
   return abs(torque_target_ - current_value) < tol;
 }
 

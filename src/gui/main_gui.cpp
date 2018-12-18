@@ -14,7 +14,7 @@ MainGUI::MainGUI(QWidget* parent, const grabcdpr::Params& config)
   connect(&robot_, SIGNAL(motorStatus(quint8, grabec::GSWDriveInPdos)), this,
           SLOT(UpdateDriveStatusTable(quint8, grabec::GSWDriveInPdos)));
 
-  robot_.EventSuccess(); // pwd & config OK --> robot ENABLED
+  robot_.eventSuccess(); // pwd & config OK --> robot ENABLED
 #if ECNTW
   if (robot_.GetCurrentState() == CableRobot::ST_ENABLED)
     robot_.Start();
@@ -62,7 +62,7 @@ void MainGUI::on_pushButton_calib_clicked()
   ui->groupBox_app->setDisabled(true);
   ui->frame_manualControl->setDisabled(true);
 
-  robot_.EnterCalibrationMode();
+  robot_.enterCalibrationMode();
 
   calib_dialog_ = new CalibrationDialog(this, &robot_);
   connect(calib_dialog_, SIGNAL(enableMainGUI()), this, SLOT(EnableInterface()));
@@ -79,7 +79,7 @@ void MainGUI::on_pushButton_homing_clicked()
   ui->groupBox_app->setDisabled(true);
   ui->frame_manualControl->setDisabled(true);
 
-  robot_.EnterHomingMode();
+  robot_.enterHomingMode();
 
   if (homing_dialog_ == NULL)
   {
@@ -131,7 +131,11 @@ void MainGUI::on_pushButton_enable_clicked()
   SetupDirectMotorCtrl();
 }
 
-void MainGUI::on_pushButton_faultReset_clicked() { CLOG(TRACE, "event"); }
+void MainGUI::on_pushButton_faultReset_clicked()
+{
+  CLOG(TRACE, "event");
+  robot_.ClearFaults();
+}
 
 void MainGUI::on_radioButton_posMode_clicked()
 {
@@ -146,8 +150,10 @@ void MainGUI::on_radioButton_posMode_clicked()
     DisableVelCtrlButtons(true);
     DisableTorqueCtrlButtons(true);
 #if ECNTW
+    pthread_mutex_lock(&robot_.Mutex());
     man_ctrl_ptr_->SetCableLenTarget(robot_.GetActuatorStatus(motor_id_).cable_length);
     man_ctrl_ptr_->SetMode(ControlMode::CABLE_LENGTH);
+    pthread_mutex_unlock(&robot_.Mutex());
 #endif
   }
 }
@@ -165,8 +171,10 @@ void MainGUI::on_radioButton_velMode_clicked()
     DisableVelCtrlButtons(false);
     DisableTorqueCtrlButtons(true);
 #if ECNTW
+    pthread_mutex_lock(&robot_.Mutex());
     man_ctrl_ptr_->SetMotorSpeedTarget(robot_.GetActuatorStatus(motor_id_).motor_speed);
     man_ctrl_ptr_->SetMode(ControlMode::MOTOR_SPEED);
+    pthread_mutex_unlock(&robot_.Mutex());
 #endif
   }
 }
@@ -184,8 +192,10 @@ void MainGUI::on_radioButton_torqueMode_clicked()
     DisableVelCtrlButtons(true);
     DisableTorqueCtrlButtons(false);
 #if ECNTW
+    pthread_mutex_lock(&robot_.Mutex());
     man_ctrl_ptr_->SetMotorTorqueTarget(robot_.GetActuatorStatus(motor_id_).motor_torque);
     man_ctrl_ptr_->SetMode(ControlMode::MOTOR_TORQUE);
+    pthread_mutex_unlock(&robot_.Mutex());
 #endif
   }
 }
@@ -194,73 +204,97 @@ void MainGUI::on_radioButton_torqueMode_clicked()
 void MainGUI::on_pushButton_posPlus_pressed()
 {
   CLOG(TRACE, "event");
+  pthread_mutex_lock(&robot_.Mutex());
   man_ctrl_ptr_->CableLenIncrement(true, Sign::POS, false);
+  pthread_mutex_unlock(&robot_.Mutex());
 }
 
 void MainGUI::on_pushButton_posPlus_released()
 {
   CLOG(TRACE, "event");
+  pthread_mutex_lock(&robot_.Mutex());
   man_ctrl_ptr_->CableLenIncrement(false);
+  pthread_mutex_unlock(&robot_.Mutex());
 }
 
 void MainGUI::on_pushButton_posMinus_pressed()
 {
   CLOG(TRACE, "event");
+  pthread_mutex_lock(&robot_.Mutex());
   man_ctrl_ptr_->CableLenIncrement(true, Sign::NEG, false);
+  pthread_mutex_unlock(&robot_.Mutex());
 }
 
 void MainGUI::on_pushButton_posMinus_released()
 {
   CLOG(TRACE, "event");
+  pthread_mutex_lock(&robot_.Mutex());
   man_ctrl_ptr_->CableLenIncrement(false);
+  pthread_mutex_unlock(&robot_.Mutex());
 }
 
 void MainGUI::on_pushButton_posMicroPlus_pressed()
 {
   CLOG(TRACE, "event");
+  pthread_mutex_lock(&robot_.Mutex());
   man_ctrl_ptr_->CableLenIncrement(true, Sign::POS, true);
+  pthread_mutex_unlock(&robot_.Mutex());
 }
 
 void MainGUI::on_pushButton_posMicroPlus_released()
 {
   CLOG(TRACE, "event");
+  pthread_mutex_lock(&robot_.Mutex());
   man_ctrl_ptr_->CableLenIncrement(false);
+  pthread_mutex_unlock(&robot_.Mutex());
 }
 
 void MainGUI::on_pushButton_posMicroMinus_pressed()
 {
   CLOG(TRACE, "event");
+  pthread_mutex_lock(&robot_.Mutex());
   man_ctrl_ptr_->CableLenIncrement(true, Sign::NEG, true);
+  pthread_mutex_unlock(&robot_.Mutex());
 }
 
 void MainGUI::on_pushButton_posMicroMinus_released()
 {
   CLOG(TRACE, "event");
+  pthread_mutex_lock(&robot_.Mutex());
   man_ctrl_ptr_->CableLenIncrement(false);
+  pthread_mutex_unlock(&robot_.Mutex());
 }
 
 void MainGUI::on_pushButton_speedPlus_clicked()
 {
   CLOG(TRACE, "event");
+  pthread_mutex_lock(&robot_.Mutex());
   man_ctrl_ptr_->MotorSpeedIncrement(Sign::POS);
+  pthread_mutex_unlock(&robot_.Mutex());
 }
 
 void MainGUI::on_pushButton_speedMinus_clicked()
 {
   CLOG(TRACE, "event");
+  pthread_mutex_lock(&robot_.Mutex());
   man_ctrl_ptr_->MotorSpeedIncrement(Sign::NEG);
+  pthread_mutex_unlock(&robot_.Mutex());
 }
 
 void MainGUI::on_pushButton_torquePlus_clicked()
 {
   CLOG(TRACE, "event");
+  pthread_mutex_lock(&robot_.Mutex());
   man_ctrl_ptr_->MotorTorqueIncrement(Sign::POS);
+  pthread_mutex_unlock(&robot_.Mutex());
 }
 
 void MainGUI::on_pushButton_torqueMinus_clicked()
 {
   CLOG(TRACE, "event");
+  pthread_mutex_lock(&robot_.Mutex());
   man_ctrl_ptr_->MotorTorqueIncrement(Sign::NEG);
+  pthread_mutex_unlock(&robot_.Mutex());
 }
 #endif
 
@@ -404,7 +438,7 @@ bool MainGUI::ExitReadyStateRequest()
 
 void MainGUI::SetupDirectMotorCtrl()
 {
-  robot_.Stop(); // robot: READY | ENABLED --> ENABLED
+  robot_.stop(); // robot: READY | ENABLED --> ENABLED
 
 #if ECNTW
   if (manual_ctrl_enabled_)
@@ -427,17 +461,21 @@ void MainGUI::SetupDirectMotorCtrl()
       man_ctrl_ptr_->SetMode(ControlMode::MOTOR_TORQUE);
       man_ctrl_ptr_->SetMotorTorqueTarget(current_status.motor_torque);
     }
+    pthread_mutex_lock(&robot_.Mutex());
     robot_.SetController(man_ctrl_ptr_);
+    pthread_mutex_unlock(&robot_.Mutex());
 
-    robot_.EnableMotors(std::vector<uint8_t>(1, motor_id_));
+    robot_.EnableMotors(std::vector<ID_t>(1, motor_id_));
   }
   else
   {
+    pthread_mutex_lock(&robot_.Mutex());
     delete man_ctrl_ptr_;
     man_ctrl_ptr_ = NULL;
     robot_.SetController(man_ctrl_ptr_);
+    pthread_mutex_unlock(&robot_.Mutex());
 
-    robot_.DisableMotors(std::vector<uint8_t>(1, motor_id_));
+    robot_.DisableMotors(std::vector<ID_t>(1, motor_id_));
   }
 #endif
 }

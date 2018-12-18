@@ -4,7 +4,7 @@
 #include "grabcommon.h"
 #include "ctrl/controller_base.h"
 
-enum class Sign : int8_t
+enum class Sign : int16_t
 {
   POS = 1,
   NEG = -1
@@ -44,10 +44,10 @@ public:
   vect<ControlAction> CalcCableSetPoint(const grabcdpr::Vars& robot_status) override;
 
 private:
-  static constexpr double kDeltaLengthMicro = 0.001;
-  static constexpr double kDeltaLength = 0.01;
-  static constexpr int32_t kDeltaSpeed = 1;
-  static constexpr int16_t kDeltaTorque = 1;
+  static constexpr double kDeltaLengthMicro_ = 0.001;
+  static constexpr double kDeltaLength_ = 0.01;
+  static constexpr int32_t kDeltaSpeed_ = 1;
+  static constexpr int16_t kDeltaTorque_ = 10;
 
   enum BitPosition
   {

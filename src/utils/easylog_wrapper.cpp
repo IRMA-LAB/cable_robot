@@ -61,7 +61,7 @@ void LogBuffer::Stop()
   wait();
 }
 
-void LogBuffer::CollectMsg(QByteArray msg)
+void LogBuffer::collectMsg(QByteArray msg)
 {
   static quint64 linear_cnt = 0;
 

@@ -54,6 +54,7 @@ public:
   void SetMotorsOpMode(const qint8 op_mode);
   void SetMotorsOpMode(const vect<ID_t>& motors_id, const qint8 op_mode);
   vect<ID_t> GetMotorsID() const;
+  void ClearFaults();
 
   void CollectMeas();
   void DumpMeas() const;
@@ -62,15 +63,15 @@ public:
   void SetController(ControllerBase* controller) { controller_ = controller; }
 
 public slots:
-  void EnterCalibrationMode();
-  void EnterHomingMode();
-  void EventSuccess();
-  void EventFailure();
-  void Stop();
+  void enterCalibrationMode();
+  void enterHomingMode();
+  void eventSuccess();
+  void eventFailure();
+  void stop();
 
 signals:
   void printToQConsole(const QString&) const;
-  void motorStatus(const quint8, const grabec::GSWDriveInPdos&) const;
+  void motorStatus(const quint64, const grabec::GSWDriveInPdos&) const;
   void sendMsg(const QByteArray) const;
 
 private:

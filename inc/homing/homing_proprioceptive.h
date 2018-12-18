@@ -70,9 +70,10 @@ signals:
   void printToQConsole(const QString&) const;
   void acquisitionComplete() const;
   void homingComplete() const;
+  void stateChanged(const quint8&) const;
 
 private:
-  static constexpr quint8 kNumMeasMin_ = 1U;
+  static constexpr quint8 kNumMeasMin_ = 1;
 
   CableRobot* robot_ = NULL;
   ControllerSingleDriveNaive controller_;

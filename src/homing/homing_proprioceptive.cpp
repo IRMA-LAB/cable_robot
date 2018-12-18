@@ -225,6 +225,9 @@ STATE_DEFINE(HomingProprioceptive, StartUp, HomingProprioceptiveStartData)
   max_torques_ = data->max_torques;
   torques_.resize(num_meas_);
 
+  pthread_mutex_lock(&robot_->Mutex());
+  robot_->SetController(&controller_);
+  pthread_mutex_unlock(&robot_->Mutex());
   vect<ID_t> motors_id = robot_->GetMotorsID();
   for (size_t i = 0; i < motors_id.size(); ++i)
   {
@@ -236,12 +239,16 @@ STATE_DEFINE(HomingProprioceptive, StartUp, HomingProprioceptiveStartData)
     {
       init_torques_.push_back(data->init_torques[i]);
       // Wait until all motors reached user-given initial torque setpoint
+      pthread_mutex_lock(&robot_->Mutex());
       controller_.SetMotorID(motors_id[i]);
       controller_.SetMotorTorqueTarget(init_torques_.back()); //  = data->init_torques[i]
+      pthread_mutex_unlock(&robot_->Mutex());
       while (1)
       {
+        pthread_mutex_lock(&robot_->Mutex());
         if (controller_.MotorTorqueTargetReached(current_torque))
           break;
+        pthread_mutex_unlock(&robot_->Mutex());
         current_torque = robot_->GetActuatorStatus(motors_id[i]).motor_torque;
         // todo: inserisci un tempo di attesa qui magari
       }
@@ -261,9 +268,14 @@ GUARD_DEFINE(HomingProprioceptive, GuardSwitch, NoEventData)
   if (prev_state_ == ST_START_UP)
     return true;
 
-  if (controller_.GetMotorsID().front() !=
-      robot_->GetMotorsID().back()) // we are not done ==> move to next cable
+  pthread_mutex_lock(&robot_->Mutex());
+  if (controller_.GetMotorsID().front() != robot_->GetMotorsID().back())
+  {
+    // We are not done ==> move to next cable
+    pthread_mutex_unlock(&robot_->Mutex());
     return true;
+  }
+  pthread_mutex_unlock(&robot_->Mutex());
 
   InternalEvent(ST_ENABLED);
   emit acquisitionComplete();
@@ -285,8 +297,10 @@ STATE_DEFINE(HomingProprioceptive, SwitchCable, NoEventData)
   torques_.back() =
     max_torques_[motor_id_idx]; // last element is forced to be = max torque
 
+  pthread_mutex_lock(&robot_->Mutex());
   controller_.SetMotorID(motors_id[motor_id_idx]);
   controller_.SetMotorTorqueTarget(torques_.front());
+  pthread_mutex_unlock(&robot_->Mutex());
 
   emit printToQConsole(
     QString("Switched to actuator #%1.\nInitial torque setpoint = %2 ‰")
@@ -312,9 +326,11 @@ STATE_DEFINE(HomingProprioceptive, Coiling, NoEventData)
     return;
   }
 
+  pthread_mutex_lock(&robot_->Mutex());
   controller_.SetMotorTorqueTarget(torques_[meas_step_]);
   emit printToQConsole(
     QString("Next torque setpoint = %1 ‰").arg(controller_.GetMotorTorqueTarget()));
+  pthread_mutex_unlock(&robot_->Mutex());
 
   WaitUntilPlatformSteady();
   DumpMeasAndMoveNext();
@@ -336,9 +352,11 @@ STATE_DEFINE(HomingProprioceptive, Uncoiling, NoEventData)
     return;
   }
 
+  pthread_mutex_lock(&robot_->Mutex());
   controller_.SetMotorTorqueTarget(torques_[kOffset - meas_step_]);
   emit printToQConsole(
     QString("Next torque setpoint = %1 ‰").arg(controller_.GetMotorTorqueTarget()));
+  pthread_mutex_unlock(&robot_->Mutex());
 
   WaitUntilPlatformSteady();
   DumpMeasAndMoveNext();
@@ -421,13 +439,12 @@ void HomingProprioceptive::WaitUntilPlatformSteady()
     for (size_t i = 0; i < motors_id.size(); i++)
     {
       status = robot_->GetActuatorStatus(motors_id[i]);
-      pulleys_angles[i].Add(lp_filters[i].Filter(status.pulley_angle));  // add filtered angle
-      if (!pulleys_angles[i].IsFull())  // wait at least until buffer is full
+      pulleys_angles[i].Add(
+        lp_filters[i].Filter(status.pulley_angle)); // add filtered angle
+      if (!pulleys_angles[i].IsFull())              // wait at least until buffer is full
         continue;
-      // Conditions to detect steadyness
+      // Condition to detect steadyness
       swinging = grabnum::Std(pulleys_angles[i].Data()) > kMaxAngleDeviation_;
-      if (motors_id[i] == controller_.GetMotorsID().front())
-        swinging |= !controller_.MotorTorqueTargetReached(status.motor_torque);
     }
     clock.WaitUntilNext();
   }
@@ -445,6 +462,7 @@ void HomingProprioceptive::PrintStateTransition(const States current_state,
 {
   if (current_state == new_state)
     return;
+  emit stateChanged(new_state);
   QString msg;
   if (current_state != ST_MAX_STATES)
     msg = QString("Homing state transition: %1 --> %2")

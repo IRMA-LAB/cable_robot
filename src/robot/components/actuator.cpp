@@ -36,6 +36,18 @@ void Actuator::Disable()
   // clang-format on
 }
 
+void Actuator::FaultTrigger()
+{
+  CLOG(TRACE, "event");
+  // clang-format off
+  BEGIN_TRANSITION_MAP                                       // - Current State -
+    TRANSITION_MAP_ENTRY(ST_FAULT)                  // ST_IDLE
+    TRANSITION_MAP_ENTRY(ST_FAULT)                  // ST_ENABLED
+    TRANSITION_MAP_ENTRY(EVENT_IGNORED)       // ST_FAULT
+  END_TRANSITION_MAP(NULL)
+  // clang-format on
+}
+
 void Actuator::FaultReset()
 {
   CLOG(TRACE, "event");
@@ -172,10 +184,14 @@ GUARD_DEFINE(Actuator, GuardFault, NoEventData)
   clock_.Reset();
   while (1)
   {
+    // Try to clear faults automatically
     if (winch_.GetServo()->GetCurrentState() == grabec::ST_SWITCH_ON_DISABLED)
-      return TRUE; // drive is disabled
+    {
+      InternalEvent(ST_IDLE);
+      return FALSE; // drive is disabled
+    }
     if (clock_.Elapsed() > kMaxTransitionTimeSec_)
-      return FALSE; // taking too long to disable drive. Something's wrong.
+      return TRUE; // taking too long to disable drive. Something's wrong.
     clock_.Reset();
   }
 }

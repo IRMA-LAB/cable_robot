@@ -49,7 +49,8 @@ public:
   LogBuffer(el::Logger* data_logger, const size_t buffer_size = 2000)
     : logger_(data_logger), stop_requested_(false),
       buffer_(buffer_size, QByteArray(static_cast<int>(kMaxMsgSize), 0))
-  {}
+  {
+  }
 
   /**
    * @brief Stop
@@ -61,12 +62,11 @@ public slots:
    * @brief CollectMsg
    * @param msg
    */
-  void CollectMsg(QByteArray msg);
-
-protected:
-  el::Logger* logger_ = NULL;
+  void collectMsg(QByteArray msg);
 
 private:
+  el::Logger* logger_ = NULL;
+
   QMutex mutex_;
   QWaitCondition buffer_not_empty;
   QWaitCondition buffer_not_full;

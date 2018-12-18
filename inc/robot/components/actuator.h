@@ -35,6 +35,10 @@ public:
    */
   void Disable();
   /**
+   * @brief FaultTrigger
+   */
+  void FaultTrigger();
+  /**
    * @brief FaultReset
    */
   void FaultReset();
@@ -152,7 +156,7 @@ private:
   };
 
   States prev_state_ = ST_IDLE;
-  grabrt::ThreadClock clock_;
+  grabrt::Clock clock_;
 
   // Define the state machine state functions with event data type
   STATE_DECLARE(Actuator, Idle, NoEventData)

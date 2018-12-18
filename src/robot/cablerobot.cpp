@@ -25,20 +25,20 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
     status_.cables.push_back(cable);
 #if ECNTW
     actuators_.push_back(Actuator(i, slave_pos++, config.actuators[i]));
-    ec_slaves_ptrs_.push_back(actuators_[i].GetWinch()->GetServo());
+    ec_slaves_ptrs_.push_back(actuators_[i].GetWinch().GetServo());
 #endif
   }
 
   // todo: is this necessary? maybe fix ethercatmaster directly
-  num_slaves_ = static_cast<int>(ec_slaves_ptrs_.size());
+  num_slaves_ = ec_slaves_ptrs_.size();
 #if ECNTW
   slave_ = &ec_slaves_ptrs_[0];
-  for (int i = 0; i < num_slaves_; i++)
+  for (size_t i = 0; i < num_slaves_; i++)
     num_domain_elements_ += ec_slaves_ptrs_[i]->GetDomainEntriesNum();
 #endif
 
   connect(this, SIGNAL(sendMeas(QByteArray)), &log_buffer_,
-          SLOT(CollectMeas(QByteArray)));
+          SLOT(collectMeas(QByteArray)));
   log_buffer_.start();
 }
 
@@ -46,7 +46,7 @@ CableRobot::~CableRobot()
 {
   log_buffer_.Stop();
   disconnect(this, SIGNAL(sendMeas(QByteArray)), &log_buffer_,
-             SLOT(CollectMeas(QByteArray)));
+             SLOT(collectMeas(QByteArray)));
 }
 
 //--------- Public Functions --------------------------------------------------//
@@ -186,6 +186,13 @@ vect<ID_t> CableRobot::GetMotorsID() const
   return motors_id;
 }
 
+void CableRobot::ClearFaults()
+{
+  for (Actuator& actuator : actuators_)
+    if (actuator.IsInFault())
+      actuator.FaultReset();
+}
+
 void CableRobot::CollectMeas()
 {
   for (size_t i = 0; i < meas_.size(); ++i)
@@ -232,7 +239,7 @@ bool CableRobot::GoHome()
 
 //--------- External Events Public --------------------------------------------------//
 
-void CableRobot::EnterCalibrationMode()
+void CableRobot::enterCalibrationMode()
 {
   CLOG(TRACE, "event");
   // clang-format off
@@ -248,7 +255,7 @@ void CableRobot::EnterCalibrationMode()
   // clang-format on
 }
 
-void CableRobot::EnterHomingMode()
+void CableRobot::enterHomingMode()
 {
   CLOG(TRACE, "event");
   // clang-format off
@@ -264,7 +271,7 @@ void CableRobot::EnterHomingMode()
   // clang-format on
 }
 
-void CableRobot::EventSuccess()
+void CableRobot::eventSuccess()
 {
   CLOG(TRACE, "event");
   // clang-format off
@@ -280,7 +287,7 @@ void CableRobot::EventSuccess()
   // clang-format on
 }
 
-void CableRobot::EventFailure()
+void CableRobot::eventFailure()
 {
   CLOG(TRACE, "event");
   // clang-format off
@@ -296,7 +303,7 @@ void CableRobot::EventFailure()
   // clang-format on
 }
 
-void CableRobot::Stop()
+void CableRobot::stop()
 {
   CLOG(TRACE, "event");
   // clang-format off
@@ -339,6 +346,9 @@ STATE_DEFINE(CableRobot, Homing, NoEventData)
 {
   PrintStateTransition(prev_state_, ST_HOMING);
   prev_state_ = ST_HOMING;
+
+  if (controller_ != NULL)
+    ControlStep(); // take care of manual control when a motor is active, skip otherwise
 }
 
 STATE_DEFINE(CableRobot, Ready, NoEventData)
