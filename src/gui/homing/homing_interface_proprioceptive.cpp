@@ -22,7 +22,7 @@ HomingInterfaceProprioceptive::HomingInterfaceProprioceptive(QWidget* parent,
           SLOT(appendText2Browser(QString)));
   connect(&app_, SIGNAL(acquisitionComplete()), this, SLOT(handleAcquisitionComplete()));
   connect(&app_, SIGNAL(homingComplete()), this, SLOT(handleHomingComplete()));
-  connect(&app_, SIGNAL(stateChanged()), this, SLOT(handleStateChanged()));
+  connect(&app_, SIGNAL(stateChanged(quint8)), this, SLOT(handleStateChanged(quint8)));
 
   app_.Stop(); // make sure we start in IDLE mode
 }
@@ -36,7 +36,7 @@ HomingInterfaceProprioceptive::~HomingInterfaceProprioceptive()
   disconnect(&app_, SIGNAL(acquisitionComplete()), this,
              SLOT(handleAcquisitionComplete()));
   disconnect(&app_, SIGNAL(homingComplete()), this, SLOT(handleHomingComplete()));
-  disconnect(&app_, SIGNAL(stateChanged()), this, SLOT(handleStateChanged()));
+  disconnect(&app_, SIGNAL(stateChanged(quint8)), this, SLOT(handleStateChanged(quint8)));
 
   for (InitTorqueForm* form : init_torque_forms_)
     delete form;

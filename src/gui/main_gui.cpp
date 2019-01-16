@@ -10,9 +10,9 @@ MainGUI::MainGUI(QWidget* parent, const grabcdpr::Params& config)
     ui->comboBox_motorAxis->addItem(QString::number(i + 1));
 
   connect(&robot_, SIGNAL(printToQConsole(QString)), this,
-          SLOT(AppendText2Browser(QString)));
-  connect(&robot_, SIGNAL(motorStatus(quint8, grabec::GSWDriveInPdos)), this,
-          SLOT(UpdateDriveStatusTable(quint8, grabec::GSWDriveInPdos)));
+          SLOT(appendText2Browser(QString)));
+  connect(&robot_, SIGNAL(motorStatus(quint64, grabec::GSWDriveInPdos)), this,
+          SLOT(updateDriveStatusTable(quint64, grabec::GSWDriveInPdos)));
 
   robot_.eventSuccess(); // pwd & config OK --> robot ENABLED
 #if ECNTW
@@ -24,22 +24,22 @@ MainGUI::MainGUI(QWidget* parent, const grabcdpr::Params& config)
 MainGUI::~MainGUI()
 {
   disconnect(&robot_, SIGNAL(printToQConsole(QString)), this,
-             SLOT(AppendText2Browser(QString)));
-  disconnect(&robot_, SIGNAL(motorStatus(quint8, grabec::GSWDriveInPdos)), this,
-             SLOT(UpdateDriveStatusTable(quint8, grabec::GSWDriveInPdos)));
+             SLOT(appendText2Browser(QString)));
+  disconnect(&robot_, SIGNAL(motorStatus(quint64, grabec::GSWDriveInPdos)), this,
+             SLOT(updateDriveStatusTable(quint64, grabec::GSWDriveInPdos)));
 
   if (calib_dialog_ != NULL)
   {
-    disconnect(calib_dialog_, SIGNAL(enableMainGUI()), this, SLOT(EnableInterface()));
-    disconnect(calib_dialog_, SIGNAL(calibrationEnd()), &robot_, SLOT(EventSuccess()));
+    disconnect(calib_dialog_, SIGNAL(enableMainGUI()), this, SLOT(enableInterface()));
+    disconnect(calib_dialog_, SIGNAL(calibrationEnd()), &robot_, SLOT(eventSuccess()));
     delete calib_dialog_;
   }
   if (homing_dialog_ != NULL)
   {
     disconnect(homing_dialog_, SIGNAL(enableMainGUI(bool)), this,
-               SLOT(EnableInterface(bool)));
-    disconnect(homing_dialog_, SIGNAL(homingSuccess()), &robot_, SLOT(EventSuccess()));
-    disconnect(homing_dialog_, SIGNAL(homingFailed()), &robot_, SLOT(EventFailure()));
+               SLOT(enableInterface(bool)));
+    disconnect(homing_dialog_, SIGNAL(homingSuccess()), &robot_, SLOT(eventSuccess()));
+    disconnect(homing_dialog_, SIGNAL(homingFailed()), &robot_, SLOT(eventFailure()));
     delete homing_dialog_;
   }
   delete ui;
@@ -53,6 +53,9 @@ MainGUI::~MainGUI()
 void MainGUI::on_pushButton_calib_clicked()
 {
   CLOG(TRACE, "event");
+  if (!ec_network_valid_)
+    return;
+
   if (robot_.GetCurrentState() == CableRobot::ST_READY)
     if (!ExitReadyStateRequest())
       return;
@@ -65,8 +68,8 @@ void MainGUI::on_pushButton_calib_clicked()
   robot_.enterCalibrationMode();
 
   calib_dialog_ = new CalibrationDialog(this, &robot_);
-  connect(calib_dialog_, SIGNAL(enableMainGUI()), this, SLOT(EnableInterface()));
-  connect(calib_dialog_, SIGNAL(calibrationEnd()), &robot_, SLOT(EventSuccess()));
+  connect(calib_dialog_, SIGNAL(enableMainGUI()), this, SLOT(enableInterface()));
+  connect(calib_dialog_, SIGNAL(calibrationEnd()), &robot_, SLOT(eventSuccess()));
   calib_dialog_->show();
   CLOG(INFO, "event") << "Prompt calibration dialog";
 }
@@ -74,6 +77,9 @@ void MainGUI::on_pushButton_calib_clicked()
 void MainGUI::on_pushButton_homing_clicked()
 {
   CLOG(TRACE, "event");
+  if (!ec_network_valid_)
+    return;
+
   ui->pushButton_homing->setDisabled(true);
   ui->pushButton_calib->setDisabled(true);
   ui->groupBox_app->setDisabled(true);
@@ -85,9 +91,9 @@ void MainGUI::on_pushButton_homing_clicked()
   {
     homing_dialog_ = new HomingDialog(this, &robot_);
     connect(homing_dialog_, SIGNAL(enableMainGUI(bool)), this,
-            SLOT(EnableInterface(bool)));
-    connect(homing_dialog_, SIGNAL(homingSuccess()), &robot_, SLOT(EventSuccess()));
-    connect(homing_dialog_, SIGNAL(homingFailed()), &robot_, SLOT(EventFailure()));
+            SLOT(enableInterface(bool)));
+    connect(homing_dialog_, SIGNAL(homingSuccess()), &robot_, SLOT(eventSuccess()));
+    connect(homing_dialog_, SIGNAL(homingFailed()), &robot_, SLOT(eventFailure()));
   }
   homing_dialog_->show();
   CLOG(INFO, "event") << "Prompt homing dialog";
@@ -105,6 +111,9 @@ void MainGUI::on_pushButton_startApp_clicked()
 void MainGUI::on_pushButton_enable_clicked()
 {
   CLOG(TRACE, "event");
+  if (!ec_network_valid_)
+    return;
+
   if (robot_.GetCurrentState() == CableRobot::ST_READY)
     if (!ExitReadyStateRequest())
       return;
@@ -302,7 +311,7 @@ void MainGUI::on_pushButton_torqueMinus_clicked()
 /// SLOTS
 ////////////////////////////////////////
 
-void MainGUI::EnableInterface(const bool op_outcome /*= false*/)
+void MainGUI::enableInterface(const bool op_outcome /*= false*/)
 {
   ui->pushButton_homing->setEnabled(true);
   ui->pushButton_calib->setEnabled(true);
@@ -312,7 +321,7 @@ void MainGUI::EnableInterface(const bool op_outcome /*= false*/)
                     << (op_outcome ? "enabled" : "disabled");
 }
 
-void MainGUI::AppendText2Browser(const QString& text)
+void MainGUI::appendText2Browser(const QString& text)
 {
   if (text.contains("warning", Qt::CaseSensitivity::CaseInsensitive))
     CLOG(WARNING, "browser") << text;
@@ -323,7 +332,7 @@ void MainGUI::AppendText2Browser(const QString& text)
   ui->textBrowser_logs->append(text);
 }
 
-void MainGUI::UpdateDriveStatusTable(const quint8 id,
+void MainGUI::updateDriveStatusTable(const quint64 id,
                                      const grabec::GSWDriveInPdos& status)
 {
   static const qint16 kUpdateCycle = 50; // ~ms
@@ -388,6 +397,28 @@ void MainGUI::UpdateDriveStatusTable(const quint8 id,
   ui->table_inputPdos->item(5, 0)->setData(Qt::DisplayRole, status.digital_inputs);
   ui->table_inputPdos->item(6, 0)->setData(Qt::DisplayRole, status.aux_pos_actual_value);
   CVLOG(2, "event") << "Drive status table updated";
+}
+
+void MainGUI::updateEcStatusLED(const Bitfield8& ec_status_flags)
+{
+  switch (ec_status_flags.Count())
+  {
+  case 3:
+    ui->label_ec_status_led->setPixmap(
+      QPixmap(QString::fromUtf8(":/img/img/green_button.png")));
+    ec_network_valid_ = true;
+    break;
+  case 0:
+    ui->label_ec_status_led->setPixmap(
+      QPixmap(QString::fromUtf8(":/img/img/red_button.png")));
+    ec_network_valid_ = true;
+    break;
+  default:
+    ui->label_ec_status_led->setPixmap(
+      QPixmap(QString::fromUtf8(":/img/img/yellow_button.png")));
+    ec_network_valid_ = true;
+    break;
+  }
 }
 
 ////////////////////////////////////////

@@ -54,11 +54,14 @@ private slots:
 #endif
 
 private slots:
-  void EnableInterface(const bool op_outcome = false);
-  void AppendText2Browser(const QString& text);
-  void UpdateDriveStatusTable(const quint8 id, const grabec::GSWDriveInPdos& status);
+  void enableInterface(const bool op_outcome = false);
+  void appendText2Browser(const QString& text);
+  void updateDriveStatusTable(const quint64 id, const grabec::GSWDriveInPdos& status);
+  void updateEcStatusLED(const Bitfield8& ec_status_flags);
 
 private:
+  bool ec_network_valid_ = false;
+
   Ui::MainGUI* ui = NULL;
   CalibrationDialog* calib_dialog_ = NULL;
   HomingDialog* homing_dialog_ = NULL;
