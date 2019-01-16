@@ -7,7 +7,6 @@
 #include "StateMachine.h"
 #include "libcdpr/inc/types.h"
 #include "libgrabec/inc/ethercatmaster.h"
-#include "libgrabec/inc/slaves/easycatslave.h"
 
 #include "components/actuator.h"
 #include "ctrl/controller_base.h"
@@ -41,7 +40,7 @@ public:
   void UpdateHomeConfig(const ID_t motor_id, const double cable_len,
                         const double pulley_angle);
 
-  bool MotorEnabled(const ID_t motor_id) { return actuators_[motor_id].IsEnabled(); }
+  bool MotorEnabled(const ID_t motor_id) { return actuators_ptrs_[motor_id]->IsEnabled(); }
   bool AnyMotorEnabled();
   bool MotorsEnabled();
   bool EnableMotor(const ID_t motor_id);
@@ -82,9 +81,7 @@ private:
   grabrt::Clock clock_;
 
   // Ethercat related
-  vect<grabec::EasyCatSlave> easycat_slaves_;
-  vect<Actuator> actuators_;
-  vect<grabec::EthercatSlave*> ec_slaves_ptrs_;
+  vect<Actuator*> actuators_ptrs_;
 
   void StartUpFunction() override final {}
   void LoopFunction() override final;
