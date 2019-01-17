@@ -1,3 +1,10 @@
+/**
+ * @file cablerobot.cpp
+ * @author Simone Comari, Edoardo Idà
+ * @date 17 Gen 2019
+ * @brief File containing definitions of functions and class declared in cablerobot.h.
+ */
+
 #include "robot/cablerobot.h"
 
 constexpr char* CableRobot::kStatesStr[];
@@ -56,6 +63,11 @@ void CableRobot::UpdateHomeConfig(const ID_t motor_id, const double cable_len,
                                   const double pulley_angle)
 {
   actuators_ptrs_[motor_id]->UpdateHomeConfig(cable_len, pulley_angle);
+}
+
+bool CableRobot::MotorEnabled(const ID_t motor_id)
+{
+  return actuators_ptrs_[motor_id]->IsEnabled();
 }
 
 bool CableRobot::AnyMotorEnabled()
@@ -376,6 +388,16 @@ void CableRobot::PrintStateTransition(const States current_state,
 }
 
 //--------- Ethercat related private functions ---------------------------------//
+
+void CableRobot::EcStateChangedCb(const Bitfield8& new_state) const
+{
+  emit ecStateChanged(new_state);
+}
+
+void CableRobot::PrintToQConsoleCb(const std::string& msg) const
+{
+  emit printToQConsole(msg.c_str());
+}
 
 void CableRobot::LoopFunction()
 {

@@ -1,3 +1,10 @@
+/**
+ * @file cablerobot.cpp
+ * @author Simone Comari, Edoardo Idà
+ * @date 17 Gen 2019
+ * @brief File containing ...
+ */
+
 #ifndef CABLE_ROBOT_CABLEROBOT_H
 #define CABLE_ROBOT_CABLEROBOT_H
 
@@ -13,14 +20,14 @@
 #include "ctrl/controller_singledrive_naive.h"
 #include "utils/easylog_wrapper.h"
 
-
 class CableRobot : public QObject,
-                   public StateMachine,
-                   public virtual grabec::EthercatMaster
+                   public virtual grabec::EthercatMaster,
+                   public StateMachine
 {
   Q_OBJECT
+
 public:
-  explicit CableRobot(QObject* parent, const grabcdpr::Params& config);
+  CableRobot(QObject* parent, const grabcdpr::Params& config);
   ~CableRobot();
 
   enum States : BYTE
@@ -40,7 +47,7 @@ public:
   void UpdateHomeConfig(const ID_t motor_id, const double cable_len,
                         const double pulley_angle);
 
-  bool MotorEnabled(const ID_t motor_id) { return actuators_ptrs_[motor_id]->IsEnabled(); }
+  bool MotorEnabled(const ID_t motor_id);
   bool AnyMotorEnabled();
   bool MotorsEnabled();
   bool EnableMotor(const ID_t motor_id);
@@ -69,9 +76,14 @@ public slots:
   void stop();
 
 signals:
-  void printToQConsole(const QString&) const;
   void motorStatus(const quint64, const grabec::GSWDriveInPdos&) const;
   void sendMsg(const QByteArray) const;
+  void printToQConsole(const QString&) const;
+  void ecStateChanged(const Bitfield8&) const;
+
+private:
+  void EcStateChangedCb(const Bitfield8&) const override final;
+  void PrintToQConsoleCb(const std::string&) const override final;
 
 private:
   grabcdpr::PlatformVars platform_;

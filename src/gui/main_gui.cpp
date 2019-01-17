@@ -13,6 +13,8 @@ MainGUI::MainGUI(QWidget* parent, const grabcdpr::Params& config)
           SLOT(appendText2Browser(QString)));
   connect(&robot_, SIGNAL(motorStatus(quint64, grabec::GSWDriveInPdos)), this,
           SLOT(updateDriveStatusTable(quint64, grabec::GSWDriveInPdos)));
+  connect(&robot_, SIGNAL(ecStateChanged(Bitfield8)), this,
+          SLOT(updateEcStatusLED(Bitfield8)));
 
   robot_.eventSuccess(); // pwd & config OK --> robot ENABLED
 #if ECNTW
@@ -27,6 +29,8 @@ MainGUI::~MainGUI()
              SLOT(appendText2Browser(QString)));
   disconnect(&robot_, SIGNAL(motorStatus(quint64, grabec::GSWDriveInPdos)), this,
              SLOT(updateDriveStatusTable(quint64, grabec::GSWDriveInPdos)));
+  disconnect(&robot_, SIGNAL(ecStateChanged(Bitfield8)), this,
+             SLOT(updateEcStatusLED(Bitfield8)));
 
   if (calib_dialog_ != NULL)
   {
@@ -403,17 +407,17 @@ void MainGUI::updateEcStatusLED(const Bitfield8& ec_status_flags)
 {
   switch (ec_status_flags.Count())
   {
-  case 3:
+  case 3: // OK (all 3 checks passed)
     ui->label_ec_status_led->setPixmap(
       QPixmap(QString::fromUtf8(":/img/img/green_button.png")));
     ec_network_valid_ = true;
     break;
-  case 0:
+  case 0: // failed at initialization (no checks passed)
     ui->label_ec_status_led->setPixmap(
       QPixmap(QString::fromUtf8(":/img/img/red_button.png")));
     ec_network_valid_ = true;
     break;
-  default:
+  default: // something is wrong (some checks passed)
     ui->label_ec_status_led->setPixmap(
       QPixmap(QString::fromUtf8(":/img/img/yellow_button.png")));
     ec_network_valid_ = true;
