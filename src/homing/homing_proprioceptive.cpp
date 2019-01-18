@@ -199,7 +199,8 @@ STATE_DEFINE(HomingProprioceptive, Idle, NoEventData)
 
 GUARD_DEFINE(HomingProprioceptive, GuardEnabled, NoEventData)
 {
-  if (robot_->EnableMotors())
+  robot_->EnableMotors();
+  if (robot_->MotorsEnabled())
     return true;
   return false;
 }

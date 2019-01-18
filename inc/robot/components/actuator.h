@@ -1,6 +1,8 @@
 #ifndef CABLE_ROBOT_ACTUATOR_H
 #define CABLE_ROBOT_ACTUATOR_H
 
+#include <QObject>
+
 #include "easylogging++.h"
 #include "StateMachine.h"
 #include "libgrabrt/inc/clocks.h"
@@ -12,20 +14,29 @@
 /**
  * @brief The Actuator class
  */
-class Actuator : public StateMachine
+class Actuator : public QObject, public StateMachine
 {
+  Q_OBJECT
+
 public:
   /**
    * @brief Actuator
    * @param[in] slave_position
    * @param[in] params
    */
-  explicit Actuator(const ID_t id, const uint8_t slave_position,
-                    const grabcdpr::ActuatorParams& params);
+  Actuator(const ID_t id, const uint8_t slave_position,
+           const grabcdpr::ActuatorParams& params, QObject* parent=NULL);
 
-  ////////////////////////////////////////////////////////////////////////////////////////////////////
-  //// External events
-  ////////////////////////////////////////////////////////////////////////////////////////////////////
+  enum States : BYTE
+  {
+    ST_IDLE,
+    ST_ENABLED,
+    ST_FAULT,
+    ST_MAX_STATES
+  };
+
+  //--------- External Events Public --------------------------------------------------//
+
   /**
    * @brief Enable
    */
@@ -48,7 +59,7 @@ public:
    * @brief ID
    * @return
    */
-  ID_t ID() const {return id_; }
+  ID_t ID() const { return id_; }
   /**
    * @brief GetWinch
    * @return
@@ -69,11 +80,6 @@ public:
    * @return
    */
   const ActuatorStatus GetStatus();
-  /**
-   * @brief GetActuatorID
-   * @return
-   */
-  ID_t GetActuatorID() const { return id_; }
 
   /**
    * @brief SetCableLength
@@ -129,6 +135,9 @@ public:
    */
   bool IsInFault() { return GetCurrentState() == ST_FAULT; }
 
+signals:
+  void stateChanged(const ID_t&, const BYTE&) const;
+
 private:
   ID_t id_;
   uint8_t slave_position_;
@@ -146,14 +155,6 @@ private:
     const_cast<char*>("MAX_STATE")
   };
   // clang-format on
-
-  enum States : BYTE
-  {
-    ST_IDLE,
-    ST_ENABLED,
-    ST_FAULT,
-    ST_MAX_STATES
-  };
 
   States prev_state_ = ST_IDLE;
   grabrt::Clock clock_;

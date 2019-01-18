@@ -4,9 +4,10 @@
 constexpr char* Actuator::kStatesStr_[];
 
 Actuator::Actuator(const ID_t id, const uint8_t slave_position,
-                   const grabcdpr::ActuatorParams& params)
-  : StateMachine(ST_MAX_STATES), id_(id), slave_position_(slave_position),
-    winch_(id, slave_position, params.winch), pulley_(id, params.pulley)
+                   const grabcdpr::ActuatorParams& params, QObject* parent /* = NULL*/)
+  : QObject(parent), StateMachine(ST_MAX_STATES), id_(id),
+    slave_position_(slave_position), winch_(id, slave_position, params.winch),
+    pulley_(id, params.pulley)
 {
 }
 
@@ -208,6 +209,7 @@ void Actuator::PrintStateTransition(const States current_state) const
 {
   if (current_state == prev_state_)
     return;
-  printf("Actuator %u state transition: %s --> %s\n", slave_position_,
-         kStatesStr_[prev_state_], kStatesStr_[current_state]);
+  printf("Actuator %lu state transition: %s --> %s\n", id_, kStatesStr_[prev_state_],
+         kStatesStr_[current_state]);
+  emit stateChanged(id_, current_state);
 }

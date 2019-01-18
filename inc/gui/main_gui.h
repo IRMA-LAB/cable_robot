@@ -38,7 +38,6 @@ private slots:
   void on_radioButton_velMode_clicked();
   void on_radioButton_torqueMode_clicked();
 
-#if ECNTW
   void on_pushButton_posPlus_pressed();
   void on_pushButton_posPlus_released();
   void on_pushButton_posMinus_pressed();
@@ -51,13 +50,13 @@ private slots:
   void on_pushButton_speedMinus_clicked();
   void on_pushButton_torquePlus_clicked();
   void on_pushButton_torqueMinus_clicked();
-#endif
 
 private slots:
   void enableInterface(const bool op_outcome = false);
   void appendText2Browser(const QString& text);
   void updateDriveStatusTable(const quint64 id, const grabec::GSWDriveInPdos& status);
   void updateEcStatusLED(const Bitfield8& ec_status_flags);
+  void updateDirectDriveCtrlPanel();
 
 private:
   bool ec_network_valid_ = false;
@@ -69,7 +68,8 @@ private:
   CableRobot robot_;
 
   bool manual_ctrl_enabled_ = false;
-  uint8_t motor_id_;
+  bool waiting_for_response_ = false;
+  ID_t motor_id_;
   ControllerSingleDriveNaive* man_ctrl_ptr_;
 
   void DisablePosCtrlButtons(const bool value);
@@ -77,7 +77,7 @@ private:
   void DisableTorqueCtrlButtons(const bool value);
   bool ExitReadyStateRequest();
 
-  void SetupDirectMotorCtrl();
+  void SetupDirectMotorCtrl(const bool enable);
 };
 
 #endif // MAIN_GUI_H

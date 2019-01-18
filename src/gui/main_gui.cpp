@@ -15,12 +15,11 @@ MainGUI::MainGUI(QWidget* parent, const grabcdpr::Params& config)
           SLOT(updateDriveStatusTable(quint64, grabec::GSWDriveInPdos)));
   connect(&robot_, SIGNAL(ecStateChanged(Bitfield8)), this,
           SLOT(updateEcStatusLED(Bitfield8)));
+  connect(&robot_, SIGNAL(requestSatisfied()), this, SLOT(updateDirectDriveCtrlPanel()));
 
   robot_.eventSuccess(); // pwd & config OK --> robot ENABLED
-#if ECNTW
   if (robot_.GetCurrentState() == CableRobot::ST_ENABLED)
     robot_.Start();
-#endif
 }
 
 MainGUI::~MainGUI()
@@ -31,6 +30,8 @@ MainGUI::~MainGUI()
              SLOT(updateDriveStatusTable(quint64, grabec::GSWDriveInPdos)));
   disconnect(&robot_, SIGNAL(ecStateChanged(Bitfield8)), this,
              SLOT(updateEcStatusLED(Bitfield8)));
+  disconnect(&robot_, SIGNAL(requestSatisfied()), this,
+             SLOT(updateDirectDriveCtrlPanel()));
 
   if (calib_dialog_ != NULL)
   {
@@ -50,9 +51,7 @@ MainGUI::~MainGUI()
   CLOG(INFO, "event") << "Main window closed";
 }
 
-////////////////////////////////////////
-/// SLOTS GUI
-////////////////////////////////////////
+//--------- Public GUI slots --------------------------------------------------//
 
 void MainGUI::on_pushButton_calib_clicked()
 {
@@ -122,26 +121,10 @@ void MainGUI::on_pushButton_enable_clicked()
     if (!ExitReadyStateRequest())
       return;
 
-  manual_ctrl_enabled_ = !manual_ctrl_enabled_;
+  bool manual_ctrl_enabled = !manual_ctrl_enabled_;
 
-  if (manual_ctrl_enabled_)
-  {
-    motor_id_ = static_cast<uint8_t>(ui->comboBox_motorAxis->currentIndex());
-    ui->pushButton_enable->setText(tr("Disable"));
-  }
-  else
-    ui->pushButton_enable->setText(tr("Enable"));
-
-  ui->pushButton_homing->setDisabled(manual_ctrl_enabled_);
-  ui->pushButton_calib->setDisabled(manual_ctrl_enabled_);
-  ui->groupBox_app->setDisabled(true); // after we move we need to do the homing again
-
-  DisablePosCtrlButtons(!(manual_ctrl_enabled_ && ui->radioButton_posMode->isChecked()));
-  DisableVelCtrlButtons(!(manual_ctrl_enabled_ && ui->radioButton_velMode->isChecked()));
-  DisableTorqueCtrlButtons(
-    !(manual_ctrl_enabled_ && ui->radioButton_torqueMode->isChecked()));
-
-  SetupDirectMotorCtrl();
+  SetupDirectMotorCtrl(manual_ctrl_enabled);
+  waiting_for_response_ = true;
 }
 
 void MainGUI::on_pushButton_faultReset_clicked()
@@ -162,12 +145,10 @@ void MainGUI::on_radioButton_posMode_clicked()
     DisablePosCtrlButtons(false);
     DisableVelCtrlButtons(true);
     DisableTorqueCtrlButtons(true);
-#if ECNTW
     pthread_mutex_lock(&robot_.Mutex());
     man_ctrl_ptr_->SetCableLenTarget(robot_.GetActuatorStatus(motor_id_).cable_length);
     man_ctrl_ptr_->SetMode(ControlMode::CABLE_LENGTH);
     pthread_mutex_unlock(&robot_.Mutex());
-#endif
   }
 }
 
@@ -183,12 +164,10 @@ void MainGUI::on_radioButton_velMode_clicked()
     DisablePosCtrlButtons(true);
     DisableVelCtrlButtons(false);
     DisableTorqueCtrlButtons(true);
-#if ECNTW
     pthread_mutex_lock(&robot_.Mutex());
     man_ctrl_ptr_->SetMotorSpeedTarget(robot_.GetActuatorStatus(motor_id_).motor_speed);
     man_ctrl_ptr_->SetMode(ControlMode::MOTOR_SPEED);
     pthread_mutex_unlock(&robot_.Mutex());
-#endif
   }
 }
 
@@ -204,16 +183,13 @@ void MainGUI::on_radioButton_torqueMode_clicked()
     DisablePosCtrlButtons(true);
     DisableVelCtrlButtons(true);
     DisableTorqueCtrlButtons(false);
-#if ECNTW
     pthread_mutex_lock(&robot_.Mutex());
     man_ctrl_ptr_->SetMotorTorqueTarget(robot_.GetActuatorStatus(motor_id_).motor_torque);
     man_ctrl_ptr_->SetMode(ControlMode::MOTOR_TORQUE);
     pthread_mutex_unlock(&robot_.Mutex());
-#endif
   }
 }
 
-#if ECNTW
 void MainGUI::on_pushButton_posPlus_pressed()
 {
   CLOG(TRACE, "event");
@@ -309,11 +285,8 @@ void MainGUI::on_pushButton_torqueMinus_clicked()
   man_ctrl_ptr_->MotorTorqueIncrement(Sign::NEG);
   pthread_mutex_unlock(&robot_.Mutex());
 }
-#endif
 
-////////////////////////////////////////
-/// SLOTS
-////////////////////////////////////////
+//--------- Private slots --------------------------------------------------//
 
 void MainGUI::enableInterface(const bool op_outcome /*= false*/)
 {
@@ -339,8 +312,8 @@ void MainGUI::appendText2Browser(const QString& text)
 void MainGUI::updateDriveStatusTable(const quint64 id,
                                      const grabec::GSWDriveInPdos& status)
 {
-  static const qint16 kUpdateCycle = 50; // ~ms
-  static quint16 counter = 1;
+  static const quint8 kUpdateCycle = 50; // ~ms
+  static quint8 counter = 1;
 
   // Check signal corresponds to current selected axis
   if (id != static_cast<uint8_t>(ui->comboBox_motorAxis->currentIndex()))
@@ -415,19 +388,38 @@ void MainGUI::updateEcStatusLED(const Bitfield8& ec_status_flags)
   case 0: // failed at initialization (no checks passed)
     ui->label_ec_status_led->setPixmap(
       QPixmap(QString::fromUtf8(":/img/img/red_button.png")));
-    ec_network_valid_ = true;
+    ec_network_valid_ = false;
     break;
   default: // something is wrong (some checks passed)
     ui->label_ec_status_led->setPixmap(
       QPixmap(QString::fromUtf8(":/img/img/yellow_button.png")));
-    ec_network_valid_ = true;
+    ec_network_valid_ = false;
     break;
   }
 }
 
-////////////////////////////////////////
-/// GUI private methods
-////////////////////////////////////////
+void MainGUI::updateDirectDriveCtrlPanel()
+{
+  if (!waiting_for_response_)
+    return;
+
+  manual_ctrl_enabled_ = !manual_ctrl_enabled_;
+
+  ui->pushButton_enable->setText(tr(manual_ctrl_enabled_ ? "Disable" : "Enable"));
+
+  ui->pushButton_homing->setDisabled(manual_ctrl_enabled_);
+  ui->pushButton_calib->setDisabled(manual_ctrl_enabled_);
+  ui->groupBox_app->setDisabled(true); // after we move we need to do the homing again
+
+  DisablePosCtrlButtons(!(manual_ctrl_enabled_ && ui->radioButton_posMode->isChecked()));
+  DisableVelCtrlButtons(!(manual_ctrl_enabled_ && ui->radioButton_velMode->isChecked()));
+  DisableTorqueCtrlButtons(
+    !(manual_ctrl_enabled_ && ui->radioButton_torqueMode->isChecked()));
+
+  waiting_for_response_ = false;
+}
+
+//--------- Private GUI methods --------------------------------------------------//
 
 void MainGUI::DisablePosCtrlButtons(const bool value)
 {
@@ -467,17 +459,15 @@ bool MainGUI::ExitReadyStateRequest()
   return (reply == QMessageBox::Yes);
 }
 
-////////////////////////////////////////
-/// Private methods
-////////////////////////////////////////
+//--------- Private methods --------------------------------------------------//
 
-void MainGUI::SetupDirectMotorCtrl()
+void MainGUI::SetupDirectMotorCtrl(const bool enable)
 {
   robot_.stop(); // robot: READY | ENABLED --> ENABLED
 
-#if ECNTW
-  if (manual_ctrl_enabled_)
+  if (enable)
   {
+    motor_id_ = static_cast<ID_t>(ui->comboBox_motorAxis->currentIndex());
     // Setup controller before enabling the motor
     man_ctrl_ptr_ = new ControllerSingleDriveNaive(motor_id_);
     ActuatorStatus current_status = robot_.GetActuatorStatus(motor_id_);
@@ -496,21 +486,18 @@ void MainGUI::SetupDirectMotorCtrl()
       man_ctrl_ptr_->SetMode(ControlMode::MOTOR_TORQUE);
       man_ctrl_ptr_->SetMotorTorqueTarget(current_status.motor_torque);
     }
-    pthread_mutex_lock(&robot_.Mutex());
     robot_.SetController(man_ctrl_ptr_);
-    pthread_mutex_unlock(&robot_.Mutex());
 
-    robot_.EnableMotors(std::vector<ID_t>(1, motor_id_));
+    robot_.EnableMotor(motor_id_);
   }
   else
   {
     pthread_mutex_lock(&robot_.Mutex());
     delete man_ctrl_ptr_;
     man_ctrl_ptr_ = NULL;
-    robot_.SetController(man_ctrl_ptr_);
     pthread_mutex_unlock(&robot_.Mutex());
+    robot_.SetController(man_ctrl_ptr_);
 
-    robot_.DisableMotors(std::vector<ID_t>(1, motor_id_));
+    robot_.DisableMotor(motor_id_);
   }
-#endif
 }

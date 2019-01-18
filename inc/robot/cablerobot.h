@@ -50,12 +50,12 @@ public:
   bool MotorEnabled(const ID_t motor_id);
   bool AnyMotorEnabled();
   bool MotorsEnabled();
-  bool EnableMotor(const ID_t motor_id);
-  bool EnableMotors();
-  bool EnableMotors(const vect<ID_t>& motors_id);
-  bool DisableMotor(const ID_t motor_id);
-  bool DisableMotors();
-  bool DisableMotors(const vect<ID_t>& motors_id);
+  void EnableMotor(const ID_t motor_id);
+  void EnableMotors();
+  void EnableMotors(const vect<ID_t>& motors_id);
+  void DisableMotor(const ID_t motor_id);
+  void DisableMotors();
+  void DisableMotors(const vect<ID_t>& motors_id);
   void SetMotorOpMode(const ID_t motor_id, const qint8 op_mode);
   void SetMotorsOpMode(const qint8 op_mode);
   void SetMotorsOpMode(const vect<ID_t>& motors_id, const qint8 op_mode);
@@ -66,7 +66,7 @@ public:
   void DumpMeas() const;
   bool GoHome();
 
-  void SetController(ControllerBase* controller) { controller_ = controller; }
+  void SetController(ControllerBase* controller);
 
 public slots:
   void enterCalibrationMode();
@@ -80,6 +80,10 @@ signals:
   void sendMsg(const QByteArray) const;
   void printToQConsole(const QString&) const;
   void ecStateChanged(const Bitfield8&) const;
+  void requestSatisfied() const;
+
+private slots:
+  void handleActuatorStateChanged(const ID_t&, const BYTE&);
 
 private:
   void EcStateChangedCb(const Bitfield8&) const override final;
@@ -91,6 +95,7 @@ private:
   vect<ActuatorStatusMsg> meas_;
   LogBuffer log_buffer_;
   grabrt::Clock clock_;
+  Bitfield8 motors_waiting4ack_;  // assuming up to 8 motors
 
   // Ethercat related
   vect<Actuator*> actuators_ptrs_;
@@ -103,8 +108,9 @@ private:
 
   void ControlStep();
 
-  // State machine
 private:
+  //--------- State machine --------------------------------------------------//
+
   // clang-format off
   static constexpr char* kStatesStr[] = {
     const_cast<char*>("IDLE"),

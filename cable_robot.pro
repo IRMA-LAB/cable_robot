@@ -70,7 +70,6 @@ DEFINES += ELPP_QT_LOGGING    \
           ELPP_FRESH_LOG_FILE
 
 DEFINES += SRCDIR=\\\"$$PWD/\\\"
-DEFINES += ECNTW=0
 
 # GRAB Ethercat lib
 unix:!macx: LIBS += -L$$PWD/lib/grab_common/libgrabec/lib/ -lgrabec

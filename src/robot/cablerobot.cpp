@@ -25,8 +25,10 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
   {
     grabcdpr::CableVars cable;
     status_.cables.push_back(cable);
-    actuators_ptrs_.push_back(new Actuator(i, slave_pos++, config.actuators[i]));
+    actuators_ptrs_.push_back(new Actuator(i, slave_pos++, config.actuators[i], this));
     slaves_ptrs_.push_back(actuators_ptrs_[i]->GetWinch().GetServo());
+    connect(actuators_ptrs_[i], SIGNAL(stateChanged(ID_t, BYTE)), this,
+            SLOT(handleActuatorStateChanged(ID_t, BYTE)));
   }
 
   for (grabec::EthercatSlave* slave_ptr : slaves_ptrs_)
@@ -34,6 +36,8 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
 
   connect(this, SIGNAL(sendMsg(QByteArray)), &log_buffer_, SLOT(collectMsg(QByteArray)));
   log_buffer_.start();
+
+  motors_waiting4ack_.ClearAll();
 }
 
 CableRobot::~CableRobot()
@@ -43,14 +47,21 @@ CableRobot::~CableRobot()
              SLOT(collectMsg(QByteArray)));
 
   for (Actuator* actuator_ptr : actuators_ptrs_)
-    free(actuator_ptr);
+  {
+    disconnect(actuator_ptr, SIGNAL(stateChanged(ID_t, BYTE)), this,
+               SLOT(handleActuatorStateChanged(ID_t, BYTE)));
+    delete actuator_ptr;
+  }
 }
 
 //--------- Public Functions --------------------------------------------------//
 
 const ActuatorStatus CableRobot::GetActuatorStatus(const ID_t motor_id)
 {
-  return actuators_ptrs_[motor_id]->GetStatus();
+  pthread_mutex_lock(&mutex_);
+  ActuatorStatus status = actuators_ptrs_[motor_id]->GetStatus();
+  pthread_mutex_unlock(&mutex_);
+  return status;
 }
 
 void CableRobot::UpdateHomeConfig(const double cable_len, const double pulley_angle)
@@ -86,81 +97,52 @@ bool CableRobot::MotorsEnabled()
   return true;
 }
 
-bool CableRobot::EnableMotor(const ID_t motor_id)
+void CableRobot::EnableMotor(const ID_t motor_id)
 {
   actuators_ptrs_[motor_id]->Enable();
-  if (!MotorEnabled(motor_id))
-  {
-    emit printToQConsole(QString("WARNING: Could not enable motor %1").arg(motor_id));
-    return false;
-  }
-  emit printToQConsole(QString("Motor %1 enabled").arg(motor_id));
-  return true;
+  motors_waiting4ack_.Set(motor_id);
 }
 
-bool CableRobot::EnableMotors()
+void CableRobot::EnableMotors()
 {
-  bool ret = false;
   for (Actuator* actuator_ptr : actuators_ptrs_)
   {
     actuator_ptr->Enable();
-    ret = actuator_ptr->IsEnabled();
-    if (!ret)
-      break;
+    motors_waiting4ack_.Set(actuator_ptr->ID());
   }
-  if (ret)
-    emit printToQConsole("All motors enabled");
-  else
-    emit printToQConsole("WARNING: Could not enable all motors");
-  return ret;
 }
 
-bool CableRobot::EnableMotors(const vect<ID_t>& motors_id)
+void CableRobot::EnableMotors(const vect<ID_t>& motors_id)
 {
   for (const ID_t& motor_id : motors_id)
   {
     actuators_ptrs_[motor_id]->Enable();
-    if (!MotorEnabled(motor_id))
-    {
-      emit printToQConsole(QString("WARNING: Could not enable motor %1").arg(motor_id));
-      return false;
-    }
-    emit printToQConsole(QString("Motor %1 enabled").arg(motor_id));
+    motors_waiting4ack_.Set(motor_id);
   }
-  return true;
 }
 
-bool CableRobot::DisableMotor(const ID_t motor_id)
+void CableRobot::DisableMotor(const ID_t motor_id)
 {
   actuators_ptrs_[motor_id]->Disable();
-  if (MotorEnabled(motor_id))
-    return false;
-  emit printToQConsole(QString("Motor %1 disabled").arg(motor_id));
-  return true;
+  motors_waiting4ack_.Set(motor_id);
 }
 
-bool CableRobot::DisableMotors()
+void CableRobot::DisableMotors()
 {
   for (Actuator* actuator_ptr : actuators_ptrs_)
   {
     actuator_ptr->Disable();
-    if (actuator_ptr->IsEnabled())
-      return false;
+    motors_waiting4ack_.Set(actuator_ptr->ID());
   }
-  emit printToQConsole("All motors disabled");
-  return true;
 }
 
-bool CableRobot::DisableMotors(const vect<ID_t>& motors_id)
+void CableRobot::DisableMotors(const vect<ID_t>& motors_id)
 {
   for (const ID_t& motor_id : motors_id)
   {
     actuators_ptrs_[motor_id]->Disable();
-    if (MotorEnabled(motor_id))
-      return false;
-    emit printToQConsole(QString("Motor %1 disabled").arg(motor_id));
+    motors_waiting4ack_.Set(motor_id);
   }
-  return true;
 }
 
 void CableRobot::SetMotorOpMode(const ID_t motor_id, const qint8 op_mode)
@@ -184,7 +166,7 @@ vect<ID_t> CableRobot::GetMotorsID() const
 {
   vect<ID_t> motors_id;
   for (const Actuator* actuator_ptr : actuators_ptrs_)
-    motors_id.push_back(actuator_ptr->GetActuatorID());
+    motors_id.push_back(actuator_ptr->ID());
   return motors_id;
 }
 
@@ -237,6 +219,13 @@ bool CableRobot::GoHome()
 
   emit printToQConsole("Daddy, I'm home!");
   return true;
+}
+
+void CableRobot::SetController(ControllerBase* controller)
+{
+  pthread_mutex_lock(&mutex_);
+  controller_ = controller;
+  pthread_mutex_unlock(&mutex_);
 }
 
 //--------- External Events Public --------------------------------------------------//
@@ -369,6 +358,30 @@ STATE_DEFINE(CableRobot, Error, NoEventData)
 {
   PrintStateTransition(prev_state_, ST_ERROR);
   prev_state_ = ST_ERROR;
+}
+
+//--------- Private slots --------------------------------------------------//
+
+void CableRobot::handleActuatorStateChanged(const ID_t& id, const BYTE& new_state)
+{
+  switch (new_state)
+  {
+  case Actuator::States::ST_IDLE:
+    emit printToQConsole(QString("Motor %1 disabled").arg(id));
+    break;
+  case Actuator::States::ST_ENABLED:
+    emit printToQConsole(QString("Motor %1 enabled").arg(id));
+    break;
+  case Actuator::States::ST_FAULT:
+    emit printToQConsole(QString("Motor %1 in fault").arg(id));
+    break;
+  default:
+    break;
+  }
+  motors_waiting4ack_.Set(id, false);
+
+  if (!motors_waiting4ack_.AnyOn())
+    emit requestSatisfied();
 }
 
 //--------- Miscellaneous private --------------------------------------------------//
