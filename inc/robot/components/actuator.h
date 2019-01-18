@@ -25,7 +25,7 @@ public:
    * @param[in] params
    */
   Actuator(const ID_t id, const uint8_t slave_position,
-           const grabcdpr::ActuatorParams& params, QObject* parent=NULL);
+           const grabcdpr::ActuatorParams& params, QObject* parent = NULL);
 
   enum States : BYTE
   {
@@ -120,6 +120,11 @@ public:
   void UpdateConfig();
 
   /**
+   * @brief IsActive
+   * @return
+   */
+  bool IsActive() const { return active_; }
+  /**
    * @brief IsIdle
    * @return
    */
@@ -141,12 +146,13 @@ signals:
 private:
   ID_t id_;
   uint8_t slave_position_;
+  bool active_;
 
   Winch winch_;
   PulleysSystem pulley_;
 
 private:
-  static constexpr double kMaxTransitionTimeSec_ = 0.010;
+  static constexpr double kMaxTransitionTimeSec_ = 5.0;
   // clang-format off
   static constexpr char* kStatesStr_[] = {
     const_cast<char*>("IDLE"),

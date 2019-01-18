@@ -59,7 +59,7 @@ public:
   void SetMotorOpMode(const ID_t motor_id, const qint8 op_mode);
   void SetMotorsOpMode(const qint8 op_mode);
   void SetMotorsOpMode(const vect<ID_t>& motors_id, const qint8 op_mode);
-  vect<ID_t> GetMotorsID() const;
+  vect<ID_t> GetActiveMotorsID() const;
   void ClearFaults();
 
   void CollectMeas();
@@ -99,6 +99,7 @@ private:
 
   // Ethercat related
   vect<Actuator*> actuators_ptrs_;
+  vect<Actuator*> active_actuators_ptrs_;
 
   void StartUpFunction() override final {}
   void LoopFunction() override final;

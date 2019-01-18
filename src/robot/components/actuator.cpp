@@ -9,6 +9,7 @@ Actuator::Actuator(const ID_t id, const uint8_t slave_position,
     slave_position_(slave_position), winch_(id, slave_position, params.winch),
     pulley_(id, params.pulley)
 {
+  active_ = params.active;
 }
 
 //--------- External Events Public --------------------------------------------------//
@@ -16,6 +17,8 @@ Actuator::Actuator(const ID_t id, const uint8_t slave_position,
 void Actuator::Enable()
 {
   CLOG(TRACE, "event");
+  if (!active_)
+    return;
   // clang-format off
   BEGIN_TRANSITION_MAP                                       // - Current State -
     TRANSITION_MAP_ENTRY(ST_ENABLED)              // ST_IDLE
@@ -28,6 +31,8 @@ void Actuator::Enable()
 void Actuator::Disable()
 {
   CLOG(TRACE, "event");
+  if (!active_)
+    return;
   // clang-format off
   BEGIN_TRANSITION_MAP                                       // - Current State -
     TRANSITION_MAP_ENTRY(EVENT_IGNORED)       // ST_IDLE
@@ -40,6 +45,8 @@ void Actuator::Disable()
 void Actuator::FaultTrigger()
 {
   CLOG(TRACE, "event");
+  if (!active_)
+    return;
   // clang-format off
   BEGIN_TRANSITION_MAP                                       // - Current State -
     TRANSITION_MAP_ENTRY(ST_FAULT)                  // ST_IDLE
@@ -52,6 +59,8 @@ void Actuator::FaultTrigger()
 void Actuator::FaultReset()
 {
   CLOG(TRACE, "event");
+  if (!active_)
+    return;
   // clang-format off
   BEGIN_TRANSITION_MAP                                       // - Current State -
     TRANSITION_MAP_ENTRY(EVENT_IGNORED)       // ST_IDLE
@@ -80,31 +89,46 @@ const ActuatorStatus Actuator::GetStatus()
 
 void Actuator::SetCableLength(const double target_length)
 {
-  winch_.SetServoPosByCableLen(target_length);
+  if (active_)
+    winch_.SetServoPosByCableLen(target_length);
 }
 
-void Actuator::SetMotorPos(const int32_t target_pos) { winch_.SetServoPos(target_pos); }
+void Actuator::SetMotorPos(const int32_t target_pos)
+{
+  if (active_)
+    winch_.SetServoPos(target_pos);
+}
 
 void Actuator::SetMotorSpeed(const int32_t target_speed)
 {
-  winch_.SetServoSpeed(target_speed);
+  if (active_)
+    winch_.SetServoSpeed(target_speed);
 }
 
 void Actuator::SetMotorTorque(const int16_t target_torque)
 {
-  winch_.SetServoTorque(target_torque);
+  if (active_)
+    winch_.SetServoTorque(target_torque);
 }
 
-void Actuator::SetMotorOpMode(const int8_t op_mode) { winch_.SetServoOpMode(op_mode); }
+void Actuator::SetMotorOpMode(const int8_t op_mode)
+{
+  if (active_)
+    winch_.SetServoOpMode(op_mode);
+}
 
 void Actuator::UpdateHomeConfig(const double cable_len, const double pulley_angle)
 {
+  if (!active_)
+    return;
   pulley_.UpdateHomeConfig(winch_.GetServo()->GetAuxPosition(), pulley_angle);
   winch_.UpdateHomeConfig(cable_len);
 }
 
 void Actuator::UpdateConfig()
 {
+  if (!active_)
+    return;
   winch_.UpdateConfig();
   pulley_.UpdateConfig(winch_.GetServo()->GetAuxPosition());
 }
@@ -142,11 +166,12 @@ GUARD_DEFINE(Actuator, GuardEnabled, NoEventData)
   clock_.Reset();
   while (1)
   {
+    std::cout << (int) winch_.GetServo()->GetCurrentState() << std::endl;
     if (winch_.GetServo()->GetCurrentState() == grabec::ST_READY_TO_SWITCH_ON)
       break;
     if (clock_.Elapsed() > kMaxTransitionTimeSec_)
       return FALSE; // taking too long to disable drive. Something's wrong.
-    clock_.Reset();
+    usleep(100000);
   }
 
   winch_.GetServo()->SwitchOn(); // switch on voltage
@@ -157,7 +182,7 @@ GUARD_DEFINE(Actuator, GuardEnabled, NoEventData)
       break;
     if (clock_.Elapsed() > kMaxTransitionTimeSec_)
       return FALSE; // taking too long to disable drive. Something's wrong.
-    clock_.Reset();
+    usleep(100000);
   }
 
   winch_.GetServo()->EnableOperation(); // enable drive
@@ -168,7 +193,7 @@ GUARD_DEFINE(Actuator, GuardEnabled, NoEventData)
       return TRUE; // drive is enabled
     if (clock_.Elapsed() > kMaxTransitionTimeSec_)
       return FALSE; // taking too long to enable drive. Something's wrong.
-    clock_.Reset();
+    usleep(100000);
   }
 }
 

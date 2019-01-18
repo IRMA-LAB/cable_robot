@@ -7,7 +7,8 @@ MainGUI::MainGUI(QWidget* parent, const grabcdpr::Params& config)
   ui->setupUi(this);
 
   for (size_t i = 0; i < config.actuators.size(); i++)
-    ui->comboBox_motorAxis->addItem(QString::number(i + 1));
+    if (config.actuators[i].active)
+      ui->comboBox_motorAxis->addItem(QString::number(i + 1));
 
   connect(&robot_, SIGNAL(printToQConsole(QString)), this,
           SLOT(appendText2Browser(QString)));
