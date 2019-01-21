@@ -317,7 +317,7 @@ void MainGUI::updateDriveStatusTable(const quint64 id,
   static quint8 counter = 1;
 
   // Check signal corresponds to current selected axis
-  if (id != static_cast<uint8_t>(ui->comboBox_motorAxis->currentIndex()))
+  if (id != ui->comboBox_motorAxis->currentText().toULong() - 1)
     return;
   // Considering a RT cycle of 1ms, update GUI at a slower rate
   if (counter++ > kUpdateCycle)
@@ -468,7 +468,7 @@ void MainGUI::SetupDirectMotorCtrl(const bool enable)
 
   if (enable)
   {
-    motor_id_ = static_cast<ID_t>(ui->comboBox_motorAxis->currentIndex());
+    motor_id_ = ui->comboBox_motorAxis->currentText().toULong() - 1;
     // Setup controller before enabling the motor
     man_ctrl_ptr_ = new ControllerSingleDriveNaive(motor_id_);
     ActuatorStatus current_status = robot_.GetActuatorStatus(motor_id_);
