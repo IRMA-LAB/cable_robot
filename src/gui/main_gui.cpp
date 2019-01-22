@@ -8,15 +8,14 @@ MainGUI::MainGUI(QWidget* parent, const grabcdpr::Params& config)
 
   for (size_t i = 0; i < config.actuators.size(); i++)
     if (config.actuators[i].active)
-      ui->comboBox_motorAxis->addItem(QString::number(i + 1));
+      ui->comboBox_motorAxis->addItem(QString::number(i));
 
   connect(&robot_, SIGNAL(printToQConsole(QString)), this,
           SLOT(appendText2Browser(QString)));
-  connect(&robot_, SIGNAL(motorStatus(quint64, grabec::GSWDriveInPdos)), this,
-          SLOT(updateDriveStatusTable(quint64, grabec::GSWDriveInPdos)));
+  connect(&robot_, SIGNAL(motorStatus(ID_t, grabec::GSWDriveInPdos)), this,
+          SLOT(handleMotorStatusUpdate(ID_t, grabec::GSWDriveInPdos)));
   connect(&robot_, SIGNAL(ecStateChanged(Bitfield8)), this,
           SLOT(updateEcStatusLED(Bitfield8)));
-  connect(&robot_, SIGNAL(requestSatisfied()), this, SLOT(updateDirectDriveCtrlPanel()));
 
   robot_.eventSuccess(); // pwd & config OK --> robot ENABLED
   if (robot_.GetCurrentState() == CableRobot::ST_ENABLED)
@@ -27,12 +26,10 @@ MainGUI::~MainGUI()
 {
   disconnect(&robot_, SIGNAL(printToQConsole(QString)), this,
              SLOT(appendText2Browser(QString)));
-  disconnect(&robot_, SIGNAL(motorStatus(quint64, grabec::GSWDriveInPdos)), this,
-             SLOT(updateDriveStatusTable(quint64, grabec::GSWDriveInPdos)));
+  disconnect(&robot_, SIGNAL(motorStatus(ID_t, grabec::GSWDriveInPdos)), this,
+             SLOT(handleMotorStatusUpdate(ID_t, grabec::GSWDriveInPdos)));
   disconnect(&robot_, SIGNAL(ecStateChanged(Bitfield8)), this,
              SLOT(updateEcStatusLED(Bitfield8)));
-  disconnect(&robot_, SIGNAL(requestSatisfied()), this,
-             SLOT(updateDirectDriveCtrlPanel()));
 
   if (calib_dialog_ != NULL)
   {
@@ -310,24 +307,88 @@ void MainGUI::appendText2Browser(const QString& text)
   ui->textBrowser_logs->append(text);
 }
 
-void MainGUI::updateDriveStatusTable(const quint64 id,
-                                     const grabec::GSWDriveInPdos& status)
+void MainGUI::updateEcStatusLED(const Bitfield8& ec_status_flags)
 {
-  static const quint8 kUpdateCycle = 50; // ~ms
-  static quint8 counter = 1;
-
-  // Check signal corresponds to current selected axis
-  if (id != ui->comboBox_motorAxis->currentText().toULong() - 1)
-    return;
-  // Considering a RT cycle of 1ms, update GUI at a slower rate
-  if (counter++ > kUpdateCycle)
+  switch (ec_status_flags.Count())
   {
-    counter = 1;
+  case 3: // OK (all 3 checks passed)
+    ui->label_ec_status_led->setPixmap(
+      QPixmap(QString::fromUtf8(":/img/img/green_button.png")));
+    ec_network_valid_ = true;
+    break;
+  case 0: // failed at initialization (no checks passed)
+    ui->label_ec_status_led->setPixmap(
+      QPixmap(QString::fromUtf8(":/img/img/red_button.png")));
+    ec_network_valid_ = false;
+    break;
+  default: // something is wrong (some checks passed)
+    ui->label_ec_status_led->setPixmap(
+      QPixmap(QString::fromUtf8(":/img/img/yellow_button.png")));
+    ec_network_valid_ = false;
+    break;
+  }
+}
+
+void MainGUI::handleMotorStatusUpdate(const ID_t& id,
+                                      const grabec::GSWDriveInPdos& motor_status)
+{
+  // Check if signal corresponds to current selected axis
+  if (id != ui->comboBox_motorAxis->currentText().toULong())
+    return;
+
+  Actuator::States actuator_state = DriveStateToActuatorState(
+    grabec::GoldSoloWhistleDrive::GetDriveState(motor_status.status_word));
+
+  // Check if motor is in fault and set panel accordingly
+  if (actuator_state == Actuator::States::ST_FAULT)
+  {
+    ui->pushButton_enable->setText(tr("Enable"));
+    ui->pushButton_enable->setDisabled(true);
+    ui->pushButton_faultReset->setEnabled(true);
+    ui->pushButton_homing->setDisabled(true);
+    ui->pushButton_calib->setDisabled(true);
+    ui->groupBox_app->setDisabled(true);
+    DisablePosCtrlButtons(true);
+    DisableVelCtrlButtons(true);
+    DisableTorqueCtrlButtons(true);
+    waiting_for_response_ = false;
     return;
   }
-  // Update table
-  //  std::string status_word = "0b" +
-  //  status.status_word.GetBitset().to_string().substr(9, 7);
+
+  UpdateDriveStatusTable(motor_status);
+  UpdateDriveCtrlPanel(actuator_state);
+}
+
+//--------- Private GUI methods --------------------------------------------------//
+
+void MainGUI::DisablePosCtrlButtons(const bool value)
+{
+  ui->pushButton_posMicroMinus->setDisabled(value);
+  ui->pushButton_posMicroPlus->setDisabled(value);
+  ui->pushButton_posMinus->setDisabled(value);
+  ui->pushButton_posPlus->setDisabled(value);
+  CVLOG(2, "event") << "Cable lenght direct control buttons "
+                    << (value ? "enabled" : "disabled");
+}
+
+void MainGUI::DisableVelCtrlButtons(const bool value)
+{
+  ui->pushButton_speedMinus->setDisabled(value);
+  ui->pushButton_speedPlus->setDisabled(value);
+  CVLOG(2, "event") << "Motor velocity direct control buttons "
+                    << (value ? "enabled" : "disabled");
+}
+
+void MainGUI::DisableTorqueCtrlButtons(const bool value)
+{
+  ui->pushButton_torqueMinus->setDisabled(value);
+  ui->pushButton_torquePlus->setDisabled(value);
+  CVLOG(2, "event") << "Motor torque direct control buttons "
+                    << (value ? "enabled" : "disabled");
+}
+
+void MainGUI::UpdateDriveStatusTable(const grabec::GSWDriveInPdos& status)
+{
   std::string status_word =
     grabec::GoldSoloWhistleDrive::GetDriveStateStr(status.status_word);
   ui->table_inputPdos->item(0, 0)->setData(Qt::DisplayRole, status_word.c_str());
@@ -377,34 +438,12 @@ void MainGUI::updateDriveStatusTable(const quint64 id,
   CVLOG(2, "event") << "Drive status table updated";
 }
 
-void MainGUI::updateEcStatusLED(const Bitfield8& ec_status_flags)
-{
-  switch (ec_status_flags.Count())
-  {
-  case 3: // OK (all 3 checks passed)
-    ui->label_ec_status_led->setPixmap(
-      QPixmap(QString::fromUtf8(":/img/img/green_button.png")));
-    ec_network_valid_ = true;
-    break;
-  case 0: // failed at initialization (no checks passed)
-    ui->label_ec_status_led->setPixmap(
-      QPixmap(QString::fromUtf8(":/img/img/red_button.png")));
-    ec_network_valid_ = false;
-    break;
-  default: // something is wrong (some checks passed)
-    ui->label_ec_status_led->setPixmap(
-      QPixmap(QString::fromUtf8(":/img/img/yellow_button.png")));
-    ec_network_valid_ = false;
-    break;
-  }
-}
-
-void MainGUI::updateDirectDriveCtrlPanel()
+void MainGUI::UpdateDriveCtrlPanel(const Actuator::States state)
 {
   if (!waiting_for_response_)
     return;
 
-  manual_ctrl_enabled_ = !manual_ctrl_enabled_;
+  manual_ctrl_enabled_ = (state == Actuator::States::ST_ENABLED);
 
   ui->pushButton_enable->setText(tr(manual_ctrl_enabled_ ? "Disable" : "Enable"));
 
@@ -418,34 +457,6 @@ void MainGUI::updateDirectDriveCtrlPanel()
     !(manual_ctrl_enabled_ && ui->radioButton_torqueMode->isChecked()));
 
   waiting_for_response_ = false;
-}
-
-//--------- Private GUI methods --------------------------------------------------//
-
-void MainGUI::DisablePosCtrlButtons(const bool value)
-{
-  ui->pushButton_posMicroMinus->setDisabled(value);
-  ui->pushButton_posMicroPlus->setDisabled(value);
-  ui->pushButton_posMinus->setDisabled(value);
-  ui->pushButton_posPlus->setDisabled(value);
-  CVLOG(2, "event") << "Cable lenght direct control buttons "
-                    << (value ? "enabled" : "disabled");
-}
-
-void MainGUI::DisableVelCtrlButtons(const bool value)
-{
-  ui->pushButton_speedMinus->setDisabled(value);
-  ui->pushButton_speedPlus->setDisabled(value);
-  CVLOG(2, "event") << "Motor velocity direct control buttons "
-                    << (value ? "enabled" : "disabled");
-}
-
-void MainGUI::DisableTorqueCtrlButtons(const bool value)
-{
-  ui->pushButton_torqueMinus->setDisabled(value);
-  ui->pushButton_torquePlus->setDisabled(value);
-  CVLOG(2, "event") << "Motor torque direct control buttons "
-                    << (value ? "enabled" : "disabled");
 }
 
 bool MainGUI::ExitReadyStateRequest()
@@ -468,7 +479,7 @@ void MainGUI::SetupDirectMotorCtrl(const bool enable)
 
   if (enable)
   {
-    motor_id_ = ui->comboBox_motorAxis->currentText().toULong() - 1;
+    motor_id_ = ui->comboBox_motorAxis->currentText().toULong();
     // Setup controller before enabling the motor
     man_ctrl_ptr_ = new ControllerSingleDriveNaive(motor_id_);
     ActuatorStatus current_status = robot_.GetActuatorStatus(motor_id_);
@@ -500,5 +511,18 @@ void MainGUI::SetupDirectMotorCtrl(const bool enable)
     robot_.SetController(man_ctrl_ptr_);
 
     robot_.DisableMotor(motor_id_);
+  }
+}
+
+Actuator::States MainGUI::DriveStateToActuatorState(const GSWDStates drive_state)
+{
+  switch (drive_state)
+  {
+  case GSWDStates::ST_OPERATION_ENABLED:
+    return Actuator::States::ST_ENABLED;
+  case GSWDStates::ST_FAULT:
+    return Actuator::States::ST_FAULT;
+  default:
+    return Actuator::States::ST_IDLE;
   }
 }

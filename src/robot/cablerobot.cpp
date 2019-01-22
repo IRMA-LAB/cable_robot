@@ -30,7 +30,9 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
     {
       active_actuators_ptrs_.push_back(actuators_ptrs_[i]);
       connect(actuators_ptrs_[i], SIGNAL(stateChanged(ID_t, BYTE)), this,
-              SLOT(handleActuatorStateChanged(ID_t, BYTE)));
+              SLOT(forwardActuatorStateChanged(ID_t, BYTE)));
+      connect(actuators_ptrs_[i], SIGNAL(printToQConsole(QString)), this,
+              SLOT(forwardPrintToQConsole(QString)));
     }
   }
   meas_.resize(active_actuators_ptrs_.size());
@@ -40,8 +42,6 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
 
   connect(this, SIGNAL(sendMsg(QByteArray)), &log_buffer_, SLOT(collectMsg(QByteArray)));
   log_buffer_.start();
-
-  motors_waiting4ack_.ClearAll();
 }
 
 CableRobot::~CableRobot()
@@ -53,8 +53,12 @@ CableRobot::~CableRobot()
   for (Actuator* actuator_ptr : actuators_ptrs_)
   {
     if (actuator_ptr->IsActive())
+    {
       disconnect(actuator_ptr, SIGNAL(stateChanged(ID_t, BYTE)), this,
-                 SLOT(handleActuatorStateChanged(ID_t, BYTE)));
+                 SLOT(forwardActuatorStateChanged(ID_t, BYTE)));
+      disconnect(actuator_ptr, SIGNAL(printToQConsole(QString)), this,
+                 SLOT(forwardPrintToQConsole(QString)));
+    }
     delete actuator_ptr;
   }
 }
@@ -105,10 +109,7 @@ bool CableRobot::MotorsEnabled()
 void CableRobot::EnableMotor(const ID_t motor_id)
 {
   if (actuators_ptrs_[motor_id]->IsActive())
-  {
     actuators_ptrs_[motor_id]->Enable();
-    motors_waiting4ack_.Set(motor_id);
-  }
 }
 
 void CableRobot::EnableMotors()
@@ -116,7 +117,6 @@ void CableRobot::EnableMotors()
   for (Actuator* actuator_ptr : active_actuators_ptrs_)
   {
     actuator_ptr->Enable();
-    motors_waiting4ack_.Set(actuator_ptr->ID());
   }
 }
 
@@ -126,7 +126,6 @@ void CableRobot::EnableMotors(const vect<ID_t>& motors_id)
     if (actuators_ptrs_[motor_id]->IsActive())
     {
       actuators_ptrs_[motor_id]->Enable();
-      motors_waiting4ack_.Set(motor_id);
     }
 }
 
@@ -135,7 +134,6 @@ void CableRobot::DisableMotor(const ID_t motor_id)
   if (actuators_ptrs_[motor_id]->IsActive())
   {
     actuators_ptrs_[motor_id]->Disable();
-    motors_waiting4ack_.Set(motor_id);
   }
 }
 
@@ -144,7 +142,6 @@ void CableRobot::DisableMotors()
   for (Actuator* actuator_ptr : active_actuators_ptrs_)
   {
     actuator_ptr->Disable();
-    motors_waiting4ack_.Set(actuator_ptr->ID());
   }
 }
 
@@ -154,7 +151,6 @@ void CableRobot::DisableMotors(const vect<ID_t>& motors_id)
     if (actuators_ptrs_[motor_id]->IsActive())
     {
       actuators_ptrs_[motor_id]->Disable();
-      motors_waiting4ack_.Set(motor_id);
     }
 }
 
@@ -193,7 +189,7 @@ void CableRobot::ClearFaults()
 void CableRobot::CollectMeas()
 {
   size_t i = 0;
-  for (Actuator* actuator_ptr: active_actuators_ptrs_)
+  for (Actuator* actuator_ptr : active_actuators_ptrs_)
   {
     meas_[i].body = actuator_ptr->GetStatus();
     meas_[i].header.timestamp = clock_.Elapsed();
@@ -338,6 +334,8 @@ STATE_DEFINE(CableRobot, Enabled, NoEventData)
   PrintStateTransition(prev_state_, ST_ENABLED);
   prev_state_ = ST_ENABLED;
 
+  EmitMotorStatusSync();
+
   if (controller_ != NULL)
     ControlStep(); // take care of manual control when a motor is active, skip otherwise
 }
@@ -377,7 +375,7 @@ STATE_DEFINE(CableRobot, Error, NoEventData)
 
 //--------- Private slots --------------------------------------------------//
 
-void CableRobot::handleActuatorStateChanged(const ID_t& id, const BYTE& new_state)
+void CableRobot::forwardActuatorStateChanged(const ID_t& id, const BYTE& new_state)
 {
   switch (new_state)
   {
@@ -393,10 +391,12 @@ void CableRobot::handleActuatorStateChanged(const ID_t& id, const BYTE& new_stat
   default:
     break;
   }
-  motors_waiting4ack_.Set(id, false);
+  emit actuatorStateChanged(id, new_state);
+}
 
-  if (!motors_waiting4ack_.AnyOn())
-    emit requestSatisfied();
+void CableRobot::forwardPrintToQConsole(const QString& text) const
+{
+  emit printToQConsole(text);
 }
 
 //--------- Miscellaneous private --------------------------------------------------//
@@ -411,14 +411,35 @@ void CableRobot::PrintStateTransition(const States current_state,
     msg = QString("CableRobot state transition: %1 --> %2")
             .arg(kStatesStr[current_state], kStatesStr[new_state]);
   else
-    msg = QString("CableRobot intial state: %1").arg(kStatesStr[new_state]);
+    msg = QString("CableRobot initial state: %1").arg(kStatesStr[new_state]);
   emit printToQConsole(msg);
+}
+
+void CableRobot::EmitMotorStatusSync() const
+{
+  static const std::vector<ID_t> active_motors_id = GetActiveMotorsID();
+  static grabrt::Clock clock;
+  static uint8_t counter = 0;
+
+  if (!ec_network_valid_)
+    return;
+
+  if (clock.Elapsed() < kEmitPeriodSec_)
+    return;
+
+  ID_t id = active_motors_id[counter++];
+  emit motorStatus(id, actuators_ptrs_[id]->GetWinch().GetServo()->GetDriveStatus());
+  clock.Reset();
+
+  if (counter > active_motors_id.size())
+    counter = 0;
 }
 
 //--------- Ethercat related private functions ---------------------------------//
 
-void CableRobot::EcStateChangedCb(const Bitfield8& new_state) const
+void CableRobot::EcStateChangedCb(const Bitfield8& new_state)
 {
+  ec_network_valid_ = (new_state.Count() == 3);
   emit ecStateChanged(new_state);
 }
 

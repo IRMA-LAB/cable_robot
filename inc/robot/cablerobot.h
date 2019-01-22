@@ -76,30 +76,37 @@ public slots:
   void stop();
 
 signals:
-  void motorStatus(const quint64, const grabec::GSWDriveInPdos&) const;
+  void motorStatus(const ID_t&, const grabec::GSWDriveInPdos&) const;
   void sendMsg(const QByteArray) const;
   void printToQConsole(const QString&) const;
   void ecStateChanged(const Bitfield8&) const;
-  void requestSatisfied() const;
+  void actuatorStateChanged(const ID_t&, const BYTE&) const;
 
 private slots:
-  void handleActuatorStateChanged(const ID_t&, const BYTE&);
+  void forwardActuatorStateChanged(const ID_t&, const BYTE&);
+  void forwardPrintToQConsole(const QString&) const;
 
 private:
-  void EcStateChangedCb(const Bitfield8&) const override final;
+  void EcStateChangedCb(const Bitfield8&) override final;
   void PrintToQConsoleCb(const std::string&) const override final;
 
 private:
+  static constexpr double kEmitPeriodSec_ = 0.2;
+
   grabcdpr::PlatformVars platform_;
   grabcdpr::Vars status_;
+
+  void EmitMotorStatusSync() const;
+
+  // Data logging
   vect<ActuatorStatusMsg> meas_;
   LogBuffer log_buffer_;
   grabrt::Clock clock_;
-  Bitfield8 motors_waiting4ack_;  // assuming up to 8 motors
 
   // Ethercat related
   vect<Actuator*> actuators_ptrs_;
   vect<Actuator*> active_actuators_ptrs_;
+  bool ec_network_valid_ = false;
 
   void StartUpFunction() override final {}
   void LoopFunction() override final;

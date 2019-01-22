@@ -27,6 +27,8 @@ public:
   Actuator(const ID_t id, const uint8_t slave_position,
            const grabcdpr::ActuatorParams& params, QObject* parent = NULL);
 
+  ~Actuator();
+
   enum States : BYTE
   {
     ST_IDLE,
@@ -35,6 +37,7 @@ public:
     ST_MAX_STATES
   };
 
+public slots:
   //--------- External Events Public --------------------------------------------------//
 
   /**
@@ -142,6 +145,7 @@ public:
 
 signals:
   void stateChanged(const ID_t&, const BYTE&) const;
+  void printToQConsole(const QString&) const;
 
 private:
   ID_t id_;

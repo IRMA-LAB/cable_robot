@@ -11,6 +11,8 @@
 #include "robot/cablerobot.h"
 #include "ctrl/controller_singledrive_naive.h"
 
+using GSWDStates = grabec::GoldSoloWhistleDriveStates;
+
 namespace Ui
 {
 class MainGUI;
@@ -54,9 +56,8 @@ private slots:
 private slots:
   void enableInterface(const bool op_outcome = false);
   void appendText2Browser(const QString& text);
-  void updateDriveStatusTable(const quint64 id, const grabec::GSWDriveInPdos& status);
   void updateEcStatusLED(const Bitfield8& ec_status_flags);
-  void updateDirectDriveCtrlPanel();
+  void handleMotorStatusUpdate(const ID_t&, const grabec::GSWDriveInPdos&motor_status);
 
 private:
   bool ec_network_valid_ = false;
@@ -75,9 +76,15 @@ private:
   void DisablePosCtrlButtons(const bool value);
   void DisableVelCtrlButtons(const bool value);
   void DisableTorqueCtrlButtons(const bool value);
+
+  void UpdateDriveStatusTable(const grabec::GSWDriveInPdos& status);
+  void UpdateDriveCtrlPanel(const Actuator::States state);
+
   bool ExitReadyStateRequest();
 
+private:
   void SetupDirectMotorCtrl(const bool enable);
+  Actuator::States DriveStateToActuatorState(const GSWDStates drive_state);
 };
 
 #endif // MAIN_GUI_H

@@ -10,6 +10,14 @@ Actuator::Actuator(const ID_t id, const uint8_t slave_position,
     pulley_(id, params.pulley)
 {
   active_ = params.active;
+
+  winch_.GetServo()->setParent(this);
+  connect(winch_.GetServo(), SIGNAL(driveFaulted()), this, SLOT(FaultTrigger()));
+}
+
+Actuator::~Actuator()
+{
+  disconnect(winch_.GetServo(), SIGNAL(driveFaulted()), this, SLOT(FaultTrigger()));
 }
 
 //--------- External Events Public --------------------------------------------------//
@@ -33,13 +41,11 @@ void Actuator::Disable()
   CLOG(TRACE, "event");
   if (!active_)
     return;
-  // clang-format off
-  BEGIN_TRANSITION_MAP                                       // - Current State -
-    TRANSITION_MAP_ENTRY(EVENT_IGNORED)       // ST_IDLE
-    TRANSITION_MAP_ENTRY(ST_IDLE)                     // ST_ENABLED
-    TRANSITION_MAP_ENTRY(ST_IDLE)                     // ST_FAULT
-  END_TRANSITION_MAP(NULL)
-  // clang-format on
+  if (GetCurrentState() == ST_ENABLED)
+  {
+    winch_.GetServo()->Shutdown(); // disable drive completely
+    ExternalEvent(ST_IDLE);
+  }
 }
 
 void Actuator::FaultTrigger()
@@ -61,13 +67,11 @@ void Actuator::FaultReset()
   CLOG(TRACE, "event");
   if (!active_)
     return;
-  // clang-format off
-  BEGIN_TRANSITION_MAP                                       // - Current State -
-    TRANSITION_MAP_ENTRY(EVENT_IGNORED)       // ST_IDLE
-    TRANSITION_MAP_ENTRY(EVENT_IGNORED)       // ST_ENABLED
-    TRANSITION_MAP_ENTRY(ST_IDLE)                     // ST_FAULT
-  END_TRANSITION_MAP(NULL)
-  // clang-format on
+  if (GetCurrentState() == ST_FAULT)
+  {
+    winch_.GetServo()->FaultReset(); // clear fault and disable drive completely
+    ExternalEvent(ST_IDLE);
+  }
 }
 
 //--------- Public Functions --------------------------------------------------//
@@ -138,17 +142,18 @@ void Actuator::UpdateConfig()
 // Guard condition to detemine whether Idle state is executed.
 GUARD_DEFINE(Actuator, GuardIdle, NoEventData)
 {
-  if (prev_state_ == ST_ENABLED)
-    winch_.GetServo()->Shutdown();   // disable drive completely
-  else                               // ST_FAULT
-    winch_.GetServo()->FaultReset(); // clear fault and disable drive completely
   clock_.Reset();
   while (1)
   {
     if (winch_.GetServo()->GetCurrentState() == grabec::ST_SWITCH_ON_DISABLED)
       return TRUE; // drive is disabled
     if (clock_.Elapsed() > kMaxTransitionTimeSec_)
-      return FALSE; // taking too long to disable drive. Something's wrong.
+    {
+      emit printToQConsole(
+        QString("[WARNING] Actuator state transition FAILED. Taking too long to disable "
+                "drive %1.").arg(id_));
+      return FALSE;
+    }
     clock_.Reset();
   }
 }
@@ -166,11 +171,15 @@ GUARD_DEFINE(Actuator, GuardEnabled, NoEventData)
   clock_.Reset();
   while (1)
   {
-    std::cout << (int) winch_.GetServo()->GetCurrentState() << std::endl;
     if (winch_.GetServo()->GetCurrentState() == grabec::ST_READY_TO_SWITCH_ON)
       break;
     if (clock_.Elapsed() > kMaxTransitionTimeSec_)
-      return FALSE; // taking too long to disable drive. Something's wrong.
+    {
+      emit printToQConsole(
+        QString("[WARNING] Actuator state transition FAILED. Taking "
+                "too long to prepare to switch on drive %1.").arg(id_));
+      return FALSE;
+    }
     usleep(100000);
   }
 
@@ -181,7 +190,12 @@ GUARD_DEFINE(Actuator, GuardEnabled, NoEventData)
     if (winch_.GetServo()->GetCurrentState() == grabec::ST_SWITCHED_ON)
       break;
     if (clock_.Elapsed() > kMaxTransitionTimeSec_)
-      return FALSE; // taking too long to disable drive. Something's wrong.
+    {
+      emit printToQConsole(
+        QString("[WARNING] Actuator state transition FAILED. Taking "
+                "too long to switch on voltage of drive %1.").arg(id_));
+      return FALSE;
+    }
     usleep(100000);
   }
 
@@ -192,7 +206,12 @@ GUARD_DEFINE(Actuator, GuardEnabled, NoEventData)
     if (winch_.GetServo()->GetCurrentState() == grabec::ST_OPERATION_ENABLED)
       return TRUE; // drive is enabled
     if (clock_.Elapsed() > kMaxTransitionTimeSec_)
-      return FALSE; // taking too long to enable drive. Something's wrong.
+    {
+      emit printToQConsole(
+        QString("[WARNING] Actuator state transition FAILED. Taking too long to enable "
+                "drive %1.").arg(id_));
+      return FALSE;
+    }
     usleep(100000);
   }
 }
@@ -203,7 +222,7 @@ STATE_DEFINE(Actuator, Enabled, NoEventData)
   prev_state_ = ST_ENABLED;
 }
 
-// Guard condition to detemine whether Idle state is executed.
+// Guard condition to detemine whether Fault state is executed.
 GUARD_DEFINE(Actuator, GuardFault, NoEventData)
 {
   winch_.GetServo()->FaultReset(); // clear fault and disable drive completely
@@ -214,11 +233,16 @@ GUARD_DEFINE(Actuator, GuardFault, NoEventData)
     if (winch_.GetServo()->GetCurrentState() == grabec::ST_SWITCH_ON_DISABLED)
     {
       InternalEvent(ST_IDLE);
-      return FALSE; // drive is disabled
+      return FALSE;
     }
     if (clock_.Elapsed() > kMaxTransitionTimeSec_)
+    {
+      emit printToQConsole(
+        QString("[WARNING] Attempt to automatically reset fault FAILED on drive %1.")
+          .arg(id_));
       return TRUE; // taking too long to disable drive. Something's wrong.
-    clock_.Reset();
+    }
+    usleep(100000);
   }
 }
 
@@ -234,7 +258,10 @@ void Actuator::PrintStateTransition(const States current_state) const
 {
   if (current_state == prev_state_)
     return;
-  printf("Actuator %lu state transition: %s --> %s\n", id_, kStatesStr_[prev_state_],
-         kStatesStr_[current_state]);
+  QString msg;
+  msg = QString("Actuator %1 state transition: %2 --> %3")
+          .arg(id_)
+          .arg(kStatesStr_[prev_state_], kStatesStr_[current_state]);
+  emit printToQConsole(msg);
   emit stateChanged(id_, current_state);
 }
