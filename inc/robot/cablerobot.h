@@ -80,10 +80,8 @@ signals:
   void sendMsg(const QByteArray) const;
   void printToQConsole(const QString&) const;
   void ecStateChanged(const Bitfield8&) const;
-  void actuatorStateChanged(const ID_t&, const BYTE&) const;
 
 private slots:
-  void forwardActuatorStateChanged(const ID_t&, const BYTE&);
   void forwardPrintToQConsole(const QString&) const;
 
 private:
@@ -91,7 +89,7 @@ private:
   void PrintToQConsoleCb(const std::string&) const override final;
 
 private:
-  static constexpr double kEmitPeriodSec_ = 0.2;
+  static constexpr double kEmitPeriodSec_ = 0.1;
 
   grabcdpr::PlatformVars platform_;
   grabcdpr::Vars status_;

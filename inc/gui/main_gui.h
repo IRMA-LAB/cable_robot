@@ -69,7 +69,7 @@ private:
   CableRobot robot_;
 
   bool manual_ctrl_enabled_ = false;
-  bool waiting_for_response_ = false;
+  Bitfield8 waiting_for_response_;
   ID_t motor_id_;
   ControllerSingleDriveNaive* man_ctrl_ptr_;
 

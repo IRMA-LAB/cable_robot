@@ -43,7 +43,7 @@ void Actuator::Disable()
     return;
   if (GetCurrentState() == ST_ENABLED)
   {
-    winch_.GetServo()->Shutdown(); // disable drive completely
+    winch_.GetServo()->DisableVoltage(); // disable drive completely
     ExternalEvent(ST_IDLE);
   }
 }

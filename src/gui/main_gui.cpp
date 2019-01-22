@@ -122,7 +122,7 @@ void MainGUI::on_pushButton_enable_clicked()
   bool manual_ctrl_enabled = !manual_ctrl_enabled_;
 
   SetupDirectMotorCtrl(manual_ctrl_enabled);
-  waiting_for_response_ = true;
+  waiting_for_response_.Set(manual_ctrl_enabled ? Actuator::ST_ENABLED: Actuator::ST_IDLE);
 }
 
 void MainGUI::on_pushButton_faultReset_clicked()
@@ -351,7 +351,7 @@ void MainGUI::handleMotorStatusUpdate(const ID_t& id,
     DisablePosCtrlButtons(true);
     DisableVelCtrlButtons(true);
     DisableTorqueCtrlButtons(true);
-    waiting_for_response_ = false;
+    waiting_for_response_.ClearAll();
     return;
   }
 
@@ -440,12 +440,16 @@ void MainGUI::UpdateDriveStatusTable(const grabec::GSWDriveInPdos& status)
 
 void MainGUI::UpdateDriveCtrlPanel(const Actuator::States state)
 {
-  if (!waiting_for_response_)
+  if (waiting_for_response_.CheckBit(Actuator::ST_ENABLED) && state != Actuator::ST_ENABLED)
+    return;
+  if (waiting_for_response_.CheckBit(Actuator::ST_IDLE) && state != Actuator::ST_IDLE)
     return;
 
   manual_ctrl_enabled_ = (state == Actuator::States::ST_ENABLED);
 
   ui->pushButton_enable->setText(tr(manual_ctrl_enabled_ ? "Disable" : "Enable"));
+  ui->pushButton_faultReset->setDisabled(true);
+  ui->comboBox_motorAxis->setDisabled(manual_ctrl_enabled_);
 
   ui->pushButton_homing->setDisabled(manual_ctrl_enabled_);
   ui->pushButton_calib->setDisabled(manual_ctrl_enabled_);
@@ -456,7 +460,7 @@ void MainGUI::UpdateDriveCtrlPanel(const Actuator::States state)
   DisableTorqueCtrlButtons(
     !(manual_ctrl_enabled_ && ui->radioButton_torqueMode->isChecked()));
 
-  waiting_for_response_ = false;
+  waiting_for_response_.ClearAll();
 }
 
 bool MainGUI::ExitReadyStateRequest()

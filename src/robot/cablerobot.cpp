@@ -29,8 +29,6 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
     if (config.actuators[i].active)
     {
       active_actuators_ptrs_.push_back(actuators_ptrs_[i]);
-      connect(actuators_ptrs_[i], SIGNAL(stateChanged(ID_t, BYTE)), this,
-              SLOT(forwardActuatorStateChanged(ID_t, BYTE)));
       connect(actuators_ptrs_[i], SIGNAL(printToQConsole(QString)), this,
               SLOT(forwardPrintToQConsole(QString)));
     }
@@ -54,8 +52,6 @@ CableRobot::~CableRobot()
   {
     if (actuator_ptr->IsActive())
     {
-      disconnect(actuator_ptr, SIGNAL(stateChanged(ID_t, BYTE)), this,
-                 SLOT(forwardActuatorStateChanged(ID_t, BYTE)));
       disconnect(actuator_ptr, SIGNAL(printToQConsole(QString)), this,
                  SLOT(forwardPrintToQConsole(QString)));
     }
@@ -375,25 +371,6 @@ STATE_DEFINE(CableRobot, Error, NoEventData)
 
 //--------- Private slots --------------------------------------------------//
 
-void CableRobot::forwardActuatorStateChanged(const ID_t& id, const BYTE& new_state)
-{
-  switch (new_state)
-  {
-  case Actuator::States::ST_IDLE:
-    emit printToQConsole(QString("Motor %1 disabled").arg(id));
-    break;
-  case Actuator::States::ST_ENABLED:
-    emit printToQConsole(QString("Motor %1 enabled").arg(id));
-    break;
-  case Actuator::States::ST_FAULT:
-    emit printToQConsole(QString("Motor %1 in fault").arg(id));
-    break;
-  default:
-    break;
-  }
-  emit actuatorStateChanged(id, new_state);
-}
-
 void CableRobot::forwardPrintToQConsole(const QString& text) const
 {
   emit printToQConsole(text);
@@ -431,7 +408,7 @@ void CableRobot::EmitMotorStatusSync() const
   emit motorStatus(id, actuators_ptrs_[id]->GetWinch().GetServo()->GetDriveStatus());
   clock.Reset();
 
-  if (counter > active_motors_id.size())
+  if (counter >= active_motors_id.size())
     counter = 0;
 }
 
@@ -476,10 +453,6 @@ void CableRobot::ControlStep()
   std::vector<ControlAction> res = controller_->CalcCableSetPoint(status_);
   for (ControlAction& ctrl_action : res)
   {
-    emit motorStatus(
-      ctrl_action.motor_id,
-      actuators_ptrs_[ctrl_action.motor_id]->GetWinch().GetServo()->GetDriveStatus());
-
     if (!actuators_ptrs_[ctrl_action.motor_id]->IsEnabled()) // safety check
       continue;
 
