@@ -42,24 +42,24 @@ public:
     ST_MAX_STATES
   };
 
-  const ActuatorStatus GetActuatorStatus(const ID_t motor_id);
+  const ActuatorStatus GetActuatorStatus(const id_t motor_id);
   void UpdateHomeConfig(const double cable_len, const double pulley_angle);
-  void UpdateHomeConfig(const ID_t motor_id, const double cable_len,
+  void UpdateHomeConfig(const id_t motor_id, const double cable_len,
                         const double pulley_angle);
 
-  bool MotorEnabled(const ID_t motor_id);
+  bool MotorEnabled(const id_t motor_id);
   bool AnyMotorEnabled();
   bool MotorsEnabled();
-  void EnableMotor(const ID_t motor_id);
+  void EnableMotor(const id_t motor_id);
   void EnableMotors();
-  void EnableMotors(const vect<ID_t>& motors_id);
-  void DisableMotor(const ID_t motor_id);
+  void EnableMotors(const vect<id_t>& motors_id);
+  void DisableMotor(const id_t motor_id);
   void DisableMotors();
-  void DisableMotors(const vect<ID_t>& motors_id);
-  void SetMotorOpMode(const ID_t motor_id, const qint8 op_mode);
+  void DisableMotors(const vect<id_t>& motors_id);
+  void SetMotorOpMode(const id_t motor_id, const qint8 op_mode);
   void SetMotorsOpMode(const qint8 op_mode);
-  void SetMotorsOpMode(const vect<ID_t>& motors_id, const qint8 op_mode);
-  vect<ID_t> GetActiveMotorsID() const;
+  void SetMotorsOpMode(const vect<id_t>& motors_id, const qint8 op_mode);
+  vect<id_t> GetActiveMotorsID() const;
   void ClearFaults();
 
   void CollectMeas();
@@ -76,7 +76,7 @@ public slots:
   void stop();
 
 signals:
-  void motorStatus(const ID_t&, const grabec::GSWDriveInPdos&) const;
+  void motorStatus(const id_t&, const grabec::GSWDriveInPdos&) const;
   void sendMsg(const QByteArray) const;
   void printToQConsole(const QString&) const;
   void ecStateChanged(const Bitfield8&) const;

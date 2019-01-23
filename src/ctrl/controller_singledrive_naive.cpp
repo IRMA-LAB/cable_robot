@@ -1,7 +1,7 @@
 #include "ctrl/controller_singledrive_naive.h"
 
-ControllerSingleDriveNaive::ControllerSingleDriveNaive(const ID_t motor_id)
-  : ControllerBase(vect<ID_t>(1, motor_id))
+ControllerSingleDriveNaive::ControllerSingleDriveNaive(const id_t motor_id)
+  : ControllerBase(vect<id_t>(1, motor_id))
 {
   Clear();
 }
@@ -13,7 +13,6 @@ ControllerSingleDriveNaive::ControllerSingleDriveNaive(const ID_t motor_id)
 void ControllerSingleDriveNaive::SetCableLenTarget(const double target)
 {
   Clear();
-  SetMode(CABLE_LENGTH);
   length_target_ = target;
   target_flags_.Set(LENGTH);
 }
@@ -21,7 +20,6 @@ void ControllerSingleDriveNaive::SetCableLenTarget(const double target)
 void ControllerSingleDriveNaive::SetMotorPosTarget(const int32_t target)
 {
   Clear();
-  SetMode(MOTOR_POSITION);
   pos_target_ = target;
   target_flags_.Set(POSITION);
 }
@@ -29,7 +27,6 @@ void ControllerSingleDriveNaive::SetMotorPosTarget(const int32_t target)
 void ControllerSingleDriveNaive::SetMotorSpeedTarget(const int32_t target)
 {
   Clear();
-  SetMode(MOTOR_SPEED);
   speed_target_ = target;
   target_flags_.Set(SPEED);
 }
@@ -37,7 +34,6 @@ void ControllerSingleDriveNaive::SetMotorSpeedTarget(const int32_t target)
 void ControllerSingleDriveNaive::SetMotorTorqueTarget(const int16_t target)
 {
   Clear();
-  SetMode(MOTOR_TORQUE);
   torque_target_ = target;
   target_flags_.Set(TORQUE);
 }
@@ -46,6 +42,9 @@ void ControllerSingleDriveNaive::CableLenIncrement(const bool active,
                                                    const Sign sign /*= Sign::POS*/,
                                                    const bool micromove /*= true*/)
 {
+  if (active == change_length_target_)
+    return;
+
   change_length_target_ = active;
   if (change_length_target_)
     delta_length_ = micromove ? sign * kDeltaLengthMicro_ : sign * kDeltaLength_;

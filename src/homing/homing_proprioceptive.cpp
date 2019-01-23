@@ -229,7 +229,7 @@ STATE_DEFINE(HomingProprioceptive, StartUp, HomingProprioceptiveStartData)
   pthread_mutex_lock(&robot_->Mutex());
   robot_->SetController(&controller_);
   pthread_mutex_unlock(&robot_->Mutex());
-  vect<ID_t> motors_id = robot_->GetActiveMotorsID();
+  vect<id_t> motors_id = robot_->GetActiveMotorsID();
   for (size_t i = 0; i < motors_id.size(); ++i)
   {
     qint16 current_torque = robot_->GetActuatorStatus(motors_id[i]).motor_torque;
@@ -286,7 +286,7 @@ GUARD_DEFINE(HomingProprioceptive, GuardSwitch, NoEventData)
 STATE_DEFINE(HomingProprioceptive, SwitchCable, NoEventData)
 {
   static quint8 motor_id_idx = 0;
-  static vect<ID_t> motors_id = robot_->GetActiveMotorsID();
+  static vect<id_t> motors_id = robot_->GetActiveMotorsID();
 
   PrintStateTransition(prev_state_, ST_SWITCH_CABLE);
   prev_state_ = ST_SWITCH_CABLE;
@@ -396,7 +396,7 @@ STATE_DEFINE(HomingProprioceptive, Home, HomingProprioceptiveHomeData)
   if (robot_->GoHome()) // (position control)
   {
     // ...which is done here.
-    for (ID_t motor_id : robot_->GetActiveMotorsID())
+    for (id_t motor_id : robot_->GetActiveMotorsID())
       robot_->UpdateHomeConfig(motor_id, data->init_lengths[motor_id],
                                data->init_angles[motor_id]);
     emit homingComplete();
@@ -421,7 +421,7 @@ void HomingProprioceptive::WaitUntilPlatformSteady()
   // Compute these once for all
   static constexpr size_t kBuffSize =
     static_cast<size_t>(kBufferingTimeSec_ / kCycleWaitTimeSec_);
-  static const std::vector<ID_t> motors_id = robot_->GetActiveMotorsID();
+  static const std::vector<id_t> motors_id = robot_->GetActiveMotorsID();
 
   // LP filters setup
   static std::vector<grabnum::LowPassFilter> lp_filters(

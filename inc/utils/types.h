@@ -5,22 +5,20 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-using ID_t = size_t;
-
 /**
  * @brief The MotorStatus struct
  */
 struct MotorStatus
 {
   MotorStatus() : id(0), motor_position(0), motor_speed(0), motor_torque(0), op_mode(0) {}
-  MotorStatus(const ID_t _id, const int8_t _op_mode, const int32_t motor_pos,
+  MotorStatus(const id_t _id, const int8_t _op_mode, const int32_t motor_pos,
               const int32_t _motor_speed, const int16_t _motor_torque)
     : id(_id), motor_position(motor_pos), motor_speed(_motor_speed),
       motor_torque(_motor_torque), op_mode(_op_mode)
   {
   }
 
-  ID_t id;
+  id_t id;
   int32_t motor_position;
   int32_t motor_speed;
   int16_t motor_torque;
@@ -33,7 +31,7 @@ struct MotorStatus
 struct WinchStatus : MotorStatus
 {
   WinchStatus() : aux_position(0), cable_length(0.0) {}
-  WinchStatus(const ID_t _id, const int8_t _op_mode, const int32_t motor_pos,
+  WinchStatus(const id_t _id, const int8_t _op_mode, const int32_t motor_pos,
               const int32_t _motor_speed, const int16_t _motor_torque,
               const double cable_len, const int aux_pos)
     : MotorStatus(_id, _op_mode, motor_pos, _motor_speed, _motor_torque),
@@ -51,7 +49,7 @@ struct WinchStatus : MotorStatus
 struct ActuatorStatus : WinchStatus
 {
   ActuatorStatus() : pulley_angle(0.0) {}
-  ActuatorStatus(const ID_t _id, const int8_t _op_mode, const int32_t motor_pos,
+  ActuatorStatus(const id_t _id, const int8_t _op_mode, const int32_t motor_pos,
                  const int32_t _motor_speed, const int16_t _motor_torque,
                  const double cable_len, const int aux_pos, const double pulley_ang)
     : WinchStatus(_id, _op_mode, motor_pos, _motor_speed, _motor_torque, cable_len,

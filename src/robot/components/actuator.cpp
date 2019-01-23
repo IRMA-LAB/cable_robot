@@ -3,7 +3,7 @@
 // Must provide redundant definition of the static member as well as the declaration.
 constexpr char* Actuator::kStatesStr_[];
 
-Actuator::Actuator(const ID_t id, const uint8_t slave_position,
+Actuator::Actuator(const id_t id, const uint8_t slave_position,
                    const grabcdpr::ActuatorParams& params, QObject* parent /* = NULL*/)
   : QObject(parent), StateMachine(ST_MAX_STATES), id_(id),
     slave_position_(slave_position), winch_(id, slave_position, params.winch),

@@ -24,7 +24,7 @@ public:
    * @param[in] slave_position
    * @param[in] params
    */
-  Actuator(const ID_t id, const uint8_t slave_position,
+  Actuator(const id_t id, const uint8_t slave_position,
            const grabcdpr::ActuatorParams& params, QObject* parent = NULL);
 
   ~Actuator();
@@ -62,7 +62,7 @@ public:
    * @brief ID
    * @return
    */
-  ID_t ID() const { return id_; }
+  id_t ID() const { return id_; }
   /**
    * @brief GetWinch
    * @return
@@ -144,11 +144,11 @@ public:
   bool IsInFault() { return GetCurrentState() == ST_FAULT; }
 
 signals:
-  void stateChanged(const ID_t&, const BYTE&) const;
+  void stateChanged(const id_t&, const BYTE&) const;
   void printToQConsole(const QString&) const;
 
 private:
-  ID_t id_;
+  id_t id_;
   uint8_t slave_position_;
   bool active_;
 

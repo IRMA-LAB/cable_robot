@@ -61,7 +61,7 @@ CableRobot::~CableRobot()
 
 //--------- Public Functions --------------------------------------------------//
 
-const ActuatorStatus CableRobot::GetActuatorStatus(const ID_t motor_id)
+const ActuatorStatus CableRobot::GetActuatorStatus(const id_t motor_id)
 {
   pthread_mutex_lock(&mutex_);
   ActuatorStatus status = actuators_ptrs_[motor_id]->GetStatus();
@@ -75,13 +75,13 @@ void CableRobot::UpdateHomeConfig(const double cable_len, const double pulley_an
     actuator_ptr->UpdateHomeConfig(cable_len, pulley_angle);
 }
 
-void CableRobot::UpdateHomeConfig(const ID_t motor_id, const double cable_len,
+void CableRobot::UpdateHomeConfig(const id_t motor_id, const double cable_len,
                                   const double pulley_angle)
 {
   actuators_ptrs_[motor_id]->UpdateHomeConfig(cable_len, pulley_angle);
 }
 
-bool CableRobot::MotorEnabled(const ID_t motor_id)
+bool CableRobot::MotorEnabled(const id_t motor_id)
 {
   return actuators_ptrs_[motor_id]->IsEnabled();
 }
@@ -102,7 +102,7 @@ bool CableRobot::MotorsEnabled()
   return true;
 }
 
-void CableRobot::EnableMotor(const ID_t motor_id)
+void CableRobot::EnableMotor(const id_t motor_id)
 {
   if (actuators_ptrs_[motor_id]->IsActive())
     actuators_ptrs_[motor_id]->Enable();
@@ -116,16 +116,16 @@ void CableRobot::EnableMotors()
   }
 }
 
-void CableRobot::EnableMotors(const vect<ID_t>& motors_id)
+void CableRobot::EnableMotors(const vect<id_t>& motors_id)
 {
-  for (const ID_t& motor_id : motors_id)
+  for (const id_t& motor_id : motors_id)
     if (actuators_ptrs_[motor_id]->IsActive())
     {
       actuators_ptrs_[motor_id]->Enable();
     }
 }
 
-void CableRobot::DisableMotor(const ID_t motor_id)
+void CableRobot::DisableMotor(const id_t motor_id)
 {
   if (actuators_ptrs_[motor_id]->IsActive())
   {
@@ -141,16 +141,16 @@ void CableRobot::DisableMotors()
   }
 }
 
-void CableRobot::DisableMotors(const vect<ID_t>& motors_id)
+void CableRobot::DisableMotors(const vect<id_t>& motors_id)
 {
-  for (const ID_t& motor_id : motors_id)
+  for (const id_t& motor_id : motors_id)
     if (actuators_ptrs_[motor_id]->IsActive())
     {
       actuators_ptrs_[motor_id]->Disable();
     }
 }
 
-void CableRobot::SetMotorOpMode(const ID_t motor_id, const qint8 op_mode)
+void CableRobot::SetMotorOpMode(const id_t motor_id, const qint8 op_mode)
 {
   actuators_ptrs_[motor_id]->SetMotorOpMode(op_mode);
 }
@@ -161,15 +161,15 @@ void CableRobot::SetMotorsOpMode(const qint8 op_mode)
     actuator_ptr->SetMotorOpMode(op_mode);
 }
 
-void CableRobot::SetMotorsOpMode(const vect<ID_t>& motors_id, const qint8 op_mode)
+void CableRobot::SetMotorsOpMode(const vect<id_t>& motors_id, const qint8 op_mode)
 {
-  for (const ID_t& motor_id : motors_id)
+  for (const id_t& motor_id : motors_id)
     actuators_ptrs_[motor_id]->SetMotorOpMode(op_mode);
 }
 
-vect<ID_t> CableRobot::GetActiveMotorsID() const
+vect<id_t> CableRobot::GetActiveMotorsID() const
 {
-  vect<ID_t> motors_id;
+  vect<id_t> motors_id;
   for (const Actuator* actuator_ptr : active_actuators_ptrs_)
     motors_id.push_back(actuator_ptr->ID());
   return motors_id;
@@ -394,7 +394,7 @@ void CableRobot::PrintStateTransition(const States current_state,
 
 void CableRobot::EmitMotorStatusSync() const
 {
-  static const std::vector<ID_t> active_motors_id = GetActiveMotorsID();
+  static const std::vector<id_t> active_motors_id = GetActiveMotorsID();
   static grabrt::Clock clock;
   static uint8_t counter = 0;
 
@@ -404,7 +404,7 @@ void CableRobot::EmitMotorStatusSync() const
   if (clock.Elapsed() < kEmitPeriodSec_)
     return;
 
-  ID_t id = active_motors_id[counter++];
+  id_t id = active_motors_id[counter++];
   emit motorStatus(id, actuators_ptrs_[id]->GetWinch().GetServo()->GetDriveStatus());
   clock.Reset();
 

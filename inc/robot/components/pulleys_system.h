@@ -17,7 +17,7 @@ public:
    * @brief PulleysSystem
    * @param params
    */
-  PulleysSystem(const ID_t id, const grabcdpr::PulleyParams& params);
+  PulleysSystem(const id_t id, const grabcdpr::PulleyParams& params);
 
   /**
    * @brief GetAngleRad
@@ -69,7 +69,7 @@ public:
   inline double CountsToPulleyAngleRad(const int counts) const;
 
 private:
-  ID_t id_;
+  id_t id_;
   grabcdpr::PulleyParams params_;
 
   int home_counts_ = 0;

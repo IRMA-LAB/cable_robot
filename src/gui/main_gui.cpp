@@ -6,14 +6,19 @@ MainGUI::MainGUI(QWidget* parent, const grabcdpr::Params& config)
 {
   ui->setupUi(this);
 
+  // Setup flags
+  waiting_for_response_.ClearAll();
+  desired_ctrl_mode_.ClearAll();
+  desired_ctrl_mode_.Set(ControlMode::CABLE_LENGTH);
+
   for (size_t i = 0; i < config.actuators.size(); i++)
     if (config.actuators[i].active)
       ui->comboBox_motorAxis->addItem(QString::number(i));
 
   connect(&robot_, SIGNAL(printToQConsole(QString)), this,
           SLOT(appendText2Browser(QString)));
-  connect(&robot_, SIGNAL(motorStatus(ID_t, grabec::GSWDriveInPdos)), this,
-          SLOT(handleMotorStatusUpdate(ID_t, grabec::GSWDriveInPdos)));
+  connect(&robot_, SIGNAL(motorStatus(id_t, grabec::GSWDriveInPdos)), this,
+          SLOT(handleMotorStatusUpdate(id_t, grabec::GSWDriveInPdos)));
   connect(&robot_, SIGNAL(ecStateChanged(Bitfield8)), this,
           SLOT(updateEcStatusLED(Bitfield8)));
 
@@ -26,8 +31,8 @@ MainGUI::~MainGUI()
 {
   disconnect(&robot_, SIGNAL(printToQConsole(QString)), this,
              SLOT(appendText2Browser(QString)));
-  disconnect(&robot_, SIGNAL(motorStatus(ID_t, grabec::GSWDriveInPdos)), this,
-             SLOT(handleMotorStatusUpdate(ID_t, grabec::GSWDriveInPdos)));
+  disconnect(&robot_, SIGNAL(motorStatus(id_t, grabec::GSWDriveInPdos)), this,
+             SLOT(handleMotorStatusUpdate(id_t, grabec::GSWDriveInPdos)));
   disconnect(&robot_, SIGNAL(ecStateChanged(Bitfield8)), this,
              SLOT(updateEcStatusLED(Bitfield8)));
 
@@ -122,7 +127,8 @@ void MainGUI::on_pushButton_enable_clicked()
   bool manual_ctrl_enabled = !manual_ctrl_enabled_;
 
   SetupDirectMotorCtrl(manual_ctrl_enabled);
-  waiting_for_response_.Set(manual_ctrl_enabled ? Actuator::ST_ENABLED: Actuator::ST_IDLE);
+  waiting_for_response_.Set(manual_ctrl_enabled ? Actuator::ST_ENABLED
+                                                : Actuator::ST_IDLE);
 }
 
 void MainGUI::on_pushButton_faultReset_clicked()
@@ -138,15 +144,18 @@ void MainGUI::on_radioButton_posMode_clicked()
   ui->radioButton_velMode->setChecked(false);
   ui->radioButton_torqueMode->setChecked(false);
 
+  if (desired_ctrl_mode_.CheckBit(ControlMode::CABLE_LENGTH))
+    return;
+  desired_ctrl_mode_.ClearAll();
+  desired_ctrl_mode_.Set(ControlMode::CABLE_LENGTH);
+
   if (manual_ctrl_enabled_)
   {
-    DisablePosCtrlButtons(false);
-    DisableVelCtrlButtons(true);
-    DisableTorqueCtrlButtons(true);
-    pthread_mutex_lock(&robot_.Mutex());
     man_ctrl_ptr_->SetCableLenTarget(robot_.GetActuatorStatus(motor_id_).cable_length);
+    pthread_mutex_lock(&robot_.Mutex());
     man_ctrl_ptr_->SetMode(ControlMode::CABLE_LENGTH);
     pthread_mutex_unlock(&robot_.Mutex());
+    waiting_for_response_.Set(Actuator::ST_ENABLED);
   }
 }
 
@@ -157,15 +166,18 @@ void MainGUI::on_radioButton_velMode_clicked()
   ui->radioButton_velMode->setChecked(true);
   ui->radioButton_torqueMode->setChecked(false);
 
+  if (desired_ctrl_mode_.CheckBit(ControlMode::MOTOR_SPEED))
+    return;
+  desired_ctrl_mode_.ClearAll();
+  desired_ctrl_mode_.Set(ControlMode::MOTOR_SPEED);
+
   if (manual_ctrl_enabled_)
   {
-    DisablePosCtrlButtons(true);
-    DisableVelCtrlButtons(false);
-    DisableTorqueCtrlButtons(true);
+    man_ctrl_ptr_->SetMotorSpeedTarget(0);
     pthread_mutex_lock(&robot_.Mutex());
-    man_ctrl_ptr_->SetMotorSpeedTarget(robot_.GetActuatorStatus(motor_id_).motor_speed);
     man_ctrl_ptr_->SetMode(ControlMode::MOTOR_SPEED);
     pthread_mutex_unlock(&robot_.Mutex());
+    waiting_for_response_.Set(Actuator::ST_ENABLED);
   }
 }
 
@@ -176,15 +188,18 @@ void MainGUI::on_radioButton_torqueMode_clicked()
   ui->radioButton_velMode->setChecked(false);
   ui->radioButton_torqueMode->setChecked(true);
 
+  if (desired_ctrl_mode_.CheckBit(ControlMode::MOTOR_TORQUE))
+    return;
+  desired_ctrl_mode_.ClearAll();
+  desired_ctrl_mode_.Set(ControlMode::MOTOR_TORQUE);
+
   if (manual_ctrl_enabled_)
   {
-    DisablePosCtrlButtons(true);
-    DisableVelCtrlButtons(true);
-    DisableTorqueCtrlButtons(false);
-    pthread_mutex_lock(&robot_.Mutex());
     man_ctrl_ptr_->SetMotorTorqueTarget(robot_.GetActuatorStatus(motor_id_).motor_torque);
+    pthread_mutex_lock(&robot_.Mutex());
     man_ctrl_ptr_->SetMode(ControlMode::MOTOR_TORQUE);
     pthread_mutex_unlock(&robot_.Mutex());
+    waiting_for_response_.Set(Actuator::ST_ENABLED);
   }
 }
 
@@ -329,14 +344,16 @@ void MainGUI::updateEcStatusLED(const Bitfield8& ec_status_flags)
   }
 }
 
-void MainGUI::handleMotorStatusUpdate(const ID_t& id,
+void MainGUI::handleMotorStatusUpdate(const id_t& id,
                                       const grabec::GSWDriveInPdos& motor_status)
 {
   // Check if signal corresponds to current selected axis
   if (id != ui->comboBox_motorAxis->currentText().toULong())
     return;
 
-  Actuator::States actuator_state = DriveStateToActuatorState(
+  UpdateDriveStatusTable(motor_status);
+
+  Actuator::States actuator_state = DriveState2ActuatorState(
     grabec::GoldSoloWhistleDrive::GetDriveState(motor_status.status_word));
 
   // Check if motor is in fault and set panel accordingly
@@ -352,11 +369,12 @@ void MainGUI::handleMotorStatusUpdate(const ID_t& id,
     DisableVelCtrlButtons(true);
     DisableTorqueCtrlButtons(true);
     waiting_for_response_.ClearAll();
+    waiting_for_response_.Set(Actuator::ST_IDLE);
     return;
   }
 
-  UpdateDriveStatusTable(motor_status);
   UpdateDriveCtrlPanel(actuator_state);
+  UpdateDriveCtrlButtons(DriveOpMode2CtrlMode(motor_status.display_op_mode));
 }
 
 //--------- Private GUI methods --------------------------------------------------//
@@ -396,7 +414,7 @@ void MainGUI::UpdateDriveStatusTable(const grabec::GSWDriveInPdos& status)
   switch (status.display_op_mode)
   {
   case grabec::NONE:
-    op_mode_str = "CYCLIC_SYNC_POSITION";
+    op_mode_str = "NONE";
     break;
   case grabec::PROFILE_POSITION:
     op_mode_str = "PROFILE_POSITION";
@@ -440,13 +458,15 @@ void MainGUI::UpdateDriveStatusTable(const grabec::GSWDriveInPdos& status)
 
 void MainGUI::UpdateDriveCtrlPanel(const Actuator::States state)
 {
-  if (waiting_for_response_.CheckBit(Actuator::ST_ENABLED) && state != Actuator::ST_ENABLED)
+  if (waiting_for_response_.CheckBit(Actuator::ST_ENABLED) &&
+      state != Actuator::ST_ENABLED)
     return;
   if (waiting_for_response_.CheckBit(Actuator::ST_IDLE) && state != Actuator::ST_IDLE)
     return;
 
-  manual_ctrl_enabled_ = (state == Actuator::States::ST_ENABLED);
+  manual_ctrl_enabled_ = (state == Actuator::ST_ENABLED);
 
+  ui->pushButton_enable->setEnabled(true);
   ui->pushButton_enable->setText(tr(manual_ctrl_enabled_ ? "Disable" : "Enable"));
   ui->pushButton_faultReset->setDisabled(true);
   ui->comboBox_motorAxis->setDisabled(manual_ctrl_enabled_);
@@ -455,12 +475,33 @@ void MainGUI::UpdateDriveCtrlPanel(const Actuator::States state)
   ui->pushButton_calib->setDisabled(manual_ctrl_enabled_);
   ui->groupBox_app->setDisabled(true); // after we move we need to do the homing again
 
-  DisablePosCtrlButtons(!(manual_ctrl_enabled_ && ui->radioButton_posMode->isChecked()));
-  DisableVelCtrlButtons(!(manual_ctrl_enabled_ && ui->radioButton_velMode->isChecked()));
-  DisableTorqueCtrlButtons(
-    !(manual_ctrl_enabled_ && ui->radioButton_torqueMode->isChecked()));
+  if (!manual_ctrl_enabled_)
+  {
+    DisablePosCtrlButtons(true);
+    DisableVelCtrlButtons(true);
+    DisableTorqueCtrlButtons(true);
+    waiting_for_response_.ClearAll();
+  }
+}
 
-  waiting_for_response_.ClearAll();
+void MainGUI::UpdateDriveCtrlButtons(const ControlMode ctrl_mode)
+{
+  if (!waiting_for_response_.AnyOn())
+    return;
+
+  if (desired_ctrl_mode_.CheckBit(ctrl_mode))
+  {
+    DisablePosCtrlButtons(ctrl_mode != ControlMode::CABLE_LENGTH);
+    DisableVelCtrlButtons(ctrl_mode != ControlMode::MOTOR_SPEED);
+    DisableTorqueCtrlButtons(ctrl_mode != ControlMode::MOTOR_TORQUE);
+    waiting_for_response_.ClearAll();
+  }
+  else
+  {
+    DisablePosCtrlButtons(true);
+    DisableVelCtrlButtons(true);
+    DisableTorqueCtrlButtons(true);
+  }
 }
 
 bool MainGUI::ExitReadyStateRequest()
@@ -495,7 +536,7 @@ void MainGUI::SetupDirectMotorCtrl(const bool enable)
     if (ui->radioButton_velMode->isChecked())
     {
       man_ctrl_ptr_->SetMode(ControlMode::MOTOR_SPEED);
-      man_ctrl_ptr_->SetMotorSpeedTarget(current_status.motor_speed);
+      man_ctrl_ptr_->SetMotorSpeedTarget(0);
     }
     if (ui->radioButton_torqueMode->isChecked())
     {
@@ -508,17 +549,14 @@ void MainGUI::SetupDirectMotorCtrl(const bool enable)
   }
   else
   {
-    pthread_mutex_lock(&robot_.Mutex());
+    robot_.SetController(NULL);
     delete man_ctrl_ptr_;
-    man_ctrl_ptr_ = NULL;
-    pthread_mutex_unlock(&robot_.Mutex());
-    robot_.SetController(man_ctrl_ptr_);
 
     robot_.DisableMotor(motor_id_);
   }
 }
 
-Actuator::States MainGUI::DriveStateToActuatorState(const GSWDStates drive_state)
+Actuator::States MainGUI::DriveState2ActuatorState(const GSWDStates drive_state)
 {
   switch (drive_state)
   {
@@ -528,5 +566,20 @@ Actuator::States MainGUI::DriveStateToActuatorState(const GSWDStates drive_state
     return Actuator::States::ST_FAULT;
   default:
     return Actuator::States::ST_IDLE;
+  }
+}
+
+ControlMode MainGUI::DriveOpMode2CtrlMode(const int8_t drive_op_mode)
+{
+  switch (drive_op_mode)
+  {
+  case grabec::CYCLIC_POSITION:
+    return ControlMode::CABLE_LENGTH;
+  case grabec::CYCLIC_VELOCITY:
+    return ControlMode::MOTOR_SPEED;
+  case grabec::CYCLIC_TORQUE:
+    return ControlMode::MOTOR_TORQUE;
+  default:
+    return ControlMode::NONE;
   }
 }

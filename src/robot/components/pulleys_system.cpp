@@ -1,6 +1,6 @@
 #include "robot/components/pulleys_system.h"
 
-PulleysSystem::PulleysSystem(const ID_t id, const grabcdpr::PulleyParams& params)
+PulleysSystem::PulleysSystem(const id_t id, const grabcdpr::PulleyParams& params)
   : id_(id), params_(params)
 {
 }
