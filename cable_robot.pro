@@ -40,7 +40,8 @@ SOURCES = \
     $$PWD/src/ctrl/controller_singledrive_naive.cpp \
     $$PWD/src/utils/msgs.cpp \
     $$PWD/src/utils/easylog_wrapper.cpp \
-    $$PWD/lib/easyloggingpp/src/easylogging++.cc
+    $$PWD/lib/easyloggingpp/src/easylogging++.cc \
+    $$PWD/lib/grab_common/grabcommon.cpp
 
 INCLUDEPATH += \
     $$PWD/inc \

@@ -58,6 +58,7 @@ private slots:
   void enableInterface(const bool op_outcome = false);
   void appendText2Browser(const QString& text);
   void updateEcStatusLED(const Bitfield8& ec_status_flags);
+  void updateRtThreadStatusLED(const bool active);
   void handleMotorStatusUpdate(const id_t&, const grabec::GSWDriveInPdos& motor_status);
 
 private:

@@ -1,7 +1,7 @@
 /**
  * @file cablerobot.cpp
  * @author Simone Comari, Edoardo Idà
- * @date 17 Gen 2019
+ * @date 24 Gen 2019
  * @brief File containing ...
  */
 
@@ -80,13 +80,20 @@ signals:
   void sendMsg(const QByteArray) const;
   void printToQConsole(const QString&) const;
   void ecStateChanged(const Bitfield8&) const;
+  void rtThreadStatusChanged(const bool) const;
 
 private slots:
   void forwardPrintToQConsole(const QString&) const;
 
 private:
-  void EcStateChangedCb(const Bitfield8&) override final;
-  void PrintToQConsoleCb(const std::string&) const override final;
+  //-------- Pseudo-signals from EthercatMaster base class -----------//
+
+  void
+  EcStateChangedCb(const Bitfield8& new_state) override final; // lives in the RT thread
+  void EcPrintCb(const std::string& msg,
+                 const char color = 'w') const override final; // lives in the RT thread
+  void EcRtThreadStatusChanged(
+    const bool active) const override final; // lives in the RT thread
 
 private:
   static constexpr double kEmitPeriodSec_ = 0.1;
@@ -106,8 +113,8 @@ private:
   vect<Actuator*> active_actuators_ptrs_;
   bool ec_network_valid_ = false;
 
-  void StartUpFunction() override final {}
-  void LoopFunction() override final;
+  void EcWorkFun() override final;      // lives in the RT thread
+  void EcEmergencyFun() override final; // lives in the RT thread
 
   // Control related
   ControllerBase* controller_ = NULL;

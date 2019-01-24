@@ -420,12 +420,28 @@ void CableRobot::EcStateChangedCb(const Bitfield8& new_state)
   emit ecStateChanged(new_state);
 }
 
-void CableRobot::PrintToQConsoleCb(const std::string& msg) const
+void CableRobot::EcPrintCb(const std::string& msg, const char color /* = 'w' */) const
 {
-  emit printToQConsole(msg.c_str());
+  switch (color)
+  {
+  case 'r':
+    emit printToQConsole(QString("<span style='color: red'>%1</span>").arg(msg.c_str()));
+    break;
+  case 'y':
+      emit printToQConsole(QString("<span style='color: yellow'>%1</span>").arg(msg.c_str()));
+    break;
+  default:
+    emit printToQConsole(msg.c_str());
+    break;
+  }
 }
 
-void CableRobot::LoopFunction()
+void CableRobot::EcRtThreadStatusChanged(const bool active) const
+{
+  emit rtThreadStatusChanged(active);
+}
+
+void CableRobot::EcWorkFun()
 {
   for (grabec::EthercatSlave* slave_ptr : slaves_ptrs_)
     slave_ptr->ReadInputs(); // read pdos
@@ -445,6 +461,8 @@ void CableRobot::LoopFunction()
     for (grabec::EthercatSlave* slave_ptr : slaves_ptrs_)
       slave_ptr->WriteOutputs(); // write all the necessary pdos
 }
+
+void CableRobot::EcEmergencyFun() {}
 
 //--------- Control related private functions ----------------------------------//
 

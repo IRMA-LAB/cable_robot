@@ -21,6 +21,8 @@ MainGUI::MainGUI(QWidget* parent, const grabcdpr::Params& config)
           SLOT(handleMotorStatusUpdate(id_t, grabec::GSWDriveInPdos)));
   connect(&robot_, SIGNAL(ecStateChanged(Bitfield8)), this,
           SLOT(updateEcStatusLED(Bitfield8)));
+  connect(&robot_, SIGNAL(rtThreadStatusChanged(bool)), this,
+          SLOT(updateRtThreadStatusLED(bool)));
 
   robot_.eventSuccess(); // pwd & config OK --> robot ENABLED
   if (robot_.GetCurrentState() == CableRobot::ST_ENABLED)
@@ -342,6 +344,12 @@ void MainGUI::updateEcStatusLED(const Bitfield8& ec_status_flags)
     ec_network_valid_ = false;
     break;
   }
+}
+
+void MainGUI::updateRtThreadStatusLED(const bool active)
+{
+  ui->label_rt_thread_status_led->setPixmap(QPixmap(QString::fromUtf8(
+    active ? ":/img/img/green_button.png" : ":/img/img/red_button.png")));
 }
 
 void MainGUI::handleMotorStatusUpdate(const id_t& id,
