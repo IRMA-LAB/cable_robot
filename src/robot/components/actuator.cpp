@@ -13,11 +13,19 @@ Actuator::Actuator(const id_t id, const uint8_t slave_position,
 
   winch_.GetServo()->setParent(this);
   connect(winch_.GetServo(), SIGNAL(driveFaulted()), this, SLOT(FaultTrigger()));
+  connect(winch_.GetServo(), SIGNAL(logMessage(QString)), this,
+          SLOT(logServoMsg(QString)));
+  connect(winch_.GetServo(), SIGNAL(printMessage(QString)), this,
+          SLOT(forwardServoPrintMsg(QString)));
 }
 
 Actuator::~Actuator()
 {
   disconnect(winch_.GetServo(), SIGNAL(driveFaulted()), this, SLOT(FaultTrigger()));
+  disconnect(winch_.GetServo(), SIGNAL(logMessage(QString)), this,
+             SLOT(logServoMsg(QString)));
+  disconnect(winch_.GetServo(), SIGNAL(printMessage(QString)), this,
+             SLOT(forwardServoPrintMsg(QString)));
 }
 
 //--------- External Events Public --------------------------------------------------//

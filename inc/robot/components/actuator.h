@@ -147,6 +147,10 @@ signals:
   void stateChanged(const id_t&, const BYTE&) const;
   void printToQConsole(const QString&) const;
 
+private slots:
+  void logServoMsg(const QString& msg) { CLOG(INFO, "event") << msg; }
+  void forwardServoPrintMsg(const QString& msg) { emit printToQConsole(msg); }
+
 private:
   id_t id_;
   uint8_t slave_position_;
@@ -156,6 +160,8 @@ private:
   PulleysSystem pulley_;
 
 private:
+  //--------- State machine --------------------------------------------------//
+
   static constexpr double kMaxTransitionTimeSec_ = 5.0;
   // clang-format off
   static constexpr char* kStatesStr_[] = {

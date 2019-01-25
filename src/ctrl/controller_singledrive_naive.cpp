@@ -1,9 +1,11 @@
 #include "ctrl/controller_singledrive_naive.h"
 
-ControllerSingleDriveNaive::ControllerSingleDriveNaive(const id_t motor_id)
-  : ControllerBase(vect<id_t>(1, motor_id))
+ControllerSingleDriveNaive::ControllerSingleDriveNaive(const id_t motor_id,
+                                                       const uint32_t period_nsec)
+  : ControllerBase(vect<id_t>(1, motor_id)), period_sec_(period_nsec * 0.000000001)
 {
   Clear();
+  abs_delta_torque_ = period_sec_ * kAbsDeltaTorquePerSec_; // delta per cycle
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -20,21 +22,21 @@ void ControllerSingleDriveNaive::SetCableLenTarget(const double target)
 void ControllerSingleDriveNaive::SetMotorPosTarget(const int32_t target)
 {
   Clear();
-  pos_target_ = target;
+  pos_target_true_ = target;
   target_flags_.Set(POSITION);
 }
 
 void ControllerSingleDriveNaive::SetMotorSpeedTarget(const int32_t target)
 {
   Clear();
-  speed_target_ = target;
+  speed_target_true_ = target;
   target_flags_.Set(SPEED);
 }
 
 void ControllerSingleDriveNaive::SetMotorTorqueTarget(const int16_t target)
 {
   Clear();
-  torque_target_ = target;
+  torque_target_true_ = target;
   target_flags_.Set(TORQUE);
 }
 
@@ -47,17 +49,34 @@ void ControllerSingleDriveNaive::CableLenIncrement(const bool active,
 
   change_length_target_ = active;
   if (change_length_target_)
-    delta_length_ = micromove ? sign * kDeltaLengthMicro_ : sign * kDeltaLength_;
+  {
+    delta_length_ = sign *
+                    (micromove ? kAbsDeltaLengthMicroPerSec_ : kAbsDeltaLengthPerSec_) *
+                    period_sec_;
+  }
 }
 
-void ControllerSingleDriveNaive::MotorSpeedIncrement(const Sign sign)
+void ControllerSingleDriveNaive::MotorSpeedIncrement(const Sign sign, const double scale)
 {
-  speed_target_ += sign * kDeltaSpeed_;
+  static const int32_t kSpeedSpan = kAbsMaxSpeed_ - kAbsMinSpeed_;
+
+  speed_target_true_ = sign * (scale * kSpeedSpan + kAbsMinSpeed_);
 }
 
 void ControllerSingleDriveNaive::MotorTorqueIncrement(const Sign sign)
 {
-  torque_target_ += sign * kDeltaTorque_;
+  torque_target_true_ += sign * kAbsDeltaTorque_;
+}
+
+void ControllerSingleDriveNaive::MotorTorqueIncrement(const bool active,
+                                                      const Sign sign /*= Sign::POS*/)
+{
+  if (active == change_torque_target_)
+    return;
+
+  change_torque_target_ = active;
+  if (change_torque_target_)
+    delta_torque_ = sign * abs_delta_torque_;
 }
 
 bool ControllerSingleDriveNaive::CableLenTargetReached(const double current_value)
@@ -69,19 +88,19 @@ bool ControllerSingleDriveNaive::CableLenTargetReached(const double current_valu
 bool ControllerSingleDriveNaive::MotorPosTargetReached(const int32_t current_value)
 {
   static const int32_t tol = 1; // inserisci una tolleranza vera..
-  return abs(pos_target_ - current_value) < tol;
+  return abs(pos_target_true_ - current_value) < tol;
 }
 
 bool ControllerSingleDriveNaive::MotorSpeedTargetReached(const int32_t current_value)
 {
-  static const int32_t tol = 1; // inserisci una tolleranza vera..
-  return abs(speed_target_ - current_value) < tol;
+  static const int32_t tol = 1000; // inserisci una tolleranza vera..
+  return abs(speed_target_true_ - current_value) < tol;
 }
 
 bool ControllerSingleDriveNaive::MotorTorqueTargetReached(const int16_t current_value)
 {
-  static const int16_t tol = 5;  // per thousand points
-  return abs(torque_target_ - current_value) < tol;
+  static const int16_t tol = 5; // per thousand points
+  return abs(torque_target_true_ - current_value) < tol;
 }
 
 vect<ControlAction> ControllerSingleDriveNaive::CalcCableSetPoint(const grabcdpr::Vars&)
@@ -103,19 +122,26 @@ vect<ControlAction> ControllerSingleDriveNaive::CalcCableSetPoint(const grabcdpr
     break;
   case MOTOR_POSITION:
     if (target_flags_.CheckBit(POSITION))
-      res.motor_position = pos_target_;
+      res.motor_position = pos_target_true_;
     else
       res.ctrl_mode = NONE;
     break;
   case MOTOR_SPEED:
     if (target_flags_.CheckBit(SPEED))
-      res.motor_speed = speed_target_;
+      res.motor_speed = speed_target_true_;
     else
       res.ctrl_mode = NONE;
     break;
   case MOTOR_TORQUE:
     if (target_flags_.CheckBit(TORQUE))
-      res.motor_torque = torque_target_;
+    {
+      if (change_torque_target_)
+      {
+        torque_target_ += delta_torque_;
+        torque_target_true_ = static_cast<int16_t>(round(torque_target_));
+      }
+      res.motor_torque = torque_target_true_;
+    }
     else
       res.ctrl_mode = NONE;
     break;
@@ -135,5 +161,6 @@ void ControllerSingleDriveNaive::Clear()
   target_flags_.ClearAll();
 
   change_length_target_ = false;
+  change_torque_target_ = false;
   delta_length_ = 0.0;
 }

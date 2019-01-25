@@ -582,9 +582,24 @@
              <item>
               <layout class="QVBoxLayout" name="verticalLayout_7">
                <item>
-                <layout class="QHBoxLayout" name="horizontalLayout_5">
+                <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="0,0">
+                 <property name="spacing">
+                  <number>11</number>
+                 </property>
                  <item>
                   <widget class="QLabel" name="label_7">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="minimumSize">
+                    <size>
+                     <width>100</width>
+                     <height>0</height>
+                    </size>
+                   </property>
                    <property name="font">
                     <font>
                      <pointsize>15</pointsize>
@@ -599,32 +614,36 @@
                   </widget>
                  </item>
                  <item>
-                  <widget class="QPushButton" name="pushButton_speedPlus">
-                   <property name="enabled">
-                    <bool>false</bool>
+                  <widget class="QSlider" name="horizontalSlider_speed_ctrl">
+                   <property name="minimum">
+                    <number>-100</number>
                    </property>
-                   <property name="font">
-                    <font>
-                     <pointsize>15</pointsize>
-                    </font>
+                   <property name="maximum">
+                    <number>100</number>
                    </property>
-                   <property name="text">
-                    <string>+</string>
+                   <property name="singleStep">
+                    <number>5</number>
                    </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="pushButton_speedMinus">
-                   <property name="enabled">
-                    <bool>false</bool>
+                   <property name="value">
+                    <number>0</number>
                    </property>
-                   <property name="font">
-                    <font>
-                     <pointsize>15</pointsize>
-                    </font>
+                   <property name="sliderPosition">
+                    <number>0</number>
                    </property>
-                   <property name="text">
-                    <string>-</string>
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="invertedAppearance">
+                    <bool>true</bool>
+                   </property>
+                   <property name="invertedControls">
+                    <bool>true</bool>
+                   </property>
+                   <property name="tickPosition">
+                    <enum>QSlider::TicksBothSides</enum>
+                   </property>
+                   <property name="tickInterval">
+                    <number>10</number>
                    </property>
                   </widget>
                  </item>

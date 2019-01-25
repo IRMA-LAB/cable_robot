@@ -19,7 +19,7 @@ class ControllerSingleDriveNaive : public ControllerBase
 {
 public:
   ControllerSingleDriveNaive(): ControllerBase() { Clear(); }
-  explicit ControllerSingleDriveNaive(const id_t motor_id);
+  ControllerSingleDriveNaive(const id_t motor_id, const uint32_t period_nsec);
 
   void SetCableLenTarget(const double target);
   void SetMotorPosTarget(const int32_t target);
@@ -27,14 +27,15 @@ public:
   void SetMotorTorqueTarget(const int16_t target);
 
   double GetCableLenTarget() const { return length_target_; }
-  int32_t GetMotorPosTarget() const { return pos_target_; }
-  int32_t GetMotorSpeedTarget() const { return speed_target_; }
-  int16_t GetMotorTorqueTarget() const { return torque_target_; }
+  int32_t GetMotorPosTarget() const { return pos_target_true_; }
+  int32_t GetMotorSpeedTarget() const { return speed_target_true_; }
+  int16_t GetMotorTorqueTarget() const { return torque_target_true_; }
 
   void CableLenIncrement(const bool active, const Sign sign = Sign::POS,
                          const bool micromove = true);
-  void MotorSpeedIncrement(const Sign sign);
+  void MotorSpeedIncrement(const Sign sign, const double scale);
   void MotorTorqueIncrement(const Sign sign);
+  void MotorTorqueIncrement(const bool active, const Sign sign = Sign::POS);
 
   bool CableLenTargetReached(const double target);
   bool MotorPosTargetReached(const int32_t target);
@@ -44,10 +45,12 @@ public:
   vect<ControlAction> CalcCableSetPoint(const grabcdpr::Vars& robot_status) override;
 
 private:
-  static constexpr double kDeltaLengthMicro_ = 0.001;
-  static constexpr double kDeltaLength_ = 0.01;
-  static constexpr int32_t kDeltaSpeed_ = 1;
-  static constexpr int16_t kDeltaTorque_ = 10;
+  static constexpr double kAbsDeltaLengthMicroPerSec_ = 0.001;
+  static constexpr double kAbsDeltaLengthPerSec_ = 0.01;
+  static constexpr int32_t kAbsMaxSpeed_ = 10000;
+  static constexpr int32_t kAbsMinSpeed_ = 1000;
+  static constexpr int16_t kAbsDeltaTorquePerSec_ = 20;
+  static constexpr int16_t kAbsDeltaTorque_ = 50;
 
   enum BitPosition
   {
@@ -57,15 +60,27 @@ private:
     TORQUE
   };
 
+  double period_sec_;
   Bitfield8 target_flags_;
 
   double length_target_;
-  int32_t pos_target_;
-  int32_t speed_target_;
-  int16_t torque_target_;
+  int32_t pos_target_true_;
+  int32_t speed_target_true_;
+  int16_t torque_target_true_;
+  double pos_target_;
+  double speed_target_;
+  double torque_target_;
 
   bool change_length_target_;
+  bool change_speed_target_;
+  bool change_torque_target_;
+
+  double abs_delta_length_;
   double delta_length_;
+  double abs_delta_speed_;
+  double delta_speed_;
+  double abs_delta_torque_;
+  double delta_torque_;
 
   void Clear();
 };

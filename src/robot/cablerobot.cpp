@@ -5,6 +5,8 @@
  * @brief File containing definitions of functions and class declared in cablerobot.h.
  */
 
+#define INCLUDE_EASYCAT 0
+
 #include "robot/cablerobot.h"
 
 constexpr char* CableRobot::kStatesStr[];
@@ -19,6 +21,12 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
   status_.platform = &platform_;
 
   quint8 slave_pos = 0;
+#if INCLUDE_EASYCAT
+  easycat1_ptr_ = new grabec::TestEasyCAT1Slave(slave_pos++);
+  slaves_ptrs_.push_back(easycat1_ptr_);
+  easycat2_ptr_ = new grabec::TestEasyCAT2Slave(slave_pos++);
+  slaves_ptrs_.push_back(easycat2_ptr_);
+#endif
 
   for (size_t i = 0; i < config.actuators.size(); i++)
   {
@@ -48,6 +56,10 @@ CableRobot::~CableRobot()
   disconnect(this, SIGNAL(sendMsg(QByteArray)), &log_buffer_,
              SLOT(collectMsg(QByteArray)));
 
+#if INCLUDE_EASYCAT
+  delete easycat1_ptr_;
+  delete easycat2_ptr_;
+#endif
   for (Actuator* actuator_ptr : actuators_ptrs_)
   {
     if (actuator_ptr->IsActive())
@@ -428,7 +440,8 @@ void CableRobot::EcPrintCb(const std::string& msg, const char color /* = 'w' */)
     emit printToQConsole(QString("<span style='color: red'>%1</span>").arg(msg.c_str()));
     break;
   case 'y':
-      emit printToQConsole(QString("<span style='color: yellow'>%1</span>").arg(msg.c_str()));
+    emit printToQConsole(
+      QString("<span style='color: orange'>%1</span>").arg(msg.c_str()));
     break;
   default:
     emit printToQConsole(msg.c_str());
