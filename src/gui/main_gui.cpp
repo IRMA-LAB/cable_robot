@@ -2,7 +2,7 @@
 #include "ui_main_gui.h"
 
 MainGUI::MainGUI(QWidget* parent, const grabcdpr::Params& config)
-  : QDialog(parent), ui(new Ui::MainGUI), robot_(this, config)
+  : QDialog(parent), ui(new Ui::MainGUI), config_params_(config)
 {
   ui->setupUi(this);
 
@@ -15,56 +15,45 @@ MainGUI::MainGUI(QWidget* parent, const grabcdpr::Params& config)
     if (config.actuators[i].active)
       ui->comboBox_motorAxis->addItem(QString::number(i));
 
-  connect(&robot_, SIGNAL(printToQConsole(QString)), this,
-          SLOT(appendText2Browser(QString)));
-  connect(&robot_, SIGNAL(motorStatus(id_t, grabec::GSWDriveInPdos)), this,
-          SLOT(handleMotorStatusUpdate(id_t, grabec::GSWDriveInPdos)));
-  connect(&robot_, SIGNAL(ecStateChanged(Bitfield8)), this,
-          SLOT(updateEcStatusLED(Bitfield8)));
-  connect(&robot_, SIGNAL(rtThreadStatusChanged(bool)), this,
-          SLOT(updateRtThreadStatusLED(bool)));
-
-  robot_.eventSuccess(); // pwd & config OK --> robot ENABLED
-  if (robot_.GetCurrentState() == CableRobot::ST_ENABLED)
-    robot_.Start();
+  Reset(); // instantiate cable robot object
 }
 
 MainGUI::~MainGUI()
 {
-  disconnect(&robot_, SIGNAL(printToQConsole(QString)), this,
-             SLOT(appendText2Browser(QString)));
-  disconnect(&robot_, SIGNAL(motorStatus(id_t, grabec::GSWDriveInPdos)), this,
-             SLOT(handleMotorStatusUpdate(id_t, grabec::GSWDriveInPdos)));
-  disconnect(&robot_, SIGNAL(ecStateChanged(Bitfield8)), this,
-             SLOT(updateEcStatusLED(Bitfield8)));
+  DeleteRobot();
 
   if (calib_dialog_ != NULL)
   {
     disconnect(calib_dialog_, SIGNAL(enableMainGUI()), this, SLOT(enableInterface()));
-    disconnect(calib_dialog_, SIGNAL(calibrationEnd()), &robot_, SLOT(eventSuccess()));
     delete calib_dialog_;
   }
+
   if (homing_dialog_ != NULL)
   {
     disconnect(homing_dialog_, SIGNAL(enableMainGUI(bool)), this,
                SLOT(enableInterface(bool)));
-    disconnect(homing_dialog_, SIGNAL(homingSuccess()), &robot_, SLOT(eventSuccess()));
-    disconnect(homing_dialog_, SIGNAL(homingFailed()), &robot_, SLOT(eventFailure()));
     delete homing_dialog_;
   }
+
   delete ui;
   CLOG(INFO, "event") << "Main window closed";
 }
 
 //--------- Public GUI slots --------------------------------------------------//
 
+void MainGUI::on_pushButton_reset_clicked()
+{
+  CLOG(TRACE, "event");
+  Reset();
+}
+
 void MainGUI::on_pushButton_calib_clicked()
 {
   CLOG(TRACE, "event");
-  if (!ec_network_valid_)
+  if (!(ec_network_valid_ && rt_thread_running_))
     return;
 
-  if (robot_.GetCurrentState() == CableRobot::ST_READY)
+  if (robot_ptr_->GetCurrentState() == CableRobot::ST_READY)
     if (!ExitReadyStateRequest())
       return;
 
@@ -73,11 +62,11 @@ void MainGUI::on_pushButton_calib_clicked()
   ui->groupBox_app->setDisabled(true);
   ui->frame_manualControl->setDisabled(true);
 
-  robot_.enterCalibrationMode();
+  robot_ptr_->enterCalibrationMode();
 
-  calib_dialog_ = new CalibrationDialog(this, &robot_);
+  calib_dialog_ = new CalibrationDialog(this, robot_ptr_);
   connect(calib_dialog_, SIGNAL(enableMainGUI()), this, SLOT(enableInterface()));
-  connect(calib_dialog_, SIGNAL(calibrationEnd()), &robot_, SLOT(eventSuccess()));
+  connect(calib_dialog_, SIGNAL(calibrationEnd()), robot_ptr_, SLOT(eventSuccess()));
   calib_dialog_->show();
   CLOG(INFO, "event") << "Prompt calibration dialog";
 }
@@ -85,7 +74,7 @@ void MainGUI::on_pushButton_calib_clicked()
 void MainGUI::on_pushButton_homing_clicked()
 {
   CLOG(TRACE, "event");
-  if (!ec_network_valid_)
+  if (!(ec_network_valid_ && rt_thread_running_))
     return;
 
   ui->pushButton_homing->setDisabled(true);
@@ -93,15 +82,15 @@ void MainGUI::on_pushButton_homing_clicked()
   ui->groupBox_app->setDisabled(true);
   ui->frame_manualControl->setDisabled(true);
 
-  robot_.enterHomingMode();
+  robot_ptr_->enterHomingMode();
 
   if (homing_dialog_ == NULL)
   {
-    homing_dialog_ = new HomingDialog(this, &robot_);
+    homing_dialog_ = new HomingDialog(this, robot_ptr_);
     connect(homing_dialog_, SIGNAL(enableMainGUI(bool)), this,
             SLOT(enableInterface(bool)));
-    connect(homing_dialog_, SIGNAL(homingSuccess()), &robot_, SLOT(eventSuccess()));
-    connect(homing_dialog_, SIGNAL(homingFailed()), &robot_, SLOT(eventFailure()));
+    connect(homing_dialog_, SIGNAL(homingSuccess()), robot_ptr_, SLOT(eventSuccess()));
+    connect(homing_dialog_, SIGNAL(homingFailed()), robot_ptr_, SLOT(eventFailure()));
   }
   homing_dialog_->show();
   CLOG(INFO, "event") << "Prompt homing dialog";
@@ -110,6 +99,9 @@ void MainGUI::on_pushButton_homing_clicked()
 void MainGUI::on_pushButton_startApp_clicked()
 {
   CLOG(TRACE, "event");
+  if (!(ec_network_valid_ && rt_thread_running_))
+    return;
+
   //  ui->pushButton_homing->setDisabled(true);
   //  ui->pushButton_calib->setDisabled(true);
   //  ui->groupBox_app->setDisabled(true);
@@ -119,10 +111,10 @@ void MainGUI::on_pushButton_startApp_clicked()
 void MainGUI::on_pushButton_enable_clicked()
 {
   CLOG(TRACE, "event");
-  if (!ec_network_valid_)
+  if (!(ec_network_valid_ && rt_thread_running_))
     return;
 
-  if (robot_.GetCurrentState() == CableRobot::ST_READY)
+  if (robot_ptr_->GetCurrentState() == CableRobot::ST_READY)
     if (!ExitReadyStateRequest())
       return;
 
@@ -136,7 +128,7 @@ void MainGUI::on_pushButton_enable_clicked()
 void MainGUI::on_pushButton_faultReset_clicked()
 {
   CLOG(TRACE, "event");
-  robot_.ClearFaults();
+  robot_ptr_->ClearFaults();
 }
 
 void MainGUI::on_radioButton_posMode_clicked()
@@ -153,10 +145,11 @@ void MainGUI::on_radioButton_posMode_clicked()
 
   if (manual_ctrl_enabled_)
   {
-    man_ctrl_ptr_->SetCableLenTarget(robot_.GetActuatorStatus(motor_id_).cable_length);
-    pthread_mutex_lock(&robot_.Mutex());
+    man_ctrl_ptr_->SetCableLenTarget(
+      robot_ptr_->GetActuatorStatus(motor_id_).cable_length);
+    pthread_mutex_lock(&robot_ptr_->Mutex());
     man_ctrl_ptr_->SetMode(ControlMode::CABLE_LENGTH);
-    pthread_mutex_unlock(&robot_.Mutex());
+    pthread_mutex_unlock(&robot_ptr_->Mutex());
     waiting_for_response_.Set(Actuator::ST_ENABLED);
   }
 }
@@ -176,9 +169,9 @@ void MainGUI::on_radioButton_velMode_clicked()
   if (manual_ctrl_enabled_)
   {
     man_ctrl_ptr_->SetMotorSpeedTarget(0);
-    pthread_mutex_lock(&robot_.Mutex());
+    pthread_mutex_lock(&robot_ptr_->Mutex());
     man_ctrl_ptr_->SetMode(ControlMode::MOTOR_SPEED);
-    pthread_mutex_unlock(&robot_.Mutex());
+    pthread_mutex_unlock(&robot_ptr_->Mutex());
     waiting_for_response_.Set(Actuator::ST_ENABLED);
   }
 }
@@ -197,10 +190,11 @@ void MainGUI::on_radioButton_torqueMode_clicked()
 
   if (manual_ctrl_enabled_)
   {
-    man_ctrl_ptr_->SetMotorTorqueTarget(robot_.GetActuatorStatus(motor_id_).motor_torque);
-    pthread_mutex_lock(&robot_.Mutex());
+    man_ctrl_ptr_->SetMotorTorqueTarget(
+      robot_ptr_->GetActuatorStatus(motor_id_).motor_torque);
+    pthread_mutex_lock(&robot_ptr_->Mutex());
     man_ctrl_ptr_->SetMode(ControlMode::MOTOR_TORQUE);
-    pthread_mutex_unlock(&robot_.Mutex());
+    pthread_mutex_unlock(&robot_ptr_->Mutex());
     waiting_for_response_.Set(Actuator::ST_ENABLED);
   }
 }
@@ -208,97 +202,114 @@ void MainGUI::on_radioButton_torqueMode_clicked()
 void MainGUI::on_pushButton_posPlus_pressed()
 {
   CLOG(TRACE, "event");
-  pthread_mutex_lock(&robot_.Mutex());
+  pthread_mutex_lock(&robot_ptr_->Mutex());
   man_ctrl_ptr_->CableLenIncrement(true, Sign::POS, false);
-  pthread_mutex_unlock(&robot_.Mutex());
+  pthread_mutex_unlock(&robot_ptr_->Mutex());
 }
 
 void MainGUI::on_pushButton_posPlus_released()
 {
   CLOG(TRACE, "event");
-  pthread_mutex_lock(&robot_.Mutex());
+  pthread_mutex_lock(&robot_ptr_->Mutex());
   man_ctrl_ptr_->CableLenIncrement(false);
-  pthread_mutex_unlock(&robot_.Mutex());
+  pthread_mutex_unlock(&robot_ptr_->Mutex());
 }
 
 void MainGUI::on_pushButton_posMinus_pressed()
 {
   CLOG(TRACE, "event");
-  pthread_mutex_lock(&robot_.Mutex());
+  pthread_mutex_lock(&robot_ptr_->Mutex());
   man_ctrl_ptr_->CableLenIncrement(true, Sign::NEG, false);
-  pthread_mutex_unlock(&robot_.Mutex());
+  pthread_mutex_unlock(&robot_ptr_->Mutex());
 }
 
 void MainGUI::on_pushButton_posMinus_released()
 {
   CLOG(TRACE, "event");
-  pthread_mutex_lock(&robot_.Mutex());
+  pthread_mutex_lock(&robot_ptr_->Mutex());
   man_ctrl_ptr_->CableLenIncrement(false);
-  pthread_mutex_unlock(&robot_.Mutex());
+  pthread_mutex_unlock(&robot_ptr_->Mutex());
 }
 
 void MainGUI::on_pushButton_posMicroPlus_pressed()
 {
   CLOG(TRACE, "event");
-  pthread_mutex_lock(&robot_.Mutex());
+  pthread_mutex_lock(&robot_ptr_->Mutex());
   man_ctrl_ptr_->CableLenIncrement(true, Sign::POS, true);
-  pthread_mutex_unlock(&robot_.Mutex());
+  pthread_mutex_unlock(&robot_ptr_->Mutex());
 }
 
 void MainGUI::on_pushButton_posMicroPlus_released()
 {
   CLOG(TRACE, "event");
-  pthread_mutex_lock(&robot_.Mutex());
+  pthread_mutex_lock(&robot_ptr_->Mutex());
   man_ctrl_ptr_->CableLenIncrement(false);
-  pthread_mutex_unlock(&robot_.Mutex());
+  pthread_mutex_unlock(&robot_ptr_->Mutex());
 }
 
 void MainGUI::on_pushButton_posMicroMinus_pressed()
 {
   CLOG(TRACE, "event");
-  pthread_mutex_lock(&robot_.Mutex());
+  pthread_mutex_lock(&robot_ptr_->Mutex());
   man_ctrl_ptr_->CableLenIncrement(true, Sign::NEG, true);
-  pthread_mutex_unlock(&robot_.Mutex());
+  pthread_mutex_unlock(&robot_ptr_->Mutex());
 }
 
 void MainGUI::on_pushButton_posMicroMinus_released()
 {
   CLOG(TRACE, "event");
-  pthread_mutex_lock(&robot_.Mutex());
+  pthread_mutex_lock(&robot_ptr_->Mutex());
   man_ctrl_ptr_->CableLenIncrement(false);
-  pthread_mutex_unlock(&robot_.Mutex());
+  pthread_mutex_unlock(&robot_ptr_->Mutex());
 }
 
-void MainGUI::on_pushButton_speedPlus_clicked()
+void MainGUI::on_horizontalSlider_speed_ctrl_sliderPressed() { CLOG(TRACE, "event"); }
+
+void MainGUI::on_horizontalSlider_speed_ctrl_sliderMoved(int position)
 {
   CLOG(TRACE, "event");
-  pthread_mutex_lock(&robot_.Mutex());
-  man_ctrl_ptr_->MotorSpeedIncrement(Sign::POS);
-  pthread_mutex_unlock(&robot_.Mutex());
+  pthread_mutex_lock(&robot_ptr_->Mutex());
+  man_ctrl_ptr_->ScaleMotorSpeed(position * 0.01);
+  pthread_mutex_unlock(&robot_ptr_->Mutex());
 }
 
-void MainGUI::on_pushButton_speedMinus_clicked()
+void MainGUI::on_horizontalSlider_speed_ctrl_sliderReleased()
 {
   CLOG(TRACE, "event");
-  pthread_mutex_lock(&robot_.Mutex());
-  man_ctrl_ptr_->MotorSpeedIncrement(Sign::NEG);
-  pthread_mutex_unlock(&robot_.Mutex());
+  ui->horizontalSlider_speed_ctrl->setValue(0);
+  ui->horizontalSlider_speed_ctrl->sliderMoved(ui->horizontalSlider_speed_ctrl->value());
 }
 
-void MainGUI::on_pushButton_torquePlus_clicked()
+void MainGUI::on_pushButton_torquePlus_pressed()
 {
   CLOG(TRACE, "event");
-  pthread_mutex_lock(&robot_.Mutex());
-  man_ctrl_ptr_->MotorTorqueIncrement(Sign::POS);
-  pthread_mutex_unlock(&robot_.Mutex());
+  pthread_mutex_lock(&robot_ptr_->Mutex());
+  man_ctrl_ptr_->MotorTorqueIncrement(true, Sign::POS);
+  pthread_mutex_unlock(&robot_ptr_->Mutex());
 }
 
-void MainGUI::on_pushButton_torqueMinus_clicked()
+void MainGUI::on_pushButton_torquePlus_released()
 {
   CLOG(TRACE, "event");
-  pthread_mutex_lock(&robot_.Mutex());
-  man_ctrl_ptr_->MotorTorqueIncrement(Sign::NEG);
-  pthread_mutex_unlock(&robot_.Mutex());
+  pthread_mutex_lock(&robot_ptr_->Mutex());
+  man_ctrl_ptr_->MotorTorqueIncrement(false);
+  pthread_mutex_unlock(&robot_ptr_->Mutex());
+}
+
+void MainGUI::on_pushButton_torqueMinus_pressed()
+{
+  CLOG(TRACE, "event");
+  pthread_mutex_lock(&robot_ptr_->Mutex());
+  man_ctrl_ptr_->MotorTorqueIncrement(true, Sign::NEG);
+  pthread_mutex_unlock(&robot_ptr_->Mutex());
+}
+
+void MainGUI::on_pushButton_torqueMinus_released()
+{
+  CLOG(TRACE, "event");
+  pthread_mutex_lock(&robot_ptr_->Mutex());
+  man_ctrl_ptr_->MotorTorqueIncrement(false);
+  pthread_mutex_unlock(&robot_ptr_->Mutex());
 }
 
 //--------- Private slots --------------------------------------------------//
@@ -348,6 +359,18 @@ void MainGUI::updateEcStatusLED(const Bitfield8& ec_status_flags)
 
 void MainGUI::updateRtThreadStatusLED(const bool active)
 {
+  rt_thread_running_ = active;
+  ui->pushButton_reset->setDisabled(rt_thread_running_);
+
+  if (!rt_thread_running_)
+  {
+    // Simulate a motor disabled event
+    waiting_for_response_.Set(Actuator::ST_IDLE);
+    UpdateDriveCtrlPanel(Actuator::ST_IDLE);
+
+    DeleteRobot();
+  }
+
   ui->label_rt_thread_status_led->setPixmap(QPixmap(QString::fromUtf8(
     active ? ":/img/img/green_button.png" : ":/img/img/red_button.png")));
 }
@@ -399,8 +422,7 @@ void MainGUI::DisablePosCtrlButtons(const bool value)
 
 void MainGUI::DisableVelCtrlButtons(const bool value)
 {
-  ui->pushButton_speedMinus->setDisabled(value);
-  ui->pushButton_speedPlus->setDisabled(value);
+  ui->horizontalSlider_speed_ctrl->setDisabled(value);
   CVLOG(2, "event") << "Motor velocity direct control buttons "
                     << (value ? "enabled" : "disabled");
 }
@@ -528,15 +550,16 @@ bool MainGUI::ExitReadyStateRequest()
 
 void MainGUI::SetupDirectMotorCtrl(const bool enable)
 {
-  robot_.stop(); // robot: READY | ENABLED --> ENABLED
+  robot_ptr_->stop(); // robot: READY | ENABLED --> ENABLED
 
   if (enable)
   {
     motor_id_ = ui->comboBox_motorAxis->currentText().toUInt();
-    robot_.UpdateHomeConfig(motor_id_, 0.0, 0.0);  // (re-)initialize reference values
+    robot_ptr_->UpdateHomeConfig(motor_id_, 0.0, 0.0); // (re-)initialize reference values
     // Setup controller before enabling the motor
-    man_ctrl_ptr_ = new ControllerSingleDriveNaive(motor_id_, robot_.GetRtCycleTimeNsec());
-    ActuatorStatus current_status = robot_.GetActuatorStatus(motor_id_);
+    man_ctrl_ptr_ =
+      new ControllerSingleDriveNaive(motor_id_, robot_ptr_->GetRtCycleTimeNsec());
+    ActuatorStatus current_status = robot_ptr_->GetActuatorStatus(motor_id_);
     if (ui->radioButton_posMode->isChecked())
     {
       man_ctrl_ptr_->SetMode(ControlMode::CABLE_LENGTH);
@@ -552,16 +575,16 @@ void MainGUI::SetupDirectMotorCtrl(const bool enable)
       man_ctrl_ptr_->SetMode(ControlMode::MOTOR_TORQUE);
       man_ctrl_ptr_->SetMotorTorqueTarget(current_status.motor_torque);
     }
-    robot_.SetController(man_ctrl_ptr_);
+    robot_ptr_->SetController(man_ctrl_ptr_);
 
-    robot_.EnableMotor(motor_id_);
+    robot_ptr_->EnableMotor(motor_id_);
   }
   else
   {
-    robot_.SetController(NULL);
+    robot_ptr_->SetController(NULL);
     delete man_ctrl_ptr_;
 
-    robot_.DisableMotor(motor_id_);
+    robot_ptr_->DisableMotor(motor_id_);
   }
 }
 
@@ -591,4 +614,51 @@ ControlMode MainGUI::DriveOpMode2CtrlMode(const int8_t drive_op_mode)
   default:
     return ControlMode::NONE;
   }
+}
+
+void MainGUI::Reset()
+{
+  // Safety check
+  if (robot_ptr_ != NULL)
+    DeleteRobot();
+
+  robot_ptr_ = new CableRobot(this, config_params_);
+
+  connect(robot_ptr_, SIGNAL(printToQConsole(QString)), this,
+          SLOT(appendText2Browser(QString)));
+  connect(robot_ptr_, SIGNAL(motorStatus(id_t, grabec::GSWDriveInPdos)), this,
+          SLOT(handleMotorStatusUpdate(id_t, grabec::GSWDriveInPdos)));
+  connect(robot_ptr_, SIGNAL(ecStateChanged(Bitfield8)), this,
+          SLOT(updateEcStatusLED(Bitfield8)));
+  connect(robot_ptr_, SIGNAL(rtThreadStatusChanged(bool)), this,
+          SLOT(updateRtThreadStatusLED(bool)));
+
+  robot_ptr_->eventSuccess(); // pwd & config OK --> robot ENABLED
+  if (robot_ptr_->GetCurrentState() == CableRobot::ST_ENABLED)
+    robot_ptr_->Start(); // start rt thread (ec master)
+}
+
+void MainGUI::DeleteRobot()
+{
+  if (robot_ptr_ == NULL)
+    return;
+
+  disconnect(robot_ptr_, SIGNAL(printToQConsole(QString)), this,
+             SLOT(appendText2Browser(QString)));
+  disconnect(robot_ptr_, SIGNAL(motorStatus(id_t, grabec::GSWDriveInPdos)), this,
+             SLOT(handleMotorStatusUpdate(id_t, grabec::GSWDriveInPdos)));
+  disconnect(robot_ptr_, SIGNAL(ecStateChanged(Bitfield8)), this,
+             SLOT(updateEcStatusLED(Bitfield8)));
+
+  if (calib_dialog_ != NULL)
+    disconnect(calib_dialog_, SIGNAL(calibrationEnd()), robot_ptr_, SLOT(eventSuccess()));
+  if (homing_dialog_ != NULL)
+  {
+    disconnect(homing_dialog_, SIGNAL(homingSuccess()), robot_ptr_, SLOT(eventSuccess()));
+    disconnect(homing_dialog_, SIGNAL(homingFailed()), robot_ptr_, SLOT(eventFailure()));
+  }
+
+  delete robot_ptr_;
+  robot_ptr_ = NULL;
+  CLOG(INFO, "event") << "Cable robot object deleted";
 }

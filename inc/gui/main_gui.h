@@ -28,6 +28,8 @@ public:
   ~MainGUI();
 
 private slots:
+  void on_pushButton_reset_clicked();
+
   void on_pushButton_calib_clicked();
 
   void on_pushButton_homing_clicked();
@@ -49,10 +51,15 @@ private slots:
   void on_pushButton_posMicroPlus_released();
   void on_pushButton_posMicroMinus_pressed();
   void on_pushButton_posMicroMinus_released();
-  void on_pushButton_speedPlus_clicked();
-  void on_pushButton_speedMinus_clicked();
-  void on_pushButton_torquePlus_clicked();
-  void on_pushButton_torqueMinus_clicked();
+
+  void on_horizontalSlider_speed_ctrl_sliderPressed();
+  void on_horizontalSlider_speed_ctrl_sliderMoved(int position);
+  void on_horizontalSlider_speed_ctrl_sliderReleased();
+
+  void on_pushButton_torqueMinus_pressed();
+  void on_pushButton_torqueMinus_released();
+  void on_pushButton_torquePlus_pressed();
+  void on_pushButton_torquePlus_released();
 
 private slots:
   void enableInterface(const bool op_outcome = false);
@@ -63,13 +70,17 @@ private slots:
 
 private:
   bool ec_network_valid_ = false;
+  bool rt_thread_running_ = false;
 
   Ui::MainGUI* ui = NULL;
   CalibrationDialog* calib_dialog_ = NULL;
   HomingDialog* homing_dialog_ = NULL;
 
-  CableRobot robot_;
+  grabcdpr::Params config_params_;
+  CableRobot* robot_ptr_ = NULL;
 
+  void Reset();
+  void DeleteRobot();
   bool ExitReadyStateRequest();
 
 private:

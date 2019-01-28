@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>872</width>
-    <height>915</height>
+    <height>946</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -64,7 +64,7 @@
     </widget>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_9" stretch="1,0">
+    <layout class="QHBoxLayout" name="horizontalLayout_10" stretch="1,0">
      <item>
       <widget class="QTextBrowser" name="textBrowser_logs">
        <property name="sizePolicy">
@@ -183,6 +183,47 @@
         </layout>
        </item>
        <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_9">
+         <item>
+          <spacer name="horizontalSpacer_5">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::MinimumExpanding</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_reset">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>100</width>
+             <height>30</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Reset</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
         <widget class="Line" name="line_4">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
@@ -210,7 +251,7 @@
          <property name="minimumSize">
           <size>
            <width>0</width>
-           <height>40</height>
+           <height>35</height>
           </size>
          </property>
          <property name="font">
@@ -234,7 +275,7 @@
          <property name="sizeHint" stdset="0">
           <size>
            <width>20</width>
-           <height>10</height>
+           <height>13</height>
           </size>
          </property>
         </spacer>
@@ -244,7 +285,7 @@
          <property name="minimumSize">
           <size>
            <width>0</width>
-           <height>40</height>
+           <height>35</height>
           </size>
          </property>
          <property name="font">
@@ -615,6 +656,9 @@
                  </item>
                  <item>
                   <widget class="QSlider" name="horizontalSlider_speed_ctrl">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
                    <property name="minimum">
                     <number>-100</number>
                    </property>
@@ -623,6 +667,9 @@
                    </property>
                    <property name="singleStep">
                     <number>5</number>
+                   </property>
+                   <property name="pageStep">
+                    <number>0</number>
                    </property>
                    <property name="value">
                     <number>0</number>

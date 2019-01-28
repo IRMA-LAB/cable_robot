@@ -36,6 +36,7 @@ void ControllerSingleDriveNaive::SetMotorSpeedTarget(const int32_t target)
 void ControllerSingleDriveNaive::SetMotorTorqueTarget(const int16_t target)
 {
   Clear();
+  torque_target_ = static_cast<double>(target);
   torque_target_true_ = target;
   target_flags_.Set(TORQUE);
 }
@@ -56,16 +57,9 @@ void ControllerSingleDriveNaive::CableLenIncrement(const bool active,
   }
 }
 
-void ControllerSingleDriveNaive::MotorSpeedIncrement(const Sign sign, const double scale)
+void ControllerSingleDriveNaive::ScaleMotorSpeed(const double scale)
 {
-  static const int32_t kSpeedSpan = kAbsMaxSpeed_ - kAbsMinSpeed_;
-
-  speed_target_true_ = sign * (scale * kSpeedSpan + kAbsMinSpeed_);
-}
-
-void ControllerSingleDriveNaive::MotorTorqueIncrement(const Sign sign)
-{
-  torque_target_true_ += sign * kAbsDeltaTorque_;
+  speed_target_true_ = static_cast<int>(round(scale * kAbsMaxSpeed_));
 }
 
 void ControllerSingleDriveNaive::MotorTorqueIncrement(const bool active,
@@ -139,6 +133,11 @@ vect<ControlAction> ControllerSingleDriveNaive::CalcCableSetPoint(const grabcdpr
       {
         torque_target_ += delta_torque_;
         torque_target_true_ = static_cast<int16_t>(round(torque_target_));
+        if (torque_target_true_ >= 0)
+          torque_target_true_ = std::min(torque_target_true_, kAbsMaxTorque_);
+        else
+          torque_target_true_ =
+            std::max(torque_target_true_, static_cast<int16_t>(-kAbsMaxTorque_));
       }
       res.motor_torque = torque_target_true_;
     }
