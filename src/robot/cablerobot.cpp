@@ -5,8 +5,6 @@
  * @brief File containing definitions of functions and class declared in cablerobot.h.
  */
 
-#define INCLUDE_EASYCAT 0
-
 #include "robot/cablerobot.h"
 
 constexpr char* CableRobot::kStatesStr[];
@@ -20,6 +18,7 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
 
   status_.platform = &platform_;
 
+  // Setup EtherCAT network
   quint8 slave_pos = 0;
 #if INCLUDE_EASYCAT
   easycat1_ptr_ = new grabec::TestEasyCAT1Slave(slave_pos++);
@@ -27,8 +26,7 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
   easycat2_ptr_ = new grabec::TestEasyCAT2Slave(slave_pos++);
   slaves_ptrs_.push_back(easycat2_ptr_);
 #endif
-
-  for (size_t i = 0; i < config.actuators.size(); i++)
+  for (uint i = 0; i < config.actuators.size(); i++)
   {
     grabcdpr::CableVars cable;
     status_.cables.push_back(cable);
@@ -36,26 +34,43 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
     slaves_ptrs_.push_back(actuators_ptrs_[i]->GetWinch().GetServo());
     if (config.actuators[i].active)
     {
+      active_actuators_id_.push_back(i);
       active_actuators_ptrs_.push_back(actuators_ptrs_[i]);
       connect(actuators_ptrs_[i], SIGNAL(printToQConsole(QString)), this,
               SLOT(forwardPrintToQConsole(QString)));
     }
   }
-  meas_.resize(active_actuators_ptrs_.size());
-
+  num_slaves_ = slaves_ptrs_.size();
   for (grabec::EthercatSlave* slave_ptr : slaves_ptrs_)
     num_domain_elements_ += slave_ptr->GetDomainEntriesNum();
 
+  // Setup data logging
+  meas_.resize(active_actuators_ptrs_.size());
   connect(this, SIGNAL(sendMsg(QByteArray)), &log_buffer_, SLOT(collectMsg(QByteArray)));
   log_buffer_.start();
+
+  // Setup timers for components' status update
+  motor_status_timer_ = new QTimer(this);
+  connect(motor_status_timer_, SIGNAL(timeout()), this, SLOT(EmitMotorStatus()));
+  actuator_status_timer_ = new QTimer(this);
+  connect(actuator_status_timer_, SIGNAL(timeout()), this, SLOT(EmitActuatorStatus()));
 }
 
 CableRobot::~CableRobot()
 {
+  // Close data logging
   log_buffer_.Stop();
   disconnect(this, SIGNAL(sendMsg(QByteArray)), &log_buffer_,
              SLOT(collectMsg(QByteArray)));
 
+  // Close timers for components' status update
+  StopTimers();
+  disconnect(motor_status_timer_, SIGNAL(timeout()), this, SLOT(EmitMotorStatus()));
+  disconnect(actuator_status_timer_, SIGNAL(timeout()), this, SLOT(EmitActuatorStatus()));
+  delete motor_status_timer_;
+  delete actuator_status_timer_;
+
+  // Delete robot components
 #if INCLUDE_EASYCAT
   delete easycat1_ptr_;
   delete easycat2_ptr_;
@@ -177,14 +192,6 @@ void CableRobot::SetMotorsOpMode(const vect<id_t>& motors_id, const qint8 op_mod
 {
   for (const id_t& motor_id : motors_id)
     actuators_ptrs_[motor_id]->SetMotorOpMode(op_mode);
-}
-
-vect<id_t> CableRobot::GetActiveMotorsID() const
-{
-  vect<id_t> motors_id;
-  for (const Actuator* actuator_ptr : active_actuators_ptrs_)
-    motors_id.push_back(actuator_ptr->ID());
-  return motors_id;
 }
 
 void CableRobot::ClearFaults()
@@ -342,10 +349,8 @@ STATE_DEFINE(CableRobot, Enabled, NoEventData)
   PrintStateTransition(prev_state_, ST_ENABLED);
   prev_state_ = ST_ENABLED;
 
-  EmitMotorStatusSync();
-
-  if (controller_ != NULL)
-    ControlStep(); // take care of manual control when a motor is active, skip otherwise
+  StopTimers();
+  motor_status_timer_->start(kMotorStatusIntervalMsec_);
 }
 
 STATE_DEFINE(CableRobot, Calibration, NoEventData)
@@ -359,8 +364,8 @@ STATE_DEFINE(CableRobot, Homing, NoEventData)
   PrintStateTransition(prev_state_, ST_HOMING);
   prev_state_ = ST_HOMING;
 
-  if (controller_ != NULL)
-    ControlStep(); // take care of manual control when a motor is active, skip otherwise
+  StopTimers();
+  actuator_status_timer_->start(kActuatorStatusIntervalMsec_);
 }
 
 STATE_DEFINE(CableRobot, Ready, NoEventData)
@@ -404,24 +409,49 @@ void CableRobot::PrintStateTransition(const States current_state,
   emit printToQConsole(msg);
 }
 
-void CableRobot::EmitMotorStatusSync() const
+void CableRobot::EmitMotorStatus()
 {
-  static const std::vector<id_t> active_motors_id = GetActiveMotorsID();
-  static grabrt::Clock clock;
   static uint8_t counter = 0;
 
-  if (!ec_network_valid_)
+  if (!(ec_network_valid_ && rt_thread_active_))
     return;
 
-  if (clock.Elapsed() < kEmitPeriodSec_)
+  id_t id = active_actuators_id_[counter++];
+  if (pthread_mutex_trylock(&mutex_) != 0)
     return;
 
-  id_t id = active_motors_id[counter++];
-  emit motorStatus(id, actuators_ptrs_[id]->GetWinch().GetServo()->GetDriveStatus());
-  clock.Reset();
+  grabec::GSWDriveInPdos motor_status(
+    actuators_ptrs_[id]->GetWinch().GetServo()->GetDriveStatus());
+  pthread_mutex_unlock(&mutex_);
 
-  if (counter >= active_motors_id.size())
+  emit motorStatus(id, motor_status);
+  if (counter >= active_actuators_id_.size())
     counter = 0;
+}
+
+void CableRobot::EmitActuatorStatus()
+{
+  static uint8_t counter = 0;
+
+  if (!(ec_network_valid_ && rt_thread_active_))
+    return;
+
+  id_t id = active_actuators_id_[counter++];
+  if (pthread_mutex_trylock(&mutex_) != 0)
+    return;
+
+  ActuatorStatus actuator_status(actuators_ptrs_[id]->GetStatus());
+  pthread_mutex_unlock(&mutex_);
+
+  emit actuatorStatus(id, actuator_status);
+  if (counter >= active_actuators_id_.size())
+    counter = 0;
+}
+
+void CableRobot::StopTimers()
+{
+  motor_status_timer_->stop();
+  actuator_status_timer_->stop();
 }
 
 //--------- Ethercat related private functions ---------------------------------//
@@ -449,8 +479,9 @@ void CableRobot::EcPrintCb(const std::string& msg, const char color /* = 'w' */)
   }
 }
 
-void CableRobot::EcRtThreadStatusChanged(const bool active) const
+void CableRobot::EcRtThreadStatusChanged(const bool active)
 {
+  rt_thread_active_ = active;
   emit rtThreadStatusChanged(active);
 }
 
@@ -459,20 +490,11 @@ void CableRobot::EcWorkFun()
   for (grabec::EthercatSlave* slave_ptr : slaves_ptrs_)
     slave_ptr->ReadInputs(); // read pdos
 
-  // clang-format off
-  BEGIN_TRANSITION_MAP			              			// - Current State -
-      TRANSITION_MAP_ENTRY (ST_IDLE)                                  // ST_IDLE
-      TRANSITION_MAP_ENTRY (ST_ENABLED)                          // ST_ENABLED
-      TRANSITION_MAP_ENTRY (ST_CALIBRATION)                    // ST_CALIBRATION
-      TRANSITION_MAP_ENTRY (ST_HOMING)                            // ST_HOMING
-      TRANSITION_MAP_ENTRY (ST_READY)                               // ST_READY
-      TRANSITION_MAP_ENTRY (ST_OPERATIONAL)			// ST_OPERATIONAL
-      TRANSITION_MAP_ENTRY (ST_ERROR)                              // ST_ERROR
-  END_TRANSITION_MAP(NULL)
-    // clang-format on
+  if (controller_ != NULL)
+    ControlStep();
 
-    for (grabec::EthercatSlave* slave_ptr : slaves_ptrs_)
-      slave_ptr->WriteOutputs(); // write all the necessary pdos
+  for (grabec::EthercatSlave* slave_ptr : slaves_ptrs_)
+    slave_ptr->WriteOutputs(); // write all the necessary pdos
 }
 
 void CableRobot::EcEmergencyFun() {}

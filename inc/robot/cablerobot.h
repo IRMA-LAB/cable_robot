@@ -8,12 +8,19 @@
 #ifndef CABLE_ROBOT_CABLEROBOT_H
 #define CABLE_ROBOT_CABLEROBOT_H
 
+#define INCLUDE_EASYCAT 0
+
 #include <QObject>
+#include <QTimer>
 
 #include "easylogging++.h"
 #include "StateMachine.h"
 #include "libcdpr/inc/types.h"
 #include "libgrabec/inc/ethercatmaster.h"
+#if INCLUDE_EASYCAT
+#include "slaves/easycat/TestEasyCAT1_slave.h"
+#include "slaves/easycat/TestEasyCAT2_slave.h"
+#endif
 
 #include "components/actuator.h"
 #include "ctrl/controller_base.h"
@@ -59,7 +66,7 @@ public:
   void SetMotorOpMode(const id_t motor_id, const qint8 op_mode);
   void SetMotorsOpMode(const qint8 op_mode);
   void SetMotorsOpMode(const vect<id_t>& motors_id, const qint8 op_mode);
-  vect<id_t> GetActiveMotorsID() const;
+  vect<id_t> GetActiveMotorsID() const { return active_actuators_id_; }
   void ClearFaults();
 
   void CollectMeas();
@@ -77,6 +84,7 @@ public slots:
 
 signals:
   void motorStatus(const id_t&, const grabec::GSWDriveInPdos&) const;
+  void actuatorStatus(const id_t&, const ActuatorStatus&) const;
   void sendMsg(const QByteArray) const;
   void printToQConsole(const QString&) const;
   void ecStateChanged(const Bitfield8&) const;
@@ -86,22 +94,24 @@ private slots:
   void forwardPrintToQConsole(const QString&) const;
 
 private:
-  //-------- Pseudo-signals from EthercatMaster base class -----------//
+  //-------- Pseudo-signals from EthercatMaster base class (live in RT thread) -------//
 
-  void
-  EcStateChangedCb(const Bitfield8& new_state) override final; // lives in the RT thread
-  void EcPrintCb(const std::string& msg,
-                 const char color = 'w') const override final; // lives in the RT thread
-  void EcRtThreadStatusChanged(
-    const bool active) const override final; // lives in the RT thread
+  void EcStateChangedCb(const Bitfield8& new_state) override final;
+  void EcPrintCb(const std::string& msg, const char color = 'w') const override final;
+  void EcRtThreadStatusChanged(const bool active) override final;
 
 private:
-  static constexpr double kEmitPeriodSec_ = 0.1;
+  static constexpr int kMotorStatusIntervalMsec_ = 100;
+  static constexpr int kActuatorStatusIntervalMsec_ = 10;
+  QTimer* motor_status_timer_ = NULL;
+  QTimer* actuator_status_timer_ = NULL;
 
   grabcdpr::PlatformVars platform_;
   grabcdpr::Vars status_;
 
-  void EmitMotorStatusSync() const;
+  void EmitMotorStatus();
+  void EmitActuatorStatus();
+  void StopTimers();
 
   // Data logging
   vect<ActuatorStatusMsg> meas_;
@@ -109,9 +119,15 @@ private:
   grabrt::Clock clock_;
 
   // Ethercat related
+#if INCLUDE_EASYCAT
+  grabec::TestEasyCAT1Slave* easycat1_ptr_;
+  grabec::TestEasyCAT2Slave* easycat2_ptr_;
+#endif
   vect<Actuator*> actuators_ptrs_;
   vect<Actuator*> active_actuators_ptrs_;
+  vect<id_t> active_actuators_id_;
   bool ec_network_valid_ = false;
+  bool rt_thread_active_ = false;
 
   void EcWorkFun() override final;      // lives in the RT thread
   void EcEmergencyFun() override final; // lives in the RT thread
