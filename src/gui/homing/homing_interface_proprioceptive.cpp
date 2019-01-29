@@ -9,8 +9,7 @@ HomingInterfaceProprioceptive::HomingInterfaceProprioceptive(QWidget* parent,
   ui->setupUi(this);
 
   quint8 i = 4;
-  for (quint8 motor_id = 0; motor_id < 8; motor_id++) // debug
-  //  for (quint8 motor_id : robot->GetMotorsID())
+  for (id_t motor_id : robot->GetActiveMotorsID())
   {
     init_torque_forms_.append(new InitTorqueForm(motor_id, this));
     ui->verticalLayout_2->insertWidget(i++, init_torque_forms_.last());
@@ -42,26 +41,6 @@ HomingInterfaceProprioceptive::~HomingInterfaceProprioceptive()
     delete form;
   delete ui;
   CLOG(INFO, "event") << "Homing interface proprioceptive closed";
-}
-
-//--------- Public slots --------------------------------------------------------//
-
-void HomingInterfaceProprioceptive::setFault(const bool value)
-{
-  ui->pushButton_clearFaults->setEnabled(value);
-  ui->pushButton_enable->setEnabled(!value);
-  ui->pushButton_start->setEnabled(!value);
-
-  if (app_.IsCollectingData())
-    ui->pushButton_enable->setText(tr("Enable"));
-
-  if (value)
-  {
-    CLOG(WARNING, "event") << "Fault present";
-    app_.FaultTrigger();
-  }
-  else
-    CLOG(INFO, "event") << "Fault cleared";
 }
 
 //--------- Private GUI slots ------------------------------------------------//
@@ -120,14 +99,15 @@ void HomingInterfaceProprioceptive::on_pushButton_clearFaults_clicked()
 void HomingInterfaceProprioceptive::on_checkBox_useCurrentTorque_stateChanged(int)
 {
   CLOG(TRACE, "event");
-  std::vector<quint8> motors_id = {0, 1, 2, 3,
-                                   4, 5, 6, 7}; // robot_ptr_->GetMotorsID(); debug
-  for (quint8 motor_id : motors_id)
+  std::vector<id_t> motors_id = robot_ptr_->GetActiveMotorsID();
+  for (id_t motor_id : motors_id)
   {
     if (ui->checkBox_useCurrentTorque->isChecked())
-      init_torque_forms_[motor_id]->SetInitTorque(300 + motor_id * 100);
-    // robot_ptr_->GetMotorStatus(motor_id).torque_target);
-    init_torque_forms_[motor_id]->EnableInitTorque(
+    {
+      init_torque_forms_[static_cast<int>(motor_id)]->SetInitTorque(
+        robot_ptr_->GetActuatorStatus(motor_id).motor_torque);
+    }
+    init_torque_forms_[static_cast<int>(motor_id)]->EnableInitTorque(
       !ui->checkBox_useCurrentTorque->isChecked());
   }
 }
@@ -338,17 +318,20 @@ void HomingInterfaceProprioceptive::handleStateChanged(const quint8& state)
     ui->pushButton_enable->setText(tr("Enable"));
     ui->pushButton_start->setDisabled(true);
     ui->pushButton_start->setText(tr("Start"));
+    ui->pushButton_clearFaults->setDisabled(true);
     break;
   case HomingProprioceptive::ST_ENABLED:
     ui->pushButton_enable->setText(tr("Disable"));
     ui->pushButton_start->setEnabled(true);
     ui->pushButton_start->setText(tr("Start"));
+    ui->pushButton_clearFaults->setDisabled(true);
     break;
   case HomingProprioceptive::ST_START_UP:
     ui->pushButton_start->setText(tr("Stop"));
     break;
   case HomingProprioceptive::ST_FAULT:
     ui->pushButton_enable->setDisabled(true);
+    ui->pushButton_enable->setText(tr("Enable"));
     ui->pushButton_start->setDisabled(true);
     ui->pushButton_clearFaults->setEnabled(true);
     break;

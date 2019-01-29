@@ -1,7 +1,7 @@
 #include "gui/homing/init_torque_form.h"
 #include "ui_init_torque_form.h"
 
-InitTorqueForm::InitTorqueForm(const quint8 motor_id, QWidget* parent)
+InitTorqueForm::InitTorqueForm(const id_t motor_id, QWidget* parent)
   : QWidget(parent), ui(new Ui::InitTorqueForm)
 {
   ui->setupUi(this);

@@ -388,7 +388,7 @@ void MainGUI::handleMotorStatusUpdate(const id_t& id,
     grabec::GoldSoloWhistleDrive::GetDriveState(motor_status.status_word));
 
   // Check if motor is in fault and set panel accordingly
-  if (actuator_state == Actuator::States::ST_FAULT)
+  if (actuator_state == Actuator::ST_FAULT)
   {
     ui->pushButton_enable->setText(tr("Enable"));
     ui->pushButton_enable->setDisabled(true);

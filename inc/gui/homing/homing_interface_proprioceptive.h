@@ -21,9 +21,6 @@ public:
   explicit HomingInterfaceProprioceptive(QWidget* parent, CableRobot* robot);
   ~HomingInterfaceProprioceptive();
 
-public slots:
-  void setFault(const bool);
-
 private slots:
   void closeEvent(QCloseEvent *);
 

@@ -47,11 +47,22 @@ constexpr double HomingProprioceptive::kCutoffFreq_;
 constexpr char* HomingProprioceptive::kStatesStr[];
 
 HomingProprioceptive::HomingProprioceptive(QObject* parent, CableRobot* robot)
-  : QObject(parent), StateMachine(ST_MAX_STATES), robot_(robot)
+  : QObject(parent), StateMachine(ST_MAX_STATES), robot_ptr_(robot)
 {
-  // init with default values
+  // Initialize with default values
   num_meas_ = kNumMeasMin_;
   prev_state_ = ST_MAX_STATES;
+
+  // Setup connection to track robot status
+  active_actuators_id_ = robot_ptr_->GetActiveMotorsID();
+  actuators_status_.resize(active_actuators_id_.size());
+  connect(robot_ptr_, SIGNAL(actuatorStatus()), this, SLOT(handleActuatorStatusUpdate()));
+}
+
+HomingProprioceptive::~HomingProprioceptive()
+{
+  disconnect(robot_ptr_, SIGNAL(actuatorStatus()), this,
+             SLOT(handleActuatorStatusUpdate()));
 }
 
 //--------- Public functions -----------------------------------------------------------//
@@ -186,6 +197,21 @@ void HomingProprioceptive::FaultReset()
   // clang-format on
 }
 
+//--------- Private slots  -----------------------------------------------------------//
+
+void HomingProprioceptive::handleActuatorStatusUpdate(
+  const id_t& actuator_id, const ActuatorStatus& actuator_status)
+{
+  for (size_t i = 0; i < active_actuators_id_.size(); i++)
+  {
+    if (active_actuators_id_[i] != actuator_id)
+      continue;
+    qmutex_.lock();
+    actuators_status_[i] = actuator_status;
+    qmutex_.unlock();
+  }
+}
+
 //--------- States actions -----------------------------------------------------------//
 
 STATE_DEFINE(HomingProprioceptive, Idle, NoEventData)
@@ -193,15 +219,24 @@ STATE_DEFINE(HomingProprioceptive, Idle, NoEventData)
   PrintStateTransition(prev_state_, ST_IDLE);
   prev_state_ = ST_IDLE;
 
-  if (robot_->AnyMotorEnabled())
-    robot_->DisableMotors();
+  if (robot_ptr_->AnyMotorEnabled())
+    robot_ptr_->DisableMotors();
 }
 
 GUARD_DEFINE(HomingProprioceptive, GuardEnabled, NoEventData)
 {
-  robot_->EnableMotors();
-  if (robot_->MotorsEnabled())
-    return true;
+  static const double kMaxWaitTimeSec = 3.0;
+
+  robot_ptr_->EnableMotors();
+  grabrt::ThreadClock clock(grabrt::Sec2NanoSec(kCycleWaitTimeSec_));
+  while (1)
+  {
+    if (robot_ptr_->MotorsEnabled())
+      return true;
+    if (clock.ElapsedFromStart() > kMaxWaitTimeSec)
+      break;
+    clock.WaitUntilNext();
+  }
   return false;
 }
 
@@ -210,7 +245,7 @@ STATE_DEFINE(HomingProprioceptive, Enabled, NoEventData)
   PrintStateTransition(prev_state_, ST_ENABLED);
   prev_state_ = ST_ENABLED;
 
-  robot_->SetMotorsOpMode(grabec::CYCLIC_TORQUE);
+  robot_ptr_->SetMotorsOpMode(grabec::CYCLIC_TORQUE);
 }
 
 STATE_DEFINE(HomingProprioceptive, StartUp, HomingProprioceptiveStartData)
@@ -225,14 +260,16 @@ STATE_DEFINE(HomingProprioceptive, StartUp, HomingProprioceptiveStartData)
   init_torques_.clear();
   max_torques_ = data->max_torques;
   torques_.resize(num_meas_);
+  grabrt::ThreadClock clock(grabrt::Sec2NanoSec(kCycleWaitTimeSec_));
 
-  pthread_mutex_lock(&robot_->Mutex());
-  robot_->SetController(&controller_);
-  pthread_mutex_unlock(&robot_->Mutex());
-  vect<id_t> motors_id = robot_->GetActiveMotorsID();
-  for (size_t i = 0; i < motors_id.size(); ++i)
+  pthread_mutex_lock(&robot_ptr_->Mutex());
+  robot_ptr_->SetController(&controller_);
+  pthread_mutex_unlock(&robot_ptr_->Mutex());
+  for (size_t i = 0; i < active_actuators_id_.size(); ++i)
   {
-    qint16 current_torque = robot_->GetActuatorStatus(motors_id[i]).motor_torque;
+    qmutex_.lock();
+    qint16 current_torque = actuators_status_[i].motor_torque;
+    qmutex_.unlock();
     // Use current torque values if not given
     if (data->init_torques.empty())
       init_torques_.push_back(current_torque);
@@ -240,25 +277,29 @@ STATE_DEFINE(HomingProprioceptive, StartUp, HomingProprioceptiveStartData)
     {
       init_torques_.push_back(data->init_torques[i]);
       // Wait until all motors reached user-given initial torque setpoint
-      pthread_mutex_lock(&robot_->Mutex());
-      controller_.SetMotorID(motors_id[i]);
+      pthread_mutex_lock(&robot_ptr_->Mutex());
+      controller_.SetMotorID(active_actuators_id_[i]);
       controller_.SetMotorTorqueTarget(init_torques_.back()); //  = data->init_torques[i]
-      pthread_mutex_unlock(&robot_->Mutex());
+      pthread_mutex_unlock(&robot_ptr_->Mutex());
+      clock.Reset();
       while (1)
       {
-        pthread_mutex_lock(&robot_->Mutex());
+        pthread_mutex_lock(&robot_ptr_->Mutex());
         if (controller_.MotorTorqueTargetReached(current_torque))
           break;
-        pthread_mutex_unlock(&robot_->Mutex());
-        current_torque = robot_->GetActuatorStatus(motors_id[i]).motor_torque;
-        // todo: inserisci un tempo di attesa qui magari
+        pthread_mutex_unlock(&robot_ptr_->Mutex());
+        qmutex_.lock();
+        current_torque = actuators_status_[i].motor_torque;
+        qmutex_.unlock();
+        // TODO: gestisci caso in cui ci metta troppo
+        clock.WaitUntilNext();
       }
     }
     msg.append(QString("\n\t%1 ‰").arg(current_torque));
   }
   // At the beginning we don't know where we are, neither we care.
   // Just update encoder home position to be used as reference to compute deltas.
-  robot_->UpdateHomeConfig(0.0, 0.0);
+  robot_ptr_->UpdateHomeConfig(0.0, 0.0);
 
   emit printToQConsole(msg);
   InternalEvent(ST_SWITCH_CABLE);
@@ -269,14 +310,14 @@ GUARD_DEFINE(HomingProprioceptive, GuardSwitch, NoEventData)
   if (prev_state_ == ST_START_UP)
     return true;
 
-  pthread_mutex_lock(&robot_->Mutex());
-  if (controller_.GetMotorsID().front() != robot_->GetActiveMotorsID().back())
+  pthread_mutex_lock(&robot_ptr_->Mutex());
+  if (controller_.GetMotorsID().front() != active_actuators_id_.back())
   {
     // We are not done ==> move to next cable
-    pthread_mutex_unlock(&robot_->Mutex());
+    pthread_mutex_unlock(&robot_ptr_->Mutex());
     return true;
   }
-  pthread_mutex_unlock(&robot_->Mutex());
+  pthread_mutex_unlock(&robot_ptr_->Mutex());
 
   InternalEvent(ST_ENABLED);
   emit acquisitionComplete();
@@ -286,7 +327,7 @@ GUARD_DEFINE(HomingProprioceptive, GuardSwitch, NoEventData)
 STATE_DEFINE(HomingProprioceptive, SwitchCable, NoEventData)
 {
   static quint8 motor_id_idx = 0;
-  static vect<id_t> motors_id = robot_->GetActiveMotorsID();
+  static vect<id_t> motors_id = robot_ptr_->GetActiveMotorsID();
 
   PrintStateTransition(prev_state_, ST_SWITCH_CABLE);
   prev_state_ = ST_SWITCH_CABLE;
@@ -298,10 +339,10 @@ STATE_DEFINE(HomingProprioceptive, SwitchCable, NoEventData)
   torques_.back() =
     max_torques_[motor_id_idx]; // last element is forced to be = max torque
 
-  pthread_mutex_lock(&robot_->Mutex());
+  pthread_mutex_lock(&robot_ptr_->Mutex());
   controller_.SetMotorID(motors_id[motor_id_idx]);
   controller_.SetMotorTorqueTarget(torques_.front());
-  pthread_mutex_unlock(&robot_->Mutex());
+  pthread_mutex_unlock(&robot_ptr_->Mutex());
 
   emit printToQConsole(
     QString("Switched to actuator #%1.\nInitial torque setpoint = %2 ‰")
@@ -327,11 +368,10 @@ STATE_DEFINE(HomingProprioceptive, Coiling, NoEventData)
     return;
   }
 
-  pthread_mutex_lock(&robot_->Mutex());
+  pthread_mutex_lock(&robot_ptr_->Mutex());
   controller_.SetMotorTorqueTarget(torques_[meas_step_]);
-  emit printToQConsole(
-    QString("Next torque setpoint = %1 ‰").arg(controller_.GetMotorTorqueTarget()));
-  pthread_mutex_unlock(&robot_->Mutex());
+  pthread_mutex_unlock(&robot_ptr_->Mutex());
+  emit printToQConsole(QString("Next torque setpoint = %1 ‰").arg(torques_[meas_step_]));
 
   WaitUntilPlatformSteady();
   DumpMeasAndMoveNext();
@@ -353,11 +393,11 @@ STATE_DEFINE(HomingProprioceptive, Uncoiling, NoEventData)
     return;
   }
 
-  pthread_mutex_lock(&robot_->Mutex());
+  pthread_mutex_lock(&robot_ptr_->Mutex());
   controller_.SetMotorTorqueTarget(torques_[kOffset - meas_step_]);
+  pthread_mutex_unlock(&robot_ptr_->Mutex());
   emit printToQConsole(
-    QString("Next torque setpoint = %1 ‰").arg(controller_.GetMotorTorqueTarget()));
-  pthread_mutex_unlock(&robot_->Mutex());
+    QString("Next torque setpoint = %1 ‰").arg(torques_[kOffset - meas_step_]));
 
   WaitUntilPlatformSteady();
   DumpMeasAndMoveNext();
@@ -393,12 +433,12 @@ STATE_DEFINE(HomingProprioceptive, Home, HomingProprioceptiveHomeData)
   // Current home corresponds to robot configuration at the beginning of homing procedure.
   // Remind that motors home count corresponds to null cable length, which needs to be
   // updated...
-  if (robot_->GoHome()) // (position control)
+  if (robot_ptr_->GoHome()) // (position control)
   {
     // ...which is done here.
-    for (id_t motor_id : robot_->GetActiveMotorsID())
-      robot_->UpdateHomeConfig(motor_id, data->init_lengths[motor_id],
-                               data->init_angles[motor_id]);
+    for (id_t motor_id : robot_ptr_->GetActiveMotorsID())
+      robot_ptr_->UpdateHomeConfig(motor_id, data->init_lengths[motor_id],
+                                   data->init_angles[motor_id]);
     emit homingComplete();
   }
   else
@@ -421,28 +461,29 @@ void HomingProprioceptive::WaitUntilPlatformSteady()
   // Compute these once for all
   static constexpr size_t kBuffSize =
     static_cast<size_t>(kBufferingTimeSec_ / kCycleWaitTimeSec_);
-  static const std::vector<id_t> motors_id = robot_->GetActiveMotorsID();
 
   // LP filters setup
   static std::vector<grabnum::LowPassFilter> lp_filters(
-    motors_id.size(), grabnum::LowPassFilter(kCutoffFreq_, kCycleWaitTimeSec_));
-  for (size_t i = 0; i < motors_id.size(); i++)
+    active_actuators_id_.size(),
+    grabnum::LowPassFilter(kCutoffFreq_, kCycleWaitTimeSec_));
+  for (size_t i = 0; i < active_actuators_id_.size(); i++)
     lp_filters[i].Reset();
 
   // Init
-  ActuatorStatus status;
   bool swinging = true;
-  std::vector<RingBufferD> pulleys_angles(motors_id.size(), RingBufferD(kBuffSize));
+  std::vector<RingBufferD> pulleys_angles(active_actuators_id_.size(),
+                                          RingBufferD(kBuffSize));
   grabrt::ThreadClock clock(grabrt::Sec2NanoSec(kCycleWaitTimeSec_));
   // Start waiting
   while (swinging)
   {
-    for (size_t i = 0; i < motors_id.size(); i++)
+    for (size_t i = 0; i < active_actuators_id_.size(); i++)
     {
-      status = robot_->GetActuatorStatus(motors_id[i]);
+      qmutex_.lock();
       pulleys_angles[i].Add(
-        lp_filters[i].Filter(status.pulley_angle)); // add filtered angle
-      if (!pulleys_angles[i].IsFull())              // wait at least until buffer is full
+        lp_filters[i].Filter(actuators_status_[i].pulley_angle)); // add filtered angle
+      qmutex_.unlock();
+      if (!pulleys_angles[i].IsFull()) // wait at least until buffer is full
         continue;
       // Condition to detect steadyness
       swinging = grabnum::Std(pulleys_angles[i].Data()) > kMaxAngleDeviation_;
@@ -453,8 +494,8 @@ void HomingProprioceptive::WaitUntilPlatformSteady()
 
 void HomingProprioceptive::DumpMeasAndMoveNext()
 {
-  robot_->CollectMeas();
-  robot_->DumpMeas();
+  robot_ptr_->CollectMeas();
+  robot_ptr_->DumpMeas();
   meas_step_++;
 }
 

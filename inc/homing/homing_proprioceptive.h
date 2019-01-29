@@ -40,7 +40,8 @@ class HomingProprioceptive : public QObject, public StateMachine
   Q_OBJECT
 
 public:
-  explicit HomingProprioceptive(QObject* parent, CableRobot* robot);
+  HomingProprioceptive(QObject* parent, CableRobot* robot);
+  ~HomingProprioceptive();
 
   enum States : BYTE
   {
@@ -72,10 +73,13 @@ signals:
   void homingComplete() const;
   void stateChanged(const quint8&) const;
 
+private slots:
+  void handleActuatorStatusUpdate(const id_t &actuator_id, const ActuatorStatus &actuator_status);
+
 private:
   static constexpr quint8 kNumMeasMin_ = 1;
 
-  CableRobot* robot_ = NULL;
+  CableRobot* robot_ptr_ = NULL;
   ControllerSingleDriveNaive controller_;
   quint8 num_meas_ = kNumMeasMin_;
   quint16 meas_step_;
@@ -83,16 +87,23 @@ private:
   vect<qint16> max_torques_;
   vect<qint16> torques_;
 
+  QMutex qmutex_;
+  vect<id_t> active_actuators_id_;
+  vect<ActuatorStatus> actuators_status_;
+
   // Tuning params
   static constexpr double kBufferingTimeSec_ = 1.0;  // [sec]
   static constexpr double kCycleWaitTimeSec_ = 0.01; // [sec]
   static constexpr double kCutoffFreq_ = 15.0; // [Hz]
   static constexpr double kMaxAngleDeviation_ = 0.1; // [deg]
+
   void WaitUntilPlatformSteady();
 
   void DumpMeasAndMoveNext();
 
 private:
+  //--------- State machine --------------------------------------------------//
+
   // clang-format off
   static constexpr char* kStatesStr[] = {
     const_cast<char*>("IDLE"),

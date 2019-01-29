@@ -13,7 +13,7 @@ class InitTorqueForm : public QWidget
   Q_OBJECT
 
 public:
-  explicit InitTorqueForm(const quint8 motor_id, QWidget* parent = 0);
+  explicit InitTorqueForm(const id_t motor_id, QWidget* parent = 0);
   ~InitTorqueForm();
 
   void SetInitTorque(const qint16 value);
