@@ -92,6 +92,8 @@ signals:
 
 private slots:
   void forwardPrintToQConsole(const QString&) const;
+  void emitMotorStatus();
+  void emitActuatorStatus();
 
 private:
   //-------- Pseudo-signals from EthercatMaster base class (live in RT thread) -------//
@@ -109,8 +111,6 @@ private:
   grabcdpr::PlatformVars platform_;
   grabcdpr::Vars status_;
 
-  void EmitMotorStatus();
-  void EmitActuatorStatus();
   void StopTimers();
 
   // Data logging

@@ -93,7 +93,7 @@ void HomingInterfaceProprioceptive::on_pushButton_enable_clicked()
 void HomingInterfaceProprioceptive::on_pushButton_clearFaults_clicked()
 {
   CLOG(TRACE, "event");
-  robot_ptr_->ClearFaults();
+  app_.FaultReset();
 }
 
 void HomingInterfaceProprioceptive::on_checkBox_useCurrentTorque_stateChanged(int)

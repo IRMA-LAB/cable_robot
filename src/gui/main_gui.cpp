@@ -20,21 +20,8 @@ MainGUI::MainGUI(QWidget* parent, const grabcdpr::Params& config)
 
 MainGUI::~MainGUI()
 {
+  CloseAllApps();
   DeleteRobot();
-
-  if (calib_dialog_ != NULL)
-  {
-    disconnect(calib_dialog_, SIGNAL(enableMainGUI()), this, SLOT(enableInterface()));
-    delete calib_dialog_;
-  }
-
-  if (homing_dialog_ != NULL)
-  {
-    disconnect(homing_dialog_, SIGNAL(enableMainGUI(bool)), this,
-               SLOT(enableInterface(bool)));
-    delete homing_dialog_;
-  }
-
   delete ui;
   CLOG(INFO, "event") << "Main window closed";
 }
@@ -364,6 +351,11 @@ void MainGUI::updateRtThreadStatusLED(const bool active)
 
   if (!rt_thread_running_)
   {
+    QMessageBox::warning(this, "Thread Error",
+                         "Real-Time thread missed its dealine and "
+                         "automatically shut down!\nPlease reset the robot.");
+    CloseAllApps();
+
     // Simulate a motor disabled event
     waiting_for_response_.Set(Actuator::ST_IDLE);
     UpdateDriveCtrlPanel(Actuator::ST_IDLE);
@@ -648,4 +640,20 @@ void MainGUI::DeleteRobot()
   delete robot_ptr_;
   robot_ptr_ = NULL;
   CLOG(INFO, "event") << "Cable robot object deleted";
+}
+
+void MainGUI::CloseAllApps()
+{
+  if (calib_dialog_ != NULL)
+  {
+    disconnect(calib_dialog_, SIGNAL(enableMainGUI()), this, SLOT(enableInterface()));
+    delete calib_dialog_;
+  }
+
+  if (homing_dialog_ != NULL)
+  {
+    disconnect(homing_dialog_, SIGNAL(enableMainGUI(bool)), this,
+               SLOT(enableInterface(bool)));
+    delete homing_dialog_;
+  }
 }

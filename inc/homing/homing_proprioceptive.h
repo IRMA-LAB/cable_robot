@@ -94,6 +94,7 @@ private:
   // Tuning params
   static constexpr double kBufferingTimeSec_ = 1.0;  // [sec]
   static constexpr double kCycleWaitTimeSec_ = 0.01; // [sec]
+  static constexpr double kMaxWaitTimeSec_ = 3.0;
   static constexpr double kCutoffFreq_ = 15.0; // [Hz]
   static constexpr double kMaxAngleDeviation_ = 0.1; // [deg]
 
@@ -120,6 +121,7 @@ private:
   States prev_state_;
 
   // Define the state machine state functions with event data type
+  GUARD_DECLARE(HomingProprioceptive, GuardIdle, NoEventData)
   STATE_DECLARE(HomingProprioceptive, Idle, NoEventData)
   GUARD_DECLARE(HomingProprioceptive, GuardEnabled, NoEventData)
   STATE_DECLARE(HomingProprioceptive, Enabled, NoEventData)
@@ -137,7 +139,7 @@ private:
   // State map to define state object order. Each state map entry defines a state object.
   BEGIN_STATE_MAP_EX
   // clang-format off
-    STATE_MAP_ENTRY_EX(&Idle)
+    STATE_MAP_ENTRY_ALL_EX(&Idle, &GuardIdle, 0, 0)
     STATE_MAP_ENTRY_ALL_EX(&Enabled, &GuardEnabled, 0, 0)
     STATE_MAP_ENTRY_EX(&StartUp)
     STATE_MAP_ENTRY_ALL_EX(&SwitchCable, &GuardSwitch, 0, 0)

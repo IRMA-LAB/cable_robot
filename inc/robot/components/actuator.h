@@ -39,26 +39,6 @@ public:
     ST_MAX_STATES
   };
 
-public slots:
-  //--------- External Events Public --------------------------------------------------//
-
-  /**
-   * @brief Enable
-   */
-  void Enable();
-  /**
-   * @brief Disable
-   */
-  void Disable();
-  /**
-   * @brief FaultTrigger
-   */
-  void FaultTrigger();
-  /**
-   * @brief FaultReset
-   */
-  void FaultReset();
-
 public:
   /**
    * @brief ID
@@ -147,6 +127,26 @@ public:
 
   static Actuator::States DriveState2ActuatorState(const GSWDStates drive_state);
 
+public slots:
+  //--------- External Events Public --------------------------------------------------//
+
+  /**
+   * @brief Enable
+   */
+  void enable();
+  /**
+   * @brief Disable
+   */
+  void disable();
+  /**
+   * @brief FaultTrigger
+   */
+  void faultTrigger();
+  /**
+   * @brief FaultReset
+   */
+  void faultReset();
+
 signals:
   void stateChanged(const id_t&, const BYTE&) const;
   void printToQConsole(const QString&) const;
@@ -167,6 +167,7 @@ private:
   //--------- State machine --------------------------------------------------//
 
   static constexpr double kMaxTransitionTimeSec_ = 5.0;
+  static constexpr uint64_t kWaitCycleTimeNsec_ = 100000000UL; // = 100 ms
   // clang-format off
   static constexpr char* kStatesStr_[] = {
     const_cast<char*>("IDLE"),
@@ -176,16 +177,16 @@ private:
   };
   // clang-format on
 
-  States prev_state_ = ST_IDLE;
-  grabrt::Clock clock_;
+  States prev_state_;
+  grabrt::ThreadClock clock_;
 
   // Define the state machine state functions with event data type
-  STATE_DECLARE(Actuator, Idle, NoEventData)
   GUARD_DECLARE(Actuator, GuardIdle, NoEventData)
-  STATE_DECLARE(Actuator, Enabled, NoEventData)
+  STATE_DECLARE(Actuator, Idle, NoEventData)
   GUARD_DECLARE(Actuator, GuardEnabled, NoEventData)
-  STATE_DECLARE(Actuator, Fault, NoEventData)
+  STATE_DECLARE(Actuator, Enabled, NoEventData)
   GUARD_DECLARE(Actuator, GuardFault, NoEventData)
+  STATE_DECLARE(Actuator, Fault, NoEventData)
 
   // State map to define state object order. Each state map entry defines a state object.
   BEGIN_STATE_MAP_EX

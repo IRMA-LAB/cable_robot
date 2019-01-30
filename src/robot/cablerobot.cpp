@@ -51,9 +51,9 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
 
   // Setup timers for components' status update
   motor_status_timer_ = new QTimer(this);
-  connect(motor_status_timer_, SIGNAL(timeout()), this, SLOT(EmitMotorStatus()));
+  connect(motor_status_timer_, SIGNAL(timeout()), this, SLOT(emitMotorStatus()));
   actuator_status_timer_ = new QTimer(this);
-  connect(actuator_status_timer_, SIGNAL(timeout()), this, SLOT(EmitActuatorStatus()));
+  connect(actuator_status_timer_, SIGNAL(timeout()), this, SLOT(emitActuatorStatus()));
 }
 
 CableRobot::~CableRobot()
@@ -65,8 +65,8 @@ CableRobot::~CableRobot()
 
   // Close timers for components' status update
   StopTimers();
-  disconnect(motor_status_timer_, SIGNAL(timeout()), this, SLOT(EmitMotorStatus()));
-  disconnect(actuator_status_timer_, SIGNAL(timeout()), this, SLOT(EmitActuatorStatus()));
+  disconnect(motor_status_timer_, SIGNAL(timeout()), this, SLOT(emitMotorStatus()));
+  disconnect(actuator_status_timer_, SIGNAL(timeout()), this, SLOT(emitActuatorStatus()));
   delete motor_status_timer_;
   delete actuator_status_timer_;
 
@@ -132,14 +132,14 @@ bool CableRobot::MotorsEnabled()
 void CableRobot::EnableMotor(const id_t motor_id)
 {
   if (actuators_ptrs_[motor_id]->IsActive())
-    actuators_ptrs_[motor_id]->Enable();
+    actuators_ptrs_[motor_id]->enable();
 }
 
 void CableRobot::EnableMotors()
 {
   for (Actuator* actuator_ptr : active_actuators_ptrs_)
   {
-    actuator_ptr->Enable();
+    actuator_ptr->enable();
   }
 }
 
@@ -148,7 +148,7 @@ void CableRobot::EnableMotors(const vect<id_t>& motors_id)
   for (const id_t& motor_id : motors_id)
     if (actuators_ptrs_[motor_id]->IsActive())
     {
-      actuators_ptrs_[motor_id]->Enable();
+      actuators_ptrs_[motor_id]->enable();
     }
 }
 
@@ -156,7 +156,7 @@ void CableRobot::DisableMotor(const id_t motor_id)
 {
   if (actuators_ptrs_[motor_id]->IsActive())
   {
-    actuators_ptrs_[motor_id]->Disable();
+    actuators_ptrs_[motor_id]->disable();
   }
 }
 
@@ -164,7 +164,7 @@ void CableRobot::DisableMotors()
 {
   for (Actuator* actuator_ptr : active_actuators_ptrs_)
   {
-    actuator_ptr->Disable();
+    actuator_ptr->disable();
   }
 }
 
@@ -173,7 +173,7 @@ void CableRobot::DisableMotors(const vect<id_t>& motors_id)
   for (const id_t& motor_id : motors_id)
     if (actuators_ptrs_[motor_id]->IsActive())
     {
-      actuators_ptrs_[motor_id]->Disable();
+      actuators_ptrs_[motor_id]->disable();
     }
 }
 
@@ -198,7 +198,7 @@ void CableRobot::ClearFaults()
 {
   for (Actuator* actuator_ptr : active_actuators_ptrs_)
     if (actuator_ptr->IsInFault())
-      actuator_ptr->FaultReset();
+      actuator_ptr->faultReset();
 }
 
 void CableRobot::CollectMeas()
@@ -409,7 +409,7 @@ void CableRobot::PrintStateTransition(const States current_state,
   emit printToQConsole(msg);
 }
 
-void CableRobot::EmitMotorStatus()
+void CableRobot::emitMotorStatus()
 {
   static uint8_t counter = 0;
 
@@ -429,7 +429,7 @@ void CableRobot::EmitMotorStatus()
     counter = 0;
 }
 
-void CableRobot::EmitActuatorStatus()
+void CableRobot::emitActuatorStatus()
 {
   static uint8_t counter = 0;
 

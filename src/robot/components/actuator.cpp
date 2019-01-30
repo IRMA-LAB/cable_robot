@@ -10,9 +10,11 @@ Actuator::Actuator(const id_t id, const uint8_t slave_position,
     pulley_(id, params.pulley)
 {
   active_ = params.active;
+  clock_.SetCycleTime(kWaitCycleTimeNsec_);
+  prev_state_ = ST_IDLE;
 
   winch_.GetServo()->setParent(this);
-  connect(winch_.GetServo(), SIGNAL(driveFaulted()), this, SLOT(FaultTrigger()));
+  connect(winch_.GetServo(), SIGNAL(driveFaulted()), this, SLOT(faultTrigger()));
   connect(winch_.GetServo(), SIGNAL(logMessage(QString)), this,
           SLOT(logServoMsg(QString)));
   connect(winch_.GetServo(), SIGNAL(printMessage(QString)), this,
@@ -21,16 +23,16 @@ Actuator::Actuator(const id_t id, const uint8_t slave_position,
 
 Actuator::~Actuator()
 {
-  disconnect(winch_.GetServo(), SIGNAL(driveFaulted()), this, SLOT(FaultTrigger()));
+  disconnect(winch_.GetServo(), SIGNAL(driveFaulted()), this, SLOT(faultTrigger()));
   disconnect(winch_.GetServo(), SIGNAL(logMessage(QString)), this,
              SLOT(logServoMsg(QString)));
   disconnect(winch_.GetServo(), SIGNAL(printMessage(QString)), this,
              SLOT(forwardServoPrintMsg(QString)));
 }
 
-//--------- External Events Public --------------------------------------------------//
+//--------- External Events Public (slots) -------------------------------------------//
 
-void Actuator::Enable()
+void Actuator::enable()
 {
   CLOG(TRACE, "event");
   if (!active_)
@@ -44,19 +46,21 @@ void Actuator::Enable()
   // clang-format on
 }
 
-void Actuator::Disable()
+void Actuator::disable()
 {
   CLOG(TRACE, "event");
   if (!active_)
     return;
-  if (GetCurrentState() == ST_ENABLED)
-  {
-    winch_.GetServo()->DisableVoltage(); // disable drive completely
-    ExternalEvent(ST_IDLE);
-  }
+  // clang-format off
+  BEGIN_TRANSITION_MAP                                       // - Current State -
+    TRANSITION_MAP_ENTRY(EVENT_IGNORED)       // ST_IDLE
+    TRANSITION_MAP_ENTRY(ST_IDLE)                     // ST_ENABLED
+    TRANSITION_MAP_ENTRY(EVENT_IGNORED)       // ST_FAULT
+  END_TRANSITION_MAP(NULL)
+  // clang-format on
 }
 
-void Actuator::FaultTrigger()
+void Actuator::faultTrigger()
 {
   CLOG(TRACE, "event");
   if (!active_)
@@ -65,21 +69,23 @@ void Actuator::FaultTrigger()
   BEGIN_TRANSITION_MAP                                       // - Current State -
     TRANSITION_MAP_ENTRY(ST_FAULT)                  // ST_IDLE
     TRANSITION_MAP_ENTRY(ST_FAULT)                  // ST_ENABLED
-    TRANSITION_MAP_ENTRY(EVENT_IGNORED)       // ST_FAULT
+    TRANSITION_MAP_ENTRY(EVENT_IGNORED)      // ST_FAULT
   END_TRANSITION_MAP(NULL)
   // clang-format on
 }
 
-void Actuator::FaultReset()
+void Actuator::faultReset()
 {
   CLOG(TRACE, "event");
   if (!active_)
     return;
-  if (GetCurrentState() == ST_FAULT)
-  {
-    winch_.GetServo()->FaultReset(); // clear fault and disable drive completely
-    ExternalEvent(ST_IDLE);
-  }
+  // clang-format off
+  BEGIN_TRANSITION_MAP                                       // - Current State -
+    TRANSITION_MAP_ENTRY(EVENT_IGNORED)       // ST_IDLE
+    TRANSITION_MAP_ENTRY(EVENT_IGNORED)       // ST_ENABLED
+    TRANSITION_MAP_ENTRY(ST_IDLE)                     // ST_FAULT
+  END_TRANSITION_MAP(NULL)
+  // clang-format on
 }
 
 //--------- Public Functions --------------------------------------------------//
@@ -198,50 +204,53 @@ GUARD_DEFINE(Actuator, GuardEnabled, NoEventData)
 {
   winch_.GetServo()->Shutdown(); // prepare to switch on
   clock_.Reset();
+  timespec t0 = clock_.GetCurrentTime();
   while (1)
   {
-    if (winch_.GetServo()->GetCurrentState() == grabec::ST_READY_TO_SWITCH_ON)
+    if (winch_.GetServo()->GetCurrentState() == GSWDStates::ST_READY_TO_SWITCH_ON)
       break;
-    if (clock_.Elapsed() > kMaxTransitionTimeSec_)
+    if (clock_.Elapsed(t0) > kMaxTransitionTimeSec_)
     {
       emit printToQConsole(
         QString("[WARNING] Actuator state transition FAILED. Taking "
                 "too long to prepare to switch on drive %1.").arg(id_));
-      return FALSE;
+      return false;
     }
-    usleep(100000);
+    clock_.WaitUntilNext();
   }
 
   winch_.GetServo()->SwitchOn(); // switch on voltage
   clock_.Reset();
+  t0 = clock_.GetCurrentTime();
   while (1)
   {
-    if (winch_.GetServo()->GetCurrentState() == grabec::ST_SWITCHED_ON)
+    if (winch_.GetServo()->GetCurrentState() == GSWDStates::ST_SWITCHED_ON)
       break;
-    if (clock_.Elapsed() > kMaxTransitionTimeSec_)
+    if (clock_.Elapsed(t0) > kMaxTransitionTimeSec_)
     {
       emit printToQConsole(
         QString("[WARNING] Actuator state transition FAILED. Taking "
                 "too long to switch on voltage of drive %1.").arg(id_));
-      return FALSE;
+      return false;
     }
-    usleep(100000);
+    clock_.WaitUntilNext();
   }
 
   winch_.GetServo()->EnableOperation(); // enable drive
   clock_.Reset();
+  t0 = clock_.GetCurrentTime();
   while (1)
   {
-    if (winch_.GetServo()->GetCurrentState() == grabec::ST_OPERATION_ENABLED)
-      return TRUE; // drive is enabled
-    if (clock_.Elapsed() > kMaxTransitionTimeSec_)
+    if (winch_.GetServo()->GetCurrentState() == GSWDStates::ST_OPERATION_ENABLED)
+      return true; // drive is enabled
+    if (clock_.Elapsed(t0) > kMaxTransitionTimeSec_)
     {
       emit printToQConsole(
         QString("[WARNING] Actuator state transition FAILED. Taking too long to enable "
                 "drive %1.").arg(id_));
-      return FALSE;
+      return false;
     }
-    usleep(100000);
+    clock_.WaitUntilNext();
   }
 }
 
@@ -256,22 +265,23 @@ GUARD_DEFINE(Actuator, GuardFault, NoEventData)
 {
   winch_.GetServo()->FaultReset(); // clear fault and disable drive completely
   clock_.Reset();
+  timespec t0 = clock_.GetCurrentTime();
   while (1)
   {
     // Try to clear faults automatically
-    if (winch_.GetServo()->GetCurrentState() == grabec::ST_SWITCH_ON_DISABLED)
+    if (winch_.GetServo()->GetCurrentState() == GSWDStates::ST_SWITCH_ON_DISABLED)
     {
       InternalEvent(ST_IDLE);
-      return FALSE;
+      return false;
     }
-    if (clock_.Elapsed() > kMaxTransitionTimeSec_)
+    if (clock_.Elapsed(t0) > kMaxTransitionTimeSec_)
     {
       emit printToQConsole(
         QString("[WARNING] Attempt to automatically reset fault FAILED on drive %1.")
           .arg(id_));
-      return TRUE; // taking too long to disable drive. Something's wrong.
+      return true; // taking too long to disable drive. Something's wrong.
     }
-    usleep(100000);
+    clock_.WaitUntilNext();
   }
 }
 

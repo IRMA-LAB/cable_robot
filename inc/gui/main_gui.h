@@ -81,6 +81,7 @@ private:
   void Reset();
   void DeleteRobot();
   bool ExitReadyStateRequest();
+  void CloseAllApps();
 
 private:
   /*--------- Direct drive control stuff --------*/

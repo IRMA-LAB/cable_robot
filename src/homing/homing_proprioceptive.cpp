@@ -112,7 +112,7 @@ void HomingProprioceptive::Stop()
   CLOG(TRACE, "event");
   // clang-format off
   BEGIN_TRANSITION_MAP			              			// - Current State -
-      TRANSITION_MAP_ENTRY (ST_IDLE)                                  // ST_IDLE
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)                    // ST_IDLE
       TRANSITION_MAP_ENTRY (ST_IDLE)                                  // ST_ENABLED
       TRANSITION_MAP_ENTRY (ST_ENABLED)                          // ST_START_UP
       TRANSITION_MAP_ENTRY (ST_ENABLED)                          // ST_SWITCH_CABLE
@@ -120,7 +120,7 @@ void HomingProprioceptive::Stop()
       TRANSITION_MAP_ENTRY (ST_ENABLED)                          // ST_UNCOILING
       TRANSITION_MAP_ENTRY (ST_ENABLED)                          // ST_OPTIMIZING
       TRANSITION_MAP_ENTRY (ST_ENABLED)                          // ST_HOME
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_FAULT
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)        	       // ST_FAULT
   END_TRANSITION_MAP(NULL)
   // clang-format on
 }
@@ -166,7 +166,7 @@ void HomingProprioceptive::FaultTrigger()
   CLOG(TRACE, "event");
   // clang-format off
   BEGIN_TRANSITION_MAP			              			// - Current State -
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)                   // ST_IDLE
+      TRANSITION_MAP_ENTRY (ST_FAULT)                               // ST_IDLE
       TRANSITION_MAP_ENTRY (ST_FAULT)                               // ST_ENABLED
       TRANSITION_MAP_ENTRY (ST_FAULT)                               // ST_START_UP
       TRANSITION_MAP_ENTRY (ST_FAULT)                               // ST_SWITCH_CABLE
@@ -182,19 +182,7 @@ void HomingProprioceptive::FaultTrigger()
 void HomingProprioceptive::FaultReset()
 {
   CLOG(TRACE, "event");
-  // clang-format off
-  BEGIN_TRANSITION_MAP			              			// - Current State -
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)                   // ST_IDLE
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)                   // ST_ENABLED
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)                   // ST_START_UP
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)                   // ST_SWITCH_CABLE
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_COILING
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_UNCOILING
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_OPTIMIZING
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_HOME
-      TRANSITION_MAP_ENTRY (ST_IDLE)                                  // ST_FAULT
-  END_TRANSITION_MAP(NULL)
-  // clang-format on
+  ExternalEvent(ST_IDLE);
 }
 
 //--------- Private slots  -----------------------------------------------------------//
@@ -206,6 +194,11 @@ void HomingProprioceptive::handleActuatorStatusUpdate(
   {
     if (active_actuators_id_[i] != actuator_id)
       continue;
+    if (actuator_status.state == Actuator::ST_FAULT)
+    {
+      FaultTrigger();
+      return;
+    }
     qmutex_.lock();
     actuators_status_[i] = actuator_status;
     qmutex_.unlock();
@@ -213,6 +206,33 @@ void HomingProprioceptive::handleActuatorStatusUpdate(
 }
 
 //--------- States actions -----------------------------------------------------------//
+
+GUARD_DEFINE(HomingProprioceptive, GuardIdle, NoEventData)
+{
+  if (prev_state_ != ST_FAULT)
+    return true;
+
+  robot_ptr_->ClearFaults();
+
+  grabrt::ThreadClock clock(grabrt::Sec2NanoSec(kCycleWaitTimeSec_));
+  bool faults_cleared = false;
+  while (!faults_cleared)
+  {
+    if (clock.ElapsedFromStart() > kMaxWaitTimeSec_)
+      return false;
+    faults_cleared = true;
+    qmutex_.lock();
+    for (ActuatorStatus& actuator_status : actuators_status_)
+      if (actuator_status.state == ST_FAULT)
+      {
+        faults_cleared = false;
+        break;
+      }
+    qmutex_.unlock();
+    clock.WaitUntilNext();
+  }
+  return true;
+}
 
 STATE_DEFINE(HomingProprioceptive, Idle, NoEventData)
 {
@@ -225,15 +245,14 @@ STATE_DEFINE(HomingProprioceptive, Idle, NoEventData)
 
 GUARD_DEFINE(HomingProprioceptive, GuardEnabled, NoEventData)
 {
-  static const double kMaxWaitTimeSec = 3.0;
-
   robot_ptr_->EnableMotors();
+
   grabrt::ThreadClock clock(grabrt::Sec2NanoSec(kCycleWaitTimeSec_));
   while (1)
   {
     if (robot_ptr_->MotorsEnabled())
       return true;
-    if (clock.ElapsedFromStart() > kMaxWaitTimeSec)
+    if (clock.ElapsedFromStart() > kMaxWaitTimeSec_)
       break;
     clock.WaitUntilNext();
   }
@@ -282,6 +301,7 @@ STATE_DEFINE(HomingProprioceptive, StartUp, HomingProprioceptiveStartData)
       controller_.SetMotorTorqueTarget(init_torques_.back()); //  = data->init_torques[i]
       pthread_mutex_unlock(&robot_ptr_->Mutex());
       clock.Reset();
+      timespec t0 = clock.GetCurrentTime();
       while (1)
       {
         pthread_mutex_lock(&robot_ptr_->Mutex());
@@ -291,7 +311,12 @@ STATE_DEFINE(HomingProprioceptive, StartUp, HomingProprioceptiveStartData)
         qmutex_.lock();
         current_torque = actuators_status_[i].motor_torque;
         qmutex_.unlock();
-        // TODO: gestisci caso in cui ci metta troppo
+        if (clock.Elapsed(t0) > kMaxWaitTimeSec_)
+        {
+          emit printToQConsole(
+            "WARNING: Start up phase is taking too long: operation aborted");
+          InternalEvent(ST_ENABLED);
+        }
         clock.WaitUntilNext();
       }
     }
@@ -443,7 +468,7 @@ STATE_DEFINE(HomingProprioceptive, Home, HomingProprioceptiveHomeData)
   }
   else
   {
-    emit printToQConsole("Something went unexpectedly wrong, please start over");
+    emit printToQConsole("WARNING: Something went unexpectedly wrong, please start over");
     InternalEvent(ST_ENABLED);
   }
 }
@@ -452,6 +477,8 @@ STATE_DEFINE(HomingProprioceptive, Fault, NoEventData)
 {
   PrintStateTransition(prev_state_, ST_FAULT);
   prev_state_ = ST_FAULT;
+
+  robot_ptr_->DisableMotors();
 }
 
 //--------- Private functions ---------------------------------------------------------//
