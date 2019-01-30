@@ -33,7 +33,7 @@ void LogWinchStatusMsg(el::Logger* data_logger, const WinchStatusMsg& msg)
 void LogActuatorStatusMsg(el::Logger* data_logger, const ActuatorStatusMsg& msg)
 {
   // clang-format off
-  data_logger->info("%v,%v,%v,%v,%v,%v,%v,%v,%v,%v",
+  data_logger->info("%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v",
                                                                 msg.header.msg_type,
                                                                 msg.header.timestamp,
                                      static_cast<int>(msg.body.id),
@@ -43,6 +43,7 @@ void LogActuatorStatusMsg(el::Logger* data_logger, const ActuatorStatusMsg& msg)
                                                                 msg.body.motor_torque,
                                                                 msg.body.cable_length,
                                                                 msg.body.aux_position,
+                                     static_cast<int>(msg.body.state),
                                                                 msg.body.pulley_angle);
   // clang-format on
 }

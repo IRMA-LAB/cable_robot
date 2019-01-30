@@ -58,6 +58,7 @@ struct ActuatorStatus : WinchStatus
   {
   }
 
+  uint8_t state;  /**< see Actuator::States */
   double pulley_angle;
 };
 

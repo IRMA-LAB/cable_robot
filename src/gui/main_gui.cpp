@@ -384,7 +384,7 @@ void MainGUI::handleMotorStatusUpdate(const id_t& id,
 
   UpdateDriveStatusTable(motor_status);
 
-  Actuator::States actuator_state = DriveState2ActuatorState(
+  Actuator::States actuator_state = Actuator::DriveState2ActuatorState(
     grabec::GoldSoloWhistleDrive::GetDriveState(motor_status.status_word));
 
   // Check if motor is in fault and set panel accordingly
@@ -585,19 +585,6 @@ void MainGUI::SetupDirectMotorCtrl(const bool enable)
     delete man_ctrl_ptr_;
 
     robot_ptr_->DisableMotor(motor_id_);
-  }
-}
-
-Actuator::States MainGUI::DriveState2ActuatorState(const GSWDStates drive_state)
-{
-  switch (drive_state)
-  {
-  case GSWDStates::ST_OPERATION_ENABLED:
-    return Actuator::States::ST_ENABLED;
-  case GSWDStates::ST_FAULT:
-    return Actuator::States::ST_FAULT;
-  default:
-    return Actuator::States::ST_IDLE;
   }
 }
 

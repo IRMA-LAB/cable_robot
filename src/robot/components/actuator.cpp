@@ -95,6 +95,8 @@ const ActuatorStatus Actuator::GetStatus()
   status.cable_length = winch_status.cable_length;
   status.aux_position = winch_status.aux_position;
   status.id = id_;
+  status.state = DriveState2ActuatorState(
+    static_cast<GSWDStates>(winch_.GetServo()->GetCurrentState()));
   status.pulley_angle = pulley_.GetAngleRad(status.aux_position);
   return status;
 }
@@ -145,24 +147,43 @@ void Actuator::UpdateConfig()
   pulley_.UpdateConfig(winch_.GetServo()->GetAuxPosition());
 }
 
+Actuator::States Actuator::DriveState2ActuatorState(const GSWDStates drive_state)
+{
+  switch (drive_state)
+  {
+  case GSWDStates::ST_OPERATION_ENABLED:
+    return Actuator::States::ST_ENABLED;
+  case GSWDStates::ST_FAULT:
+    return Actuator::States::ST_FAULT;
+  default:
+    return Actuator::States::ST_IDLE;
+  }
+}
+
 //--------- States Actions Private --------------------------------------------------//
 
 // Guard condition to detemine whether Idle state is executed.
 GUARD_DEFINE(Actuator, GuardIdle, NoEventData)
 {
+  if (prev_state_ == ST_FAULT)
+    winch_.GetServo()->FaultReset(); // clear fault and disable drive completely
+  else
+    winch_.GetServo()->DisableVoltage(); // disable drive completely
+
   clock_.Reset();
+  timespec t0 = clock_.GetCurrentTime();
   while (1)
   {
-    if (winch_.GetServo()->GetCurrentState() == grabec::ST_SWITCH_ON_DISABLED)
-      return TRUE; // drive is disabled
-    if (clock_.Elapsed() > kMaxTransitionTimeSec_)
+    if (winch_.GetServo()->GetCurrentState() == GSWDStates::ST_SWITCH_ON_DISABLED)
+      return true; // drive is disabled
+    if (clock_.Elapsed(t0) > kMaxTransitionTimeSec_)
     {
       emit printToQConsole(
         QString("[WARNING] Actuator state transition FAILED. Taking too long to disable "
                 "drive %1.").arg(id_));
-      return FALSE;
+      return false;
     }
-    clock_.Reset();
+    clock_.WaitUntilNext();
   }
 }
 

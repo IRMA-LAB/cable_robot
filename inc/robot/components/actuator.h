@@ -11,6 +11,8 @@
 #include "winch.h"
 #include "pulleys_system.h"
 
+using GSWDStates = grabec::GoldSoloWhistleDriveStates;
+
 /**
  * @brief The Actuator class
  */
@@ -142,6 +144,8 @@ public:
    * @return
    */
   bool IsInFault() { return GetCurrentState() == ST_FAULT; }
+
+  static Actuator::States DriveState2ActuatorState(const GSWDStates drive_state);
 
 signals:
   void stateChanged(const id_t&, const BYTE&) const;

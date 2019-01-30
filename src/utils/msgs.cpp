@@ -38,7 +38,7 @@ QDataStream& operator>>(QDataStream& istream, HeaderMsg& data)
 
 //----------------------  MESSAGES -------------------------//
 
-const size_t kMaxMsgSize = 45; // todo: compute automatically somehow..
+const size_t kMaxMsgSize = 47; // todo: compute automatically somehow..
 
 // clang-format off
 MSG_FIELDS_ORDER_DEFINE(MotorStatus,
@@ -63,6 +63,7 @@ MSG_FIELDS_ORDER_DEFINE(ActuatorStatus,
                         motor_torque,
                         cable_length,
                         aux_position,
+                        state,
                         pulley_angle)
 // ... message order goes here, this is how you need to handle data in parser for example.
 // E.g. MSG_FIELDS_ORDER_DEFINE(MyTypeStruct, field1, field2, ...)

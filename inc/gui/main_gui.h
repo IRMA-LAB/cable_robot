@@ -11,7 +11,6 @@
 #include "robot/cablerobot.h"
 #include "ctrl/controller_singledrive_naive.h"
 
-using GSWDStates = grabec::GoldSoloWhistleDriveStates;
 using GSWDOpModes = grabec::GoldSoloWhistleOperationModes;
 
 namespace Ui
@@ -101,7 +100,6 @@ private:
   void UpdateDriveCtrlButtons(const ControlMode ctrl_mode);
 
   void SetupDirectMotorCtrl(const bool enable);
-  static Actuator::States DriveState2ActuatorState(const GSWDStates drive_state);
   static ControlMode DriveOpMode2CtrlMode(const int8_t drive_op_mode);
 };
 
