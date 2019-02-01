@@ -147,17 +147,13 @@ void CableRobot::EnableMotors(const vect<id_t>& motors_id)
 {
   for (const id_t& motor_id : motors_id)
     if (actuators_ptrs_[motor_id]->IsActive())
-    {
       actuators_ptrs_[motor_id]->enable();
-    }
 }
 
 void CableRobot::DisableMotor(const id_t motor_id)
 {
   if (actuators_ptrs_[motor_id]->IsActive())
-  {
     actuators_ptrs_[motor_id]->disable();
-  }
 }
 
 void CableRobot::DisableMotors()
@@ -254,7 +250,8 @@ void CableRobot::SetController(ControllerBase* controller)
   pthread_mutex_unlock(&mutex_);
 }
 
-//--------- External Events Public --------------------------------------------------//
+//--------- External Events Public
+//--------------------------------------------------//
 
 void CableRobot::enterCalibrationMode()
 {
@@ -292,12 +289,12 @@ void CableRobot::eventSuccess()
 {
   CLOG(TRACE, "event");
   // clang-format off
-  BEGIN_TRANSITION_MAP			              			// - Current State -
+  BEGIN_TRANSITION_MAP                              // - Current State -
       TRANSITION_MAP_ENTRY (ST_ENABLED)				// ST_IDLE
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)                   // ST_ENABLED
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)          // ST_ENABLED
       TRANSITION_MAP_ENTRY (ST_ENABLED)				// ST_CALIBRATION
       TRANSITION_MAP_ENTRY (ST_READY)				// ST_HOMING
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)                   // ST_READY
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)          // ST_READY
       TRANSITION_MAP_ENTRY (ST_READY)				// ST_OPERATIONAL
       TRANSITION_MAP_ENTRY (ST_ENABLED)				// ST_ERROR
   END_TRANSITION_MAP(NULL)
@@ -308,12 +305,12 @@ void CableRobot::eventFailure()
 {
   CLOG(TRACE, "event");
   // clang-format off
-  BEGIN_TRANSITION_MAP			              			// - Current State -
+  BEGIN_TRANSITION_MAP			              		// - Current State -
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_IDLE
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)                   // ST_ENABLED
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)          // ST_ENABLED
       TRANSITION_MAP_ENTRY (ST_ENABLED)				// ST_CALIBRATION
       TRANSITION_MAP_ENTRY (ST_ENABLED)				// ST_HOMING
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)                   // ST_READY
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)          // ST_READY
       TRANSITION_MAP_ENTRY (ST_ERROR)				// ST_OPERATIONAL
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_ERROR
   END_TRANSITION_MAP(NULL)
@@ -324,12 +321,12 @@ void CableRobot::stop()
 {
   CLOG(TRACE, "event");
   // clang-format off
-  BEGIN_TRANSITION_MAP			              			// - Current State -
+  BEGIN_TRANSITION_MAP			              		// - Current State -
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_IDLE
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)                    // ST_ENABLED
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)          // ST_ENABLED
       TRANSITION_MAP_ENTRY (ST_ENABLED)				// ST_CALIBRATION
       TRANSITION_MAP_ENTRY (ST_ENABLED)				// ST_HOMING
-      TRANSITION_MAP_ENTRY (ST_ENABLED)                           // ST_READY
+      TRANSITION_MAP_ENTRY (ST_ENABLED)             // ST_READY
       TRANSITION_MAP_ENTRY (ST_READY)				// ST_OPERATIONAL
       TRANSITION_MAP_ENTRY (ST_ENABLED)   			// ST_ERROR
   END_TRANSITION_MAP(NULL)

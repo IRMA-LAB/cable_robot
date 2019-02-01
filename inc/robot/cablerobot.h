@@ -13,8 +13,8 @@
 #include <QObject>
 #include <QTimer>
 
-#include "easylogging++.h"
 #include "StateMachine.h"
+#include "easylogging++.h"
 #include "libcdpr/inc/types.h"
 #include "libgrabec/inc/ethercatmaster.h"
 #if INCLUDE_EASYCAT
@@ -35,7 +35,7 @@ class CableRobot : public QObject,
 
 public:
   CableRobot(QObject* parent, const grabcdpr::Params& config);
-  ~CableRobot();
+  ~CableRobot() override;
 
   enum States : BYTE
   {
@@ -96,7 +96,7 @@ private slots:
   void emitActuatorStatus();
 
 private:
-  //-------- Pseudo-signals from EthercatMaster base class (live in RT thread) -------//
+  //-------- Pseudo-signals from EthercatMaster base class (live in RT thread) --------//
 
   void EcStateChangedCb(const Bitfield8& new_state) override final;
   void EcPrintCb(const std::string& msg, const char color = 'w') const override final;
