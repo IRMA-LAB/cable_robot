@@ -3,28 +3,30 @@
 
 #include <QWidget>
 
-namespace Ui
-{
+namespace Ui {
 class InitTorqueForm;
 }
 
-class InitTorqueForm : public QWidget
-{
+class InitTorqueForm: public QWidget {
   Q_OBJECT
 
-public:
-  explicit InitTorqueForm(const id_t motor_id, QWidget* parent = 0);
+ public:
+  InitTorqueForm(const id_t motor_id, QWidget* parent = NULL);
   ~InitTorqueForm();
 
   void SetInitTorque(const qint16 value);
+  void SetMaxTorque(const int value);
 
   qint16 GetInitTorque() const;
   qint16 GetMaxTorque() const;
+  qint16 GetMaxTorqueMinumum() const;
 
   void EnableInitTorque(const bool value);
   void EnableMaxTorque(const bool value);
 
-private:
+ private:
+  static constexpr int kTorqueMeasTol_ = 10;
+
   Ui::InitTorqueForm* ui;
 };
 

@@ -1,10 +1,11 @@
 #include "gui/homing/homing_interface_proprioceptive.h"
 #include "ui_homing_interface_proprioceptive.h"
 
+
 HomingInterfaceProprioceptive::HomingInterfaceProprioceptive(QWidget* parent,
                                                              CableRobot* robot)
   : HomingInterface(parent, robot), ui(new Ui::HomingInterfaceProprioceptive),
-    app_(this, robot)
+    app_(this, robot), acquisition_complete_(false), close_cmd_(false)
 {
   ui->setupUi(this);
 
@@ -43,21 +44,26 @@ HomingInterfaceProprioceptive::~HomingInterfaceProprioceptive()
   CLOG(INFO, "event") << "Homing interface proprioceptive closed";
 }
 
-//--------- Private GUI slots ------------------------------------------------//
+//--------- Private GUI slots -------------------------------------------------------//
 
-void HomingInterfaceProprioceptive::closeEvent(QCloseEvent*)
+void HomingInterfaceProprioceptive::closeEvent(QCloseEvent* event)
 {
-  ui->pushButton_cancel->click();
+  if (close_cmd_)
+    event->accept();
+  else
+    event->ignore();
 }
 
 void HomingInterfaceProprioceptive::on_pushButton_enable_clicked()
 {
   bool robot_enabled = ui->pushButton_enable->text() == "Disable";
-  CLOG(TRACE, "event") << (robot_enabled ? "ENABLE" : "DISABLE");
+  CLOG(TRACE, "event") << (robot_enabled ? "DISABLE" : "ENABLE");
+  ui->pushButton_enable->setChecked(false);
 
-  if (robot_enabled)
+  if (!robot_enabled)
   {
-    app_.Start(NULL); // IDLE --> ENABLED
+    if (!close_cmd_)
+      app_.Start(NULL); // IDLE --> ENABLED
     return;
   }
 
@@ -77,12 +83,13 @@ void HomingInterfaceProprioceptive::on_pushButton_enable_clicked()
   }
   else if (acquisition_complete_)
   {
-    QMessageBox::StandardButton reply = QMessageBox::question(
-      this, "Homing in progress", "If you disable the motors all data collected so far "
-                                  "will be lost and you will have to start over the "
-                                  "procedure before starting a new application.\nAre you "
-                                  "sure you want to continue?",
-      QMessageBox::Yes | QMessageBox::No);
+    QMessageBox::StandardButton reply =
+      QMessageBox::question(this, "Homing in progress",
+                            "If you disable the motors all data collected so far "
+                            "will be lost and you will have to start over the "
+                            "procedure before starting a new application.\nAre you "
+                            "sure you want to continue?",
+                            QMessageBox::Yes | QMessageBox::No);
     CLOG(INFO, "event") << "DISABLE? --> " << (reply == QMessageBox::Yes);
     if (reply == QMessageBox::No)
       return;
@@ -100,23 +107,23 @@ void HomingInterfaceProprioceptive::on_checkBox_useCurrentTorque_stateChanged(in
 {
   CLOG(TRACE, "event");
   for (auto form : init_torque_forms_)
-  {
     form->EnableInitTorque(!ui->checkBox_useCurrentTorque->isChecked());
-    form->SetInitTorque(0);
-  }
+  UpdateTorquesLimits();
 }
 
 void HomingInterfaceProprioceptive::on_checkBox_maxTorque_stateChanged(int)
 {
   CLOG(TRACE, "event");
-  qint16 max_init_torque = 0;
   for (auto& init_torque_form : init_torque_forms_)
-  {
     init_torque_form->EnableMaxTorque(!ui->checkBox_maxTorque->isChecked());
-    max_init_torque = std::max(max_init_torque, init_torque_form->GetInitTorque());
-  }
-  ui->spinBox_maxTorque->setMinimum(max_init_torque);
   ui->spinBox_maxTorque->setEnabled(ui->checkBox_maxTorque->isChecked());
+  UpdateTorquesLimits();
+}
+
+void HomingInterfaceProprioceptive::on_spinBox_maxTorque_valueChanged(int value)
+{
+  for (auto& init_torque_form : init_torque_forms_)
+    init_torque_form->SetMaxTorque(value);
 }
 
 void HomingInterfaceProprioceptive::on_pushButton_start_clicked()
@@ -137,7 +144,7 @@ void HomingInterfaceProprioceptive::on_pushButton_start_clicked()
 
   CLOG(TRACE, "event") << "(START)";
   HomingProprioceptiveStartData* data = new HomingProprioceptiveStartData();
-  data->num_meas = static_cast<quint8>(ui->spinBox_numMeas->value());
+  data->num_meas                      = static_cast<quint8>(ui->spinBox_numMeas->value());
   for (InitTorqueForm* form : init_torque_forms_)
   {
     if (!ui->checkBox_useCurrentTorque->isChecked())
@@ -224,11 +231,12 @@ void HomingInterfaceProprioceptive::on_pushButton_cancel_clicked()
   }
   case HomingProprioceptive::ST_HOME:
   {
-    QMessageBox::StandardButton reply = QMessageBox::question(
-      this, "Homing in progress", "The robot is moving to the homing position. If you "
-                                  "quit now all progress will be lost.\nAre you sure "
-                                  "you want to abort the operation?",
-      QMessageBox::Yes | QMessageBox::No);
+    QMessageBox::StandardButton reply =
+      QMessageBox::question(this, "Homing in progress",
+                            "The robot is moving to the homing position. If you "
+                            "quit now all progress will be lost.\nAre you sure "
+                            "you want to abort the operation?",
+                            QMessageBox::Yes | QMessageBox::No);
     if (reply == QMessageBox::No)
       return;
     CLOG(INFO, "event") << "Homing interrupted by user while moving to home position";
@@ -253,6 +261,7 @@ void HomingInterfaceProprioceptive::on_pushButton_cancel_clicked()
   }
   }
 
+  close_cmd_ = true;
   ui->pushButton_enable->click();
   emit homingFailed();
   close();
@@ -265,7 +274,7 @@ void HomingInterfaceProprioceptive::on_pushButton_done_clicked()
   close();
 }
 
-//--------- Private slots -----------------------------------------------------//
+//--------- Private slots -----------------------------------------------------------//
 
 void HomingInterfaceProprioceptive::appendText2Browser(const QString& text)
 {
@@ -320,12 +329,8 @@ void HomingInterfaceProprioceptive::handleStateChanged(const quint8& state)
     ui->pushButton_start->setEnabled(true);
     ui->pushButton_start->setText(tr("Start"));
     ui->pushButton_clearFaults->setDisabled(true);
-    // Update initial torques now because unless enable values are unknown
-    std::vector<id_t> motors_id = app_.GetActuatorsID();
-    for (size_t i = 0; i < motors_id.size(); i++)
-      if (ui->checkBox_useCurrentTorque->isChecked())
-        init_torque_forms_[static_cast<int>(i)]->SetInitTorque(
-          app_.GetActuatorStatus(motors_id[i]).motor_torque);
+    // Update initial torques now because unless enabled values are unknown
+    UpdateTorquesLimits();
     break;
   }
   case HomingProprioceptive::ST_START_UP:
@@ -342,9 +347,29 @@ void HomingInterfaceProprioceptive::handleStateChanged(const quint8& state)
   }
 }
 
-//--------- Private functions -----------------------------------------------//
+//--------- Private functions ------------------------------------------------------//
 
-bool HomingInterfaceProprioceptive::ParseExtFile(HomingProprioceptiveHomeData* res)
+void HomingInterfaceProprioceptive::UpdateTorquesLimits()
+{
+  if (app_.GetCurrentState() == HomingProprioceptive::ST_ENABLED &&
+      ui->checkBox_useCurrentTorque->isChecked())
+  {
+    std::vector<id_t> motors_id = app_.GetActuatorsID();
+    for (size_t i = 0; i < motors_id.size(); i++)
+      init_torque_forms_[static_cast<int>(i)]->SetInitTorque(
+        app_.GetActuatorStatus(motors_id[i]).motor_torque);
+  }
+  if (ui->checkBox_maxTorque->isChecked())
+  {
+    qint16 max_torque_minimum = static_cast<qint16>(ui->spinBox_maxTorque->maximum());
+    for (auto& init_torque_form : init_torque_forms_)
+      max_torque_minimum =
+        std::min(max_torque_minimum, init_torque_form->GetMaxTorqueMinumum());
+    ui->spinBox_maxTorque->setMaximum(max_torque_minimum);
+  }
+}
+
+bool HomingInterfaceProprioceptive::ParseExtFile(HomingProprioceptiveHomeData* /*res*/)
 {
   // Read external file and fill res struct
   return true; // dummy

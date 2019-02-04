@@ -94,14 +94,14 @@ const ActuatorStatus Actuator::GetStatus()
 {
   WinchStatus winch_status = winch_.GetStatus();
   ActuatorStatus status;
-  status.op_mode = winch_status.op_mode;
+  status.op_mode        = winch_status.op_mode;
   status.motor_position = winch_status.motor_position;
-  status.motor_speed = winch_status.motor_speed;
-  status.motor_torque = winch_status.motor_torque;
-  status.cable_length = winch_status.cable_length;
-  status.aux_position = winch_status.aux_position;
-  status.id = id_;
-  status.state = DriveState2ActuatorState(
+  status.motor_speed    = winch_status.motor_speed;
+  status.motor_torque   = winch_status.motor_torque;
+  status.cable_length   = winch_status.cable_length;
+  status.aux_position   = winch_status.aux_position;
+  status.id             = id_;
+  status.state          = DriveState2ActuatorState(
     static_cast<GSWDStates>(winch_.GetServo()->GetCurrentState()));
   status.pulley_angle = pulley_.GetAngleRad(status.aux_position);
   return status;
@@ -185,8 +185,9 @@ GUARD_DEFINE(Actuator, GuardIdle, NoEventData)
     if (clock_.Elapsed(t0) > kMaxTransitionTimeSec_)
     {
       emit printToQConsole(
-        QString("[WARNING] Actuator state transition FAILED. Taking too long to disable "
-                "drive %1.").arg(id_));
+        QString("WARNING: Actuator state transition FAILED. Taking too long to disable "
+                "drive %1.")
+          .arg(id_));
       return false;
     }
     clock_.WaitUntilNext();
@@ -211,9 +212,9 @@ GUARD_DEFINE(Actuator, GuardEnabled, NoEventData)
       break;
     if (clock_.Elapsed(t0) > kMaxTransitionTimeSec_)
     {
-      emit printToQConsole(
-        QString("[WARNING] Actuator state transition FAILED. Taking "
-                "too long to prepare to switch on drive %1.").arg(id_));
+      emit printToQConsole(QString("WARNING: Actuator state transition FAILED. Taking "
+                                   "too long to prepare to switch on drive %1.")
+                             .arg(id_));
       return false;
     }
     clock_.WaitUntilNext();
@@ -228,9 +229,9 @@ GUARD_DEFINE(Actuator, GuardEnabled, NoEventData)
       break;
     if (clock_.Elapsed(t0) > kMaxTransitionTimeSec_)
     {
-      emit printToQConsole(
-        QString("[WARNING] Actuator state transition FAILED. Taking "
-                "too long to switch on voltage of drive %1.").arg(id_));
+      emit printToQConsole(QString("WARNING: Actuator state transition FAILED. Taking "
+                                   "too long to switch on voltage of drive %1.")
+                             .arg(id_));
       return false;
     }
     clock_.WaitUntilNext();
@@ -246,8 +247,9 @@ GUARD_DEFINE(Actuator, GuardEnabled, NoEventData)
     if (clock_.Elapsed(t0) > kMaxTransitionTimeSec_)
     {
       emit printToQConsole(
-        QString("[WARNING] Actuator state transition FAILED. Taking too long to enable "
-                "drive %1.").arg(id_));
+        QString("WARNING: Actuator state transition FAILED. Taking too long to enable "
+                "drive %1.")
+          .arg(id_));
       return false;
     }
     clock_.WaitUntilNext();
@@ -277,7 +279,7 @@ GUARD_DEFINE(Actuator, GuardFault, NoEventData)
     if (clock_.Elapsed(t0) > kMaxTransitionTimeSec_)
     {
       emit printToQConsole(
-        QString("[WARNING] Attempt to automatically reset fault FAILED on drive %1.")
+        QString("WARNING: Attempt to automatically reset fault FAILED on drive %1.")
           .arg(id_));
       return true; // taking too long to disable drive. Something's wrong.
     }

@@ -70,6 +70,9 @@ CableRobot::~CableRobot()
   delete motor_status_timer_;
   delete actuator_status_timer_;
 
+  // Stop RT thread
+  thread_rt_.Stop();
+
   // Delete robot components
 #if INCLUDE_EASYCAT
   delete easycat1_ptr_;
@@ -86,7 +89,7 @@ CableRobot::~CableRobot()
   }
 }
 
-//--------- Public Functions --------------------------------------------------//
+//--------- Public Functions --------------------------------------------------------//
 
 const ActuatorStatus CableRobot::GetActuatorStatus(const id_t motor_id)
 {
@@ -202,7 +205,7 @@ void CableRobot::CollectMeas()
   size_t i = 0;
   for (Actuator* actuator_ptr : active_actuators_ptrs_)
   {
-    meas_[i].body = actuator_ptr->GetStatus();
+    meas_[i].body             = actuator_ptr->GetStatus();
     meas_[i].header.timestamp = clock_.Elapsed();
     i++;
   }
@@ -228,7 +231,7 @@ bool CableRobot::GoHome()
   ControllerSingleDriveNaive controller;
   // temporarly switch to local controller for moving to home pos
   ControllerBase* prev_controller = controller_;
-  controller_ = &controller;
+  controller_                     = &controller;
 
   for (Actuator* actuator_ptr : active_actuators_ptrs_)
   {
@@ -250,8 +253,7 @@ void CableRobot::SetController(ControllerBase* controller)
   pthread_mutex_unlock(&mutex_);
 }
 
-//--------- External Events Public
-//--------------------------------------------------//
+//--------- External Events Public --------------------------------------------------//
 
 void CableRobot::enterCalibrationMode()
 {
@@ -306,13 +308,13 @@ void CableRobot::eventFailure()
   CLOG(TRACE, "event");
   // clang-format off
   BEGIN_TRANSITION_MAP			              		// - Current State -
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_IDLE
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)          // ST_ENABLED
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)		// ST_IDLE
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)    // ST_ENABLED
       TRANSITION_MAP_ENTRY (ST_ENABLED)				// ST_CALIBRATION
       TRANSITION_MAP_ENTRY (ST_ENABLED)				// ST_HOMING
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)          // ST_READY
-      TRANSITION_MAP_ENTRY (ST_ERROR)				// ST_OPERATIONAL
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_ERROR
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)    // ST_READY
+      TRANSITION_MAP_ENTRY (ST_ERROR)         // ST_OPERATIONAL
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)		// ST_ERROR
   END_TRANSITION_MAP(NULL)
   // clang-format on
 }
@@ -322,13 +324,13 @@ void CableRobot::stop()
   CLOG(TRACE, "event");
   // clang-format off
   BEGIN_TRANSITION_MAP			              		// - Current State -
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_IDLE
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)          // ST_ENABLED
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)		// ST_IDLE
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)    // ST_ENABLED
       TRANSITION_MAP_ENTRY (ST_ENABLED)				// ST_CALIBRATION
       TRANSITION_MAP_ENTRY (ST_ENABLED)				// ST_HOMING
-      TRANSITION_MAP_ENTRY (ST_ENABLED)             // ST_READY
-      TRANSITION_MAP_ENTRY (ST_READY)				// ST_OPERATIONAL
-      TRANSITION_MAP_ENTRY (ST_ENABLED)   			// ST_ERROR
+      TRANSITION_MAP_ENTRY (ST_ENABLED)       // ST_READY
+      TRANSITION_MAP_ENTRY (ST_READY)         // ST_OPERATIONAL
+      TRANSITION_MAP_ENTRY (ST_ENABLED)   		// ST_ERROR
   END_TRANSITION_MAP(NULL)
   // clang-format on
 }
@@ -383,14 +385,14 @@ STATE_DEFINE(CableRobot, Error, NoEventData)
   prev_state_ = ST_ERROR;
 }
 
-//--------- Private slots --------------------------------------------------//
+//--------- Private slots -----------------------------------------------------------//
 
 void CableRobot::forwardPrintToQConsole(const QString& text) const
 {
   emit printToQConsole(text);
 }
 
-//--------- Miscellaneous private --------------------------------------------------//
+//--------- Miscellaneous private ---------------------------------------------------//
 
 void CableRobot::PrintStateTransition(const States current_state,
                                       const States new_state) const
@@ -451,7 +453,7 @@ void CableRobot::StopTimers()
   actuator_status_timer_->stop();
 }
 
-//--------- Ethercat related private functions ---------------------------------//
+//--------- Ethercat related private functions --------------------------------------//
 
 void CableRobot::EcStateChangedCb(const Bitfield8& new_state)
 {
@@ -496,7 +498,7 @@ void CableRobot::EcWorkFun()
 
 void CableRobot::EcEmergencyFun() {}
 
-//--------- Control related private functions ----------------------------------//
+//--------- Control related private functions ---------------------------------------//
 
 void CableRobot::ControlStep()
 {

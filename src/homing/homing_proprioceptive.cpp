@@ -1,8 +1,8 @@
 #include "homing/homing_proprioceptive.h"
 
-//----------------------------------------------------------------------------------------------------//
-//--------- Homing proprioceptive data classes ----------------------------------------//
-//----------------------------------------------------------------------------------------------------//
+//------------------------------------------------------------------------------------//
+//--------- Homing Proprioceptive Data classes ---------------------------------------//
+//------------------------------------------------------------------------------------//
 
 HomingProprioceptiveStartData::HomingProprioceptiveStartData() {}
 
@@ -37,9 +37,9 @@ std::ostream& operator<<(std::ostream& stream, const HomingProprioceptiveHomeDat
   return stream;
 }
 
-//--------------------------------------------------------------------------------------------------//
-//--------- Homing proprioceptive class ------------------------------------------------//
-//--------------------------------------------------------------------------------------------------//
+//------------------------------------------------------------------------------------//
+//--------- Homing Proprioceptive class ----------------------------------------------//
+//------------------------------------------------------------------------------------//
 
 // For static constexpr passed by reference we need a dummy definition no matter what
 constexpr double HomingProprioceptive::kCycleWaitTimeSec_;
@@ -50,7 +50,7 @@ HomingProprioceptive::HomingProprioceptive(QObject* parent, CableRobot* robot)
   : QObject(parent), StateMachine(ST_MAX_STATES), robot_ptr_(robot)
 {
   // Initialize with default values
-  num_meas_ = kNumMeasMin_;
+  num_meas_   = kNumMeasMin_;
   prev_state_ = ST_MAX_STATES;
 
   // Setup connection to track robot status
@@ -66,7 +66,7 @@ HomingProprioceptive::~HomingProprioceptive()
              SLOT(handleActuatorStatusUpdate(id_t, ActuatorStatus)));
 }
 
-//--------- Public functions -----------------------------------------------------------//
+//--------- Public functions ---------------------------------------------------------//
 
 bool HomingProprioceptive::IsCollectingData()
 {
@@ -103,16 +103,20 @@ ActuatorStatus HomingProprioceptive::GetActuatorStatus(const id_t id)
   return status;
 }
 
-//--------- External Events ---------------------------------------------------------//
+//--------- External events ----------------------------------------------------------//
 
 void HomingProprioceptive::Start(HomingProprioceptiveStartData* data)
 {
-  CLOG(TRACE, "event") << "with " << *data;
+  if (data == NULL)
+    CLOG(TRACE, "event") << "with NULL";
+  else
+    CLOG(TRACE, "event") << "with " << *data;
+
   // clang-format off
   BEGIN_TRANSITION_MAP			              			// - Current State -
-      TRANSITION_MAP_ENTRY (ST_ENABLED)                          // ST_IDLE
-      TRANSITION_MAP_ENTRY (ST_START_UP)                         // ST_ENABLED
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)                    // ST_START_UP
+      TRANSITION_MAP_ENTRY (ST_ENABLED)         // ST_IDLE
+      TRANSITION_MAP_ENTRY (ST_START_UP)        // ST_ENABLED
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_START_UP
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_SWITCH_CABLE
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_COILING
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_UNCOILING
@@ -128,15 +132,15 @@ void HomingProprioceptive::Stop()
   CLOG(TRACE, "event");
   // clang-format off
   BEGIN_TRANSITION_MAP			              			// - Current State -
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)                    // ST_IDLE
-      TRANSITION_MAP_ENTRY (ST_IDLE)                                  // ST_ENABLED
-      TRANSITION_MAP_ENTRY (ST_ENABLED)                          // ST_START_UP
-      TRANSITION_MAP_ENTRY (ST_ENABLED)                          // ST_SWITCH_CABLE
-      TRANSITION_MAP_ENTRY (ST_ENABLED)                          // ST_COILING
-      TRANSITION_MAP_ENTRY (ST_ENABLED)                          // ST_UNCOILING
-      TRANSITION_MAP_ENTRY (ST_ENABLED)                          // ST_OPTIMIZING
-      TRANSITION_MAP_ENTRY (ST_ENABLED)                          // ST_HOME
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)        	       // ST_FAULT
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_IDLE
+      TRANSITION_MAP_ENTRY (ST_IDLE)            // ST_ENABLED
+      TRANSITION_MAP_ENTRY (ST_ENABLED)         // ST_START_UP
+      TRANSITION_MAP_ENTRY (ST_ENABLED)         // ST_SWITCH_CABLE
+      TRANSITION_MAP_ENTRY (ST_ENABLED)         // ST_COILING
+      TRANSITION_MAP_ENTRY (ST_ENABLED)         // ST_UNCOILING
+      TRANSITION_MAP_ENTRY (ST_ENABLED)         // ST_OPTIMIZING
+      TRANSITION_MAP_ENTRY (ST_ENABLED)         // ST_HOME
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_FAULT
   END_TRANSITION_MAP(NULL)
   // clang-format on
 }
@@ -235,7 +239,11 @@ GUARD_DEFINE(HomingProprioceptive, GuardIdle, NoEventData)
   while (!faults_cleared)
   {
     if (clock.ElapsedFromStart() > kMaxWaitTimeSec_)
+    {
+      emit printToQConsole("WARNING: Homing state transition FAILED. Taking too long to "
+                           "clear faults.");
       return false;
+    }
     faults_cleared = true;
     qmutex_.lock();
     for (ActuatorStatus& actuator_status : actuators_status_)
@@ -272,6 +280,8 @@ GUARD_DEFINE(HomingProprioceptive, GuardEnabled, NoEventData)
       break;
     clock.WaitUntilNext();
   }
+  emit printToQConsole("WARNING: Homing state transition FAILED. Taking too long to "
+                       "enable drives.");
   return false;
 }
 
@@ -367,7 +377,7 @@ GUARD_DEFINE(HomingProprioceptive, GuardSwitch, NoEventData)
 
 STATE_DEFINE(HomingProprioceptive, SwitchCable, NoEventData)
 {
-  static quint8 motor_id_idx = 0;
+  static quint8 motor_id_idx  = 0;
   static vect<id_t> motors_id = robot_ptr_->GetActiveMotorsID();
 
   PrintStateTransition(prev_state_, ST_SWITCH_CABLE);
@@ -497,7 +507,7 @@ STATE_DEFINE(HomingProprioceptive, Fault, NoEventData)
   robot_ptr_->DisableMotors();
 }
 
-//--------- Private functions ---------------------------------------------------------//
+//--------- Private functions --------------------------------------------------------//
 
 void HomingProprioceptive::WaitUntilPlatformSteady()
 {

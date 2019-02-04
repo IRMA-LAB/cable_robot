@@ -8,13 +8,12 @@
 #include "easylogging++.h"
 #include "inc/filters.h"
 
-#include "robot/cablerobot.h"
 #include "ctrl/controller_singledrive_naive.h"
+#include "robot/cablerobot.h"
 
 
-class HomingProprioceptiveStartData : public EventData
-{
-public:
+class HomingProprioceptiveStartData: public EventData {
+ public:
   HomingProprioceptiveStartData();
   HomingProprioceptiveStartData(const vect<qint16>& _init_torques,
                                 const vect<qint16>& _max_torques, const quint8 _num_meas);
@@ -26,20 +25,20 @@ public:
 
 std::ostream& operator<<(std::ostream& stream, const HomingProprioceptiveStartData& data);
 
-class HomingProprioceptiveHomeData : public EventData
-{
-public:
+
+class HomingProprioceptiveHomeData: public EventData {
+ public:
   vect<double> init_lengths;
   vect<double> init_angles;
 };
 
 std::ostream& operator<<(std::ostream& stream, const HomingProprioceptiveHomeData& data);
 
-class HomingProprioceptive : public QObject, public StateMachine
-{
+
+class HomingProprioceptive: public QObject, public StateMachine {
   Q_OBJECT
 
-public:
+ public:
   HomingProprioceptive(QObject* parent, CableRobot* robot);
   ~HomingProprioceptive();
 
@@ -61,24 +60,27 @@ public:
   vect<id_t> GetActuatorsID() const { return active_actuators_id_; }
   ActuatorStatus GetActuatorStatus(const id_t id);
 
-public:
+ public:
+  //--------- External events -------------------------------------------------------//
+
   void Start(HomingProprioceptiveStartData* data);
   void Stop();
   void Optimize();
-  void GoHome(HomingProprioceptiveHomeData *data);
+  void GoHome(HomingProprioceptiveHomeData* data);
   void FaultTrigger();
   void FaultReset();
 
-signals:
+ signals:
   void printToQConsole(const QString&) const;
   void acquisitionComplete() const;
   void homingComplete() const;
   void stateChanged(const quint8&) const;
 
-private slots:
-  void handleActuatorStatusUpdate(const id_t &actuator_id, const ActuatorStatus &actuator_status);
+ private slots:
+  void handleActuatorStatusUpdate(const id_t& actuator_id,
+                                  const ActuatorStatus& actuator_status);
 
-private:
+ private:
   static constexpr quint8 kNumMeasMin_ = 1;
 
   CableRobot* robot_ptr_ = NULL;
@@ -94,18 +96,18 @@ private:
   vect<ActuatorStatus> actuators_status_;
 
   // Tuning params
-  static constexpr double kBufferingTimeSec_ = 1.0;  // [sec]
-  static constexpr double kCycleWaitTimeSec_ = 0.01; // [sec]
-  static constexpr double kMaxWaitTimeSec_ = 3.0;
-  static constexpr double kCutoffFreq_ = 15.0; // [Hz]
-  static constexpr double kMaxAngleDeviation_ = 0.1; // [deg]
+  static constexpr double kBufferingTimeSec_  = 1.0;  // [sec]
+  static constexpr double kCycleWaitTimeSec_  = 0.01; // [sec]
+  static constexpr double kMaxWaitTimeSec_    = 3.0;  // [sec]
+  static constexpr double kCutoffFreq_        = 15.0; // [Hz]
+  static constexpr double kMaxAngleDeviation_ = 0.1;  // [deg]
 
   void WaitUntilPlatformSteady();
 
   void DumpMeasAndMoveNext();
 
-private:
-  //--------- State machine --------------------------------------------------//
+ private:
+  //--------- State machine ---------------------------------------------------------//
 
   // clang-format off
   static constexpr char* kStatesStr[] = {
@@ -138,7 +140,7 @@ private:
   STATE_DECLARE(HomingProprioceptive, Home, HomingProprioceptiveHomeData)
   STATE_DECLARE(HomingProprioceptive, Fault, NoEventData)
 
-  // State map to define state object order. Each state map entry defines a state object.
+  // State map to define state object order
   BEGIN_STATE_MAP_EX
   // clang-format off
     STATE_MAP_ENTRY_ALL_EX(&Idle, &GuardIdle, 0, 0)

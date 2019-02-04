@@ -98,6 +98,7 @@ void MainGUI::on_pushButton_startApp_clicked()
 void MainGUI::on_pushButton_enable_clicked()
 {
   CLOG(TRACE, "event");
+  ui->pushButton_enable->setChecked(false);
   if (!(ec_network_valid_ && rt_thread_running_))
     return;
 
@@ -528,12 +529,13 @@ void MainGUI::UpdateDriveCtrlButtons(const ControlMode ctrl_mode)
 
 bool MainGUI::ExitReadyStateRequest()
 {
-  QMessageBox::StandardButton reply = QMessageBox::question(
-    this, "Robot ready", "If you proceed with direct manual motor control all homing "
-                         "results will be lost and you will have to repeat the "
-                         "procedure before starting a new application.\nAre you sure "
-                         "you want to continue?",
-    QMessageBox::Yes | QMessageBox::No);
+  QMessageBox::StandardButton reply =
+    QMessageBox::question(this, "Robot ready",
+                          "If you proceed with direct manual motor control all homing "
+                          "results will be lost and you will have to repeat the "
+                          "procedure before starting a new application.\nAre you sure "
+                          "you want to continue?",
+                          QMessageBox::Yes | QMessageBox::No);
   CLOG(TRACE, "event") << "--> " << (reply == QMessageBox::Yes);
   return (reply == QMessageBox::Yes);
 }
@@ -629,14 +631,6 @@ void MainGUI::DeleteRobot()
   disconnect(robot_ptr_, SIGNAL(ecStateChanged(Bitfield8)), this,
              SLOT(updateEcStatusLED(Bitfield8)));
 
-  if (calib_dialog_ != NULL)
-    disconnect(calib_dialog_, SIGNAL(calibrationEnd()), robot_ptr_, SLOT(eventSuccess()));
-  if (homing_dialog_ != NULL)
-  {
-    disconnect(homing_dialog_, SIGNAL(homingSuccess()), robot_ptr_, SLOT(eventSuccess()));
-    disconnect(homing_dialog_, SIGNAL(homingFailed()), robot_ptr_, SLOT(eventFailure()));
-  }
-
   delete robot_ptr_;
   robot_ptr_ = NULL;
   CLOG(INFO, "event") << "Cable robot object deleted";
@@ -646,12 +640,15 @@ void MainGUI::CloseAllApps()
 {
   if (calib_dialog_ != NULL)
   {
+    disconnect(calib_dialog_, SIGNAL(calibrationEnd()), robot_ptr_, SLOT(eventSuccess()));
     disconnect(calib_dialog_, SIGNAL(enableMainGUI()), this, SLOT(enableInterface()));
     delete calib_dialog_;
   }
 
   if (homing_dialog_ != NULL)
   {
+    disconnect(homing_dialog_, SIGNAL(homingSuccess()), robot_ptr_, SLOT(eventSuccess()));
+    disconnect(homing_dialog_, SIGNAL(homingFailed()), robot_ptr_, SLOT(eventFailure()));
     disconnect(homing_dialog_, SIGNAL(enableMainGUI(bool)), this,
                SLOT(enableInterface(bool)));
     delete homing_dialog_;

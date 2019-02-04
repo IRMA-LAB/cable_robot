@@ -241,16 +241,16 @@
              <string>‰</string>
             </property>
             <property name="minimum">
-             <number>300</number>
+             <number>-800</number>
             </property>
             <property name="maximum">
-             <number>1000</number>
+             <number>-300</number>
             </property>
             <property name="singleStep">
-             <number>10</number>
+             <number>20</number>
             </property>
             <property name="value">
-             <number>500</number>
+             <number>-500</number>
             </property>
            </widget>
           </item>
