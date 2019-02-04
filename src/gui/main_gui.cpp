@@ -604,13 +604,13 @@ void MainGUI::Reset()
   robot_ptr_ = new CableRobot(this, config_params_);
 
   connect(robot_ptr_, SIGNAL(printToQConsole(QString)), this,
-          SLOT(appendText2Browser(QString)));
+          SLOT(appendText2Browser(QString)), Qt::ConnectionType::QueuedConnection);
   connect(robot_ptr_, SIGNAL(motorStatus(id_t, grabec::GSWDriveInPdos)), this,
           SLOT(handleMotorStatusUpdate(id_t, grabec::GSWDriveInPdos)));
   connect(robot_ptr_, SIGNAL(ecStateChanged(Bitfield8)), this,
-          SLOT(updateEcStatusLED(Bitfield8)));
+          SLOT(updateEcStatusLED(Bitfield8)), Qt::ConnectionType::QueuedConnection);
   connect(robot_ptr_, SIGNAL(rtThreadStatusChanged(bool)), this,
-          SLOT(updateRtThreadStatusLED(bool)));
+          SLOT(updateRtThreadStatusLED(bool)), Qt::ConnectionType::QueuedConnection);
 
   robot_ptr_->eventSuccess(); // pwd & config OK --> robot ENABLED
   if (robot_ptr_->GetCurrentState() == CableRobot::ST_ENABLED)

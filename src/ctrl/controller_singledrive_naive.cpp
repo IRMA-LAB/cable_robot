@@ -134,7 +134,8 @@ vect<ControlAction> ControllerSingleDriveNaive::CalcCableSetPoint(const grabcdpr
         torque_target_ += delta_torque_;
         torque_target_true_ = static_cast<int16_t>(round(torque_target_));
         if (torque_target_true_ >= 0)
-          torque_target_true_ = std::min(torque_target_true_, static_cast<int16_t>(kAbsMaxTorque_));
+          torque_target_true_ =
+            std::min(torque_target_true_, static_cast<int16_t>(kAbsMaxTorque_));
         else
           torque_target_true_ =
             std::max(torque_target_true_, static_cast<int16_t>(-kAbsMaxTorque_));

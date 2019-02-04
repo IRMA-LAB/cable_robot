@@ -56,13 +56,14 @@ HomingProprioceptive::HomingProprioceptive(QObject* parent, CableRobot* robot)
   // Setup connection to track robot status
   active_actuators_id_ = robot_ptr_->GetActiveMotorsID();
   actuators_status_.resize(active_actuators_id_.size());
-  connect(robot_ptr_, SIGNAL(actuatorStatus()), this, SLOT(handleActuatorStatusUpdate()));
+  connect(robot_ptr_, SIGNAL(actuatorStatus(id_t, ActuatorStatus)), this,
+          SLOT(handleActuatorStatusUpdate(id_t, ActuatorStatus)));
 }
 
 HomingProprioceptive::~HomingProprioceptive()
 {
-  disconnect(robot_ptr_, SIGNAL(actuatorStatus()), this,
-             SLOT(handleActuatorStatusUpdate()));
+  disconnect(robot_ptr_, SIGNAL(actuatorStatus(id_t, ActuatorStatus)), this,
+             SLOT(handleActuatorStatusUpdate(id_t, ActuatorStatus)));
 }
 
 //--------- Public functions -----------------------------------------------------------//
@@ -85,6 +86,21 @@ bool HomingProprioceptive::IsCollectingData()
   default:
     return true;
   }
+}
+
+ActuatorStatus HomingProprioceptive::GetActuatorStatus(const id_t id)
+{
+  ActuatorStatus status;
+  for (size_t i = 0; i < active_actuators_id_.size(); i++)
+  {
+    if (active_actuators_id_[i] != id)
+      continue;
+    qmutex_.lock();
+    status = actuators_status_[i];
+    qmutex_.unlock();
+    break;
+  }
+  return status;
 }
 
 //--------- External Events ---------------------------------------------------------//

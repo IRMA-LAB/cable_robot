@@ -16,7 +16,7 @@ HomingInterfaceProprioceptive::HomingInterfaceProprioceptive(QWidget* parent,
   }
 
   connect(robot_ptr_, SIGNAL(printToQConsole(QString)), this,
-          SLOT(appendText2Browser(QString)));
+          SLOT(appendText2Browser(QString)), Qt::ConnectionType::QueuedConnection);
   connect(&app_, SIGNAL(printToQConsole(QString)), this,
           SLOT(appendText2Browser(QString)));
   connect(&app_, SIGNAL(acquisitionComplete()), this, SLOT(handleAcquisitionComplete()));
@@ -99,16 +99,10 @@ void HomingInterfaceProprioceptive::on_pushButton_clearFaults_clicked()
 void HomingInterfaceProprioceptive::on_checkBox_useCurrentTorque_stateChanged(int)
 {
   CLOG(TRACE, "event");
-  std::vector<id_t> motors_id = robot_ptr_->GetActiveMotorsID();
-  for (id_t motor_id : motors_id)
+  for (auto form : init_torque_forms_)
   {
-    if (ui->checkBox_useCurrentTorque->isChecked())
-    {
-      init_torque_forms_[static_cast<int>(motor_id)]->SetInitTorque(
-        robot_ptr_->GetActuatorStatus(motor_id).motor_torque);
-    }
-    init_torque_forms_[static_cast<int>(motor_id)]->EnableInitTorque(
-      !ui->checkBox_useCurrentTorque->isChecked());
+    form->EnableInitTorque(!ui->checkBox_useCurrentTorque->isChecked());
+    form->SetInitTorque(0);
   }
 }
 
@@ -321,11 +315,19 @@ void HomingInterfaceProprioceptive::handleStateChanged(const quint8& state)
     ui->pushButton_clearFaults->setDisabled(true);
     break;
   case HomingProprioceptive::ST_ENABLED:
+  {
     ui->pushButton_enable->setText(tr("Disable"));
     ui->pushButton_start->setEnabled(true);
     ui->pushButton_start->setText(tr("Start"));
     ui->pushButton_clearFaults->setDisabled(true);
+    // Update initial torques now because unless enable values are unknown
+    std::vector<id_t> motors_id = app_.GetActuatorsID();
+    for (size_t i = 0; i < motors_id.size(); i++)
+      if (ui->checkBox_useCurrentTorque->isChecked())
+        init_torque_forms_[static_cast<int>(i)]->SetInitTorque(
+          app_.GetActuatorStatus(motors_id[i]).motor_torque);
     break;
+  }
   case HomingProprioceptive::ST_START_UP:
     ui->pushButton_start->setText(tr("Stop"));
     break;

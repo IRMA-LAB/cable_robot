@@ -58,6 +58,8 @@ public:
   };
 
   bool IsCollectingData();
+  vect<id_t> GetActuatorsID() const { return active_actuators_id_; }
+  ActuatorStatus GetActuatorStatus(const id_t id);
 
 public:
   void Start(HomingProprioceptiveStartData* data);
