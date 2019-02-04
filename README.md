@@ -128,6 +128,10 @@ You should see the following line printed on the console:
 ```bash
 Starting EtherCAT master 1.5.2 done
 ```
+Additional commmand line tools can be installed by creating the following link:
+```bash
+ln -s /opt/etherlab/bin/ethercat /usr/local/bin/ethercat
+```
 
 At this point, if you reboot the PC, at startup of the real-time kernel the EtherCAT master will be automatically loaded, so that it can be used right away by any application. If for any reason you are not using e1000e as the ethercat communication port, but the r8169 one, you might experience the failure of the driver to load at boot. This is still an unresolved issue by the developers but a pretty easy workaround is to shut down the PC and unplug it from its power cord: in this way
 the LAN card is initialized again and will work properly next time you boot with the real-time kernel.
