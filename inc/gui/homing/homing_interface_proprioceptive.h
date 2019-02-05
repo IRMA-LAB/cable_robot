@@ -3,6 +3,7 @@
 
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QCloseEvent>
 
 #include "gui/homing/homing_interface.h"
 #include "gui/homing/init_torque_form.h"

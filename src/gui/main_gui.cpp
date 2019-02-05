@@ -360,6 +360,7 @@ void MainGUI::updateRtThreadStatusLED(const bool active)
     CloseAllApps();
 
     // Simulate a motor disabled event
+    waiting_for_response_.ClearAll();
     waiting_for_response_.Set(Actuator::ST_IDLE);
     UpdateDriveCtrlPanel(Actuator::ST_IDLE);
 

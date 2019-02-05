@@ -20,7 +20,9 @@ HEADERS = \
     $$PWD/inc/utils/easylog_wrapper.h \
     $$PWD/lib/easyloggingpp/src/easylogging++.h \
     $$PWD/lib/grab_common/grabcommon.h \
-    $$PWD/lib/grab_common/bitfield.h
+    $$PWD/lib/grab_common/bitfield.h \
+    $$PWD/lib/grab_common/libgrabec/inc/slaves/easycat/TestEasyCAT1_slave.h \
+    $$PWD/lib/grab_common/libgrabec/inc/slaves/easycat/TestEasyCAT2_slave.h
 
 SOURCES = \
     $$PWD/src/main.cpp \
@@ -41,6 +43,8 @@ SOURCES = \
     $$PWD/src/utils/msgs.cpp \
     $$PWD/src/utils/easylog_wrapper.cpp \
     $$PWD/lib/easyloggingpp/src/easylogging++.cc \
+    $$PWD/lib/grab_common/libgrabec/src/slaves/easycat/TestEasyCAT1_slave.cpp \
+    $$PWD/lib/grab_common/libgrabec/src/slaves/easycat/TestEasyCAT2_slave.cpp \
     $$PWD/lib/grab_common/grabcommon.cpp
 
 INCLUDEPATH += \
@@ -72,12 +76,25 @@ DEFINES += ELPP_QT_LOGGING    \
 
 DEFINES += SRCDIR=\\\"$$PWD/\\\"
 
+# DEBUG
+HEADERS += \
+    $$PWD/lib/grab_common/libgrabec/inc/ethercatmaster.h \
+    $$PWD/lib/grab_common/libgrabec/inc/ethercatslave.h \
+    $$PWD/lib/grab_common/libgrabec/inc/types.h \
+    $$PWD/lib/grab_common/libgrabec/inc/slaves/goldsolowhistledrive.h
+SOURCES += \
+    $$PWD/lib/grab_common/libgrabec/src/ethercatmaster.cpp \
+    $$PWD/lib/grab_common/libgrabec/src/ethercatslave.cpp \
+    $$PWD/lib/grab_common/libgrabec/src/types.cpp \
+    $$PWD/lib/grab_common/libgrabec/src/slaves/goldsolowhistledrive.cpp
+INCLUDEPATH += $$PWD/lib/grab_common/libgrabec/inc
+
 # GRAB Ethercat lib
-unix:!macx: LIBS += -L$$PWD/lib/grab_common/libgrabec/lib/ -lgrabec
-INCLUDEPATH += $$PWD/lib/grab_common/libgrabec \
-    lib/grab_common/libgrabec/inc
-DEPENDPATH += $$PWD/lib/grab_common/libgrabec
-unix:!macx: PRE_TARGETDEPS += $$PWD/lib/grab_common/libgrabec/lib/libgrabec.a
+#unix:!macx: LIBS += -L$$PWD/lib/grab_common/libgrabec/lib/ -lgrabec
+#INCLUDEPATH += $$PWD/lib/grab_common/libgrabec \
+#    lib/grab_common/libgrabec/inc
+#DEPENDPATH += $$PWD/lib/grab_common/libgrabec
+#unix:!macx: PRE_TARGETDEPS += $$PWD/lib/grab_common/libgrabec/lib/libgrabec.a
 
 # GRAB Real-time lib
 unix:!macx: LIBS += -L$$PWD/lib/grab_common/libgrabrt/lib/ -lgrabrt

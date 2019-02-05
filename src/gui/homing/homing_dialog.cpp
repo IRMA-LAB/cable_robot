@@ -14,6 +14,7 @@ HomingDialog::~HomingDialog()
     disconnect(interface_, SIGNAL(homingSuccess()), this, SLOT(HomingSuccessCb()));
     disconnect(interface_, SIGNAL(homingFailed()), this, SLOT(HomingFailedCb()));
     delete interface_;
+    interface_ = NULL;
   }
   delete ui;
   CLOG(INFO, "event") << "Homing dialog closed";
