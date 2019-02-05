@@ -19,7 +19,8 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
   status_.platform = &platform_;
 
   // Setup EtherCAT network
-  quint8 slave_pos = 0;
+  max_shutdown_wait_time_sec_ = 3.0; // [sec]
+  quint8 slave_pos            = 0;
 #if INCLUDE_EASYCAT
   easycat1_ptr_ = new grabec::TestEasyCAT1Slave(slave_pos++);
   slaves_ptrs_.push_back(easycat1_ptr_);
@@ -70,10 +71,10 @@ CableRobot::~CableRobot()
   delete motor_status_timer_;
   delete actuator_status_timer_;
 
-  // Stop RT thread
+  // Stop RT thread before removing slaves
   thread_rt_.Stop();
 
-  // Delete robot components
+  // Delete robot components (i.e. ethercat slaves)
 #if INCLUDE_EASYCAT
   delete easycat1_ptr_;
   delete easycat2_ptr_;

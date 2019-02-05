@@ -27,13 +27,12 @@
 #include "ctrl/controller_singledrive_naive.h"
 #include "utils/easylog_wrapper.h"
 
-class CableRobot : public QObject,
-                   public virtual grabec::EthercatMaster,
-                   public StateMachine
-{
+class CableRobot: public QObject,
+                  public virtual grabec::EthercatMaster,
+                  public StateMachine {
   Q_OBJECT
 
-public:
+ public:
   CableRobot(QObject* parent, const grabcdpr::Params& config);
   ~CableRobot() override;
 
@@ -75,14 +74,14 @@ public:
 
   void SetController(ControllerBase* controller);
 
-public slots:
+ public slots:
   void enterCalibrationMode();
   void enterHomingMode();
   void eventSuccess();
   void eventFailure();
   void stop();
 
-signals:
+ signals:
   void motorStatus(const id_t&, const grabec::GSWDriveInPdos&) const;
   void actuatorStatus(const id_t&, const ActuatorStatus&) const;
   void sendMsg(const QByteArray) const;
@@ -90,23 +89,23 @@ signals:
   void ecStateChanged(const Bitfield8&) const;
   void rtThreadStatusChanged(const bool) const;
 
-private slots:
+ private slots:
   void forwardPrintToQConsole(const QString&) const;
   void emitMotorStatus();
   void emitActuatorStatus();
 
-private:
+ private:
   //-------- Pseudo-signals from EthercatMaster base class (live in RT thread) --------//
 
   void EcStateChangedCb(const Bitfield8& new_state) override final;
   void EcPrintCb(const std::string& msg, const char color = 'w') const override final;
   void EcRtThreadStatusChanged(const bool active) override final;
 
-private:
-  static constexpr int kMotorStatusIntervalMsec_ = 100;
+ private:
+  static constexpr int kMotorStatusIntervalMsec_    = 100;
   static constexpr int kActuatorStatusIntervalMsec_ = 10;
-  QTimer* motor_status_timer_ = NULL;
-  QTimer* actuator_status_timer_ = NULL;
+  QTimer* motor_status_timer_                       = NULL;
+  QTimer* actuator_status_timer_                    = NULL;
 
   grabcdpr::PlatformVars platform_;
   grabcdpr::Vars status_;
@@ -137,7 +136,7 @@ private:
 
   void ControlStep();
 
-private:
+ private:
   //--------- State machine --------------------------------------------------//
 
   // clang-format off

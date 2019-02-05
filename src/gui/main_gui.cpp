@@ -349,6 +349,8 @@ void MainGUI::updateRtThreadStatusLED(const bool active)
 {
   rt_thread_running_ = active;
   ui->pushButton_reset->setDisabled(rt_thread_running_);
+  ui->label_rt_thread_status_led->setPixmap(QPixmap(QString::fromUtf8(
+    active ? ":/img/img/green_button.png" : ":/img/img/red_button.png")));
 
   if (!rt_thread_running_)
   {
@@ -363,9 +365,6 @@ void MainGUI::updateRtThreadStatusLED(const bool active)
 
     DeleteRobot();
   }
-
-  ui->label_rt_thread_status_led->setPixmap(QPixmap(QString::fromUtf8(
-    active ? ":/img/img/green_button.png" : ":/img/img/red_button.png")));
 }
 
 void MainGUI::handleMotorStatusUpdate(const id_t& id,
@@ -492,7 +491,8 @@ void MainGUI::UpdateDriveCtrlPanel(const Actuator::States state)
   ui->pushButton_enable->setEnabled(true);
   ui->pushButton_enable->setText(tr(manual_ctrl_enabled_ ? "Disable" : "Enable"));
   ui->pushButton_faultReset->setDisabled(true);
-  ui->comboBox_motorAxis->setDisabled(manual_ctrl_enabled_);
+  ui->comboBox_motorAxis->setDisabled(
+    manual_ctrl_enabled_); // prevent switching drive during manual control
 
   ui->pushButton_homing->setDisabled(manual_ctrl_enabled_);
   ui->pushButton_calib->setDisabled(manual_ctrl_enabled_);
@@ -630,6 +630,8 @@ void MainGUI::DeleteRobot()
              SLOT(handleMotorStatusUpdate(id_t, grabec::GSWDriveInPdos)));
   disconnect(robot_ptr_, SIGNAL(ecStateChanged(Bitfield8)), this,
              SLOT(updateEcStatusLED(Bitfield8)));
+  disconnect(robot_ptr_, SIGNAL(rtThreadStatusChanged(bool)), this,
+             SLOT(updateRtThreadStatusLED(bool)));
 
   delete robot_ptr_;
   robot_ptr_ = NULL;
