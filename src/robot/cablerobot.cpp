@@ -480,7 +480,7 @@ void CableRobot::EcPrintCb(const std::string& msg, const char color /* = 'w' */)
 }
 
 void CableRobot::EcRtThreadStatusChanged(const bool active)
-{
+{  
   rt_thread_active_ = active;
   emit rtThreadStatusChanged(active);
 }
