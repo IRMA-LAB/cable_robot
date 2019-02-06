@@ -20,9 +20,7 @@ HEADERS = \
     $$PWD/inc/utils/easylog_wrapper.h \
     $$PWD/lib/easyloggingpp/src/easylogging++.h \
     $$PWD/lib/grab_common/grabcommon.h \
-    $$PWD/lib/grab_common/bitfield.h \
-    $$PWD/lib/grab_common/libgrabec/inc/slaves/easycat/TestEasyCAT1_slave.h \
-    $$PWD/lib/grab_common/libgrabec/inc/slaves/easycat/TestEasyCAT2_slave.h
+    $$PWD/lib/grab_common/bitfield.h
 
 SOURCES = \
     $$PWD/src/main.cpp \
@@ -43,8 +41,6 @@ SOURCES = \
     $$PWD/src/utils/msgs.cpp \
     $$PWD/src/utils/easylog_wrapper.cpp \
     $$PWD/lib/easyloggingpp/src/easylogging++.cc \
-    $$PWD/lib/grab_common/libgrabec/src/slaves/easycat/TestEasyCAT1_slave.cpp \
-    $$PWD/lib/grab_common/libgrabec/src/slaves/easycat/TestEasyCAT2_slave.cpp \
     $$PWD/lib/grab_common/grabcommon.cpp
 
 INCLUDEPATH += \

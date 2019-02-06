@@ -625,8 +625,7 @@ void MainGUI::DeleteRobot()
   if (robot_ptr_ == NULL)
     return;
 
-  disconnect(robot_ptr_, SIGNAL(printToQConsole(QString)), this,
-             SLOT(appendText2Browser(QString)));
+  // We don't disconnect printToQConsole so we still have logs on shutdown
   disconnect(robot_ptr_, SIGNAL(motorStatus(id_t, grabec::GSWDriveInPdos)), this,
              SLOT(handleMotorStatusUpdate(id_t, grabec::GSWDriveInPdos)));
   disconnect(robot_ptr_, SIGNAL(ecStateChanged(Bitfield8)), this,
@@ -636,6 +635,7 @@ void MainGUI::DeleteRobot()
 
   delete robot_ptr_;
   robot_ptr_ = NULL;
+  QCoreApplication::processEvents();
   CLOG(INFO, "event") << "Cable robot object deleted";
 }
 
@@ -645,6 +645,7 @@ void MainGUI::CloseAllApps()
   {
     disconnect(calib_dialog_, SIGNAL(calibrationEnd()), robot_ptr_, SLOT(eventSuccess()));
     disconnect(calib_dialog_, SIGNAL(enableMainGUI()), this, SLOT(enableInterface()));
+    calib_dialog_->close();
     delete calib_dialog_;
   }
 
@@ -654,6 +655,7 @@ void MainGUI::CloseAllApps()
     disconnect(homing_dialog_, SIGNAL(homingFailed()), robot_ptr_, SLOT(eventFailure()));
     disconnect(homing_dialog_, SIGNAL(enableMainGUI(bool)), this,
                SLOT(enableInterface(bool)));
+    homing_dialog_->close();
     delete homing_dialog_;
   }
 }
