@@ -78,7 +78,7 @@ private:
   grabcdpr::Params config_params_;
   CableRobot* robot_ptr_ = NULL;
 
-  void Reset();
+  void StartRobot();
   void DeleteRobot();
   bool ExitReadyStateRequest();
   void CloseAllApps();

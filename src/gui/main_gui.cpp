@@ -15,7 +15,7 @@ MainGUI::MainGUI(QWidget* parent, const grabcdpr::Params& config)
     if (config.actuators[i].active)
       ui->comboBox_motorAxis->addItem(QString::number(i));
 
-  Reset(); // instantiate cable robot object
+  StartRobot(); // instantiate cable robot object
 }
 
 MainGUI::~MainGUI()
@@ -31,7 +31,7 @@ MainGUI::~MainGUI()
 void MainGUI::on_pushButton_reset_clicked()
 {
   CLOG(TRACE, "event");
-  Reset();
+  robot_ptr_->Reset();
 }
 
 void MainGUI::on_pushButton_calib_clicked()
@@ -363,8 +363,6 @@ void MainGUI::updateRtThreadStatusLED(const bool active)
     waiting_for_response_.ClearAll();
     waiting_for_response_.Set(Actuator::ST_IDLE);
     UpdateDriveCtrlPanel(Actuator::ST_IDLE);
-
-    DeleteRobot();
   }
 }
 
@@ -598,12 +596,8 @@ ControlMode MainGUI::DriveOpMode2CtrlMode(const int8_t drive_op_mode)
   }
 }
 
-void MainGUI::Reset()
+void MainGUI::StartRobot()
 {
-  // Safety check
-  if (robot_ptr_ != NULL)
-    DeleteRobot();
-
   robot_ptr_ = new CableRobot(this, config_params_);
 
   connect(robot_ptr_, SIGNAL(printToQConsole(QString)), this,
