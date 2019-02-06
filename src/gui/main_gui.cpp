@@ -26,7 +26,7 @@ MainGUI::~MainGUI()
   CLOG(INFO, "event") << "Main window closed";
 }
 
-//--------- Public GUI slots --------------------------------------------------//
+//--------- Public GUI slots ---------------------------------------------------------//
 
 void MainGUI::on_pushButton_reset_clicked()
 {
@@ -300,7 +300,7 @@ void MainGUI::on_pushButton_torqueMinus_released()
   pthread_mutex_unlock(&robot_ptr_->Mutex());
 }
 
-//--------- Private slots --------------------------------------------------//
+//--------- Private slots ------------------------------------------------------------//
 
 void MainGUI::enableInterface(const bool op_outcome /*= false*/)
 {
@@ -401,7 +401,7 @@ void MainGUI::handleMotorStatusUpdate(const id_t& id,
   UpdateDriveCtrlButtons(DriveOpMode2CtrlMode(motor_status.display_op_mode));
 }
 
-//--------- Private GUI methods --------------------------------------------------//
+//--------- Private GUI methods ------------------------------------------------------//
 
 void MainGUI::DisablePosCtrlButtons(const bool value)
 {
@@ -541,7 +541,7 @@ bool MainGUI::ExitReadyStateRequest()
   return (reply == QMessageBox::Yes);
 }
 
-//--------- Private methods --------------------------------------------------//
+//--------- Private methods ----------------------------------------------------------//
 
 void MainGUI::SetupDirectMotorCtrl(const bool enable)
 {

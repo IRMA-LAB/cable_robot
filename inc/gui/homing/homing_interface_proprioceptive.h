@@ -22,7 +22,7 @@ class HomingInterfaceProprioceptive: public HomingInterface {
   ~HomingInterfaceProprioceptive();
 
  private slots:
-  void closeEvent(QCloseEvent* event);
+  void closeEvent(QCloseEvent* event) override final;
 
   void on_pushButton_enable_clicked();
   void on_pushButton_clearFaults_clicked();
@@ -54,10 +54,12 @@ class HomingInterfaceProprioceptive: public HomingInterface {
 
   HomingProprioceptive app_;
   bool acquisition_complete_;
-  bool close_cmd_;
+  bool ext_close_cmd_;
 
   void UpdateTorquesLimits();
   bool ParseExtFile(HomingProprioceptiveHomeData*);
+
+  void Close() override final;
 };
 
 #endif // CABLE_ROBOT_HOMING_INTERFACE_PROPRIOCEPTIVE_H

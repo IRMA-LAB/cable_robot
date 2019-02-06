@@ -3,49 +3,54 @@
 
 #include <QDialog>
 
-#include "libcdpr/inc/types.h"
 #include "easylogging++.h"
+#include "libcdpr/inc/types.h"
 
 #include "gui/homing/homing_interface_proprioceptive.h"
 
-namespace Ui
-{
+
+namespace Ui {
 class HomingDialog;
 }
 
-class HomingDialog : public QDialog
+class HomingDialog: public QDialog
 {
   Q_OBJECT
 
-public:
-  explicit HomingDialog(QWidget* parent, CableRobot* robot);
+ public:
+  HomingDialog(QWidget* parent, CableRobot* robot);
   ~HomingDialog();
 
-signals:
+ signals:
   void enableMainGUI(bool);
   void homingFailed();
   void homingSuccess();
 
-private slots:
+ private slots:
   void on_buttonBox_accepted();
-  void on_buttonBox_rejected() { HomingFailedCb(); }
+  void on_buttonBox_rejected();
 
-  void HomingFailedCb();
-  void HomingSuccessCb();
+ private slots:
+  void fwdHomingFailed();
+  void fwdHomingSuccess();
 
-private:
+ private:
   Ui::HomingDialog* ui;
 
   enum HomingMethod
   {
     PROPRIOCEPTIVE,
     VISION,
-    FUSION
+    FUSION,
+    NONE
   };
 
   const grabcdpr::Params* config_ptr_;
   HomingInterface* interface_ = NULL;
-  CableRobot* robot_ptr_ = NULL;
+  CableRobot* robot_ptr_      = NULL;
+  int homing_method_;
+
+  void DeleteInterface();
 };
 
 #endif // HOMING_DIALOG_H

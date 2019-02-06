@@ -5,15 +5,15 @@
 HomingInterfaceProprioceptive::HomingInterfaceProprioceptive(QWidget* parent,
                                                              CableRobot* robot)
   : HomingInterface(parent, robot), ui(new Ui::HomingInterfaceProprioceptive),
-    app_(this, robot), acquisition_complete_(false), close_cmd_(false)
+    app_(this, robot), acquisition_complete_(false), ext_close_cmd_(false)
 {
   ui->setupUi(this);
 
-  quint8 i = 4;
+  quint8 pos = 4; // insert position in vertical layout
   for (id_t motor_id : robot->GetActiveMotorsID())
   {
     init_torque_forms_.append(new InitTorqueForm(motor_id, this));
-    ui->verticalLayout_2->insertWidget(i++, init_torque_forms_.last());
+    ui->verticalLayout_2->insertWidget(pos++, init_torque_forms_.last());
   }
 
   connect(robot_ptr_, SIGNAL(printToQConsole(QString)), this,
@@ -23,8 +23,6 @@ HomingInterfaceProprioceptive::HomingInterfaceProprioceptive(QWidget* parent,
   connect(&app_, SIGNAL(acquisitionComplete()), this, SLOT(handleAcquisitionComplete()));
   connect(&app_, SIGNAL(homingComplete()), this, SLOT(handleHomingComplete()));
   connect(&app_, SIGNAL(stateChanged(quint8)), this, SLOT(handleStateChanged(quint8)));
-
-  app_.Stop(); // make sure we start in IDLE mode
 }
 
 HomingInterfaceProprioceptive::~HomingInterfaceProprioceptive()
@@ -48,10 +46,17 @@ HomingInterfaceProprioceptive::~HomingInterfaceProprioceptive()
 
 void HomingInterfaceProprioceptive::closeEvent(QCloseEvent* event)
 {
-  if (close_cmd_)
+  if (ext_close_cmd_)
+  {
+    ext_close_cmd_ = false;
     event->accept();
+  }
   else
+  {
     event->ignore();
+    // This becomes like user hit Cancel button.
+    ui->pushButton_cancel->click();
+  }
 }
 
 void HomingInterfaceProprioceptive::on_pushButton_enable_clicked()
@@ -62,8 +67,7 @@ void HomingInterfaceProprioceptive::on_pushButton_enable_clicked()
 
   if (!robot_enabled)
   {
-    if (!close_cmd_)
-      app_.Start(NULL); // IDLE --> ENABLED
+    app_.Start(NULL); // IDLE --> ENABLED
     return;
   }
 
@@ -214,64 +218,64 @@ void HomingInterfaceProprioceptive::on_pushButton_cancel_clicked()
   CLOG(TRACE, "event");
   switch (static_cast<HomingProprioceptive::States>(app_.GetCurrentState()))
   {
-  case HomingProprioceptive::ST_IDLE:
-    break;
-  case HomingProprioceptive::ST_OPTIMIZING:
-  {
-    QMessageBox::StandardButton reply =
-      QMessageBox::question(this, "Optimization in progress",
-                            "The application is still evaluating data to complete the "
-                            "homing procedure. If you quit now all progress will be "
-                            "lost.\nAre you sure you want to abort the operation?",
-                            QMessageBox::Yes | QMessageBox::No);
-    if (reply == QMessageBox::No)
+    case HomingProprioceptive::ST_IDLE:
+      break;
+    case HomingProprioceptive::ST_OPTIMIZING:
+    {
+      QMessageBox::StandardButton reply =
+        QMessageBox::question(this, "Optimization in progress",
+                              "The application is still evaluating data to complete the "
+                              "homing procedure. If you quit now all progress will be "
+                              "lost.\nAre you sure you want to abort the operation?",
+                              QMessageBox::Yes | QMessageBox::No);
+      if (reply == QMessageBox::No)
+        return;
+      CLOG(INFO, "event") << "Homing interrupted by user during optimizazion";
+      break;
+    }
+    case HomingProprioceptive::ST_HOME:
+    {
+      QMessageBox::StandardButton reply =
+        QMessageBox::question(this, "Homing in progress",
+                              "The robot is moving to the homing position. If you "
+                              "quit now all progress will be lost.\nAre you sure "
+                              "you want to abort the operation?",
+                              QMessageBox::Yes | QMessageBox::No);
+      if (reply == QMessageBox::No)
+        return;
+      CLOG(INFO, "event") << "Homing interrupted by user while moving to home position";
+      break;
+    }
+    case HomingProprioceptive::ST_FAULT:
+    {
+      QMessageBox::information(this, "Fault present",
+                               "Please clear faults before quitting the application.");
       return;
-    CLOG(INFO, "event") << "Homing interrupted by user during optimizazion";
-    break;
+    }
+    default:
+    {
+      QMessageBox::StandardButton reply = QMessageBox::question(
+        this, "Acquisition in progress",
+        "The application is still acquiring data from the robot. If you quit now all "
+        "progress will be lost.\nAre you sure you want to abort the operation?",
+        QMessageBox::Yes | QMessageBox::No);
+      if (reply == QMessageBox::No)
+        return;
+      CLOG(INFO, "event") << "Homing interrupted by user during data acquisition";
+    }
   }
-  case HomingProprioceptive::ST_HOME:
-  {
-    QMessageBox::StandardButton reply =
-      QMessageBox::question(this, "Homing in progress",
-                            "The robot is moving to the homing position. If you "
-                            "quit now all progress will be lost.\nAre you sure "
-                            "you want to abort the operation?",
-                            QMessageBox::Yes | QMessageBox::No);
-    if (reply == QMessageBox::No)
-      return;
-    CLOG(INFO, "event") << "Homing interrupted by user while moving to home position";
-    break;
-  }
-  case HomingProprioceptive::ST_FAULT:
-  {
-    QMessageBox::information(this, "Fault present",
-                             "Please clear faults before quitting the application.");
-    return;
-  }
-  default:
-  {
-    QMessageBox::StandardButton reply = QMessageBox::question(
-      this, "Acquisition in progress",
-      "The application is still acquiring data from the robot. If you quit now all "
-      "progress will be lost.\nAre you sure you want to abort the operation?",
-      QMessageBox::Yes | QMessageBox::No);
-    if (reply == QMessageBox::No)
-      return;
-    CLOG(INFO, "event") << "Homing interrupted by user during data acquisition";
-  }
-  }
-
-  close_cmd_ = true;
-  ui->pushButton_enable->click();
+  app_.Stop(); // any --> ENABLED | IDLE --> IDLE
+  app_.Stop(); // ENABLED | IDLE --> IDLE
   emit homingFailed();
-  close();
+  hide();
+  CLOG(INFO, "event") << "Hide homing interface proprioceptive";
 }
 
 void HomingInterfaceProprioceptive::on_pushButton_done_clicked()
 {
   CLOG(TRACE, "event");
   emit homingSuccess();
-  close();
+  hide();
 }
 
 //--------- Private slots -----------------------------------------------------------//
@@ -317,33 +321,33 @@ void HomingInterfaceProprioceptive::handleStateChanged(const quint8& state)
 {
   switch (state)
   {
-  case HomingProprioceptive::ST_IDLE:
-    ui->pushButton_enable->setText(tr("Enable"));
-    ui->pushButton_start->setDisabled(true);
-    ui->pushButton_start->setText(tr("Start"));
-    ui->pushButton_clearFaults->setDisabled(true);
-    break;
-  case HomingProprioceptive::ST_ENABLED:
-  {
-    ui->pushButton_enable->setText(tr("Disable"));
-    ui->pushButton_start->setEnabled(true);
-    ui->pushButton_start->setText(tr("Start"));
-    ui->pushButton_clearFaults->setDisabled(true);
-    // Update initial torques now because unless enabled values are unknown
-    UpdateTorquesLimits();
-    break;
-  }
-  case HomingProprioceptive::ST_START_UP:
-    ui->pushButton_start->setText(tr("Stop"));
-    break;
-  case HomingProprioceptive::ST_FAULT:
-    ui->pushButton_enable->setDisabled(true);
-    ui->pushButton_enable->setText(tr("Enable"));
-    ui->pushButton_start->setDisabled(true);
-    ui->pushButton_clearFaults->setEnabled(true);
-    break;
-  default:
-    break;
+    case HomingProprioceptive::ST_IDLE:
+      ui->pushButton_enable->setText(tr("Enable"));
+      ui->pushButton_start->setDisabled(true);
+      ui->pushButton_start->setText(tr("Start"));
+      ui->pushButton_clearFaults->setDisabled(true);
+      break;
+    case HomingProprioceptive::ST_ENABLED:
+    {
+      ui->pushButton_enable->setText(tr("Disable"));
+      ui->pushButton_start->setEnabled(true);
+      ui->pushButton_start->setText(tr("Start"));
+      ui->pushButton_clearFaults->setDisabled(true);
+      // Update initial torques now because unless enabled values are unknown
+      UpdateTorquesLimits();
+      break;
+    }
+    case HomingProprioceptive::ST_START_UP:
+      ui->pushButton_start->setText(tr("Stop"));
+      break;
+    case HomingProprioceptive::ST_FAULT:
+      ui->pushButton_enable->setDisabled(true);
+      ui->pushButton_enable->setText(tr("Enable"));
+      ui->pushButton_start->setDisabled(true);
+      ui->pushButton_clearFaults->setEnabled(true);
+      break;
+    default:
+      break;
   }
 }
 
@@ -373,4 +377,10 @@ bool HomingInterfaceProprioceptive::ParseExtFile(HomingProprioceptiveHomeData* /
 {
   // Read external file and fill res struct
   return true; // dummy
+}
+
+void HomingInterfaceProprioceptive::Close()
+{
+  ext_close_cmd_ = true;
+  close();
 }

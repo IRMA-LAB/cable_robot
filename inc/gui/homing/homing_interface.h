@@ -7,19 +7,21 @@
 
 #include "robot/cablerobot.h"
 
-class HomingInterface : public QDialog
+class HomingInterface: public QDialog
 {
   Q_OBJECT
 
-public:
-  explicit HomingInterface(QWidget* parent, CableRobot* robot);
+ public:
+  HomingInterface(QWidget* parent, CableRobot* robot);
   virtual ~HomingInterface() = 0;
 
-signals:
+  virtual void Close() { close(); }
+
+ signals:
   void homingFailed() const;
   void homingSuccess() const;
 
-protected:
+ protected:
   CableRobot* robot_ptr_ = NULL;
 };
 

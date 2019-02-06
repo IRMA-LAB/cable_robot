@@ -20,7 +20,7 @@ AlwaysBreakTemplateDeclarations: MultiLine
 BinPackArguments: true
 BinPackParameters: true
 BraceWrapping: 
-  AfterClass: false
+  AfterClass: true
   AfterControlStatement: true
   AfterEnum: true
   AfterFunction: true
@@ -68,7 +68,7 @@ IncludeCategories:
   - Regex: '.*'
     Priority: 1
 IncludeIsMainRegex: '(Test)?$'
-IndentCaseLabels: false
+IndentCaseLabels: true
 IndentPPDirectives: None
 IndentWidth: 2
 IndentWrappedFunctionNames: false

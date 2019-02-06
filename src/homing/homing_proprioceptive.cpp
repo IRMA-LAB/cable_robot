@@ -10,8 +10,7 @@ HomingProprioceptiveStartData::HomingProprioceptiveStartData(
   const vect<qint16>& _init_torques, const vect<qint16>& _max_torques,
   const quint8 _num_meas)
   : init_torques(_init_torques), max_torques(_max_torques), num_meas(_num_meas)
-{
-}
+{}
 
 std::ostream& operator<<(std::ostream& stream, const HomingProprioceptiveStartData& data)
 {
@@ -52,6 +51,8 @@ HomingProprioceptive::HomingProprioceptive(QObject* parent, CableRobot* robot)
   // Initialize with default values
   num_meas_   = kNumMeasMin_;
   prev_state_ = ST_MAX_STATES;
+  ExternalEvent(ST_IDLE);
+  prev_state_ = ST_IDLE;
 
   // Setup connection to track robot status
   active_actuators_id_ = robot_ptr_->GetActiveMotorsID();
@@ -73,18 +74,18 @@ bool HomingProprioceptive::IsCollectingData()
   States current_state = static_cast<States>(GetCurrentState());
   switch (current_state)
   {
-  case ST_IDLE:
-    return false;
-  case ST_ENABLED:
-    return false;
-  case ST_FAULT:
-    return false;
-  case ST_OPTIMIZING:
-    return false;
-  case ST_HOME:
-    return false;
-  default:
-    return true;
+    case ST_IDLE:
+      return false;
+    case ST_ENABLED:
+      return false;
+    case ST_FAULT:
+      return false;
+    case ST_OPTIMIZING:
+      return false;
+    case ST_HOME:
+      return false;
+    default:
+      return true;
   }
 }
 
