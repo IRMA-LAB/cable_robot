@@ -32,6 +32,7 @@ void MainGUI::on_pushButton_reset_clicked()
 {
   CLOG(TRACE, "event");
   robot_ptr_->Reset();
+  ui->frame_manualControl->setEnabled(true);
 }
 
 void MainGUI::on_pushButton_calib_clicked()
@@ -89,10 +90,10 @@ void MainGUI::on_pushButton_startApp_clicked()
   if (!(ec_network_valid_ && rt_thread_running_))
     return;
 
-  //  ui->pushButton_homing->setDisabled(true);
-  //  ui->pushButton_calib->setDisabled(true);
-  //  ui->groupBox_app->setDisabled(true);
-  //  ui->frame_manualControl->setDisabled(true);
+  ui->pushButton_homing->setDisabled(true);
+  ui->pushButton_calib->setDisabled(true);
+  ui->groupBox_app->setDisabled(true);
+  ui->frame_manualControl->setDisabled(true);
 }
 
 void MainGUI::on_pushButton_enable_clicked()
@@ -315,40 +316,50 @@ void MainGUI::enableInterface(const bool op_outcome /*= false*/)
 void MainGUI::appendText2Browser(const QString& text)
 {
   if (text.contains("warning", Qt::CaseSensitivity::CaseInsensitive))
+  {
     CLOG(WARNING, "browser") << text;
+    ui->textBrowser_logs->append(
+      QString("<span style='color: orange'>%1</span>").arg(text));
+  }
   else if (text.contains("error", Qt::CaseSensitivity::CaseInsensitive))
+  {
     CLOG(ERROR, "browser") << text;
+    ui->textBrowser_logs->append(QString("<span style='color: red'>%1</span>").arg(text));
+  }
   else
+  {
     CLOG(INFO, "browser") << text;
-  ui->textBrowser_logs->append(text);
+    ui->textBrowser_logs->append(text);
+  }
 }
 
 void MainGUI::updateEcStatusLED(const Bitfield8& ec_status_flags)
 {
   switch (ec_status_flags.Count())
   {
-  case 3: // OK (all 3 checks passed)
-    ui->label_ec_status_led->setPixmap(
-      QPixmap(QString::fromUtf8(":/img/img/green_button.png")));
-    ec_network_valid_ = true;
-    break;
-  case 0: // failed at initialization (no checks passed)
-    ui->label_ec_status_led->setPixmap(
-      QPixmap(QString::fromUtf8(":/img/img/red_button.png")));
-    ec_network_valid_ = false;
-    break;
-  default: // something is wrong (some checks passed)
-    ui->label_ec_status_led->setPixmap(
-      QPixmap(QString::fromUtf8(":/img/img/yellow_button.png")));
-    ec_network_valid_ = false;
-    break;
+    case 3: // OK (all 3 checks passed)
+      ui->label_ec_status_led->setPixmap(
+        QPixmap(QString::fromUtf8(":/img/img/green_button.png")));
+      ec_network_valid_ = true;
+      break;
+    case 0: // failed at initialization (no checks passed)
+      ui->label_ec_status_led->setPixmap(
+        QPixmap(QString::fromUtf8(":/img/img/red_button.png")));
+      ec_network_valid_ = false;
+      break;
+    default: // something is wrong (some checks passed)
+      ui->label_ec_status_led->setPixmap(
+        QPixmap(QString::fromUtf8(":/img/img/yellow_button.png")));
+      ec_network_valid_ = false;
+      break;
   }
+  ui->pushButton_reset->setDisabled(ec_network_valid_ && rt_thread_running_);
 }
 
 void MainGUI::updateRtThreadStatusLED(const bool active)
 {
   rt_thread_running_ = active;
-  ui->pushButton_reset->setDisabled(rt_thread_running_);
+  ui->pushButton_reset->setDisabled(ec_network_valid_ && rt_thread_running_);
   ui->label_rt_thread_status_led->setPixmap(QPixmap(QString::fromUtf8(
     active ? ":/img/img/green_button.png" : ":/img/img/red_button.png")));
 
@@ -434,39 +445,39 @@ void MainGUI::UpdateDriveStatusTable(const grabec::GSWDriveInPdos& status)
   std::string op_mode_str;
   switch (status.display_op_mode)
   {
-  case grabec::NONE:
-    op_mode_str = "NONE";
-    break;
-  case grabec::PROFILE_POSITION:
-    op_mode_str = "PROFILE_POSITION";
-    break;
-  case grabec::VELOCITY_MODE:
-    op_mode_str = "VELOCITY_MODE";
-    break;
-  case grabec::PROFILE_VELOCITY:
-    op_mode_str = "PROFILE_VELOCITY";
-    break;
-  case grabec::TORQUE_PROFILE:
-    op_mode_str = "TORQUE_PROFILE";
-    break;
-  case grabec::HOMING:
-    op_mode_str = "HOMING";
-    break;
-  case grabec::INTERPOLATED_POSITION:
-    op_mode_str = "INTERPOLATED_POSITION";
-    break;
-  case grabec::CYCLIC_POSITION:
-    op_mode_str = "CYCLIC_SYNC_POSITION";
-    break;
-  case grabec::CYCLIC_VELOCITY:
-    op_mode_str = "CYCLIC_SYNC_VELOCITY";
-    break;
-  case grabec::CYCLIC_TORQUE:
-    op_mode_str = "CYCLIC_SYNC_TORQUE";
-    break;
-  default:
-    op_mode_str = "UNKNOWN: " + std::to_string(status.display_op_mode);
-    break;
+    case grabec::NONE:
+      op_mode_str = "NONE";
+      break;
+    case grabec::PROFILE_POSITION:
+      op_mode_str = "PROFILE_POSITION";
+      break;
+    case grabec::VELOCITY_MODE:
+      op_mode_str = "VELOCITY_MODE";
+      break;
+    case grabec::PROFILE_VELOCITY:
+      op_mode_str = "PROFILE_VELOCITY";
+      break;
+    case grabec::TORQUE_PROFILE:
+      op_mode_str = "TORQUE_PROFILE";
+      break;
+    case grabec::HOMING:
+      op_mode_str = "HOMING";
+      break;
+    case grabec::INTERPOLATED_POSITION:
+      op_mode_str = "INTERPOLATED_POSITION";
+      break;
+    case grabec::CYCLIC_POSITION:
+      op_mode_str = "CYCLIC_SYNC_POSITION";
+      break;
+    case grabec::CYCLIC_VELOCITY:
+      op_mode_str = "CYCLIC_SYNC_VELOCITY";
+      break;
+    case grabec::CYCLIC_TORQUE:
+      op_mode_str = "CYCLIC_SYNC_TORQUE";
+      break;
+    default:
+      op_mode_str = "UNKNOWN: " + std::to_string(status.display_op_mode);
+      break;
   }
   ui->table_inputPdos->item(1, 0)->setData(Qt::DisplayRole, op_mode_str.c_str());
   ui->table_inputPdos->item(2, 0)->setData(Qt::DisplayRole, status.pos_actual_value);
@@ -585,14 +596,14 @@ ControlMode MainGUI::DriveOpMode2CtrlMode(const int8_t drive_op_mode)
 {
   switch (drive_op_mode)
   {
-  case grabec::CYCLIC_POSITION:
-    return ControlMode::CABLE_LENGTH;
-  case grabec::CYCLIC_VELOCITY:
-    return ControlMode::MOTOR_SPEED;
-  case grabec::CYCLIC_TORQUE:
-    return ControlMode::MOTOR_TORQUE;
-  default:
-    return ControlMode::NONE;
+    case grabec::CYCLIC_POSITION:
+      return ControlMode::CABLE_LENGTH;
+    case grabec::CYCLIC_VELOCITY:
+      return ControlMode::MOTOR_SPEED;
+    case grabec::CYCLIC_TORQUE:
+      return ControlMode::MOTOR_TORQUE;
+    default:
+      return ControlMode::NONE;
   }
 }
 

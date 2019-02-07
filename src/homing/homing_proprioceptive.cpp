@@ -14,22 +14,25 @@ HomingProprioceptiveStartData::HomingProprioceptiveStartData(
 
 std::ostream& operator<<(std::ostream& stream, const HomingProprioceptiveStartData& data)
 {
-  stream << "initial torques=[ ";
-  for (const qint16 value : data.init_torques)
-    stream << value << " ";
-  stream << " ]\tmaximum torques=[ ";
+  stream << "initial torques = [ ";
+  if (data.init_torques.empty())
+    stream << "default";
+  else
+    for (const qint16 value : data.init_torques)
+      stream << value << " ";
+  stream << " ], maximum torques = [ ";
   for (const qint16 value : data.max_torques)
     stream << value << " ";
-  stream << " ]\tnumber of measurements=" << data.num_meas;
+  stream << " ], number of measurements = " << static_cast<int>(data.num_meas);
   return stream;
 }
 
 std::ostream& operator<<(std::ostream& stream, const HomingProprioceptiveHomeData& data)
 {
-  stream << "initial cable lengths=[ ";
+  stream << "initial cable lengths = [ ";
   for (const double& value : data.init_lengths)
     stream << value << " ";
-  stream << " ]\tinitial pulley angles=[ ";
+  stream << " ], initial pulley angles = [ ";
   for (const double& value : data.init_angles)
     stream << value << " ";
   stream << " ]";
@@ -187,14 +190,14 @@ void HomingProprioceptive::FaultTrigger()
   CLOG(TRACE, "event");
   // clang-format off
   BEGIN_TRANSITION_MAP			              			// - Current State -
-      TRANSITION_MAP_ENTRY (ST_FAULT)                               // ST_IDLE
-      TRANSITION_MAP_ENTRY (ST_FAULT)                               // ST_ENABLED
-      TRANSITION_MAP_ENTRY (ST_FAULT)                               // ST_START_UP
-      TRANSITION_MAP_ENTRY (ST_FAULT)                               // ST_SWITCH_CABLE
-      TRANSITION_MAP_ENTRY (ST_FAULT)                               // ST_COILING
-      TRANSITION_MAP_ENTRY (ST_FAULT)                               // ST_UNCOILING
-      TRANSITION_MAP_ENTRY (ST_FAULT)                               // ST_OPTIMIZING
-      TRANSITION_MAP_ENTRY (ST_FAULT)                               // ST_HOME
+      TRANSITION_MAP_ENTRY (ST_FAULT)           // ST_IDLE
+      TRANSITION_MAP_ENTRY (ST_FAULT)           // ST_ENABLED
+      TRANSITION_MAP_ENTRY (ST_FAULT)           // ST_START_UP
+      TRANSITION_MAP_ENTRY (ST_FAULT)           // ST_SWITCH_CABLE
+      TRANSITION_MAP_ENTRY (ST_FAULT)           // ST_COILING
+      TRANSITION_MAP_ENTRY (ST_FAULT)           // ST_UNCOILING
+      TRANSITION_MAP_ENTRY (ST_FAULT)           // ST_OPTIMIZING
+      TRANSITION_MAP_ENTRY (ST_FAULT)           // ST_HOME
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_FAULT
   END_TRANSITION_MAP(NULL)
   // clang-format on
@@ -270,6 +273,7 @@ STATE_DEFINE(HomingProprioceptive, Idle, NoEventData)
 
 GUARD_DEFINE(HomingProprioceptive, GuardEnabled, NoEventData)
 {
+  robot_ptr_->SetController(NULL);
   robot_ptr_->EnableMotors();
 
   grabrt::ThreadClock clock(grabrt::Sec2NanoSec(kCycleWaitTimeSec_));
@@ -308,9 +312,7 @@ STATE_DEFINE(HomingProprioceptive, StartUp, HomingProprioceptiveStartData)
   torques_.resize(num_meas_);
   grabrt::ThreadClock clock(grabrt::Sec2NanoSec(kCycleWaitTimeSec_));
 
-  pthread_mutex_lock(&robot_ptr_->Mutex());
   robot_ptr_->SetController(&controller_);
-  pthread_mutex_unlock(&robot_ptr_->Mutex());
   for (size_t i = 0; i < active_actuators_id_.size(); ++i)
   {
     qmutex_.lock();
@@ -325,24 +327,31 @@ STATE_DEFINE(HomingProprioceptive, StartUp, HomingProprioceptiveStartData)
       // Wait until all motors reached user-given initial torque setpoint
       pthread_mutex_lock(&robot_ptr_->Mutex());
       controller_.SetMotorID(active_actuators_id_[i]);
+      controller_.SetMode(ControlMode::MOTOR_TORQUE);
       controller_.SetMotorTorqueTarget(init_torques_.back()); //  = data->init_torques[i]
       pthread_mutex_unlock(&robot_ptr_->Mutex());
       clock.Reset();
       timespec t0 = clock.GetCurrentTime();
       while (1)
       {
+        QCoreApplication::processEvents();
         pthread_mutex_lock(&robot_ptr_->Mutex());
         if (controller_.MotorTorqueTargetReached(current_torque))
+        {
+          pthread_mutex_unlock(&robot_ptr_->Mutex());
           break;
+        }
         pthread_mutex_unlock(&robot_ptr_->Mutex());
         qmutex_.lock();
         current_torque = actuators_status_[i].motor_torque;
         qmutex_.unlock();
         if (clock.Elapsed(t0) > kMaxWaitTimeSec_)
         {
+          robot_ptr_->SetController(NULL);
           emit printToQConsole(
             "WARNING: Start up phase is taking too long: operation aborted");
           InternalEvent(ST_ENABLED);
+          return;
         }
         clock.WaitUntilNext();
       }
@@ -504,8 +513,6 @@ STATE_DEFINE(HomingProprioceptive, Fault, NoEventData)
 {
   PrintStateTransition(prev_state_, ST_FAULT);
   prev_state_ = ST_FAULT;
-
-  robot_ptr_->DisableMotors();
 }
 
 //--------- Private functions --------------------------------------------------------//

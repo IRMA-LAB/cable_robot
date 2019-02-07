@@ -101,13 +101,13 @@
       <number>-800</number>
      </property>
      <property name="maximum">
-      <number>-300</number>
+      <number>0</number>
      </property>
      <property name="singleStep">
       <number>20</number>
      </property>
      <property name="value">
-      <number>-300</number>
+      <number>-100</number>
      </property>
     </widget>
    </item>

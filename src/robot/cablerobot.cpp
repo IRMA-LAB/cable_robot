@@ -142,9 +142,8 @@ void CableRobot::EnableMotor(const id_t motor_id)
 void CableRobot::EnableMotors()
 {
   for (Actuator* actuator_ptr : active_actuators_ptrs_)
-  {
-    actuator_ptr->enable();
-  }
+    if (!actuator_ptr->IsEnabled())
+      actuator_ptr->enable();
 }
 
 void CableRobot::EnableMotors(const vect<id_t>& motors_id)
@@ -262,10 +261,10 @@ void CableRobot::enterCalibrationMode()
   // clang-format off
   BEGIN_TRANSITION_MAP			              			// - Current State -
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_IDLE
-      TRANSITION_MAP_ENTRY (ST_CALIBRATION)                    // ST_ENABLED
+      TRANSITION_MAP_ENTRY (ST_CALIBRATION)     // ST_ENABLED
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_CALIBRATION
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_HOMING
-      TRANSITION_MAP_ENTRY (ST_CALIBRATION)                    // ST_READY
+      TRANSITION_MAP_ENTRY (ST_CALIBRATION)     // ST_READY
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_OPERATIONAL
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_ERROR
   END_TRANSITION_MAP(NULL)
@@ -278,10 +277,10 @@ void CableRobot::enterHomingMode()
   // clang-format off
   BEGIN_TRANSITION_MAP			              			// - Current State -
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_IDLE
-      TRANSITION_MAP_ENTRY (ST_HOMING)                            // ST_ENABLED
+      TRANSITION_MAP_ENTRY (ST_HOMING)          // ST_ENABLED
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_CALIBRATION
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_HOMING
-      TRANSITION_MAP_ENTRY (ST_HOMING)                            // ST_READY
+      TRANSITION_MAP_ENTRY (ST_HOMING)          // ST_READY
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_OPERATIONAL
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_ERROR
   END_TRANSITION_MAP(NULL)
@@ -466,21 +465,26 @@ void CableRobot::EcPrintCb(const std::string& msg, const char color /* = 'w' */)
 {
   switch (color)
   {
-  case 'r':
-    emit printToQConsole(QString("<span style='color: red'>%1</span>").arg(msg.c_str()));
-    break;
-  case 'y':
-    emit printToQConsole(
-      QString("<span style='color: orange'>%1</span>").arg(msg.c_str()));
-    break;
-  default:
-    emit printToQConsole(msg.c_str());
-    break;
+    case 'r':
+      if (msg.find("ERROR:") == std::string::npos)
+        emit printToQConsole(QString("ERROR: %1").arg(msg.c_str()));
+      else
+        emit printToQConsole(msg.c_str());
+      break;
+    case 'y':
+      if (msg.find("WARNING:") == std::string::npos)
+        emit printToQConsole(QString("WARNING: %1").arg(msg.c_str()));
+      else
+        emit printToQConsole(msg.c_str());
+      break;
+    default:
+      emit printToQConsole(msg.c_str());
+      break;
   }
 }
 
 void CableRobot::EcRtThreadStatusChanged(const bool active)
-{  
+{
   rt_thread_active_ = active;
   emit rtThreadStatusChanged(active);
 }
@@ -511,20 +515,20 @@ void CableRobot::ControlStep()
 
     switch (ctrl_action.ctrl_mode)
     {
-    case CABLE_LENGTH:
-      actuators_ptrs_[ctrl_action.motor_id]->SetCableLength(ctrl_action.cable_length);
-      break;
-    case MOTOR_POSITION:
-      actuators_ptrs_[ctrl_action.motor_id]->SetMotorPos(ctrl_action.motor_position);
-      break;
-    case MOTOR_SPEED:
-      actuators_ptrs_[ctrl_action.motor_id]->SetMotorSpeed(ctrl_action.motor_speed);
-      break;
-    case MOTOR_TORQUE:
-      actuators_ptrs_[ctrl_action.motor_id]->SetMotorTorque(ctrl_action.motor_torque);
-      break;
-    case NONE:
-      break;
+      case CABLE_LENGTH:
+        actuators_ptrs_[ctrl_action.motor_id]->SetCableLength(ctrl_action.cable_length);
+        break;
+      case MOTOR_POSITION:
+        actuators_ptrs_[ctrl_action.motor_id]->SetMotorPos(ctrl_action.motor_position);
+        break;
+      case MOTOR_SPEED:
+        actuators_ptrs_[ctrl_action.motor_id]->SetMotorSpeed(ctrl_action.motor_speed);
+        break;
+      case MOTOR_TORQUE:
+        actuators_ptrs_[ctrl_action.motor_id]->SetMotorTorque(ctrl_action.motor_torque);
+        break;
+      case NONE:
+        break;
     }
   }
 }

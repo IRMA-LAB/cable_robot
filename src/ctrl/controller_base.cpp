@@ -13,9 +13,7 @@ ControllerBase::ControllerBase(const vect<id_t>& motors_id) : motors_id_(motors_
 
 ControllerBase::~ControllerBase() {}
 
-////////////////////////////////////////////
-/// Public functions
-////////////////////////////////////////////
+//--------- Public functions ---------------------------------------------------------//
 
 void ControllerBase::SetMotorID(const id_t motor_id)
 {
@@ -26,7 +24,7 @@ void ControllerBase::SetMotorID(const id_t motor_id)
   modes_.reserve(1);
 }
 
-void ControllerBase::SetMotorsID(const vect<id_t> &motors_id)
+void ControllerBase::SetMotorsID(const vect<id_t>& motors_id)
 {
   motors_id_.clear();
   modes_.clear();
@@ -38,8 +36,9 @@ void ControllerBase::SetMotorsID(const vect<id_t> &motors_id)
 void ControllerBase::SetMode(const ControlMode mode)
 {
   if (motors_id_.empty())
-    std::cerr << "[ControllerBase] WARNING: no motor ID defined: cannot set motor "
-                 "operational mode" << std::endl;
+    PrintColor(
+      'y',
+      "[ControllerBase] WARNING: no motor ID defined: cannot set motor operational mode");
   for (size_t i = 0; i < motors_id_.size(); i++)
     modes_[i] = mode;
 }
@@ -47,8 +46,9 @@ void ControllerBase::SetMode(const ControlMode mode)
 void ControllerBase::SetMode(const id_t motor_id, const ControlMode mode)
 {
   if (motors_id_.empty())
-    std::cerr << "[ControllerBase] WARNING: no motor ID defined: cannot set motor "
-                 "operational mode" << std::endl;
+    PrintColor(
+      'y',
+      "[ControllerBase] WARNING: no motor ID defined: cannot set motor operational mode");
   for (size_t i = 0; i < motors_id_.size(); i++)
   {
     if (motors_id_[i] == motor_id)

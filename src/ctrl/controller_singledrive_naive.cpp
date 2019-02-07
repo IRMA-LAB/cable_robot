@@ -8,9 +8,7 @@ ControllerSingleDriveNaive::ControllerSingleDriveNaive(const id_t motor_id,
   abs_delta_torque_ = period_sec_ * kAbsDeltaTorquePerSec_; // delta per cycle
 }
 
-////////////////////////////////////////////////////////////////////////////
-//// Public functions
-////////////////////////////////////////////////////////////////////////////
+//--------- Public functions ---------------------------------------------------------//
 
 void ControllerSingleDriveNaive::SetCableLenTarget(const double target)
 {
@@ -36,7 +34,7 @@ void ControllerSingleDriveNaive::SetMotorSpeedTarget(const int32_t target)
 void ControllerSingleDriveNaive::SetMotorTorqueTarget(const int16_t target)
 {
   Clear();
-  torque_target_ = static_cast<double>(target);
+  torque_target_      = static_cast<double>(target);
   torque_target_true_ = target;
   target_flags_.Set(TORQUE);
 }
@@ -101,60 +99,58 @@ vect<ControlAction> ControllerSingleDriveNaive::CalcCableSetPoint(const grabcdpr
 {
   ControlAction res;
   res.ctrl_mode = modes_[0];
-  res.motor_id = motors_id_[0];
+  res.motor_id  = motors_id_[0];
   switch (res.ctrl_mode)
   {
-  case CABLE_LENGTH:
-    if (target_flags_.CheckBit(LENGTH))
-    {
-      if (change_length_target_)
-        length_target_ += delta_length_;
-      res.cable_length = length_target_;
-    }
-    else
-      res.ctrl_mode = NONE;
-    break;
-  case MOTOR_POSITION:
-    if (target_flags_.CheckBit(POSITION))
-      res.motor_position = pos_target_true_;
-    else
-      res.ctrl_mode = NONE;
-    break;
-  case MOTOR_SPEED:
-    if (target_flags_.CheckBit(SPEED))
-      res.motor_speed = speed_target_true_;
-    else
-      res.ctrl_mode = NONE;
-    break;
-  case MOTOR_TORQUE:
-    if (target_flags_.CheckBit(TORQUE))
-    {
-      if (change_torque_target_)
+    case CABLE_LENGTH:
+      if (target_flags_.CheckBit(LENGTH))
       {
-        torque_target_ += delta_torque_;
-        torque_target_true_ = static_cast<int16_t>(round(torque_target_));
-        if (torque_target_true_ >= 0)
-          torque_target_true_ =
-            std::min(torque_target_true_, static_cast<int16_t>(kAbsMaxTorque_));
-        else
-          torque_target_true_ =
-            std::max(torque_target_true_, static_cast<int16_t>(-kAbsMaxTorque_));
+        if (change_length_target_)
+          length_target_ += delta_length_;
+        res.cable_length = length_target_;
       }
-      res.motor_torque = torque_target_true_;
-    }
-    else
+      else
+        res.ctrl_mode = NONE;
+      break;
+    case MOTOR_POSITION:
+      if (target_flags_.CheckBit(POSITION))
+        res.motor_position = pos_target_true_;
+      else
+        res.ctrl_mode = NONE;
+      break;
+    case MOTOR_SPEED:
+      if (target_flags_.CheckBit(SPEED))
+        res.motor_speed = speed_target_true_;
+      else
+        res.ctrl_mode = NONE;
+      break;
+    case MOTOR_TORQUE:
+      if (target_flags_.CheckBit(TORQUE))
+      {
+        if (change_torque_target_)
+        {
+          torque_target_ += delta_torque_;
+          torque_target_true_ = static_cast<int16_t>(round(torque_target_));
+          if (torque_target_true_ >= 0)
+            torque_target_true_ =
+              std::min(torque_target_true_, static_cast<int16_t>(kAbsMaxTorque_));
+          else
+            torque_target_true_ =
+              std::max(torque_target_true_, static_cast<int16_t>(-kAbsMaxTorque_));
+        }
+        res.motor_torque = torque_target_true_;
+      }
+      else
+        res.ctrl_mode = NONE;
+      break;
+    case NONE:
       res.ctrl_mode = NONE;
-    break;
-  case NONE:
-    res.ctrl_mode = NONE;
-    break;
+      break;
   }
   return vect<ControlAction>(1, res);
 }
 
-////////////////////////////////////////////////////////////////////////////
-//// Private functions
-////////////////////////////////////////////////////////////////////////////
+//--------- Private functions --------------------------------------------------------//
 
 void ControllerSingleDriveNaive::Clear()
 {
@@ -162,5 +158,5 @@ void ControllerSingleDriveNaive::Clear()
 
   change_length_target_ = false;
   change_torque_target_ = false;
-  delta_length_ = 0.0;
+  delta_length_         = 0.0;
 }

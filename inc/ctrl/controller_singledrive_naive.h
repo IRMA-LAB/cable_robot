@@ -15,7 +15,7 @@ template <typename T> T operator*(const Sign& sign, const T value)
   return static_cast<T>(sign) * value;
 }
 
-class ControllerSingleDriveNaive : public ControllerBase
+class ControllerSingleDriveNaive: public ControllerBase
 {
 public:
   ControllerSingleDriveNaive(): ControllerBase() { Clear(); }
@@ -36,19 +36,19 @@ public:
   void ScaleMotorSpeed(const double scale);
   void MotorTorqueIncrement(const bool active, const Sign sign = Sign::POS);
 
-  bool CableLenTargetReached(const double target);
-  bool MotorPosTargetReached(const int32_t target);
-  bool MotorSpeedTargetReached(const int32_t target);
-  bool MotorTorqueTargetReached(const int16_t target);
+  bool CableLenTargetReached(const double current_value);
+  bool MotorPosTargetReached(const int32_t current_value);
+  bool MotorSpeedTargetReached(const int32_t current_value);
+  bool MotorTorqueTargetReached(const int16_t current_value);
 
   vect<ControlAction> CalcCableSetPoint(const grabcdpr::Vars& robot_status) override;
 
-private:
-  static constexpr double kAbsDeltaLengthMicroPerSec_ = 0.005; // [m/s]
-  static constexpr double kAbsDeltaLengthPerSec_ = 0.02;  // [m/s]
-  static constexpr int32_t kAbsMaxSpeed_ = 800000;  // [counts/s]
-  static constexpr int16_t kAbsDeltaTorquePerSec_ = 20;  // [nominal points]
-  static constexpr int16_t kAbsMaxTorque_ = 600; // [nominal points]
+ private:
+  static constexpr double kAbsDeltaLengthMicroPerSec_ = 0.005;  // [m/s]
+  static constexpr double kAbsDeltaLengthPerSec_      = 0.02;   // [m/s]
+  static constexpr int32_t kAbsMaxSpeed_              = 800000; // [counts/s]
+  static constexpr int16_t kAbsDeltaTorquePerSec_     = 20;     // [nominal points]
+  static constexpr int16_t kAbsMaxTorque_             = 600;    // [nominal points]
 
   enum BitPosition
   {

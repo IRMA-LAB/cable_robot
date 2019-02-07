@@ -66,10 +66,10 @@ void Actuator::faultTrigger()
   if (!active_)
     return;
   // clang-format off
-  BEGIN_TRANSITION_MAP                                       // - Current State -
+  BEGIN_TRANSITION_MAP                              // - Current State -
     TRANSITION_MAP_ENTRY(ST_FAULT)                  // ST_IDLE
     TRANSITION_MAP_ENTRY(ST_FAULT)                  // ST_ENABLED
-    TRANSITION_MAP_ENTRY(EVENT_IGNORED)      // ST_FAULT
+    TRANSITION_MAP_ENTRY(EVENT_IGNORED)             // ST_FAULT
   END_TRANSITION_MAP(NULL)
   // clang-format on
 }

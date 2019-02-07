@@ -19,7 +19,7 @@ class HomingInterfaceProprioceptive: public HomingInterface {
 
  public:
   explicit HomingInterfaceProprioceptive(QWidget* parent, CableRobot* robot);
-  ~HomingInterfaceProprioceptive();
+  ~HomingInterfaceProprioceptive() override final;
 
  private slots:
   void closeEvent(QCloseEvent* event) override final;

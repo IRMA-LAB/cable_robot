@@ -104,6 +104,7 @@ void HomingInterfaceProprioceptive::on_pushButton_enable_clicked()
 void HomingInterfaceProprioceptive::on_pushButton_clearFaults_clicked()
 {
   CLOG(TRACE, "event");
+  ui->pushButton_start->setChecked(false);
   app_.FaultReset();
 }
 
@@ -132,6 +133,7 @@ void HomingInterfaceProprioceptive::on_spinBox_maxTorque_valueChanged(int value)
 
 void HomingInterfaceProprioceptive::on_pushButton_start_clicked()
 {
+  ui->pushButton_start->setChecked(false);
   if (app_.IsCollectingData())
   {
     QMessageBox::StandardButton reply =
@@ -283,12 +285,21 @@ void HomingInterfaceProprioceptive::on_pushButton_done_clicked()
 void HomingInterfaceProprioceptive::appendText2Browser(const QString& text)
 {
   if (text.contains("warning", Qt::CaseSensitivity::CaseInsensitive))
+  {
     CLOG(WARNING, "browser") << text;
+    ui->textBrowser_logs->append(
+      QString("<span style='color: orange'>%1</span>").arg(text));
+  }
   else if (text.contains("error", Qt::CaseSensitivity::CaseInsensitive))
+  {
     CLOG(ERROR, "browser") << text;
+    ui->textBrowser_logs->append(QString("<span style='color: red'>%1</span>").arg(text));
+  }
   else
+  {
     CLOG(INFO, "browser") << text;
-  ui->textBrowser_logs->append(text);
+    ui->textBrowser_logs->append(text);
+  }
 }
 
 void HomingInterfaceProprioceptive::updateAcquisitionProgress(const int value)
