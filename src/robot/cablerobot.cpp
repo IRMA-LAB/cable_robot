@@ -16,7 +16,7 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
   PrintStateTransition(prev_state_, ST_IDLE);
   prev_state_ = ST_IDLE;
 
-  status_.platform = &platform_;
+  cdpr_status_.platform = &platform_;
 
   // Setup EtherCAT network
   max_shutdown_wait_time_sec_ = 3.0; // [sec]
@@ -30,7 +30,7 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
   for (uint i = 0; i < config.actuators.size(); i++)
   {
     grabcdpr::CableVars cable;
-    status_.cables.push_back(cable);
+    cdpr_status_.cables.push_back(cable);
     actuators_ptrs_.push_back(new Actuator(i, slave_pos++, config.actuators[i], this));
     slaves_ptrs_.push_back(actuators_ptrs_[i]->GetWinch().GetServo());
     if (config.actuators[i].active)
@@ -46,13 +46,14 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
     num_domain_elements_ += slave_ptr->GetDomainEntriesNum();
 
   // Setup data logging
-  meas_.resize(active_actuators_ptrs_.size());
+  meas_.resize(active_actuators_id_.size());
   connect(this, SIGNAL(sendMsg(QByteArray)), &log_buffer_, SLOT(collectMsg(QByteArray)));
   log_buffer_.start();
 
   // Setup timers for components' status update
   motor_status_timer_ = new QTimer(this);
   connect(motor_status_timer_, SIGNAL(timeout()), this, SLOT(emitMotorStatus()));
+  active_actuators_status_.resize(active_actuators_id_.size());
   actuator_status_timer_ = new QTimer(this);
   connect(actuator_status_timer_, SIGNAL(timeout()), this, SLOT(emitActuatorStatus()));
 }
@@ -228,7 +229,7 @@ bool CableRobot::GoHome()
   }
   emit printToQConsole("Moving to home position...");
 
-  ControllerSingleDriveNaive controller;
+  ControllerSingleDriveNaive controller(GetRtCycleTimeNsec());
   // temporarly switch to local controller for moving to home pos
   ControllerBase* prev_controller = controller_;
   controller_                     = &controller;
@@ -430,21 +431,19 @@ void CableRobot::emitMotorStatus()
 
 void CableRobot::emitActuatorStatus()
 {
-  static uint8_t counter = 0;
+  static size_t idx = 0;
 
   if (!(ec_network_valid_ && rt_thread_active_))
     return;
 
-  id_t id = active_actuators_id_[counter++];
   if (pthread_mutex_trylock(&mutex_) != 0)
     return;
-
-  ActuatorStatus actuator_status(actuators_ptrs_[id]->GetStatus());
+  active_actuators_status_[idx] = active_actuators_ptrs_[idx]->GetStatus();
   pthread_mutex_unlock(&mutex_);
 
-  emit actuatorStatus(id, actuator_status);
-  if (counter >= active_actuators_id_.size())
-    counter = 0;
+  emit actuatorStatus(active_actuators_status_[idx++]);
+  if (idx >= active_actuators_id_.size())
+    idx = 0;
 }
 
 void CableRobot::StopTimers()
@@ -507,8 +506,12 @@ void CableRobot::EcEmergencyFun() {}
 
 void CableRobot::ControlStep()
 {
-  std::vector<ControlAction> res = controller_->CalcCableSetPoint(status_);
-  for (ControlAction& ctrl_action : res)
+  for (size_t i = 0; i < active_actuators_status_.size(); i++)
+    active_actuators_status_[i] = active_actuators_ptrs_[i]->GetStatus();
+
+  std::vector<ControlAction> ctrl_actions =
+    controller_->CalcCtrlActions(cdpr_status_, active_actuators_status_);
+  for (const ControlAction& ctrl_action : ctrl_actions)
   {
     if (!actuators_ptrs_[ctrl_action.motor_id]->IsEnabled()) // safety check
       continue;

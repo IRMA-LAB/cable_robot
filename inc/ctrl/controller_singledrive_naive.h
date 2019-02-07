@@ -1,8 +1,10 @@
 #ifndef CONTROLLER_BASIC_H
 #define CONTROLLER_BASIC_H
 
-#include "grabcommon.h"
+#include "lib/grab_common/pid/pid.h"
+
 #include "ctrl/controller_base.h"
+#include "grabcommon.h"
 
 enum class Sign : int16_t
 {
@@ -17,8 +19,8 @@ template <typename T> T operator*(const Sign& sign, const T value)
 
 class ControllerSingleDriveNaive: public ControllerBase
 {
-public:
-  ControllerSingleDriveNaive(): ControllerBase() { Clear(); }
+ public:
+  ControllerSingleDriveNaive(const uint32_t period_nsec);
   ControllerSingleDriveNaive(const id_t motor_id, const uint32_t period_nsec);
 
   void SetCableLenTarget(const double target);
@@ -41,7 +43,10 @@ public:
   bool MotorSpeedTargetReached(const int32_t current_value);
   bool MotorTorqueTargetReached(const int16_t current_value);
 
-  vect<ControlAction> CalcCableSetPoint(const grabcdpr::Vars& robot_status) override;
+  int16_t CalcMotorTorque(const vect<ActuatorStatus>& actuators_status);
+  vect<ControlAction>
+  CalcCtrlActions(const grabcdpr::Vars& robot_status,
+                  const vect<ActuatorStatus>& actuators_status) override;
 
  private:
   static constexpr double kAbsDeltaLengthMicroPerSec_ = 0.005;  // [m/s]
@@ -79,6 +84,11 @@ public:
   double delta_speed_;
   double abs_delta_torque_;
   double delta_torque_;
+
+  PID torque_pid_;
+  static constexpr double Kp_ = 0.5;
+  static constexpr double Ki_ = 0.0;
+  static constexpr double Kd_ = 0.5;
 
   void Clear();
 };

@@ -1,8 +1,18 @@
 #include "ctrl/controller_singledrive_naive.h"
 
+
+ControllerSingleDriveNaive::ControllerSingleDriveNaive(const uint32_t period_nsec)
+  : ControllerBase(), period_sec_(period_nsec * 0.000000001),
+    torque_pid_(period_sec_, 0, -kAbsMaxTorque_, Kp_, Ki_, Kd_)
+{
+  Clear();
+  abs_delta_torque_ = period_sec_ * kAbsDeltaTorquePerSec_; // delta per cycle
+}
+
 ControllerSingleDriveNaive::ControllerSingleDriveNaive(const id_t motor_id,
                                                        const uint32_t period_nsec)
-  : ControllerBase(vect<id_t>(1, motor_id)), period_sec_(period_nsec * 0.000000001)
+  : ControllerBase(vect<id_t>(1, motor_id)), period_sec_(period_nsec * 0.000000001),
+    torque_pid_(period_sec_, 0, -kAbsMaxTorque_, Kp_, Ki_, Kd_)
 {
   Clear();
   abs_delta_torque_ = period_sec_ * kAbsDeltaTorquePerSec_; // delta per cycle
@@ -95,7 +105,29 @@ bool ControllerSingleDriveNaive::MotorTorqueTargetReached(const int16_t current_
   return abs(torque_target_true_ - current_value) < tol;
 }
 
-vect<ControlAction> ControllerSingleDriveNaive::CalcCableSetPoint(const grabcdpr::Vars&)
+int16_t
+ControllerSingleDriveNaive::CalcMotorTorque(const vect<ActuatorStatus>& actuators_status)
+{
+  double motor_torque = torque_target_;
+  for (const ActuatorStatus& actuator_status : actuators_status)
+  {
+    if (actuator_status.id != motors_id_[0])
+      continue;
+    double current_motor_torque = static_cast<double>(actuator_status.motor_torque);
+    motor_torque =
+      current_motor_torque + torque_pid_.calculate(torque_target_, current_motor_torque);
+//    printf("%f/%f --> %d/%d\n", current_motor_torque, torque_target_,
+//           static_cast<int16_t>(round(motor_torque)), torque_target_true_);
+    printf("%d\n%d ", actuator_status.motor_torque, torque_target_true_);
+    break;
+  }
+  //  return static_cast<int16_t>(round(motor_torque));
+  return torque_target_true_;
+}
+
+vect<ControlAction>
+ControllerSingleDriveNaive::CalcCtrlActions(const grabcdpr::Vars&,
+                                            const vect<ActuatorStatus>& actuators_status)
 {
   ControlAction res;
   res.ctrl_mode = modes_[0];
@@ -138,7 +170,7 @@ vect<ControlAction> ControllerSingleDriveNaive::CalcCableSetPoint(const grabcdpr
             torque_target_true_ =
               std::max(torque_target_true_, static_cast<int16_t>(-kAbsMaxTorque_));
         }
-        res.motor_torque = torque_target_true_;
+        res.motor_torque = CalcMotorTorque(actuators_status);
       }
       else
         res.ctrl_mode = NONE;

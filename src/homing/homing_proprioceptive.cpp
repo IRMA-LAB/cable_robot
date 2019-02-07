@@ -49,7 +49,8 @@ constexpr double HomingProprioceptive::kCutoffFreq_;
 constexpr char* HomingProprioceptive::kStatesStr[];
 
 HomingProprioceptive::HomingProprioceptive(QObject* parent, CableRobot* robot)
-  : QObject(parent), StateMachine(ST_MAX_STATES), robot_ptr_(robot)
+  : QObject(parent), StateMachine(ST_MAX_STATES), robot_ptr_(robot),
+    controller_(robot->GetRtCycleTimeNsec())
 {
   // Initialize with default values
   num_meas_   = kNumMeasMin_;
@@ -60,14 +61,14 @@ HomingProprioceptive::HomingProprioceptive(QObject* parent, CableRobot* robot)
   // Setup connection to track robot status
   active_actuators_id_ = robot_ptr_->GetActiveMotorsID();
   actuators_status_.resize(active_actuators_id_.size());
-  connect(robot_ptr_, SIGNAL(actuatorStatus(id_t, ActuatorStatus)), this,
-          SLOT(handleActuatorStatusUpdate(id_t, ActuatorStatus)));
+  connect(robot_ptr_, SIGNAL(actuatorStatus(ActuatorStatus)), this,
+          SLOT(handleActuatorStatusUpdate(ActuatorStatus)));
 }
 
 HomingProprioceptive::~HomingProprioceptive()
 {
-  disconnect(robot_ptr_, SIGNAL(actuatorStatus(id_t, ActuatorStatus)), this,
-             SLOT(handleActuatorStatusUpdate(id_t, ActuatorStatus)));
+  disconnect(robot_ptr_, SIGNAL(actuatorStatus(ActuatorStatus)), this,
+             SLOT(handleActuatorStatusUpdate(ActuatorStatus)));
 }
 
 //--------- Public functions ---------------------------------------------------------//
@@ -212,11 +213,12 @@ void HomingProprioceptive::FaultReset()
 //--------- Private slots  -----------------------------------------------------------//
 
 void HomingProprioceptive::handleActuatorStatusUpdate(
-  const id_t& actuator_id, const ActuatorStatus& actuator_status)
+const ActuatorStatus& actuator_status)
 {
+  //  printf("%d %d\n", actuator_id, actuator_status.motor_torque);
   for (size_t i = 0; i < active_actuators_id_.size(); i++)
   {
-    if (active_actuators_id_[i] != actuator_id)
+    if (active_actuators_id_[i] != actuator_status.id)
       continue;
     if (actuator_status.state == Actuator::ST_FAULT)
     {

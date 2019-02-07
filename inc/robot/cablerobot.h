@@ -83,7 +83,7 @@ class CableRobot: public QObject,
 
  signals:
   void motorStatus(const id_t&, const grabec::GSWDriveInPdos&) const;
-  void actuatorStatus(const id_t&, const ActuatorStatus&) const;
+  void actuatorStatus(const ActuatorStatus&) const;
   void sendMsg(const QByteArray) const;
   void printToQConsole(const QString&) const;
   void ecStateChanged(const Bitfield8&) const;
@@ -108,7 +108,7 @@ class CableRobot: public QObject,
   QTimer* actuator_status_timer_                    = NULL;
 
   grabcdpr::PlatformVars platform_;
-  grabcdpr::Vars status_;
+  grabcdpr::Vars cdpr_status_;
 
   void StopTimers();
 
@@ -124,6 +124,7 @@ class CableRobot: public QObject,
 #endif
   vect<Actuator*> actuators_ptrs_;
   vect<Actuator*> active_actuators_ptrs_;
+  vect<ActuatorStatus> active_actuators_status_;
   vect<id_t> active_actuators_id_;
   bool ec_network_valid_ = false;
   bool rt_thread_active_ = false;

@@ -77,8 +77,7 @@ class HomingProprioceptive: public QObject, public StateMachine {
   void stateChanged(const quint8&) const;
 
  private slots:
-  void handleActuatorStatusUpdate(const id_t& actuator_id,
-                                  const ActuatorStatus& actuator_status);
+  void handleActuatorStatusUpdate(const ActuatorStatus& actuator_status);
 
  private:
   static constexpr quint8 kNumMeasMin_ = 1;
@@ -98,7 +97,7 @@ class HomingProprioceptive: public QObject, public StateMachine {
   // Tuning params
   static constexpr double kBufferingTimeSec_  = 1.0;  // [sec]
   static constexpr double kCycleWaitTimeSec_  = 0.01; // [sec]
-  static constexpr double kMaxWaitTimeSec_    = 5.0;  // [sec]
+  static constexpr double kMaxWaitTimeSec_    = 1.0;  // [sec]
   static constexpr double kCutoffFreq_        = 15.0; // [Hz]
   static constexpr double kMaxAngleDeviation_ = 0.1;  // [deg]
 
