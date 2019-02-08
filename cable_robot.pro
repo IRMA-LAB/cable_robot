@@ -21,7 +21,7 @@ HEADERS = \
     $$PWD/lib/easyloggingpp/src/easylogging++.h \
     $$PWD/lib/grab_common/grabcommon.h \
     $$PWD/lib/grab_common/bitfield.h \
-    lib/grab_common/pid/pid.h
+    $$PWD/lib/grab_common/pid/pid.h
 
 SOURCES = \
     $$PWD/src/main.cpp \
@@ -43,7 +43,7 @@ SOURCES = \
     $$PWD/src/utils/easylog_wrapper.cpp \
     $$PWD/lib/easyloggingpp/src/easylogging++.cc \
     $$PWD/lib/grab_common/grabcommon.cpp \
-    lib/grab_common/pid/pid.cpp
+    $$PWD/lib/grab_common/pid/pid.cpp
 
 INCLUDEPATH += \
     $$PWD/inc \

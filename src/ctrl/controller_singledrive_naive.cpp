@@ -1,9 +1,15 @@
 #include "ctrl/controller_singledrive_naive.h"
 
+constexpr double ControllerSingleDriveNaive::Kp_;
+constexpr double ControllerSingleDriveNaive::Ki_;
+constexpr double ControllerSingleDriveNaive::Kd_;
+constexpr double ControllerSingleDriveNaive::Tf_;
+constexpr double ControllerSingleDriveNaive::kMaxCtrlOutput_;
 
 ControllerSingleDriveNaive::ControllerSingleDriveNaive(const uint32_t period_nsec)
   : ControllerBase(), period_sec_(period_nsec * 0.000000001),
-    torque_pid_(period_sec_, 0, -kAbsMaxTorque_, Kp_, Ki_, Kd_)
+    torque_pid_(period_sec_, ControllerSingleDriveNaive::Kp_, Ki_, Kd_, Tf_,
+                kMaxCtrlOutput_, -kMaxCtrlOutput_)
 {
   Clear();
   abs_delta_torque_ = period_sec_ * kAbsDeltaTorquePerSec_; // delta per cycle
@@ -12,7 +18,7 @@ ControllerSingleDriveNaive::ControllerSingleDriveNaive(const uint32_t period_nse
 ControllerSingleDriveNaive::ControllerSingleDriveNaive(const id_t motor_id,
                                                        const uint32_t period_nsec)
   : ControllerBase(vect<id_t>(1, motor_id)), period_sec_(period_nsec * 0.000000001),
-    torque_pid_(period_sec_, 0, -kAbsMaxTorque_, Kp_, Ki_, Kd_)
+    torque_pid_(period_sec_, Kp_, Ki_, Kd_, Tf_, kMaxCtrlOutput_, -kMaxCtrlOutput_)
 {
   Clear();
   abs_delta_torque_ = period_sec_ * kAbsDeltaTorquePerSec_; // delta per cycle
@@ -115,10 +121,9 @@ ControllerSingleDriveNaive::CalcMotorTorque(const vect<ActuatorStatus>& actuator
       continue;
     double current_motor_torque = static_cast<double>(actuator_status.motor_torque);
     motor_torque =
-      current_motor_torque + torque_pid_.calculate(torque_target_, current_motor_torque);
-//    printf("%f/%f --> %d/%d\n", current_motor_torque, torque_target_,
-//           static_cast<int16_t>(round(motor_torque)), torque_target_true_);
-    printf("%d\n%d ", actuator_status.motor_torque, torque_target_true_);
+      current_motor_torque + torque_pid_.Calculate(torque_target_, current_motor_torque);
+    printf("%f/%f --> %d/%d\n", current_motor_torque, torque_target_,
+           static_cast<int16_t>(round(motor_torque)), torque_target_true_);
     break;
   }
   //  return static_cast<int16_t>(round(motor_torque));
