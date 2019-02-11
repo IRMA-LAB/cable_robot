@@ -86,10 +86,10 @@ class ControllerSingleDriveNaive: public ControllerBase
   double delta_torque_;
 
   PID torque_pid_;
-  static constexpr double Kp_ = 1.0;
-  static constexpr double Ki_ = 0.0;
-  static constexpr double Kd_ = -0.1;
-  static constexpr double Tf_ = 0.001;
+  static constexpr double Kp_ = 0.01;
+  static constexpr double Ki_ = 0.00005;
+  static constexpr double Kd_ = -0.0001;
+  static constexpr double Tf_ = 0.01;
   static constexpr double kMaxCtrlOutput_ = 50.0;
 
   void Clear();
