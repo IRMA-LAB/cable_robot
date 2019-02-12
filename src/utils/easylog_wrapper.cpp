@@ -4,13 +4,13 @@ void LogMotorStatusMsg(el::Logger* data_logger, const MotorStatusMsg& msg)
 {
   // clang-format off
   data_logger->info("%v,%v,%v,%v,%v,%v,%v",
-                                                                msg.header.msg_type,
-                                                                msg.header.timestamp,
+                                                      msg.header.msg_type,
+                                                      msg.header.timestamp,
                                      static_cast<int>(msg.body.id),
                                      static_cast<int>(msg.body.op_mode),
-                                                                msg.body.motor_position,
-                                                                msg.body.motor_speed,
-                                                                msg.body.motor_torque);
+                                                      msg.body.motor_position,
+                                                      msg.body.motor_speed,
+                                                      msg.body.motor_torque);
   // clang-format on
 }
 
@@ -18,15 +18,15 @@ void LogWinchStatusMsg(el::Logger* data_logger, const WinchStatusMsg& msg)
 {
   // clang-format off
   data_logger->info("%v,%v,%v,%v,%v,%v,%v,%v,%v",
-                                                                msg.header.msg_type,
-                                                                msg.header.timestamp,
+                                                      msg.header.msg_type,
+                                                      msg.header.timestamp,
                                      static_cast<int>(msg.body.id),
                                      static_cast<int>(msg.body.op_mode),
-                                                                msg.body.motor_position,
-                                                                msg.body.motor_speed,
-                                                                msg.body.motor_torque,
-                                                                msg.body.cable_length,
-                                                                msg.body.aux_position);
+                                                      msg.body.motor_position,
+                                                      msg.body.motor_speed,
+                                                      msg.body.motor_torque,
+                                                      msg.body.cable_length,
+                                                      msg.body.aux_position);
   // clang-format on
 }
 
@@ -34,24 +34,23 @@ void LogActuatorStatusMsg(el::Logger* data_logger, const ActuatorStatusMsg& msg)
 {
   // clang-format off
   data_logger->info("%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v",
-                                                                msg.header.msg_type,
-                                                                msg.header.timestamp,
+                                                      msg.header.msg_type,
+                                                      msg.header.timestamp,
                                      static_cast<int>(msg.body.id),
                                      static_cast<int>(msg.body.op_mode),
-                                                                msg.body.motor_position,
-                                                                msg.body.motor_speed,
-                                                                msg.body.motor_torque,
-                                                                msg.body.cable_length,
-                                                                msg.body.aux_position,
+                                                      msg.body.motor_position,
+                                                      msg.body.motor_speed,
+                                                      msg.body.motor_torque,
+                                                      msg.body.cable_length,
+                                                      msg.body.aux_position,
                                      static_cast<int>(msg.body.state),
-                                                                msg.body.pulley_angle);
+                                                      msg.body.pulley_angle);
   // clang-format on
 }
 
 // ... add new message log function definition here
 
-////////////////////////////////////////  LOG BUFFER
-/////////////////////////////////////////
+//-------- LOG BUFFER ----------------------------------------------------------------//
 
 void LogBuffer::Stop()
 {
@@ -127,20 +126,20 @@ void LogBuffer::LogData(const quint16 index)
   stream >> header_;
   switch (header_.msg_type)
   {
-  case NULL_MSG:
-    break;
-  case MOTOR_STATUS:
-    motor_status_.deserialize(buffer_[index]);
-    LogMotorStatusMsg(logger_, motor_status_);
-    break;
-  case WINCH_STATUS:
-    winch_status_.deserialize(buffer_[index]);
-    LogWinchStatusMsg(logger_, winch_status_);
-    break;
-  case ACTUATOR_STATUS:
-    actuator_status_.deserialize(buffer_[index]);
-    LogActuatorStatusMsg(logger_, actuator_status_);
-    break;
-  // ... add new case here
+    case NULL_MSG:
+      break;
+    case MOTOR_STATUS:
+      motor_status_.deserialize(buffer_[index]);
+      LogMotorStatusMsg(logger_, motor_status_);
+      break;
+    case WINCH_STATUS:
+      winch_status_.deserialize(buffer_[index]);
+      LogWinchStatusMsg(logger_, winch_status_);
+      break;
+    case ACTUATOR_STATUS:
+      actuator_status_.deserialize(buffer_[index]);
+      LogActuatorStatusMsg(logger_, actuator_status_);
+      break;
+      // ... add new case here
   }
 }

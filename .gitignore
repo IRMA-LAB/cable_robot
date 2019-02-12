@@ -58,3 +58,6 @@ Doxyfile
 
 # Logs
 logs
+
+# Matlab
+*.m~
