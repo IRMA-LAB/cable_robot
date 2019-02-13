@@ -562,7 +562,7 @@ void MainGUI::SetupDirectMotorCtrl(const bool enable)
     robot_ptr_->UpdateHomeConfig(motor_id_, 0.0, 0.0); // (re-)initialize reference values
     // Setup controller before enabling the motor
     man_ctrl_ptr_ =
-      new ControllerSingleDriveNaive(motor_id_, robot_ptr_->GetRtCycleTimeNsec());
+      new ControllerSingleDrive(motor_id_, robot_ptr_->GetRtCycleTimeNsec());
     ActuatorStatus current_status = robot_ptr_->GetActuatorStatus(motor_id_);
     if (ui->radioButton_posMode->isChecked())
     {

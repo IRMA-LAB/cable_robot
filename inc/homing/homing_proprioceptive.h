@@ -8,7 +8,7 @@
 #include "easylogging++.h"
 #include "inc/filters.h"
 
-#include "ctrl/controller_singledrive_naive.h"
+#include "ctrl/controller_singledrive.h"
 #include "robot/cablerobot.h"
 
 
@@ -83,7 +83,7 @@ class HomingProprioceptive: public QObject, public StateMachine {
   static constexpr quint8 kNumMeasMin_ = 1;
 
   CableRobot* robot_ptr_ = NULL;
-  ControllerSingleDriveNaive controller_;
+  ControllerSingleDrive controller_;
   quint8 num_meas_ = kNumMeasMin_;
   quint16 meas_step_;
   vect<qint16> init_torques_;

@@ -9,7 +9,7 @@
 #include "gui/calib/calibration_dialog.h"
 #include "gui/homing/homing_dialog.h"
 #include "robot/cablerobot.h"
-#include "ctrl/controller_singledrive_naive.h"
+#include "ctrl/controller_singledrive.h"
 
 using GSWDOpModes = grabec::GoldSoloWhistleOperationModes;
 
@@ -90,7 +90,7 @@ private:
   Bitfield8 waiting_for_response_;
   Bitfield8 desired_ctrl_mode_;
   id_t motor_id_;
-  ControllerSingleDriveNaive* man_ctrl_ptr_;
+  ControllerSingleDrive* man_ctrl_ptr_;
 
   void DisablePosCtrlButtons(const bool value);
   void DisableVelCtrlButtons(const bool value);

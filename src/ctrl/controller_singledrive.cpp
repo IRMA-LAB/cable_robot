@@ -1,12 +1,12 @@
-#include "ctrl/controller_singledrive_naive.h"
+#include "ctrl/controller_singledrive.h"
 
-constexpr double ControllerSingleDriveNaive::Kp_;
-constexpr double ControllerSingleDriveNaive::Ki_;
-constexpr double ControllerSingleDriveNaive::Kd_;
-constexpr double ControllerSingleDriveNaive::Tf_;
-constexpr double ControllerSingleDriveNaive::kMaxCtrlOutput_;
+constexpr double ControllerSingleDrive::Kp_;
+constexpr double ControllerSingleDrive::Ki_;
+constexpr double ControllerSingleDrive::Kd_;
+constexpr double ControllerSingleDrive::Tf_;
+constexpr double ControllerSingleDrive::kMaxCtrlOutput_;
 
-ControllerSingleDriveNaive::ControllerSingleDriveNaive(const uint32_t period_nsec)
+ControllerSingleDrive::ControllerSingleDrive(const uint32_t period_nsec)
   : ControllerBase(), period_sec_(period_nsec * 0.000000001),
     torque_pid_(period_sec_, Kp_, Kd_, Ki_, Tf_, kMaxCtrlOutput_, -kMaxCtrlOutput_)
 {
@@ -14,7 +14,7 @@ ControllerSingleDriveNaive::ControllerSingleDriveNaive(const uint32_t period_nse
   abs_delta_torque_ = period_sec_ * kAbsDeltaTorquePerSec_; // delta per cycle
 }
 
-ControllerSingleDriveNaive::ControllerSingleDriveNaive(const id_t motor_id,
+ControllerSingleDrive::ControllerSingleDrive(const id_t motor_id,
                                                        const uint32_t period_nsec)
   : ControllerBase(vect<id_t>(1, motor_id)), period_sec_(period_nsec * 0.000000001),
     torque_pid_(period_sec_, Kp_, Kd_, Ki_, Tf_, kMaxCtrlOutput_, -kMaxCtrlOutput_)
@@ -25,28 +25,28 @@ ControllerSingleDriveNaive::ControllerSingleDriveNaive(const id_t motor_id,
 
 //--------- Public functions ---------------------------------------------------------//
 
-void ControllerSingleDriveNaive::SetCableLenTarget(const double target)
+void ControllerSingleDrive::SetCableLenTarget(const double target)
 {
   Clear();
   length_target_ = target;
   target_flags_.Set(LENGTH);
 }
 
-void ControllerSingleDriveNaive::SetMotorPosTarget(const int32_t target)
+void ControllerSingleDrive::SetMotorPosTarget(const int32_t target)
 {
   Clear();
   pos_target_true_ = target;
   target_flags_.Set(POSITION);
 }
 
-void ControllerSingleDriveNaive::SetMotorSpeedTarget(const int32_t target)
+void ControllerSingleDrive::SetMotorSpeedTarget(const int32_t target)
 {
   Clear();
   speed_target_true_ = target;
   target_flags_.Set(SPEED);
 }
 
-void ControllerSingleDriveNaive::SetMotorTorqueTarget(const int16_t target)
+void ControllerSingleDrive::SetMotorTorqueTarget(const int16_t target)
 {
   Clear();
   torque_target_      = static_cast<double>(target);
@@ -54,7 +54,7 @@ void ControllerSingleDriveNaive::SetMotorTorqueTarget(const int16_t target)
   target_flags_.Set(TORQUE);
 }
 
-void ControllerSingleDriveNaive::CableLenIncrement(const bool active,
+void ControllerSingleDrive::CableLenIncrement(const bool active,
                                                    const Sign sign /*= Sign::POS*/,
                                                    const bool micromove /*= true*/)
 {
@@ -70,12 +70,12 @@ void ControllerSingleDriveNaive::CableLenIncrement(const bool active,
   }
 }
 
-void ControllerSingleDriveNaive::ScaleMotorSpeed(const double scale)
+void ControllerSingleDrive::ScaleMotorSpeed(const double scale)
 {
   speed_target_true_ = static_cast<int>(round(scale * kAbsMaxSpeed_));
 }
 
-void ControllerSingleDriveNaive::MotorTorqueIncrement(const bool active,
+void ControllerSingleDrive::MotorTorqueIncrement(const bool active,
                                                       const Sign sign /*= Sign::POS*/)
 {
   if (active == change_torque_target_)
@@ -86,32 +86,32 @@ void ControllerSingleDriveNaive::MotorTorqueIncrement(const bool active,
     delta_torque_ = sign * abs_delta_torque_;
 }
 
-bool ControllerSingleDriveNaive::CableLenTargetReached(const double current_value)
+bool ControllerSingleDrive::CableLenTargetReached(const double current_value)
 {
   static const double tol = grabnum::EPSILON; // inserisci una tolleranza vera..
   return grabnum::IsClose(length_target_, current_value, tol);
 }
 
-bool ControllerSingleDriveNaive::MotorPosTargetReached(const int32_t current_value)
+bool ControllerSingleDrive::MotorPosTargetReached(const int32_t current_value)
 {
   static const int32_t tol = 1; // inserisci una tolleranza vera..
   return abs(pos_target_true_ - current_value) < tol;
 }
 
-bool ControllerSingleDriveNaive::MotorSpeedTargetReached(const int32_t current_value)
+bool ControllerSingleDrive::MotorSpeedTargetReached(const int32_t current_value)
 {
   static const int32_t tol = 1000; // inserisci una tolleranza vera..
   return abs(speed_target_true_ - current_value) < tol;
 }
 
-bool ControllerSingleDriveNaive::MotorTorqueTargetReached(const int16_t current_value)
+bool ControllerSingleDrive::MotorTorqueTargetReached(const int16_t current_value)
 {
   static const int16_t tol = 5; // per thousand points
   return abs(torque_target_true_ - current_value) < tol;
 }
 
 int16_t
-ControllerSingleDriveNaive::CalcMotorTorque(const vect<ActuatorStatus>& actuators_status)
+ControllerSingleDrive::CalcMotorTorque(const vect<ActuatorStatus>& actuators_status)
 {
   double motor_torque = torque_target_;
   for (const ActuatorStatus& actuator_status : actuators_status)
@@ -130,7 +130,7 @@ ControllerSingleDriveNaive::CalcMotorTorque(const vect<ActuatorStatus>& actuator
 }
 
 vect<ControlAction>
-ControllerSingleDriveNaive::CalcCtrlActions(const grabcdpr::Vars&,
+ControllerSingleDrive::CalcCtrlActions(const grabcdpr::Vars&,
                                             const vect<ActuatorStatus>& actuators_status)
 {
   ControlAction res;
@@ -188,7 +188,7 @@ ControllerSingleDriveNaive::CalcCtrlActions(const grabcdpr::Vars&,
 
 //--------- Private functions --------------------------------------------------------//
 
-void ControllerSingleDriveNaive::Clear()
+void ControllerSingleDrive::Clear()
 {
   target_flags_.ClearAll();
 

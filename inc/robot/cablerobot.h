@@ -24,7 +24,7 @@
 
 #include "components/actuator.h"
 #include "ctrl/controller_base.h"
-#include "ctrl/controller_singledrive_naive.h"
+#include "ctrl/controller_singledrive.h"
 #include "utils/easylog_wrapper.h"
 
 class CableRobot: public QObject,

@@ -1,5 +1,5 @@
-#ifndef CONTROLLER_BASIC_H
-#define CONTROLLER_BASIC_H
+#ifndef CONTROLLER_SINGLEDRIVE_H
+#define CONTROLLER_SINGLEDRIVE_H
 
 #include "lib/grab_common/pid/pid.h"
 
@@ -17,11 +17,11 @@ template <typename T> T operator*(const Sign& sign, const T value)
   return static_cast<T>(sign) * value;
 }
 
-class ControllerSingleDriveNaive: public ControllerBase
+class ControllerSingleDrive: public ControllerBase
 {
  public:
-  ControllerSingleDriveNaive(const uint32_t period_nsec);
-  ControllerSingleDriveNaive(const id_t motor_id, const uint32_t period_nsec);
+  ControllerSingleDrive(const uint32_t period_nsec);
+  ControllerSingleDrive(const id_t motor_id, const uint32_t period_nsec);
 
   void SetCableLenTarget(const double target);
   void SetMotorPosTarget(const int32_t target);
@@ -86,13 +86,13 @@ class ControllerSingleDriveNaive: public ControllerBase
   double delta_torque_;
 
   PID torque_pid_;
-  static constexpr double Kp_ = 0.1;
-  static constexpr double Ki_ = 0.1;
-  static constexpr double Kd_ = -0.005;
-  static constexpr double Tf_ = 0.1;
+  static constexpr double Kp_ = 0.052;
+  static constexpr double Ki_ = 0.093;
+  static constexpr double Kd_ = -0.0003;
+  static constexpr double Tf_ = 0.6;
   static constexpr double kMaxCtrlOutput_ = 50.0;
 
   void Clear();
 };
 
-#endif // CONTROLLER_BASIC_H
+#endif // CONTROLLER_SINGLEDRIVE_H

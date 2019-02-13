@@ -13,7 +13,7 @@ HEADERS = \
     $$PWD/inc/gui/homing/init_torque_form.h \
     $$PWD/inc/homing/homing_proprioceptive.h \
     $$PWD/inc/ctrl/controller_base.h \
-    $$PWD/inc/ctrl/controller_singledrive_naive.h \
+    $$PWD/inc/ctrl/controller_singledrive.h \
     $$PWD/inc/utils/types.h \
     $$PWD/inc/utils/macros.h \
     $$PWD/inc/utils/msgs.h \
@@ -38,7 +38,7 @@ SOURCES = \
     $$PWD/src/gui/homing/init_torque_form.cpp \
     $$PWD/src/homing/homing_proprioceptive.cpp \
     $$PWD/src/ctrl/controller_base.cpp \
-    $$PWD/src/ctrl/controller_singledrive_naive.cpp \
+    $$PWD/src/ctrl/controller_singledrive.cpp \
     $$PWD/src/utils/msgs.cpp \
     $$PWD/src/utils/easylog_wrapper.cpp \
     $$PWD/lib/easyloggingpp/src/easylogging++.cc \

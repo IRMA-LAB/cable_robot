@@ -47,6 +47,7 @@ build
 /.project
 /.settings/language.settings.xml
 *.pro.user*
+*.autosave
 
 # Documentation
 /lib/grab_common/libnumeric/doc*

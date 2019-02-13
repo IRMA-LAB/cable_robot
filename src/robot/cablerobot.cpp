@@ -229,7 +229,7 @@ bool CableRobot::GoHome()
   }
   emit printToQConsole("Moving to home position...");
 
-  ControllerSingleDriveNaive controller(GetRtCycleTimeNsec());
+  ControllerSingleDrive controller(GetRtCycleTimeNsec());
   // temporarly switch to local controller for moving to home pos
   ControllerBase* prev_controller = controller_;
   controller_                     = &controller;
