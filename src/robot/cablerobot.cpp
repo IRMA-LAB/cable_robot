@@ -204,20 +204,20 @@ void CableRobot::ClearFaults()
 void CableRobot::CollectMeas()
 {
   size_t i = 0;
+  pthread_mutex_lock(&mutex_);
   for (Actuator* actuator_ptr : active_actuators_ptrs_)
   {
     meas_[i].body             = actuator_ptr->GetStatus();
     meas_[i].header.timestamp = clock_.Elapsed();
     i++;
   }
-  emit printToQConsole("Measurements collected");
+  pthread_mutex_unlock(&mutex_);
 }
 
 void CableRobot::DumpMeas() const
 {
   for (ActuatorStatusMsg msg : meas_)
     emit sendMsg(msg.serialized());
-  emit printToQConsole("Measurements dumped onto log file");
 }
 
 bool CableRobot::GoHome()

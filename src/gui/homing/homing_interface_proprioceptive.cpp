@@ -19,7 +19,7 @@ HomingInterfaceProprioceptive::HomingInterfaceProprioceptive(QWidget* parent,
   connect(robot_ptr_, SIGNAL(printToQConsole(QString)), this,
           SLOT(appendText2Browser(QString)), Qt::ConnectionType::QueuedConnection);
   connect(&app_, SIGNAL(printToQConsole(QString)), this,
-          SLOT(appendText2Browser(QString)));
+          SLOT(appendText2Browser(QString)), Qt::ConnectionType::DirectConnection);
   connect(&app_, SIGNAL(acquisitionComplete()), this, SLOT(handleAcquisitionComplete()));
   connect(&app_, SIGNAL(homingComplete()), this, SLOT(handleHomingComplete()));
   connect(&app_, SIGNAL(stateChanged(quint8)), this, SLOT(handleStateChanged(quint8)));

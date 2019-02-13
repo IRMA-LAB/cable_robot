@@ -118,16 +118,16 @@ void HomingProprioceptive::Start(HomingProprioceptiveStartData* data)
     CLOG(TRACE, "event") << "with " << *data;
 
   // clang-format off
-  BEGIN_TRANSITION_MAP			              			// - Current State -
+  BEGIN_TRANSITION_MAP			        // - Current State -
       TRANSITION_MAP_ENTRY (ST_ENABLED)         // ST_IDLE
       TRANSITION_MAP_ENTRY (ST_START_UP)        // ST_ENABLED
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_START_UP
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_SWITCH_CABLE
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_COILING
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_UNCOILING
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_OPTIMIZING
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_HOME
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_FAULT
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)	// ST_SWITCH_CABLE
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)	// ST_COILING
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)	// ST_UNCOILING
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)	// ST_OPTIMIZING
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)	// ST_HOME
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)	// ST_FAULT
   END_TRANSITION_MAP(data)
   // clang-format on
 }
@@ -136,7 +136,7 @@ void HomingProprioceptive::Stop()
 {
   CLOG(TRACE, "event");
   // clang-format off
-  BEGIN_TRANSITION_MAP			              			// - Current State -
+  BEGIN_TRANSITION_MAP			        // - Current State -
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_IDLE
       TRANSITION_MAP_ENTRY (ST_IDLE)            // ST_ENABLED
       TRANSITION_MAP_ENTRY (ST_ENABLED)         // ST_START_UP
@@ -154,16 +154,16 @@ void HomingProprioceptive::Optimize()
 {
   CLOG(TRACE, "event");
   // clang-format off
-  BEGIN_TRANSITION_MAP			              			// - Current State -
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)                   // ST_IDLE
-      TRANSITION_MAP_ENTRY (ST_OPTIMIZING)                      // ST_ENABLED
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)                    // ST_START_UP
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)                    // ST_SWITCH_CABLE
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_COILING
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_UNCOILING
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_OPTIMIZING
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_HOME
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_FAULT
+  BEGIN_TRANSITION_MAP			        // - Current State -
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)      // ST_IDLE
+      TRANSITION_MAP_ENTRY (ST_OPTIMIZING)      // ST_ENABLED
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_START_UP
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_SWITCH_CABLE
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)	// ST_COILING
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)	// ST_UNCOILING
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)	// ST_OPTIMIZING
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)	// ST_HOME
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)	// ST_FAULT
   END_TRANSITION_MAP(NULL)
   // clang-format on
 }
@@ -172,16 +172,16 @@ void HomingProprioceptive::GoHome(HomingProprioceptiveHomeData* data)
 {
   CLOG(TRACE, "event") << "with " << *data;
   // clang-format off
-  BEGIN_TRANSITION_MAP			              			// - Current State -
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)                   // ST_IDLE
-      TRANSITION_MAP_ENTRY (ST_HOME)                               // ST_ENABLED
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)                   // ST_START_UP
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)                   // ST_SWITCH_CABLE
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)                   // ST_COILING
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_UNCOILING
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_OPTIMIZING
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_HOME
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)			// ST_FAULT
+  BEGIN_TRANSITION_MAP			        // - Current State -
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)      // ST_IDLE
+      TRANSITION_MAP_ENTRY (ST_HOME)            // ST_ENABLED
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)      // ST_START_UP
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)      // ST_SWITCH_CABLE
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)      // ST_COILING
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)	// ST_UNCOILING
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)	// ST_OPTIMIZING
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)	// ST_HOME
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)	// ST_FAULT
   END_TRANSITION_MAP(data)
   // clang-format on
 }
@@ -190,7 +190,7 @@ void HomingProprioceptive::FaultTrigger()
 {
   CLOG(TRACE, "event");
   // clang-format off
-  BEGIN_TRANSITION_MAP			              			// - Current State -
+  BEGIN_TRANSITION_MAP			        // - Current State -
       TRANSITION_MAP_ENTRY (ST_FAULT)           // ST_IDLE
       TRANSITION_MAP_ENTRY (ST_FAULT)           // ST_ENABLED
       TRANSITION_MAP_ENTRY (ST_FAULT)           // ST_START_UP
@@ -199,7 +199,7 @@ void HomingProprioceptive::FaultTrigger()
       TRANSITION_MAP_ENTRY (ST_FAULT)           // ST_UNCOILING
       TRANSITION_MAP_ENTRY (ST_FAULT)           // ST_OPTIMIZING
       TRANSITION_MAP_ENTRY (ST_FAULT)           // ST_HOME
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)			// ST_FAULT
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)	// ST_FAULT
   END_TRANSITION_MAP(NULL)
   // clang-format on
 }
@@ -558,7 +558,9 @@ void HomingProprioceptive::WaitUntilPlatformSteady()
 void HomingProprioceptive::DumpMeasAndMoveNext()
 {
   robot_ptr_->CollectMeas();
+  emit printToQConsole("Measurements collected");
   robot_ptr_->DumpMeas();
+  emit printToQConsole("Measurements dumped onto log file");
   meas_step_++;
 }
 
