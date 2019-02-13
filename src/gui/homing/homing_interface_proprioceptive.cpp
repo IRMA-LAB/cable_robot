@@ -164,6 +164,24 @@ void HomingInterfaceProprioceptive::on_pushButton_start_clicked()
   acquisition_complete_ = false;
 }
 
+void HomingInterfaceProprioceptive::on_pushButton_stop_clicked()
+{
+  CLOG(TRACE, "event");
+  ui->pushButton_start->setChecked(false);
+  if (app_.IsCollectingData())
+  {
+    QMessageBox::StandardButton reply =
+      QMessageBox::question(this, "Homing in progress",
+                            "If you stop now all data collected so far will be lost and "
+                            "you will have to start over the procedure before starting a "
+                            "new application.\nAre you sure you want to continue?",
+                            QMessageBox::Yes | QMessageBox::No);
+    CLOG(TRACE, "event") << "(STOP?) --> " << (reply == QMessageBox::Yes);
+    if (reply == QMessageBox::Yes)
+      app_.Stop(); // any --> ENABLED
+  }
+}
+
 void HomingInterfaceProprioceptive::on_radioButton_internal_clicked()
 {
   CLOG(TRACE, "event");
@@ -335,6 +353,7 @@ void HomingInterfaceProprioceptive::handleStateChanged(const quint8& state)
     case HomingProprioceptive::ST_IDLE:
       ui->pushButton_enable->setText(tr("Enable"));
       ui->pushButton_start->setDisabled(true);
+      ui->pushButton_stop->setDisabled(true);
       ui->pushButton_start->setText(tr("Start"));
       ui->pushButton_clearFaults->setDisabled(true);
       break;
@@ -342,6 +361,7 @@ void HomingInterfaceProprioceptive::handleStateChanged(const quint8& state)
     {
       ui->pushButton_enable->setText(tr("Disable"));
       ui->pushButton_start->setEnabled(true);
+      ui->pushButton_stop->setDisabled(true);
       ui->pushButton_start->setText(tr("Start"));
       ui->pushButton_clearFaults->setDisabled(true);
       // Update initial torques now because unless enabled values are unknown
@@ -350,11 +370,13 @@ void HomingInterfaceProprioceptive::handleStateChanged(const quint8& state)
     }
     case HomingProprioceptive::ST_START_UP:
       ui->pushButton_start->setText(tr("Stop"));
+      ui->pushButton_stop->setEnabled(true);
       break;
     case HomingProprioceptive::ST_FAULT:
       ui->pushButton_enable->setDisabled(true);
       ui->pushButton_enable->setText(tr("Enable"));
       ui->pushButton_start->setDisabled(true);
+      ui->pushButton_stop->setDisabled(true);
       ui->pushButton_clearFaults->setEnabled(true);
       break;
     default:

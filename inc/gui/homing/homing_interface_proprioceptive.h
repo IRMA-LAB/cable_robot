@@ -1,9 +1,9 @@
 #ifndef CABLE_ROBOT_HOMING_INTERFACE_PROPRIOCEPTIVE_H
 #define CABLE_ROBOT_HOMING_INTERFACE_PROPRIOCEPTIVE_H
 
+#include <QCloseEvent>
 #include <QFileDialog>
 #include <QMessageBox>
-#include <QCloseEvent>
 
 #include "gui/homing/homing_interface.h"
 #include "gui/homing/init_torque_form.h"
@@ -14,7 +14,8 @@ namespace Ui {
 class HomingInterfaceProprioceptive;
 }
 
-class HomingInterfaceProprioceptive: public HomingInterface {
+class HomingInterfaceProprioceptive: public HomingInterface
+{
   Q_OBJECT
 
  public:
@@ -30,6 +31,7 @@ class HomingInterfaceProprioceptive: public HomingInterface {
   void on_checkBox_maxTorque_stateChanged(int);
   void on_spinBox_maxTorque_valueChanged(int value);
   void on_pushButton_start_clicked();
+  void on_pushButton_stop_clicked();
 
   void on_radioButton_internal_clicked();
   void on_radioButton_external_clicked();
