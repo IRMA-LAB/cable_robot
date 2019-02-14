@@ -513,6 +513,17 @@ void CableRobot::ControlStep()
     controller_->CalcCtrlActions(cdpr_status_, active_actuators_status_);
   for (const ControlAction& ctrl_action : ctrl_actions)
   {
+    // Safety check to see if given motor id is valid
+    bool valid_id = false;
+    for (const id_t& actuator_id : active_actuators_id_)
+      if (ctrl_action.motor_id == actuator_id)
+      {
+        valid_id = true;
+        break;
+      }
+    if (!valid_id)
+      continue;
+
     if (!actuators_ptrs_[ctrl_action.motor_id]->IsEnabled()) // safety check
       continue;
 

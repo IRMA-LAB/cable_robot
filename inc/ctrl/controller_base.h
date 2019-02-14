@@ -29,7 +29,7 @@ struct ControlAction
     int16_t motor_torque;
     // Characteristic
     id_t motor_id;
-    ControlMode ctrl_mode;
+    ControlMode ctrl_mode = ControlMode::NONE;
 };
 
 class ControllerBase

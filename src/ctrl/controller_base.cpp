@@ -3,12 +3,12 @@
 ControllerBase::ControllerBase(const id_t motor_id)
 {
   motors_id_.push_back(motor_id);
-  modes_.reserve(1);
+  modes_.resize(1, ControlMode::NONE);
 }
 
 ControllerBase::ControllerBase(const vect<id_t>& motors_id) : motors_id_(motors_id)
 {
-  modes_.reserve(motors_id.size());
+  modes_.resize(motors_id.size(), ControlMode::NONE);
 }
 
 ControllerBase::~ControllerBase() {}
@@ -21,7 +21,7 @@ void ControllerBase::SetMotorID(const id_t motor_id)
   modes_.clear();
 
   motors_id_.push_back(motor_id);
-  modes_.reserve(1);
+  modes_.resize(1, ControlMode::NONE);
 }
 
 void ControllerBase::SetMotorsID(const vect<id_t>& motors_id)
@@ -30,7 +30,7 @@ void ControllerBase::SetMotorsID(const vect<id_t>& motors_id)
   modes_.clear();
 
   motors_id_ = motors_id;
-  modes_.reserve(motors_id.size());
+  modes_.resize(motors_id.size(), ControlMode::NONE);
 }
 
 void ControllerBase::SetMode(const ControlMode mode)

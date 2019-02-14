@@ -134,8 +134,11 @@ ControllerSingleDrive::CalcCtrlActions(const grabcdpr::Vars&,
                                        const vect<ActuatorStatus>& actuators_status)
 {
   ControlAction res;
-  res.ctrl_mode = modes_[0];
-  res.motor_id  = motors_id_[0];
+  if (!modes_.empty())
+  {
+    res.ctrl_mode = modes_[0];
+    res.motor_id  = motors_id_[0];
+  }
   switch (res.ctrl_mode)
   {
     case CABLE_LENGTH:
