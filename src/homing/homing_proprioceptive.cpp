@@ -118,16 +118,16 @@ void HomingProprioceptive::Start(HomingProprioceptiveStartData* data)
     CLOG(TRACE, "event") << "with " << *data;
 
   // clang-format off
-  BEGIN_TRANSITION_MAP			        // - Current State -
+  BEGIN_TRANSITION_MAP                          // - Current State -
       TRANSITION_MAP_ENTRY (ST_ENABLED)         // ST_IDLE
       TRANSITION_MAP_ENTRY (ST_START_UP)        // ST_ENABLED
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_START_UP
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)	// ST_SWITCH_CABLE
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)	// ST_COILING
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)	// ST_UNCOILING
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)	// ST_OPTIMIZING
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)	// ST_HOME
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)	// ST_FAULT
+      TRANSITION_MAP_ENTRY (ST_SWITCH_CABLE)      // ST_START_UP
+      TRANSITION_MAP_ENTRY (ST_COILING)      // ST_SWITCH_CABLE
+      TRANSITION_MAP_ENTRY (ST_COILING)      // ST_COILING
+      TRANSITION_MAP_ENTRY (ST_UNCOILING)      // ST_UNCOILING
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)      // ST_OPTIMIZING
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)      // ST_HOME
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)      // ST_FAULT
   END_TRANSITION_MAP(data)
   // clang-format on
 }
@@ -135,16 +135,30 @@ void HomingProprioceptive::Start(HomingProprioceptiveStartData* data)
 void HomingProprioceptive::Stop()
 {
   CLOG(TRACE, "event");
+
+  qmutex_.lock();
+  stop_cmd_recv_ = true;
+  qmutex_.unlock();
+}
+
+void HomingProprioceptive::Disable()
+{
+  CLOG(TRACE, "event");
+
+  qmutex_.lock();
+  disable_cmd_recv_ = true;
+  qmutex_.unlock();
+
   // clang-format off
-  BEGIN_TRANSITION_MAP			        // - Current State -
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_IDLE
+  BEGIN_TRANSITION_MAP                          // - Current State -
+      TRANSITION_MAP_ENTRY (ST_IDLE)            // ST_IDLE
       TRANSITION_MAP_ENTRY (ST_IDLE)            // ST_ENABLED
-      TRANSITION_MAP_ENTRY (ST_ENABLED)         // ST_START_UP
-      TRANSITION_MAP_ENTRY (ST_ENABLED)         // ST_SWITCH_CABLE
-      TRANSITION_MAP_ENTRY (ST_ENABLED)         // ST_COILING
-      TRANSITION_MAP_ENTRY (ST_ENABLED)         // ST_UNCOILING
-      TRANSITION_MAP_ENTRY (ST_ENABLED)         // ST_OPTIMIZING
-      TRANSITION_MAP_ENTRY (ST_ENABLED)         // ST_HOME
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_START_UP
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_SWITCH_CABLE
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_COILING
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_UNCOILING
+      TRANSITION_MAP_ENTRY (ST_IDLE)            // ST_OPTIMIZING
+      TRANSITION_MAP_ENTRY (ST_IDLE)            // ST_HOME
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_FAULT
   END_TRANSITION_MAP(NULL)
   // clang-format on
@@ -154,16 +168,16 @@ void HomingProprioceptive::Optimize()
 {
   CLOG(TRACE, "event");
   // clang-format off
-  BEGIN_TRANSITION_MAP			        // - Current State -
+  BEGIN_TRANSITION_MAP                          // - Current State -
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)      // ST_IDLE
       TRANSITION_MAP_ENTRY (ST_OPTIMIZING)      // ST_ENABLED
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_START_UP
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_SWITCH_CABLE
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)	// ST_COILING
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)	// ST_UNCOILING
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)	// ST_OPTIMIZING
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)	// ST_HOME
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)	// ST_FAULT
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_COILING
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_UNCOILING
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_OPTIMIZING
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_HOME
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)      // ST_FAULT
   END_TRANSITION_MAP(NULL)
   // clang-format on
 }
@@ -172,16 +186,16 @@ void HomingProprioceptive::GoHome(HomingProprioceptiveHomeData* data)
 {
   CLOG(TRACE, "event") << "with " << *data;
   // clang-format off
-  BEGIN_TRANSITION_MAP			        // - Current State -
+  BEGIN_TRANSITION_MAP                          // - Current State -
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)      // ST_IDLE
       TRANSITION_MAP_ENTRY (ST_HOME)            // ST_ENABLED
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)      // ST_START_UP
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)      // ST_SWITCH_CABLE
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)      // ST_COILING
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)	// ST_UNCOILING
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)	// ST_OPTIMIZING
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)	// ST_HOME
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)	// ST_FAULT
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)      // ST_UNCOILING
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)      // ST_OPTIMIZING
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_HOME
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)      // ST_FAULT
   END_TRANSITION_MAP(data)
   // clang-format on
 }
@@ -190,7 +204,7 @@ void HomingProprioceptive::FaultTrigger()
 {
   CLOG(TRACE, "event");
   // clang-format off
-  BEGIN_TRANSITION_MAP			        // - Current State -
+  BEGIN_TRANSITION_MAP                          // - Current State -
       TRANSITION_MAP_ENTRY (ST_FAULT)           // ST_IDLE
       TRANSITION_MAP_ENTRY (ST_FAULT)           // ST_ENABLED
       TRANSITION_MAP_ENTRY (ST_FAULT)           // ST_START_UP
@@ -199,7 +213,7 @@ void HomingProprioceptive::FaultTrigger()
       TRANSITION_MAP_ENTRY (ST_FAULT)           // ST_UNCOILING
       TRANSITION_MAP_ENTRY (ST_FAULT)           // ST_OPTIMIZING
       TRANSITION_MAP_ENTRY (ST_FAULT)           // ST_HOME
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)	// ST_FAULT
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_FAULT
   END_TRANSITION_MAP(NULL)
   // clang-format on
 }
@@ -213,7 +227,7 @@ void HomingProprioceptive::FaultReset()
 //--------- Private slots  -----------------------------------------------------------//
 
 void HomingProprioceptive::handleActuatorStatusUpdate(
-const ActuatorStatus& actuator_status)
+  const ActuatorStatus& actuator_status)
 {
   //  printf("%d %d\n", actuator_id, actuator_status.motor_torque);
   for (size_t i = 0; i < active_actuators_id_.size(); i++)
@@ -268,9 +282,14 @@ STATE_DEFINE(HomingProprioceptive, Idle, NoEventData)
 {
   PrintStateTransition(prev_state_, ST_IDLE);
   prev_state_ = ST_IDLE;
+  emit stateChanged(ST_IDLE);
 
   if (robot_ptr_->AnyMotorEnabled())
     robot_ptr_->DisableMotors();
+
+  qmutex_.lock();
+  disable_cmd_recv_ = false; // reset
+  qmutex_.unlock();
 }
 
 GUARD_DEFINE(HomingProprioceptive, GuardEnabled, NoEventData)
@@ -296,8 +315,14 @@ STATE_DEFINE(HomingProprioceptive, Enabled, NoEventData)
 {
   PrintStateTransition(prev_state_, ST_ENABLED);
   prev_state_ = ST_ENABLED;
+  emit stateChanged(ST_ENABLED);
 
   robot_ptr_->SetMotorsOpMode(grabec::CYCLIC_TORQUE);
+  qmutex_.lock();
+  stop_cmd_recv_ = false; // reset
+  if (disable_cmd_recv_)
+    InternalEvent(ST_IDLE);
+  qmutex_.unlock();
 }
 
 STATE_DEFINE(HomingProprioceptive, StartUp, HomingProprioceptiveStartData)
@@ -308,64 +333,42 @@ STATE_DEFINE(HomingProprioceptive, StartUp, HomingProprioceptiveStartData)
   QString msg("Start up phase complete\nRobot in predefined configuration\nInitial "
               "torque values:");
 
-  num_meas_ = data->num_meas;
+  working_actuator_idx_ = 0;
+  num_meas_             = data->num_meas;
+  num_tot_meas_         = (2 * num_meas_ - 1) * active_actuators_id_.size();
   init_torques_.clear();
   max_torques_ = data->max_torques;
   torques_.resize(num_meas_);
-  grabrt::ThreadClock clock(grabrt::Sec2NanoSec(kCycleWaitTimeSec_));
 
   robot_ptr_->SetController(&controller_);
   for (size_t i = 0; i < active_actuators_id_.size(); ++i)
   {
-    qmutex_.lock();
-    qint16 current_torque = actuators_status_[i].motor_torque;
-    qmutex_.unlock();
-    // Use current torque values if not given
-    if (data->init_torques.empty())
-      init_torques_.push_back(current_torque);
-    else
+    // Setup initial target torque for each motor
+    init_torques_.push_back(data->init_torques[i]);
+    pthread_mutex_lock(&robot_ptr_->Mutex());
+    controller_.SetMotorID(active_actuators_id_[i]);
+    controller_.SetMode(ControlMode::MOTOR_TORQUE);
+    controller_.SetMotorTorqueTarget(init_torques_.back()); // = data->init_torques[i]
+    pthread_mutex_unlock(&robot_ptr_->Mutex());
+    // Wait until each motor reached user-given initial torque setpoint
+    RetVal ret = WaitUntilTargetReached();
+    if (ret != RetVal::OK)
     {
-      init_torques_.push_back(data->init_torques[i]);
-      // Wait until all motors reached user-given initial torque setpoint
-      pthread_mutex_lock(&robot_ptr_->Mutex());
-      controller_.SetMotorID(active_actuators_id_[i]);
-      controller_.SetMode(ControlMode::MOTOR_TORQUE);
-      controller_.SetMotorTorqueTarget(init_torques_.back()); //  = data->init_torques[i]
-      pthread_mutex_unlock(&robot_ptr_->Mutex());
-      clock.Reset();
-      timespec t0 = clock.GetCurrentTime();
-      while (1)
-      {
-        QCoreApplication::processEvents();
-        pthread_mutex_lock(&robot_ptr_->Mutex());
-        if (controller_.MotorTorqueTargetReached(current_torque))
-        {
-          pthread_mutex_unlock(&robot_ptr_->Mutex());
-          break;
-        }
-        pthread_mutex_unlock(&robot_ptr_->Mutex());
-        qmutex_.lock();
-        current_torque = actuators_status_[i].motor_torque;
-        qmutex_.unlock();
-        if (clock.Elapsed(t0) > kMaxWaitTimeSec_)
-        {
-          robot_ptr_->SetController(NULL);
-          emit printToQConsole(
-            "WARNING: Start up phase is taking too long: operation aborted");
-          InternalEvent(ST_ENABLED);
-          return;
-        }
-        clock.WaitUntilNext();
-      }
+      if (ret == RetVal::ETIMEOUT)
+        emit printToQConsole(
+          "WARNING: Start up phase is taking too long: operation aborted");
+      robot_ptr_->SetController(NULL);
+      InternalEvent(ST_ENABLED);
+      return;
     }
-    msg.append(QString("\n\t%1 ‰").arg(current_torque));
+    msg.append(QString("\n\t%1±%2 ‰").arg(init_torques_.back()).arg(kTorqueSsErrTol_));
   }
   // At the beginning we don't know where we are, neither we care.
   // Just update encoder home position to be used as reference to compute deltas.
   robot_ptr_->UpdateHomeConfig(0.0, 0.0);
 
   emit printToQConsole(msg);
-  InternalEvent(ST_SWITCH_CABLE);
+  emit stateChanged(ST_START_UP);
 }
 
 GUARD_DEFINE(HomingProprioceptive, GuardSwitch, NoEventData)
@@ -374,7 +377,7 @@ GUARD_DEFINE(HomingProprioceptive, GuardSwitch, NoEventData)
     return true;
 
   pthread_mutex_lock(&robot_ptr_->Mutex());
-  if (controller_.GetMotorsID().front() != active_actuators_id_.back())
+  if (working_actuator_idx_ < active_actuators_id_.size())
   {
     // We are not done ==> move to next cable
     pthread_mutex_unlock(&robot_ptr_->Mutex());
@@ -389,33 +392,40 @@ GUARD_DEFINE(HomingProprioceptive, GuardSwitch, NoEventData)
 
 STATE_DEFINE(HomingProprioceptive, SwitchCable, NoEventData)
 {
-  static quint8 motor_id_idx  = 0;
   static vect<id_t> motors_id = robot_ptr_->GetActiveMotorsID();
 
   PrintStateTransition(prev_state_, ST_SWITCH_CABLE);
   prev_state_ = ST_SWITCH_CABLE;
 
+  // Compute sequence of torque setpoints for i-th actuator
   qint16 delta_torque =
-    (max_torques_[motor_id_idx] - init_torques_[motor_id_idx]) / (num_meas_ - 1);
+    (max_torques_[working_actuator_idx_] - init_torques_[working_actuator_idx_]) /
+    (num_meas_ - 1);
   for (quint8 i = 0; i < num_meas_ - 1; ++i)
-    torques_[i] = init_torques_[motor_id_idx] + i * delta_torque;
+    torques_[i] = init_torques_[working_actuator_idx_] + i * delta_torque;
   torques_.back() =
-    max_torques_[motor_id_idx]; // last element is forced to be = max torque
+    max_torques_[working_actuator_idx_]; // last element is forced to be = max torque
 
+  // Setup first setpoint of the sequence
   pthread_mutex_lock(&robot_ptr_->Mutex());
-  controller_.SetMotorID(motors_id[motor_id_idx]);
+  controller_.SetMotorID(motors_id[working_actuator_idx_]);
   controller_.SetMotorTorqueTarget(torques_.front());
   pthread_mutex_unlock(&robot_ptr_->Mutex());
 
   emit printToQConsole(
     QString("Switched to actuator #%1.\nInitial torque setpoint = %2 ‰")
-      .arg(motors_id[motor_id_idx])
+      .arg(motors_id[working_actuator_idx_])
       .arg(torques_.front()));
-  motor_id_idx++;
+  working_actuator_idx_++;
   meas_step_ = 0; // reset
 
-  WaitUntilPlatformSteady();
-  InternalEvent(ST_COILING);
+  if (WaitUntilPlatformSteady() == RetVal::OK)
+  {
+    emit stateChanged(ST_SWITCH_CABLE);
+    return;
+  }
+  robot_ptr_->SetController(NULL);
+  InternalEvent(ST_ENABLED);
 }
 
 ENTRY_DEFINE(HomingProprioceptive, EntryCoiling, NoEventData) { DumpMeasAndMoveNext(); }
@@ -436,17 +446,20 @@ STATE_DEFINE(HomingProprioceptive, Coiling, NoEventData)
   pthread_mutex_unlock(&robot_ptr_->Mutex());
   emit printToQConsole(QString("Next torque setpoint = %1 ‰").arg(torques_[meas_step_]));
 
-  WaitUntilPlatformSteady();
-  DumpMeasAndMoveNext();
-  InternalEvent(ST_COILING);
+  if (WaitUntilPlatformSteady() == RetVal::OK)
+  {
+    DumpMeasAndMoveNext();
+    emit stateChanged(ST_COILING);
+    return;
+  }
+  robot_ptr_->SetController(NULL);
+  InternalEvent(ST_ENABLED);
 }
 
 ENTRY_DEFINE(HomingProprioceptive, EntryUncoiling, NoEventData) { meas_step_++; }
 
 STATE_DEFINE(HomingProprioceptive, Uncoiling, NoEventData)
 {
-  static const quint16 kOffset = 2 * num_meas_ - 1;
-
   PrintStateTransition(prev_state_, ST_UNCOILING);
   prev_state_ = ST_UNCOILING;
 
@@ -456,21 +469,28 @@ STATE_DEFINE(HomingProprioceptive, Uncoiling, NoEventData)
     return;
   }
 
+  const ulong kOffset = num_tot_meas_ / active_actuators_id_.size();
   pthread_mutex_lock(&robot_ptr_->Mutex());
   controller_.SetMotorTorqueTarget(torques_[kOffset - meas_step_]);
   pthread_mutex_unlock(&robot_ptr_->Mutex());
   emit printToQConsole(
     QString("Next torque setpoint = %1 ‰").arg(torques_[kOffset - meas_step_]));
 
-  WaitUntilPlatformSteady();
-  DumpMeasAndMoveNext();
-  InternalEvent(ST_UNCOILING);
+  if (WaitUntilPlatformSteady() == RetVal::OK)
+  {
+    DumpMeasAndMoveNext();
+    emit stateChanged(ST_UNCOILING);
+    return;
+  }
+  robot_ptr_->SetController(NULL);
+  InternalEvent(ST_ENABLED);
 }
 
 STATE_DEFINE(HomingProprioceptive, Optimizing, NoEventData)
 {
   PrintStateTransition(prev_state_, ST_OPTIMIZING);
   prev_state_ = ST_OPTIMIZING;
+  emit stateChanged(ST_OPTIMIZING);
 
   HomingProprioceptiveHomeData* home_data = new HomingProprioceptiveHomeData;
   // do optimization here..
@@ -492,6 +512,7 @@ STATE_DEFINE(HomingProprioceptive, Home, HomingProprioceptiveHomeData)
 {
   PrintStateTransition(prev_state_, ST_HOME);
   prev_state_ = ST_HOME;
+  emit stateChanged(ST_HOME);
 
   // Current home corresponds to robot configuration at the beginning of homing procedure.
   // Remind that motors home count corresponds to null cable length, which needs to be
@@ -515,16 +536,48 @@ STATE_DEFINE(HomingProprioceptive, Fault, NoEventData)
 {
   PrintStateTransition(prev_state_, ST_FAULT);
   prev_state_ = ST_FAULT;
+  emit stateChanged(ST_FAULT);
 }
 
 //--------- Private functions --------------------------------------------------------//
 
-void HomingProprioceptive::WaitUntilPlatformSteady()
+RetVal HomingProprioceptive::WaitUntilTargetReached()
+{
+  grabrt::ThreadClock clock(grabrt::Sec2NanoSec(kCycleWaitTimeSec_));
+  while (1)
+  {
+    // Check if target is reached
+    pthread_mutex_lock(&robot_ptr_->Mutex());
+    if (controller_.MotorTorqueTargetReached(kTorqueSsErrTol_))
+    {
+      pthread_mutex_unlock(&robot_ptr_->Mutex());
+      return RetVal::OK;
+    }
+    pthread_mutex_unlock(&robot_ptr_->Mutex());
+    // Check if external abort signal is received
+    qmutex_.lock();
+    if (stop_cmd_recv_ || disable_cmd_recv_)
+    {
+      qmutex_.unlock();
+      return RetVal::EINT;
+    }
+    qmutex_.unlock();
+    // Check if timeout expired (safety feature to prevent hanging in forever)
+    if (clock.ElapsedFromStart() > kMaxWaitTimeSec_)
+    {
+      emit printToQConsole(
+        "WARNING: Platform is taking too long to stabilize: operation aborted");
+      return RetVal::ETIMEOUT;
+    }
+    clock.WaitUntilNext();
+  }
+}
+
+RetVal HomingProprioceptive::WaitUntilPlatformSteady()
 {
   // Compute these once for all
   static constexpr size_t kBuffSize =
     static_cast<size_t>(kBufferingTimeSec_ / kCycleWaitTimeSec_);
-
   // LP filters setup
   static std::vector<grabnum::LowPassFilter> lp_filters(
     active_actuators_id_.size(),
@@ -543,6 +596,12 @@ void HomingProprioceptive::WaitUntilPlatformSteady()
     for (size_t i = 0; i < active_actuators_id_.size(); i++)
     {
       qmutex_.lock();
+      // Check if external abort signal is received
+      if (stop_cmd_recv_ || disable_cmd_recv_)
+      {
+        qmutex_.unlock();
+        return RetVal::EINT;
+      }
       pulleys_angles[i].Add(
         lp_filters[i].Filter(actuators_status_[i].pulley_angle)); // add filtered angle
       qmutex_.unlock();
@@ -551,8 +610,12 @@ void HomingProprioceptive::WaitUntilPlatformSteady()
       // Condition to detect steadyness
       swinging = grabnum::Std(pulleys_angles[i].Data()) > kMaxAngleDeviation_;
     }
+    // Check if timeout expired (safety feature to prevent hanging in forever)
+    if (clock.ElapsedFromStart() > kMaxWaitTimeSec_)
+      return RetVal::ETIMEOUT;
     clock.WaitUntilNext();
   }
+  return RetVal::OK;
 }
 
 void HomingProprioceptive::DumpMeasAndMoveNext()
@@ -562,6 +625,10 @@ void HomingProprioceptive::DumpMeasAndMoveNext()
   robot_ptr_->DumpMeas();
   emit printToQConsole("Measurements dumped onto log file");
   meas_step_++;
+  double normalized_value =
+    round(100. * ((working_actuator_idx_ - 1.0) / active_actuators_id_.size() +
+                  static_cast<double>(meas_step_) / num_tot_meas_));
+  emit progressValue(static_cast<int>(normalized_value));
 }
 
 void HomingProprioceptive::PrintStateTransition(const States current_state,
@@ -569,7 +636,6 @@ void HomingProprioceptive::PrintStateTransition(const States current_state,
 {
   if (current_state == new_state)
     return;
-  emit stateChanged(new_state);
   QString msg;
   if (current_state != ST_MAX_STATES)
     msg = QString("Homing state transition: %1 --> %2")

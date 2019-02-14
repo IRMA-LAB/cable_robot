@@ -15,7 +15,7 @@ ControllerSingleDrive::ControllerSingleDrive(const uint32_t period_nsec)
 }
 
 ControllerSingleDrive::ControllerSingleDrive(const id_t motor_id,
-                                                       const uint32_t period_nsec)
+                                             const uint32_t period_nsec)
   : ControllerBase(vect<id_t>(1, motor_id)), period_sec_(period_nsec * 0.000000001),
     torque_pid_(period_sec_, Kp_, Kd_, Ki_, Tf_, kMaxCtrlOutput_, -kMaxCtrlOutput_)
 {
@@ -55,8 +55,8 @@ void ControllerSingleDrive::SetMotorTorqueTarget(const int16_t target)
 }
 
 void ControllerSingleDrive::CableLenIncrement(const bool active,
-                                                   const Sign sign /*= Sign::POS*/,
-                                                   const bool micromove /*= true*/)
+                                              const Sign sign /*= Sign::POS*/,
+                                              const bool micromove /*= true*/)
 {
   if (active == change_length_target_)
     return;
@@ -76,7 +76,7 @@ void ControllerSingleDrive::ScaleMotorSpeed(const double scale)
 }
 
 void ControllerSingleDrive::MotorTorqueIncrement(const bool active,
-                                                      const Sign sign /*= Sign::POS*/)
+                                                 const Sign sign /*= Sign::POS*/)
 {
   if (active == change_torque_target_)
     return;
@@ -104,10 +104,10 @@ bool ControllerSingleDrive::MotorSpeedTargetReached(const int32_t current_value)
   return abs(speed_target_true_ - current_value) < tol;
 }
 
-bool ControllerSingleDrive::MotorTorqueTargetReached(const int16_t current_value)
+bool ControllerSingleDrive::MotorTorqueTargetReached(const int16_t ss_err_tol)
 {
-  static const int16_t tol = 5; // per thousand points
-  return abs(torque_target_true_ - current_value) < tol;
+  return std::abs(torque_pid_.GetError()) + std::abs(torque_pid_.GetPrevError()) <
+         2 * ss_err_tol;
 }
 
 int16_t
@@ -131,7 +131,7 @@ ControllerSingleDrive::CalcMotorTorque(const vect<ActuatorStatus>& actuators_sta
 
 vect<ControlAction>
 ControllerSingleDrive::CalcCtrlActions(const grabcdpr::Vars&,
-                                            const vect<ActuatorStatus>& actuators_status)
+                                       const vect<ActuatorStatus>& actuators_status)
 {
   ControlAction res;
   res.ctrl_mode = modes_[0];
@@ -193,7 +193,6 @@ void ControllerSingleDrive::Clear()
   target_flags_.ClearAll();
 
   torque_pid_.Reset();
-  printf("pid reset\n");
 
   change_length_target_ = false;
   change_torque_target_ = false;

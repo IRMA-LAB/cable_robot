@@ -12,7 +12,8 @@
 #include "robot/cablerobot.h"
 
 
-class HomingProprioceptiveStartData: public EventData {
+class HomingProprioceptiveStartData: public EventData
+{
  public:
   HomingProprioceptiveStartData();
   HomingProprioceptiveStartData(const vect<qint16>& _init_torques,
@@ -26,7 +27,8 @@ class HomingProprioceptiveStartData: public EventData {
 std::ostream& operator<<(std::ostream& stream, const HomingProprioceptiveStartData& data);
 
 
-class HomingProprioceptiveHomeData: public EventData {
+class HomingProprioceptiveHomeData: public EventData
+{
  public:
   vect<double> init_lengths;
   vect<double> init_angles;
@@ -35,7 +37,8 @@ class HomingProprioceptiveHomeData: public EventData {
 std::ostream& operator<<(std::ostream& stream, const HomingProprioceptiveHomeData& data);
 
 
-class HomingProprioceptive: public QObject, public StateMachine {
+class HomingProprioceptive: public QObject, public StateMachine
+{
   Q_OBJECT
 
  public:
@@ -65,6 +68,7 @@ class HomingProprioceptive: public QObject, public StateMachine {
 
   void Start(HomingProprioceptiveStartData* data);
   void Stop();
+  void Disable();
   void Optimize();
   void GoHome(HomingProprioceptiveHomeData* data);
   void FaultTrigger();
@@ -75,33 +79,42 @@ class HomingProprioceptive: public QObject, public StateMachine {
   void acquisitionComplete() const;
   void homingComplete() const;
   void stateChanged(const quint8&) const;
+  void progressValue(const int&) const;
 
  private slots:
   void handleActuatorStatusUpdate(const ActuatorStatus& actuator_status);
 
  private:
-  static constexpr quint8 kNumMeasMin_ = 1;
+  static constexpr size_t kNumMeasMin_     = 1;
+  static constexpr qint16 kTorqueSsErrTol_ = 5;
 
   CableRobot* robot_ptr_ = NULL;
   ControllerSingleDrive controller_;
-  quint8 num_meas_ = kNumMeasMin_;
-  quint16 meas_step_;
+  size_t num_meas_ = kNumMeasMin_;
+  size_t num_tot_meas_;
+  size_t working_actuator_idx_;
+  size_t meas_step_;
   vect<qint16> init_torques_;
   vect<qint16> max_torques_;
   vect<qint16> torques_;
+  bool stop_cmd_recv_;
+  bool disable_cmd_recv_;
 
   QMutex qmutex_;
+
   vect<id_t> active_actuators_id_;
   vect<ActuatorStatus> actuators_status_;
 
-  // Tuning params
+  // Tuning params for waiting functions
+  static constexpr double kCycleWaitTimeSec_ = 0.01; // [sec]
+  static constexpr double kMaxWaitTimeSec_   = 10.0; // [sec]
+  // Tuning params for detecting platform steadyness
   static constexpr double kBufferingTimeSec_  = 1.0;  // [sec]
-  static constexpr double kCycleWaitTimeSec_  = 0.01; // [sec]
-  static constexpr double kMaxWaitTimeSec_    = 1.0;  // [sec]
   static constexpr double kCutoffFreq_        = 15.0; // [Hz]
   static constexpr double kMaxAngleDeviation_ = 0.1;  // [deg]
 
-  void WaitUntilPlatformSteady();
+  RetVal WaitUntilTargetReached();
+  RetVal WaitUntilPlatformSteady();
 
   void DumpMeasAndMoveNext();
 

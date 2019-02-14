@@ -31,7 +31,6 @@ class HomingInterfaceProprioceptive: public HomingInterface
   void on_checkBox_maxTorque_stateChanged(int);
   void on_spinBox_maxTorque_valueChanged(int value);
   void on_pushButton_start_clicked();
-  void on_pushButton_stop_clicked();
 
   void on_radioButton_internal_clicked();
   void on_radioButton_external_clicked();
