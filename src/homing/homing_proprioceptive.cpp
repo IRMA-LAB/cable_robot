@@ -57,6 +57,7 @@ HomingProprioceptive::HomingProprioceptive(QObject* parent, CableRobot* robot)
   prev_state_ = ST_MAX_STATES;
   ExternalEvent(ST_IDLE);
   prev_state_ = ST_IDLE;
+  controller_.SetMotorTorqueSsErrTol(kTorqueSsErrTol_);
 
   // Setup connection to track robot status
   active_actuators_id_ = robot_ptr_->GetActiveMotorsID();
@@ -400,7 +401,7 @@ STATE_DEFINE(HomingProprioceptive, SwitchCable, NoEventData)
   // Compute sequence of torque setpoints for i-th actuator
   qint16 delta_torque =
     (max_torques_[working_actuator_idx_] - init_torques_[working_actuator_idx_]) /
-    (num_meas_ - 1);
+    (static_cast<qint16>(num_meas_) - 1);
   for (quint8 i = 0; i < num_meas_ - 1; ++i)
     torques_[i] = init_torques_[working_actuator_idx_] + i * delta_torque;
   torques_.back() =
@@ -409,6 +410,7 @@ STATE_DEFINE(HomingProprioceptive, SwitchCable, NoEventData)
   // Setup first setpoint of the sequence
   pthread_mutex_lock(&robot_ptr_->Mutex());
   controller_.SetMotorID(motors_id[working_actuator_idx_]);
+  controller_.SetMode(ControlMode::MOTOR_TORQUE);
   controller_.SetMotorTorqueTarget(torques_.front());
   pthread_mutex_unlock(&robot_ptr_->Mutex());
 
@@ -419,7 +421,7 @@ STATE_DEFINE(HomingProprioceptive, SwitchCable, NoEventData)
   working_actuator_idx_++;
   meas_step_ = 0; // reset
 
-  if (WaitUntilPlatformSteady() == RetVal::OK)
+  if (!(WaitUntilTargetReached() && WaitUntilPlatformSteady()))
   {
     emit stateChanged(ST_SWITCH_CABLE);
     return;
@@ -446,7 +448,7 @@ STATE_DEFINE(HomingProprioceptive, Coiling, NoEventData)
   pthread_mutex_unlock(&robot_ptr_->Mutex());
   emit printToQConsole(QString("Next torque setpoint = %1 ‰").arg(torques_[meas_step_]));
 
-  if (WaitUntilPlatformSteady() == RetVal::OK)
+  if (!(WaitUntilTargetReached() && WaitUntilPlatformSteady()))
   {
     DumpMeasAndMoveNext();
     emit stateChanged(ST_COILING);
@@ -476,7 +478,7 @@ STATE_DEFINE(HomingProprioceptive, Uncoiling, NoEventData)
   emit printToQConsole(
     QString("Next torque setpoint = %1 ‰").arg(torques_[kOffset - meas_step_]));
 
-  if (WaitUntilPlatformSteady() == RetVal::OK)
+  if (!(WaitUntilTargetReached() && WaitUntilPlatformSteady()))
   {
     DumpMeasAndMoveNext();
     emit stateChanged(ST_UNCOILING);
@@ -548,7 +550,7 @@ RetVal HomingProprioceptive::WaitUntilTargetReached()
   {
     // Check if target is reached
     pthread_mutex_lock(&robot_ptr_->Mutex());
-    if (controller_.MotorTorqueTargetReached(kTorqueSsErrTol_))
+    if (controller_.MotorTorqueTargetReached())
     {
       pthread_mutex_unlock(&robot_ptr_->Mutex());
       return RetVal::OK;

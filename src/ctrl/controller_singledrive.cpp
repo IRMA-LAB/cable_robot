@@ -104,15 +104,12 @@ bool ControllerSingleDrive::MotorSpeedTargetReached(const int32_t current_value)
   return abs(speed_target_true_ - current_value) < tol;
 }
 
-bool ControllerSingleDrive::MotorTorqueTargetReached(const int16_t ss_err_tol)
-{
-  return std::abs(torque_pid_.GetError()) + std::abs(torque_pid_.GetPrevError()) <
-         2 * ss_err_tol;
-}
-
 int16_t
 ControllerSingleDrive::CalcMotorTorque(const vect<ActuatorStatus>& actuators_status)
 {
+  if (on_target_)
+    return torque_target_true_;
+
   double motor_torque = torque_target_;
   for (const ActuatorStatus& actuator_status : actuators_status)
   {
@@ -121,12 +118,13 @@ ControllerSingleDrive::CalcMotorTorque(const vect<ActuatorStatus>& actuators_sta
     double current_motor_torque = static_cast<double>(actuator_status.motor_torque);
     motor_torque =
       current_motor_torque + torque_pid_.Calculate(torque_target_, current_motor_torque);
-//    printf("%f/%f --> %d/%d\n", current_motor_torque, torque_target_,
-//           static_cast<int16_t>(round(motor_torque)), torque_target_true_);
+    //    printf("%f/%f --> %d/%d\n", current_motor_torque, torque_target_,
+    //           static_cast<int16_t>(round(motor_torque)), torque_target_true_);
     break;
   }
+  on_target_ = (std::abs(torque_pid_.GetError()) + std::abs(torque_pid_.GetPrevError())) <
+               (2 * torque_ss_err_tol_);
   return static_cast<int16_t>(round(motor_torque));
-  //  return torque_target_true_;
 }
 
 vect<ControlAction>
@@ -196,6 +194,7 @@ void ControllerSingleDrive::Clear()
   target_flags_.ClearAll();
 
   torque_pid_.Reset();
+  on_target_ = false;
 
   change_length_target_ = false;
   change_torque_target_ = false;

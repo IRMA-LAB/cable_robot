@@ -28,6 +28,8 @@ class ControllerSingleDrive: public ControllerBase
   void SetMotorSpeedTarget(const int32_t target);
   void SetMotorTorqueTarget(const int16_t target);
 
+  void SetMotorTorqueSsErrTol(const int16_t tol) { torque_ss_err_tol_ = tol; }
+
   double GetCableLenTarget() const { return length_target_; }
   int32_t GetMotorPosTarget() const { return pos_target_true_; }
   int32_t GetMotorSpeedTarget() const { return speed_target_true_; }
@@ -41,7 +43,7 @@ class ControllerSingleDrive: public ControllerBase
   bool CableLenTargetReached(const double current_value);
   bool MotorPosTargetReached(const int32_t current_value);
   bool MotorSpeedTargetReached(const int32_t current_value);
-  bool MotorTorqueTargetReached(const int16_t current_value);
+  bool MotorTorqueTargetReached() const { return on_target_; }
 
   int16_t CalcMotorTorque(const vect<ActuatorStatus>& actuators_status);
   vect<ControlAction>
@@ -65,6 +67,7 @@ class ControllerSingleDrive: public ControllerBase
 
   double period_sec_;
   Bitfield8 target_flags_;
+  bool on_target_;
 
   double length_target_;
   int32_t pos_target_true_;
@@ -73,6 +76,8 @@ class ControllerSingleDrive: public ControllerBase
   double pos_target_;
   double speed_target_;
   double torque_target_;
+
+  int16_t torque_ss_err_tol_;
 
   bool change_length_target_;
   bool change_speed_target_;
@@ -86,10 +91,10 @@ class ControllerSingleDrive: public ControllerBase
   double delta_torque_;
 
   PID torque_pid_;
-  static constexpr double Kp_ = 0.052;
-  static constexpr double Ki_ = 0.093;
-  static constexpr double Kd_ = -0.0003;
-  static constexpr double Tf_ = 0.6;
+  static constexpr double Kp_             = 0.052;
+  static constexpr double Ki_             = 0.093;
+  static constexpr double Kd_             = -0.0003;
+  static constexpr double Tf_             = 0.6;
   static constexpr double kMaxCtrlOutput_ = 50.0;
 
   void Clear();
