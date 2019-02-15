@@ -230,7 +230,6 @@ void HomingProprioceptive::FaultReset()
 void HomingProprioceptive::handleActuatorStatusUpdate(
   const ActuatorStatus& actuator_status)
 {
-  //  printf("%d %d\n", actuator_id, actuator_status.motor_torque);
   for (size_t i = 0; i < active_actuators_id_.size(); i++)
   {
     if (active_actuators_id_[i] != actuator_status.id)
@@ -243,6 +242,7 @@ void HomingProprioceptive::handleActuatorStatusUpdate(
     qmutex_.lock();
     actuators_status_[i] = actuator_status;
     qmutex_.unlock();
+    break;
   }
 }
 
@@ -421,7 +421,7 @@ STATE_DEFINE(HomingProprioceptive, SwitchCable, NoEventData)
   working_actuator_idx_++;
   meas_step_ = 0; // reset
 
-  if (!(WaitUntilTargetReached() && WaitUntilPlatformSteady()))
+  if (WaitUntilTargetReached() == RetVal::OK && WaitUntilPlatformSteady() == RetVal::OK)
   {
     emit stateChanged(ST_SWITCH_CABLE);
     return;
@@ -448,7 +448,7 @@ STATE_DEFINE(HomingProprioceptive, Coiling, NoEventData)
   pthread_mutex_unlock(&robot_ptr_->Mutex());
   emit printToQConsole(QString("Next torque setpoint = %1 ‰").arg(torques_[meas_step_]));
 
-  if (!(WaitUntilTargetReached() && WaitUntilPlatformSteady()))
+  if (WaitUntilTargetReached() == RetVal::OK && WaitUntilPlatformSteady() == RetVal::OK)
   {
     DumpMeasAndMoveNext();
     emit stateChanged(ST_COILING);
@@ -478,7 +478,7 @@ STATE_DEFINE(HomingProprioceptive, Uncoiling, NoEventData)
   emit printToQConsole(
     QString("Next torque setpoint = %1 ‰").arg(torques_[kOffset - meas_step_]));
 
-  if (!(WaitUntilTargetReached() && WaitUntilPlatformSteady()))
+  if (WaitUntilTargetReached() == RetVal::OK && WaitUntilPlatformSteady() == RetVal::OK)
   {
     DumpMeasAndMoveNext();
     emit stateChanged(ST_UNCOILING);
@@ -568,7 +568,7 @@ RetVal HomingProprioceptive::WaitUntilTargetReached()
     if (clock.ElapsedFromStart() > kMaxWaitTimeSec_)
     {
       emit printToQConsole(
-        "WARNING: Platform is taking too long to stabilize: operation aborted");
+        "WARNING: Actuator is taking too long to reach target: operation aborted");
       return RetVal::ETIMEOUT;
     }
     clock.WaitUntilNext();
@@ -589,7 +589,7 @@ RetVal HomingProprioceptive::WaitUntilPlatformSteady()
 
   // debug
   ulong step = (working_actuator_idx_ - 1) * (2 * num_meas_ - 1) + meas_step_;
-  std::ofstream dbg_log_file("pulley_angles_" + std::to_string(step));
+  std::ofstream dbg_log_file("/home/labpc/MATLAB-Drive/cable_robot/pulley_angles/pulley_angles_" + std::to_string(step) + ".txt");
   // Init
   bool swinging = true;
   std::vector<RingBufferD> pulleys_angles(active_actuators_id_.size(),
@@ -600,6 +600,7 @@ RetVal HomingProprioceptive::WaitUntilPlatformSteady()
   {
     for (size_t i = 0; i < active_actuators_id_.size(); i++)
     {
+      QCoreApplication::processEvents();
       qmutex_.lock();
       // Check if external abort signal is received
       if (stop_cmd_recv_ || disable_cmd_recv_)
@@ -610,14 +611,16 @@ RetVal HomingProprioceptive::WaitUntilPlatformSteady()
       }
       pulleys_angles[i].Add(
         lp_filters[i].Filter(actuators_status_[i].pulley_angle)); // add filtered angle
-      qmutex_.unlock();
       // debug
       dbg_log_file << pulleys_angles[i].Tail() << "," << actuators_status_[i].pulley_angle
                    << ",";
+      qmutex_.unlock();
       if (!pulleys_angles[i].IsFull()) // wait at least until buffer is full
         continue;
       // Condition to detect steadyness
       swinging = grabnum::Std(pulleys_angles[i].Data()) > kMaxAngleDeviation_;
+      if (swinging)
+        break;
     }
     // debug
     dbg_log_file << "\n";
@@ -625,6 +628,8 @@ RetVal HomingProprioceptive::WaitUntilPlatformSteady()
     if (clock.ElapsedFromStart() > kMaxWaitTimeSec_)
     {
       dbg_log_file.close(); // debug
+      emit printToQConsole(
+        "WARNING: Platform is taking too long to stabilize: operation aborted");
       return RetVal::ETIMEOUT;
     }
     clock.WaitUntilNext();

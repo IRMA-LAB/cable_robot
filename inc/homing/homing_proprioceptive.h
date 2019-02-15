@@ -107,11 +107,11 @@ class HomingProprioceptive: public QObject, public StateMachine
 
   // Tuning params for waiting functions
   static constexpr double kCycleWaitTimeSec_ = 0.01; // [sec]
-  static constexpr double kMaxWaitTimeSec_   = 10.0; // [sec]
+  static constexpr double kMaxWaitTimeSec_   = 25.0; // [sec]
   // Tuning params for detecting platform steadyness
-  static constexpr double kBufferingTimeSec_  = 1.0;    // [sec]
+  static constexpr double kBufferingTimeSec_  = 3.0;    // [sec]
   static constexpr double kCutoffFreq_        = 15.0;   // [Hz]
-  static constexpr double kMaxAngleDeviation_ = 0.0087; // [rad]
+  static constexpr double kMaxAngleDeviation_ = 0.0001; // [rad]
 
   RetVal WaitUntilTargetReached();
   RetVal WaitUntilPlatformSteady();
