@@ -59,7 +59,7 @@ struct ActuatorStatus : WinchStatus
   }
 
   uint8_t state;  /**< see Actuator::States */
-  double pulley_angle;
+  double pulley_angle;  /**< [rad] */
 };
 
 #endif // CABLE_ROBOT_TYPES_H
