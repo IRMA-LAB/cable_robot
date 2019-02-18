@@ -203,20 +203,18 @@ void CableRobot::ClearFaults()
 
 void CableRobot::CollectMeas()
 {
-  size_t i = 0;
   pthread_mutex_lock(&mutex_);
-  for (Actuator* actuator_ptr : active_actuators_ptrs_)
+  for (size_t i = 0; i < active_actuators_ptrs_.size(); i++)
   {
-    meas_[i].body             = actuator_ptr->GetStatus();
+    meas_[i].body             = active_actuators_ptrs_[i]->GetStatus();
     meas_[i].header.timestamp = clock_.Elapsed();
-    i++;
   }
   pthread_mutex_unlock(&mutex_);
 }
 
 void CableRobot::DumpMeas() const
 {
-  for (ActuatorStatusMsg msg : meas_)
+  for (const ActuatorStatusMsg& msg : meas_)
     emit sendMsg(msg.serialized());
 }
 

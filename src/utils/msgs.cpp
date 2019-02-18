@@ -1,6 +1,6 @@
 #include "utils/msgs.h"
 
-//----------------------  QDataStream operators for basic types -------------------------//
+//------- QDataStream operators for basic types --------------------------------------//
 
 QDataStream& operator<<(QDataStream& ostream, const size_t& value)
 {
@@ -23,7 +23,7 @@ QDataStream& operator>>(QDataStream& istream, MsgType& value)
   return istream;
 }
 
-//----------------------  MESSAGE HEADER -------------------------//
+//------- MESSAGE HEADER -------------------------------------------------------------//
 
 QDataStream& operator<<(QDataStream& ostream, const HeaderMsg& data)
 {
@@ -36,9 +36,9 @@ QDataStream& operator>>(QDataStream& istream, HeaderMsg& data)
   return istream;
 }
 
-//----------------------  MESSAGES -------------------------//
+//------- MESSAGES -------------------------------------------------------------------//
 
-const size_t kMaxMsgSize = 47; // todo: compute automatically somehow..
+const size_t kMaxMsgSize = 48; // TODO: compute automatically somehow..
 
 // clang-format off
 MSG_FIELDS_ORDER_DEFINE(MotorStatus,
