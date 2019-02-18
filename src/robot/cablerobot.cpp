@@ -442,6 +442,10 @@ void CableRobot::emitActuatorStatus()
   emit actuatorStatus(active_actuators_status_[idx++]);
   if (idx >= active_actuators_id_.size())
     idx = 0;
+
+  // debug
+  ActuatorStatusMsg msg(clock_.Elapsed(), active_actuators_status_[idx]);
+  emit sendMsg(msg.serialized());
 }
 
 void CableRobot::StopTimers()
