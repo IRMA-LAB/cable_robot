@@ -3,30 +3,29 @@
 
 #include <QDialog>
 
-#include "libcdpr/inc/types.h"
 #include "easylogging++.h"
+#include "libcdpr/inc/types.h"
 
+#include "ctrl/controller_singledrive.h"
 #include "gui/calib/calibration_dialog.h"
 #include "gui/homing/homing_dialog.h"
 #include "robot/cablerobot.h"
-#include "ctrl/controller_singledrive.h"
 
 using GSWDOpModes = grabec::GoldSoloWhistleOperationModes;
 
-namespace Ui
-{
+namespace Ui {
 class MainGUI;
 }
 
-class MainGUI : public QDialog
+class MainGUI: public QDialog
 {
   Q_OBJECT
 
-public:
+ public:
   MainGUI(QWidget* parent, const grabcdpr::Params& config);
   ~MainGUI();
 
-private slots:
+ private slots:
   void on_pushButton_reset_clicked();
 
   void on_pushButton_calib_clicked();
@@ -60,20 +59,20 @@ private slots:
   void on_pushButton_torquePlus_pressed();
   void on_pushButton_torquePlus_released();
 
-private slots:
+ private slots:
   void enableInterface(const bool op_outcome = false);
   void appendText2Browser(const QString& text);
   void updateEcStatusLED(const Bitfield8& ec_status_flags);
   void updateRtThreadStatusLED(const bool active);
   void handleMotorStatusUpdate(const id_t&, const grabec::GSWDriveInPdos& motor_status);
 
-private:
-  bool ec_network_valid_ = false;
+ private:
+  bool ec_network_valid_  = false;
   bool rt_thread_running_ = false;
 
-  Ui::MainGUI* ui = NULL;
+  Ui::MainGUI* ui                  = NULL;
   CalibrationDialog* calib_dialog_ = NULL;
-  HomingDialog* homing_dialog_ = NULL;
+  HomingDialog* homing_dialog_     = NULL;
 
   grabcdpr::Params config_params_;
   CableRobot* robot_ptr_ = NULL;
@@ -83,8 +82,9 @@ private:
   bool ExitReadyStateRequest();
   void CloseAllApps();
 
-private:
-  /*--------- Direct drive control stuff --------*/
+ private:
+  //--------- Direct drive control stuff ---------------------------------------------//
+  static constexpr int16_t kTorqueSsErrTol_ = 5;
 
   bool manual_ctrl_enabled_ = false;
   Bitfield8 waiting_for_response_;

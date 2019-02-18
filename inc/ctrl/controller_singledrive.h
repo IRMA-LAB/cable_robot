@@ -91,11 +91,12 @@ class ControllerSingleDrive: public ControllerBase
   double delta_torque_;
 
   PID torque_pid_;
-  static constexpr double Kp_             = 0.052;
-  static constexpr double Ki_             = 0.093;
-  static constexpr double Kd_             = -0.0003;
-  static constexpr double Tf_             = 0.6;
-  static constexpr double kMaxCtrlOutput_ = 50.0;
+  static constexpr double Kp_               = 0.052;
+  static constexpr double Ki_               = 0.093;
+  static constexpr double Kd_               = -0.0003;
+  static constexpr double Tf_               = 0.6;
+  static constexpr double kMaxCtrlOutput_   = 50.0;
+  static constexpr int16_t kDefaultSsErrTol_ = 5;
 
   void Clear();
 };

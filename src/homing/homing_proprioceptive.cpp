@@ -358,7 +358,6 @@ STATE_DEFINE(HomingProprioceptive, StartUp, HomingProprioceptiveStartData)
       if (ret == RetVal::ETIMEOUT)
         emit printToQConsole(
           "WARNING: Start up phase is taking too long: operation aborted");
-      robot_ptr_->SetController(NULL);
       InternalEvent(ST_ENABLED);
       return;
     }
@@ -426,7 +425,6 @@ STATE_DEFINE(HomingProprioceptive, SwitchCable, NoEventData)
     emit stateChanged(ST_SWITCH_CABLE);
     return;
   }
-  robot_ptr_->SetController(NULL);
   InternalEvent(ST_ENABLED);
 }
 
@@ -454,7 +452,6 @@ STATE_DEFINE(HomingProprioceptive, Coiling, NoEventData)
     emit stateChanged(ST_COILING);
     return;
   }
-  robot_ptr_->SetController(NULL);
   InternalEvent(ST_ENABLED);
 }
 
@@ -484,7 +481,6 @@ STATE_DEFINE(HomingProprioceptive, Uncoiling, NoEventData)
     emit stateChanged(ST_UNCOILING);
     return;
   }
-  robot_ptr_->SetController(NULL);
   InternalEvent(ST_ENABLED);
 }
 

@@ -21,7 +21,7 @@ classdef WinchStatus < handle
         end
         
         function append(obj, winch_status_packed)
-            obj.is(end + 1) = winch_status_packed(1);
+            obj.id(end + 1) = winch_status_packed(1);
             obj.op_mode(end + 1) = winch_status_packed(2);
             obj.motor_position(end + 1) = winch_status_packed(3);
             obj.motor_speed(end + 1) = winch_status_packed(4);

@@ -563,6 +563,7 @@ void MainGUI::SetupDirectMotorCtrl(const bool enable)
     // Setup controller before enabling the motor
     man_ctrl_ptr_ =
       new ControllerSingleDrive(motor_id_, robot_ptr_->GetRtCycleTimeNsec());
+    man_ctrl_ptr_->SetMotorTorqueSsErrTol(kTorqueSsErrTol_);
     ActuatorStatus current_status = robot_ptr_->GetActuatorStatus(motor_id_);
     if (ui->radioButton_posMode->isChecked())
     {

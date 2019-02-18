@@ -8,6 +8,7 @@ constexpr double ControllerSingleDrive::kMaxCtrlOutput_;
 
 ControllerSingleDrive::ControllerSingleDrive(const uint32_t period_nsec)
   : ControllerBase(), period_sec_(period_nsec * 0.000000001),
+    torque_ss_err_tol_(kDefaultSsErrTol_),
     torque_pid_(period_sec_, Kp_, Kd_, Ki_, Tf_, kMaxCtrlOutput_, -kMaxCtrlOutput_)
 {
   Clear();
@@ -17,6 +18,7 @@ ControllerSingleDrive::ControllerSingleDrive(const uint32_t period_nsec)
 ControllerSingleDrive::ControllerSingleDrive(const id_t motor_id,
                                              const uint32_t period_nsec)
   : ControllerBase(vect<id_t>(1, motor_id)), period_sec_(period_nsec * 0.000000001),
+    torque_ss_err_tol_(kDefaultSsErrTol_),
     torque_pid_(period_sec_, Kp_, Kd_, Ki_, Tf_, kMaxCtrlOutput_, -kMaxCtrlOutput_)
 {
   Clear();
@@ -49,8 +51,11 @@ void ControllerSingleDrive::SetMotorSpeedTarget(const int32_t target)
 void ControllerSingleDrive::SetMotorTorqueTarget(const int16_t target)
 {
   Clear();
-  torque_target_      = static_cast<double>(target);
-  torque_target_true_ = target;
+  if (target >= 0)
+    torque_target_true_ = std::min(target, static_cast<int16_t>(kAbsMaxTorque_));
+  else
+    torque_target_true_ = std::max(target, static_cast<int16_t>(-kAbsMaxTorque_));
+  torque_target_ = static_cast<double>(torque_target_true_);
   target_flags_.Set(TORQUE);
 }
 
@@ -174,6 +179,8 @@ ControllerSingleDrive::CalcCtrlActions(const grabcdpr::Vars&,
           else
             torque_target_true_ =
               std::max(torque_target_true_, static_cast<int16_t>(-kAbsMaxTorque_));
+          torque_pid_.Reset();
+          on_target_ = false;
         }
         res.motor_torque = CalcMotorTorque(actuators_status);
       }
