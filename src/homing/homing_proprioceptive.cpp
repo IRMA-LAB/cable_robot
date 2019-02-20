@@ -496,17 +496,46 @@ STATE_DEFINE(HomingProprioceptive, Optimizing, NoEventData)
   prev_state_ = ST_OPTIMIZING;
   emit stateChanged(ST_OPTIMIZING);
 
-  HomingProprioceptiveHomeData* home_data = new HomingProprioceptiveHomeData;
-  // do optimization here..
-  bool optimization_success = true; // dummy
+  // Start MATLAB engine synchronously
+  std::unique_ptr<matlab::engine::MATLABEngine> matlabPtr = matlab::engine::startMATLAB();
 
-  if (optimization_success)
+  // Create string buffer for standard output
+  auto output_buff = std::make_shared<StringBuf>();
+  auto err_buff    = std::make_shared<StringBuf>();
+
+  // Create  MATLAB data array factory
+  matlab::data::ArrayFactory factory;
+
+  HomingProprioceptiveHomeData* home_data = new HomingProprioceptiveHomeData;
+  try
   {
+    // Call MATLAB function
+    matlab::data::TypedArray<double> results = matlabPtr->feval(
+      u"homingScript", factory.createCharArray("/tmp/cable-robot-logs/data.log"),
+      output_buff, err_buff);
+    // Distribute results over home data
+    const size_t N = active_actuators_id_.size();
+    for (size_t i = 0; i < N; i++)
+    {
+      home_data->init_angles.push_back(results[i]);
+      home_data->init_lengths.push_back(results[i + N]);
+    }
+
+    // Display MATLAB output in C++
+    matlab::engine::String output = output_buff.get()->str();
+    std::cout << matlab::engine::convertUTF16StringToUTF8String(output) << std::endl;
+
     emit printToQConsole("Optimization complete");
     InternalEvent(ST_HOME, home_data);
   }
-  else
+  catch (...)
   {
+    delete home_data;
+
+    // Display MATLAB output in C++
+    matlab::engine::String output = err_buff.get()->str();
+    emit printToQConsole(QString("WARNING: %s").arg(*output.c_str()));
+
     emit printToQConsole("Optimization failed");
     InternalEvent(ST_ENABLED);
   }
@@ -557,11 +586,6 @@ RetVal HomingProprioceptive::WaitUntilPlatformSteady()
   for (size_t i = 0; i < active_actuators_id_.size(); i++)
     lp_filters[i].Reset();
 
-  // debug
-  ulong step = (working_actuator_idx_ - 1) * (2 * num_meas_ - 1) + meas_step_;
-  std::ofstream dbg_log_file(
-    "/home/labpc/MATLAB-Drive/cable_robot/pulley_angles/pulley_angles_" +
-    std::to_string(step) + ".txt");
   // Init
   bool swinging = true;
   std::vector<RingBufferD> pulleys_angles(active_actuators_id_.size(),
@@ -578,14 +602,10 @@ RetVal HomingProprioceptive::WaitUntilPlatformSteady()
       if (stop_cmd_recv_ || disable_cmd_recv_)
       {
         qmutex_.unlock();
-        dbg_log_file.close(); // debug
         return RetVal::EINT;
       }
       pulleys_angles[i].Add(
         lp_filters[i].Filter(actuators_status_[i].pulley_angle)); // add filtered angle
-      // debug
-      dbg_log_file << pulleys_angles[i].Tail() << "," << actuators_status_[i].pulley_angle
-                   << ",";
       qmutex_.unlock();
       if (!pulleys_angles[i].IsFull()) // wait at least until buffer is full
         continue;
@@ -594,19 +614,15 @@ RetVal HomingProprioceptive::WaitUntilPlatformSteady()
       if (swinging)
         break;
     }
-    // debug
-    dbg_log_file << "\n";
     // Check if timeout expired (safety feature to prevent hanging in forever)
     if (clock.ElapsedFromStart() > CableRobot::kCycleWaitTimeSec)
     {
-      dbg_log_file.close(); // debug
       emit printToQConsole(
         "WARNING: Platform is taking too long to stabilize: operation aborted");
       return RetVal::ETIMEOUT;
     }
     clock.WaitUntilNext();
   }
-  dbg_log_file.close();
   return RetVal::OK;
 }
 

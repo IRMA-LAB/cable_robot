@@ -4,12 +4,16 @@
 #include <QObject>
 #include <QString>
 
+#include "MatlabDataArray.hpp"
+#include "MatlabEngine.hpp"
+
 #include "StateMachine.h"
 #include "easylogging++.h"
 #include "inc/filters.h"
 
 #include "ctrl/controller_singledrive.h"
 #include "robot/cablerobot.h"
+#include "utils/types.h"
 
 
 class HomingProprioceptiveStartData: public EventData

@@ -7,6 +7,9 @@
 
 #include "libgrabec/inc/slaves/goldsolowhistledrive.h"
 
+
+typedef std::basic_stringbuf<char16_t> StringBuf;
+
 /**
  * @brief The MotorStatus struct
  */
