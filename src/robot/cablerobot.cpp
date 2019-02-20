@@ -1,12 +1,14 @@
 /**
  * @file cablerobot.cpp
  * @author Simone Comari, Edoardo Idà
- * @date 17 Gen 2019
+ * @date 20 Feb 2019
  * @brief File containing definitions of functions and class declared in cablerobot.h.
  */
 
 #include "robot/cablerobot.h"
 
+constexpr double CableRobot::kMaxWaitTimeSec;
+constexpr double CableRobot::kCycleWaitTimeSec;
 constexpr char* CableRobot::kStatesStr[];
 
 CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
@@ -222,22 +224,29 @@ bool CableRobot::GoHome()
 {
   if (!MotorsEnabled())
   {
-    emit printToQConsole("Cannot move to home position: not all motors enabled");
+    emit printToQConsole("WARNING: Cannot move to home position: not all motors enabled");
     return false;
   }
   emit printToQConsole("Moving to home position...");
 
   ControllerSingleDrive controller(GetRtCycleTimeNsec());
-  // temporarly switch to local controller for moving to home pos
+  // Temporarly switch to local controller for moving to home pos
   ControllerBase* prev_controller = controller_;
   controller_                     = &controller;
 
   for (Actuator* actuator_ptr : active_actuators_ptrs_)
   {
+    pthread_mutex_lock(&mutex_);
     controller.SetMotorID(actuator_ptr->ID());
+    controller.SetMode(ControlMode::MOTOR_POSITION);
     controller.SetMotorPosTarget(actuator_ptr->GetWinch().GetServoHomePos());
-    while (!controller.MotorPosTargetReached(actuator_ptr->GetStatus().motor_position))
-      continue; // todo: inserisci un tempo di attesa qui
+    pthread_mutex_unlock(&mutex_);
+
+    if (WaitUntilTargetReached() != RetVal::OK)
+    {
+      emit printToQConsole("WARNING: Transition to home position interrupted");
+      return false;
+    }
   }
   controller_ = prev_controller; // restore original controller
 
@@ -252,7 +261,48 @@ void CableRobot::SetController(ControllerBase* controller)
   pthread_mutex_unlock(&mutex_);
 }
 
-//--------- External Events Public --------------------------------------------------//
+RetVal CableRobot::WaitUntilTargetReached()
+{
+  grabrt::ThreadClock clock(grabrt::Sec2NanoSec(kCycleWaitTimeSec));
+  while (1)
+  {
+    // Check if target is reached
+    pthread_mutex_lock(&mutex_);
+    if (controller_->TargetReached())
+    {
+      pthread_mutex_unlock(&mutex_);
+      return RetVal::OK;
+    }
+    pthread_mutex_unlock(&mutex_);
+    // Check if external abort signal is received
+    QCoreApplication::processEvents();
+    qmutex_.lock();
+    if (stop_waiting_cmd_recv_)
+    {
+      stop_waiting_cmd_recv_ = false;
+      qmutex_.unlock();
+      return RetVal::EINT;
+    }
+    qmutex_.unlock();
+    // Check if timeout expired (safety feature to prevent hanging in forever)
+    if (clock.ElapsedFromStart() > kMaxWaitTimeSec)
+    {
+      emit printToQConsole(
+        "WARNING: Actuator is taking too long to reach target: operation aborted");
+      return RetVal::ETIMEOUT;
+    }
+    clock.WaitUntilNext();
+  }
+}
+
+//--------- External Events (Public slots) ------------------------------------------//
+
+void CableRobot::stopWaiting()
+{
+  qmutex_.lock();
+  stop_waiting_cmd_recv_ = true;
+  qmutex_.unlock();
+}
 
 void CableRobot::enterCalibrationMode()
 {
@@ -391,22 +441,6 @@ void CableRobot::forwardPrintToQConsole(const QString& text) const
   emit printToQConsole(text);
 }
 
-//--------- Miscellaneous private ---------------------------------------------------//
-
-void CableRobot::PrintStateTransition(const States current_state,
-                                      const States new_state) const
-{
-  if (current_state == new_state)
-    return;
-  QString msg;
-  if (current_state != ST_MAX_STATES)
-    msg = QString("CableRobot state transition: %1 --> %2")
-            .arg(kStatesStr[current_state], kStatesStr[new_state]);
-  else
-    msg = QString("CableRobot initial state: %1").arg(kStatesStr[new_state]);
-  emit printToQConsole(msg);
-}
-
 void CableRobot::emitMotorStatus()
 {
   static uint8_t counter = 0;
@@ -446,6 +480,22 @@ void CableRobot::emitActuatorStatus()
   // debug
   ActuatorStatusMsg msg(clock_.Elapsed(), active_actuators_status_[idx]);
   emit sendMsg(msg.serialized());
+}
+
+//--------- Miscellaneous private ---------------------------------------------------//
+
+void CableRobot::PrintStateTransition(const States current_state,
+                                      const States new_state) const
+{
+  if (current_state == new_state)
+    return;
+  QString msg;
+  if (current_state != ST_MAX_STATES)
+    msg = QString("CableRobot state transition: %1 --> %2")
+            .arg(kStatesStr[current_state], kStatesStr[new_state]);
+  else
+    msg = QString("CableRobot initial state: %1").arg(kStatesStr[new_state]);
+  emit printToQConsole(msg);
 }
 
 void CableRobot::StopTimers()

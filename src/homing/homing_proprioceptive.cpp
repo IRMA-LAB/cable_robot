@@ -44,7 +44,6 @@ std::ostream& operator<<(std::ostream& stream, const HomingProprioceptiveHomeDat
 //------------------------------------------------------------------------------------//
 
 // For static constexpr passed by reference we need a dummy definition no matter what
-constexpr double HomingProprioceptive::kCycleWaitTimeSec_;
 constexpr double HomingProprioceptive::kCutoffFreq_;
 constexpr char* HomingProprioceptive::kStatesStr[];
 
@@ -64,12 +63,14 @@ HomingProprioceptive::HomingProprioceptive(QObject* parent, CableRobot* robot)
   actuators_status_.resize(active_actuators_id_.size());
   connect(robot_ptr_, SIGNAL(actuatorStatus(ActuatorStatus)), this,
           SLOT(handleActuatorStatusUpdate(ActuatorStatus)));
+  connect(this, SIGNAL(stopWaitingCmd()), robot_ptr_, SLOT(stopWaiting()));
 }
 
 HomingProprioceptive::~HomingProprioceptive()
 {
   disconnect(robot_ptr_, SIGNAL(actuatorStatus(ActuatorStatus)), this,
              SLOT(handleActuatorStatusUpdate(ActuatorStatus)));
+  disconnect(this, SIGNAL(stopWaitingCmd()), robot_ptr_, SLOT(stopWaiting()));
 }
 
 //--------- Public functions ---------------------------------------------------------//
@@ -140,6 +141,7 @@ void HomingProprioceptive::Stop()
   qmutex_.lock();
   stop_cmd_recv_ = true;
   qmutex_.unlock();
+  emit stopWaitingCmd();
 }
 
 void HomingProprioceptive::Disable()
@@ -149,6 +151,7 @@ void HomingProprioceptive::Disable()
   qmutex_.lock();
   disable_cmd_recv_ = true;
   qmutex_.unlock();
+  emit stopWaitingCmd();
 
   // clang-format off
   BEGIN_TRANSITION_MAP                          // - Current State -
@@ -255,11 +258,11 @@ GUARD_DEFINE(HomingProprioceptive, GuardIdle, NoEventData)
 
   robot_ptr_->ClearFaults();
 
-  grabrt::ThreadClock clock(grabrt::Sec2NanoSec(kCycleWaitTimeSec_));
+  grabrt::ThreadClock clock(grabrt::Sec2NanoSec(CableRobot::kCycleWaitTimeSec));
   bool faults_cleared = false;
   while (!faults_cleared)
   {
-    if (clock.ElapsedFromStart() > kMaxWaitTimeSec_)
+    if (clock.ElapsedFromStart() > CableRobot::kMaxWaitTimeSec)
     {
       emit printToQConsole("WARNING: Homing state transition FAILED. Taking too long to "
                            "clear faults.");
@@ -298,12 +301,12 @@ GUARD_DEFINE(HomingProprioceptive, GuardEnabled, NoEventData)
   robot_ptr_->SetController(NULL);
   robot_ptr_->EnableMotors();
 
-  grabrt::ThreadClock clock(grabrt::Sec2NanoSec(kCycleWaitTimeSec_));
+  grabrt::ThreadClock clock(grabrt::Sec2NanoSec(CableRobot::kCycleWaitTimeSec));
   while (1)
   {
     if (robot_ptr_->MotorsEnabled())
       return true;
-    if (clock.ElapsedFromStart() > kMaxWaitTimeSec_)
+    if (clock.ElapsedFromStart() > CableRobot::kMaxWaitTimeSec)
       break;
     clock.WaitUntilNext();
   }
@@ -352,7 +355,7 @@ STATE_DEFINE(HomingProprioceptive, StartUp, HomingProprioceptiveStartData)
     controller_.SetMotorTorqueTarget(init_torques_.back()); // = data->init_torques[i]
     pthread_mutex_unlock(&robot_ptr_->Mutex());
     // Wait until each motor reached user-given initial torque setpoint
-    RetVal ret = WaitUntilTargetReached();
+    RetVal ret = robot_ptr_->WaitUntilTargetReached();
     if (ret != RetVal::OK)
     {
       if (ret == RetVal::ETIMEOUT)
@@ -420,7 +423,8 @@ STATE_DEFINE(HomingProprioceptive, SwitchCable, NoEventData)
   working_actuator_idx_++;
   meas_step_ = 0; // reset
 
-  if (WaitUntilTargetReached() == RetVal::OK && WaitUntilPlatformSteady() == RetVal::OK)
+  if (robot_ptr_->WaitUntilTargetReached() == RetVal::OK &&
+      WaitUntilPlatformSteady() == RetVal::OK)
   {
     emit stateChanged(ST_SWITCH_CABLE);
     return;
@@ -446,7 +450,8 @@ STATE_DEFINE(HomingProprioceptive, Coiling, NoEventData)
   pthread_mutex_unlock(&robot_ptr_->Mutex());
   emit printToQConsole(QString("Next torque setpoint = %1 ‰").arg(torques_[meas_step_]));
 
-  if (WaitUntilTargetReached() == RetVal::OK && WaitUntilPlatformSteady() == RetVal::OK)
+  if (robot_ptr_->WaitUntilTargetReached() == RetVal::OK &&
+      WaitUntilPlatformSteady() == RetVal::OK)
   {
     DumpMeasAndMoveNext();
     emit stateChanged(ST_COILING);
@@ -475,7 +480,8 @@ STATE_DEFINE(HomingProprioceptive, Uncoiling, NoEventData)
   emit printToQConsole(
     QString("Next torque setpoint = %1 ‰").arg(torques_[kOffset - meas_step_]));
 
-  if (WaitUntilTargetReached() == RetVal::OK && WaitUntilPlatformSteady() == RetVal::OK)
+  if (robot_ptr_->WaitUntilTargetReached() == RetVal::OK &&
+      WaitUntilPlatformSteady() == RetVal::OK)
   {
     DumpMeasAndMoveNext();
     emit stateChanged(ST_UNCOILING);
@@ -539,58 +545,28 @@ STATE_DEFINE(HomingProprioceptive, Fault, NoEventData)
 
 //--------- Private functions --------------------------------------------------------//
 
-RetVal HomingProprioceptive::WaitUntilTargetReached()
-{
-  grabrt::ThreadClock clock(grabrt::Sec2NanoSec(kCycleWaitTimeSec_));
-  while (1)
-  {
-    // Check if target is reached
-    pthread_mutex_lock(&robot_ptr_->Mutex());
-    if (controller_.MotorTorqueTargetReached())
-    {
-      pthread_mutex_unlock(&robot_ptr_->Mutex());
-      return RetVal::OK;
-    }
-    pthread_mutex_unlock(&robot_ptr_->Mutex());
-    // Check if external abort signal is received
-    qmutex_.lock();
-    if (stop_cmd_recv_ || disable_cmd_recv_)
-    {
-      qmutex_.unlock();
-      return RetVal::EINT;
-    }
-    qmutex_.unlock();
-    // Check if timeout expired (safety feature to prevent hanging in forever)
-    if (clock.ElapsedFromStart() > kMaxWaitTimeSec_)
-    {
-      emit printToQConsole(
-        "WARNING: Actuator is taking too long to reach target: operation aborted");
-      return RetVal::ETIMEOUT;
-    }
-    clock.WaitUntilNext();
-  }
-}
-
 RetVal HomingProprioceptive::WaitUntilPlatformSteady()
 {
   // Compute these once for all
   static constexpr size_t kBuffSize =
-    static_cast<size_t>(kBufferingTimeSec_ / kCycleWaitTimeSec_);
+    static_cast<size_t>(kBufferingTimeSec_ / CableRobot::kCycleWaitTimeSec);
   // LP filters setup
   static std::vector<grabnum::LowPassFilter> lp_filters(
     active_actuators_id_.size(),
-    grabnum::LowPassFilter(kCutoffFreq_, kCycleWaitTimeSec_));
+    grabnum::LowPassFilter(kCutoffFreq_, CableRobot::kCycleWaitTimeSec));
   for (size_t i = 0; i < active_actuators_id_.size(); i++)
     lp_filters[i].Reset();
 
   // debug
   ulong step = (working_actuator_idx_ - 1) * (2 * num_meas_ - 1) + meas_step_;
-  std::ofstream dbg_log_file("/home/labpc/MATLAB-Drive/cable_robot/pulley_angles/pulley_angles_" + std::to_string(step) + ".txt");
+  std::ofstream dbg_log_file(
+    "/home/labpc/MATLAB-Drive/cable_robot/pulley_angles/pulley_angles_" +
+    std::to_string(step) + ".txt");
   // Init
   bool swinging = true;
   std::vector<RingBufferD> pulleys_angles(active_actuators_id_.size(),
                                           RingBufferD(kBuffSize));
-  grabrt::ThreadClock clock(grabrt::Sec2NanoSec(kCycleWaitTimeSec_));
+  grabrt::ThreadClock clock(grabrt::Sec2NanoSec(CableRobot::kCycleWaitTimeSec));
   // Start waiting
   while (swinging)
   {
@@ -621,7 +597,7 @@ RetVal HomingProprioceptive::WaitUntilPlatformSteady()
     // debug
     dbg_log_file << "\n";
     // Check if timeout expired (safety feature to prevent hanging in forever)
-    if (clock.ElapsedFromStart() > kMaxWaitTimeSec_)
+    if (clock.ElapsedFromStart() > CableRobot::kCycleWaitTimeSec)
     {
       dbg_log_file.close(); // debug
       emit printToQConsole(

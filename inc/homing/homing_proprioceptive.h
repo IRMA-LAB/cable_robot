@@ -80,6 +80,7 @@ class HomingProprioceptive: public QObject, public StateMachine
   void homingComplete() const;
   void stateChanged(const quint8&) const;
   void progressValue(const int&) const;
+  void stopWaitingCmd() const;
 
  private slots:
   void handleActuatorStatusUpdate(const ActuatorStatus& actuator_status);
@@ -105,15 +106,11 @@ class HomingProprioceptive: public QObject, public StateMachine
   vect<id_t> active_actuators_id_;
   vect<ActuatorStatus> actuators_status_;
 
-  // Tuning params for waiting functions
-  static constexpr double kCycleWaitTimeSec_ = 0.02; // [sec]
-  static constexpr double kMaxWaitTimeSec_   = 25.0; // [sec]
   // Tuning params for detecting platform steadyness
   static constexpr double kBufferingTimeSec_  = 3.0;    // [sec]
   static constexpr double kCutoffFreq_        = 20.0;   // [Hz]
   static constexpr double kMaxAngleDeviation_ = 0.00005; // [rad]
 
-  RetVal WaitUntilTargetReached();
   RetVal WaitUntilPlatformSteady();
 
   void DumpMeasAndMoveNext();

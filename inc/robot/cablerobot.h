@@ -1,7 +1,7 @@
 /**
  * @file cablerobot.cpp
  * @author Simone Comari, Edoardo Idà
- * @date 24 Gen 2019
+ * @date 20 Feb 2019
  * @brief File containing ...
  */
 
@@ -48,6 +48,10 @@ class CableRobot: public QObject,
     ST_MAX_STATES
   };
 
+  // Tuning params for waiting functions
+  static constexpr double kCycleWaitTimeSec = 0.02; // [sec]
+  static constexpr double kMaxWaitTimeSec   = 25.0; // [sec]
+
   const ActuatorStatus GetActuatorStatus(const id_t motor_id);
   void UpdateHomeConfig(const double cable_len, const double pulley_angle);
   void UpdateHomeConfig(const id_t motor_id, const double cable_len,
@@ -73,8 +77,11 @@ class CableRobot: public QObject,
   bool GoHome();
 
   void SetController(ControllerBase* controller);
+  RetVal WaitUntilTargetReached();
 
  public slots:
+  void stopWaiting();
+
   void enterCalibrationMode();
   void enterHomingMode();
   void eventSuccess();
@@ -102,13 +109,14 @@ class CableRobot: public QObject,
   void EcRtThreadStatusChanged(const bool active) override final;
 
  private:
+  grabcdpr::PlatformVars platform_;
+  grabcdpr::Vars cdpr_status_;
+
+  // Timers for status updates
   static constexpr int kMotorStatusIntervalMsec_    = 100;
   static constexpr int kActuatorStatusIntervalMsec_ = 10;
   QTimer* motor_status_timer_                       = NULL;
   QTimer* actuator_status_timer_                    = NULL;
-
-  grabcdpr::PlatformVars platform_;
-  grabcdpr::Vars cdpr_status_;
 
   void StopTimers();
 
@@ -134,6 +142,8 @@ class CableRobot: public QObject,
 
   // Control related
   ControllerBase* controller_ = NULL;
+  QMutex qmutex_;
+  bool stop_waiting_cmd_recv_ = false;
 
   void ControlStep();
 
