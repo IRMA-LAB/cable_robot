@@ -50,6 +50,7 @@ public:
   vect<ControlMode> GetModes() const { return modes_; }
 
   virtual vect<ControlAction> CalcCtrlActions(const grabcdpr::Vars& robot_status, const vect<ActuatorStatus>& actuators_status) = 0;
+  virtual bool TargetReached() const = 0;
 
 protected:
   vect<id_t> motors_id_;
