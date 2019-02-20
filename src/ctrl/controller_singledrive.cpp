@@ -178,13 +178,13 @@ int32_t ControllerSingleDrive::CalcMotorPos(const vect<ActuatorStatus>& actuator
     if (actuator_status.id != motors_id_[0])
       continue;
     double current_motor_pos = static_cast<double>(actuator_status.motor_position);
-    motor_pos = current_motor_pos + torque_pid_.Calculate(pos_target_, current_motor_pos);
+    motor_pos = pos_pid_.Calculate(pos_target_, current_motor_pos);
     //    printf("%f/%f --> %d/%d\n", current_motor_pos, pos_target_,
     //           static_cast<int32_t>(round(motor_pos)), pos_target_true_);
     break;
   }
-  on_target_ = (std::abs(torque_pid_.GetError()) + std::abs(torque_pid_.GetPrevError())) <
-               (2 * torque_ss_err_tol_);
+  on_target_ = (std::abs(pos_pid_.GetError()) + std::abs(pos_pid_.GetPrevError())) <
+               (2 * pos_ss_err_tol_);
 //  return static_cast<int32_t>(round(motor_pos));
   return pos_target_true_;
 }
@@ -201,8 +201,7 @@ ControllerSingleDrive::CalcMotorTorque(const vect<ActuatorStatus>& actuators_sta
     if (actuator_status.id != motors_id_[0])
       continue;
     double current_motor_torque = static_cast<double>(actuator_status.motor_torque);
-    motor_torque =
-      current_motor_torque + torque_pid_.Calculate(torque_target_, current_motor_torque);
+    motor_torque = torque_pid_.Calculate(torque_target_, current_motor_torque);
     //    printf("%f/%f --> %d/%d\n", current_motor_torque, torque_target_,
     //           static_cast<int16_t>(round(motor_torque)), torque_target_true_);
     break;

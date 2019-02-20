@@ -94,9 +94,9 @@ class ControllerSingleDrive: public ControllerBase
   double delta_torque_;
 
   PID pos_pid_;
-  ParamsPID pos_pid_params_ = {0.052, 0.093, -0.0003, 0.6, 50.0, -50.0};
+  ParamsPID pos_pid_params_ = {0.0263, 0., 15.847, 0., 50.0, -50.0};
   PID torque_pid_;
-  ParamsPID torque_pid_params_ = {0.052, 0.093, -0.0003, 0.6, 50.0, -50.0};
+  ParamsPID torque_pid_params_ = {0.0263, 0., 15.847, 0., kAbsMaxTorque_, -kAbsMaxTorque_};
 
   int32_t CalcMotorPos(const vect<ActuatorStatus>& actuators_status);
   int16_t CalcMotorTorque(const vect<ActuatorStatus>& actuators_status);
