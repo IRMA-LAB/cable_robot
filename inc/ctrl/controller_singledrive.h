@@ -46,7 +46,6 @@ class ControllerSingleDrive: public ControllerBase
   bool MotorSpeedTargetReached(const int32_t current_value);
   bool MotorTorqueTargetReached() const { return on_target_; }
 
-  int16_t CalcMotorTorque(const vect<ActuatorStatus>& actuators_status);
   vect<ControlAction>
   CalcCtrlActions(const grabcdpr::Vars& robot_status,
                   const vect<ActuatorStatus>& actuators_status) override;
@@ -54,9 +53,11 @@ class ControllerSingleDrive: public ControllerBase
  private:
   static constexpr double kAbsDeltaLengthMicroPerSec_ = 0.005;  // [m/s]
   static constexpr double kAbsDeltaLengthPerSec_      = 0.02;   // [m/s]
+  static constexpr int32_t kDefaultPosSsErrTol_       = 5;      // [counts]
   static constexpr int32_t kAbsMaxSpeed_              = 800000; // [counts/s]
   static constexpr int16_t kAbsDeltaTorquePerSec_     = 20;     // [nominal points]
   static constexpr int16_t kAbsMaxTorque_             = 600;    // [nominal points]
+  static constexpr int16_t kDefaultTorqueSsErrTol_    = 5;      // [nominal points]
 
   enum BitPosition
   {
@@ -78,6 +79,7 @@ class ControllerSingleDrive: public ControllerBase
   double speed_target_;
   double torque_target_;
 
+  int32_t pos_ss_err_tol_;
   int16_t torque_ss_err_tol_;
 
   bool change_length_target_;
@@ -91,13 +93,13 @@ class ControllerSingleDrive: public ControllerBase
   double abs_delta_torque_;
   double delta_torque_;
 
+  PID pos_pid_;
+  ParamsPID pos_pid_params_ = {0.052, 0.093, -0.0003, 0.6, 50.0, -50.0};
   PID torque_pid_;
-  static constexpr double Kp_                = 0.052;
-  static constexpr double Ki_                = 0.093;
-  static constexpr double Kd_                = -0.0003;
-  static constexpr double Tf_                = 0.6;
-  static constexpr double kMaxCtrlOutput_    = 50.0;
-  static constexpr int16_t kDefaultSsErrTol_ = 5;
+  ParamsPID torque_pid_params_ = {0.052, 0.093, -0.0003, 0.6, 50.0, -50.0};
+
+  int32_t CalcMotorPos(const vect<ActuatorStatus>& actuators_status);
+  int16_t CalcMotorTorque(const vect<ActuatorStatus>& actuators_status);
 
   void Clear();
 };
