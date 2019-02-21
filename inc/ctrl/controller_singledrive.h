@@ -53,6 +53,7 @@ class ControllerSingleDrive: public ControllerBase
  private:
   static constexpr double kAbsDeltaLengthMicroPerSec_ = 0.005;  // [m/s]
   static constexpr double kAbsDeltaLengthPerSec_      = 0.02;   // [m/s]
+  static constexpr int32_t kAbsMaxPos_                = 5;      // [counts]
   static constexpr int32_t kDefaultPosSsErrTol_       = 5;      // [counts]
   static constexpr int32_t kAbsMaxSpeed_              = 800000; // [counts/s]
   static constexpr int16_t kAbsDeltaTorquePerSec_     = 20;     // [nominal points]
@@ -94,9 +95,10 @@ class ControllerSingleDrive: public ControllerBase
   double delta_torque_;
 
   PID pos_pid_;
-  ParamsPID pos_pid_params_ = {0.0263, 0., 15.847, 0., 50.0, -50.0};
+  ParamsPID pos_pid_params_ = {0.0263, 0., 15.847, 0., kAbsMaxPos_, -kAbsMaxPos_};
   PID torque_pid_;
-  ParamsPID torque_pid_params_ = {0.0263, 0., 15.847, 0., kAbsMaxTorque_, -kAbsMaxTorque_};
+  ParamsPID torque_pid_params_ = {0.0263,         0., 15.847, 0., kAbsMaxTorque_,
+                                  -kAbsMaxTorque_};
 
   int32_t CalcMotorPos(const vect<ActuatorStatus>& actuators_status);
   int16_t CalcMotorTorque(const vect<ActuatorStatus>& actuators_status);
