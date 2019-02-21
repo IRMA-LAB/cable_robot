@@ -5,10 +5,15 @@
 #include <QFileDialog>
 #include <QMessageBox>
 
+#include "json.hpp"
+
 #include "gui/homing/homing_interface.h"
 #include "gui/homing/init_torque_form.h"
 #include "homing/homing_proprioceptive.h"
 
+
+// Aliases -----------------------------------------
+using json = nlohmann::json; // JSON library support
 
 namespace Ui {
 class HomingInterfaceProprioceptive;

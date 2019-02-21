@@ -163,8 +163,12 @@ void HomingInterfaceProprioceptive::on_pushButton_start_clicked()
                                   : form->GetMaxTorque());
   }
   ui->progressBar_acquisition->setValue(0);
-  app_.Start(data);
+  ui->radioButton_internal->setDisabled(true);
+  ui->lineEdit_extFile->clear();
+  ui->radioButton_external->toggled(true);
+  ui->pushButton_ok->setDisabled(true);
   acquisition_complete_ = false;
+  app_.Start(data);
 }
 
 void HomingInterfaceProprioceptive::on_radioButton_internal_clicked()
@@ -173,6 +177,7 @@ void HomingInterfaceProprioceptive::on_radioButton_internal_clicked()
   ui->radioButton_external->toggled(false);
   ui->lineEdit_extFile->setDisabled(true);
   ui->pushButton_extFile->setDisabled(true);
+  ui->pushButton_ok->setEnabled(true);
 }
 
 void HomingInterfaceProprioceptive::on_radioButton_external_clicked()
@@ -181,6 +186,8 @@ void HomingInterfaceProprioceptive::on_radioButton_external_clicked()
   ui->radioButton_internal->toggled(false);
   ui->lineEdit_extFile->setEnabled(true);
   ui->pushButton_extFile->setEnabled(true);
+  ui->pushButton_ok->setEnabled(acquisition_complete_ &&
+                                !ui->lineEdit_extFile->text().isEmpty());
 }
 
 void HomingInterfaceProprioceptive::on_pushButton_extFile_clicked()
@@ -188,7 +195,7 @@ void HomingInterfaceProprioceptive::on_pushButton_extFile_clicked()
   CLOG(TRACE, "event");
   QString config_filename =
     QFileDialog::getOpenFileName(this, tr("Load Optimization Results"), tr("../.."),
-                                 tr("Optimization results (*.txt)"));
+                                 tr("Optimization results (*.json)"));
   if (config_filename.isEmpty())
   {
     QMessageBox::warning(this, "File Error", "File name is empty!");
@@ -200,6 +207,7 @@ void HomingInterfaceProprioceptive::on_pushButton_extFile_clicked()
 void HomingInterfaceProprioceptive::on_pushButton_ok_clicked()
 {
   CLOG(TRACE, "event");
+  ui->pushButton_ok->setChecked(false);
   if (ui->radioButton_internal->isChecked())
   {
     ui->groupBox_dataCollection->setEnabled(false);
@@ -207,15 +215,15 @@ void HomingInterfaceProprioceptive::on_pushButton_ok_clicked()
     return;
   }
 
-  HomingProprioceptiveHomeData* res = new HomingProprioceptiveHomeData;
-  if (!ParseExtFile(res))
+  HomingProprioceptiveHomeData* home_data = new HomingProprioceptiveHomeData;
+  if (!ParseExtFile(home_data))
   {
     QMessageBox::warning(this, "File Error",
                          "File content is not valid!\nPlease load a different file.");
     return;
   }
   ui->groupBox_dataCollection->setEnabled(false);
-  app_.GoHome(res);
+  app_.GoHome(home_data);
 }
 
 void HomingInterfaceProprioceptive::on_pushButton_cancel_clicked()
@@ -399,10 +407,42 @@ void HomingInterfaceProprioceptive::UpdateTorquesLimits()
   }
 }
 
-bool HomingInterfaceProprioceptive::ParseExtFile(HomingProprioceptiveHomeData* /*res*/)
+bool HomingInterfaceProprioceptive::ParseExtFile(HomingProprioceptiveHomeData* home_data)
 {
-  // Read external file and fill res struct
-  return true; // dummy
+  // Open file
+  QString filename = ui->lineEdit_extFile->text();
+  appendText2Browser("Parsing file '" + filename + "'...");
+  std::ifstream ifile(filename.toStdString());
+  if (!ifile.is_open())
+  {
+    appendText2Browser("ERROR: Could not open file '" + filename + "'");
+    return false;
+  }
+
+  // Parse JSON (generic) data
+  json optimization_results;
+  ifile >> optimization_results;
+  ifile.close();
+
+  // Fill home_data structure
+  QString field;
+  try
+  {
+    for (size_t i = 0; i < static_cast<size_t>(init_torque_forms_.size()); i++)
+    {
+      field = "init_lengths";
+      home_data->init_lengths.push_back(optimization_results[field.toStdString()].at(i));
+      field = "init_angles";
+      home_data->init_angles.push_back(optimization_results[field.toStdString()].at(i));
+    }
+  }
+  catch (json::type_error)
+  {
+    appendText2Browser("ERROR: Missing, invalid or incomplete optimization result: " +
+                       field);
+    return false;
+  }
+  return true;
 }
 
 void HomingInterfaceProprioceptive::Close()
