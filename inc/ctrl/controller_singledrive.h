@@ -24,7 +24,7 @@ class ControllerSingleDrive: public ControllerBase
   ControllerSingleDrive(const id_t motor_id, const uint32_t period_nsec);
 
   void SetCableLenTarget(const double target);
-  void SetMotorPosTarget(const int32_t target);
+  void SetMotorPosTarget(const int32_t target, const double time = 0.0);
   void SetMotorSpeedTarget(const int32_t target);
   void SetMotorTorqueTarget(const int16_t target);
 
@@ -101,8 +101,13 @@ class ControllerSingleDrive: public ControllerBase
   const ParamsPID torque_pid_params_ = {0.0263, 15.847,         0.,
                                         0.,     kAbsMaxTorque_, -kAbsMaxTorque_};
 
+  double traj_time_ = 0.0;  /**< [sec] */
+  bool new_trajectory_ = false;
+
   int32_t CalcMotorPos(const vect<ActuatorStatus>& actuators_status);
   int16_t CalcMotorTorque(const vect<ActuatorStatus>& actuators_status);
+
+  int32_t CalcPoly5Waypoint(const int32_t q, const int32_t q_final);
 
   void Clear();
 };

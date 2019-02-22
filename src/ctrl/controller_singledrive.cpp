@@ -32,12 +32,15 @@ void ControllerSingleDrive::SetCableLenTarget(const double target)
   target_flags_.Set(LENGTH);
 }
 
-void ControllerSingleDrive::SetMotorPosTarget(const int32_t target)
+void ControllerSingleDrive::SetMotorPosTarget(const int32_t target,
+                                              const double time /*= 0.0*/)
 {
   Clear();
   pos_target_true_ = target;
   pos_target_      = static_cast<double>(pos_target_true_);
   pos_pid_.Reset();
+  traj_time_      = time;
+  new_trajectory_ = true;
   target_flags_.Set(POSITION);
 }
 
@@ -167,23 +170,33 @@ ControllerSingleDrive::CalcCtrlActions(const grabcdpr::Vars&,
 
 int32_t ControllerSingleDrive::CalcMotorPos(const vect<ActuatorStatus>& actuators_status)
 {
+  static int32_t prev_pos_target;
+
   if (on_target_)
     return pos_target_true_;
 
-  double motor_pos = pos_target_;
+  double motor_pos = pos_target_; // this is for safety, in case there's no id match
   for (const ActuatorStatus& actuator_status : actuators_status)
   {
     if (actuator_status.id != motors_id_[0])
       continue;
     double current_motor_pos = static_cast<double>(actuator_status.motor_position);
-    motor_pos                = pos_pid_.Calculate(pos_target_, current_motor_pos);
-    printf("%d - %.1f -> %.1f\n", pos_target_true_, current_motor_pos, motor_pos);
+    int32_t pos_target =
+      CalcPoly5Waypoint(actuator_status.motor_position, pos_target_true_);
+    if (pos_target != prev_pos_target)
+    {
+      pos_pid_.Reset();
+      prev_pos_target = pos_target;
+    }
+    motor_pos = pos_pid_.Calculate(pos_target, current_motor_pos);
+    // debug
+    printf("%d(%d) - %.1f -> %.1f\n", pos_target, pos_target_true_, current_motor_pos,
+           motor_pos);
     break;
   }
   on_target_ = (std::abs(pos_pid_.GetError()) + std::abs(pos_pid_.GetPrevError())) <
                (2 * pos_ss_err_tol_);
-  //  return static_cast<int32_t>(round(motor_pos));
-  return pos_target_true_;
+  return static_cast<int32_t>(round(motor_pos));
 }
 
 int16_t
@@ -199,13 +212,39 @@ ControllerSingleDrive::CalcMotorTorque(const vect<ActuatorStatus>& actuators_sta
       continue;
     double current_motor_torque = static_cast<double>(actuator_status.motor_torque);
     motor_torque = torque_pid_.Calculate(torque_target_, current_motor_torque);
-//    printf("%d - %.1f -> %.1f\n", torque_target_true_, current_motor_torque,
-//           motor_torque);
+    //    printf("%d - %.1f -> %.1f\n", torque_target_true_, current_motor_torque,
+    //           motor_torque);
     break;
   }
   on_target_ = (std::abs(torque_pid_.GetError()) + std::abs(torque_pid_.GetPrevError())) <
                (2 * torque_ss_err_tol_);
   return static_cast<int16_t>(round(motor_torque));
+}
+
+int32_t ControllerSingleDrive::CalcPoly5Waypoint(const int32_t q, const int32_t q_final)
+{
+  static double a0, a3, a4, a5; // polynomial coefficients for null init/final vel/acc
+  static grabrt::Clock clock;
+
+  // Check if a trajectory was requested
+  if (traj_time_ <= 0.0)
+    return q_final;
+
+  if (new_trajectory_)
+  {
+    a0              = q; // this is q_init for a new trajectory
+    a3              = 20. / (2 * pow(traj_time_, 3.)) * (q_final - q);
+    a4              = 30. / (2 * pow(traj_time_, 4.)) * (q - q_final);
+    a5              = 12. / (2 * pow(traj_time_, 5.)) * (q_final - q);
+    new_trajectory_ = false;
+    clock.Reset();
+  }
+
+  double t = clock.Elapsed();
+  if (t >= traj_time_)
+    return q_final;
+  double q_t = a0 + a3 * pow(t, 3.) + a4 * pow(t, 4.) + a5 * pow(t, 5.);
+  return static_cast<int32_t>(round(q_t));
 }
 
 void ControllerSingleDrive::Clear()
