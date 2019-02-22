@@ -3,10 +3,9 @@
 ControllerSingleDrive::ControllerSingleDrive(const uint32_t period_nsec)
   : ControllerBase(), period_sec_(period_nsec * 0.000000001),
     pos_ss_err_tol_(kDefaultPosSsErrTol_), torque_ss_err_tol_(kDefaultTorqueSsErrTol_),
-    pos_pid_(period_sec_), torque_pid_(period_sec_)
+    torque_pid_(period_sec_)
 {
   Clear();
-  pos_pid_.SetParams(pos_pid_params_);
   torque_pid_.SetParams(torque_pid_params_);
   abs_delta_torque_ = period_sec_ * kAbsDeltaTorquePerSec_; // delta per cycle
 }
@@ -15,10 +14,9 @@ ControllerSingleDrive::ControllerSingleDrive(const id_t motor_id,
                                              const uint32_t period_nsec)
   : ControllerBase(vect<id_t>(1, motor_id)), period_sec_(period_nsec * 0.000000001),
     pos_ss_err_tol_(kDefaultPosSsErrTol_), torque_ss_err_tol_(kDefaultTorqueSsErrTol_),
-    pos_pid_(period_sec_), torque_pid_(period_sec_)
+    torque_pid_(period_sec_)
 {
   Clear();
-  pos_pid_.SetParams(pos_pid_params_);
   torque_pid_.SetParams(torque_pid_params_);
   abs_delta_torque_ = period_sec_ * kAbsDeltaTorquePerSec_; // delta per cycle
 }
@@ -33,14 +31,15 @@ void ControllerSingleDrive::SetCableLenTarget(const double target)
 }
 
 void ControllerSingleDrive::SetMotorPosTarget(const int32_t target,
-                                              const double time /*= 0.0*/)
+                                              const bool apply_traj /*= true*/,
+                                              const double time /*= -1.0*/)
 {
   Clear();
-  pos_target_true_ = target;
-  pos_target_      = static_cast<double>(pos_target_true_);
-  pos_pid_.Reset();
-  traj_time_      = time;
-  new_trajectory_ = true;
+  pos_target_true_  = target;
+  pos_target_       = static_cast<double>(pos_target_true_);
+  traj_time_        = time;
+  new_trajectory_   = true;
+  apply_trajectory_ = apply_traj;
   target_flags_.Set(POSITION);
 }
 
@@ -170,33 +169,21 @@ ControllerSingleDrive::CalcCtrlActions(const grabcdpr::Vars&,
 
 int32_t ControllerSingleDrive::CalcMotorPos(const vect<ActuatorStatus>& actuators_status)
 {
-  static int32_t prev_pos_target;
-
   if (on_target_)
     return pos_target_true_;
 
-  double motor_pos = pos_target_; // this is for safety, in case there's no id match
+  int32_t pos_target =
+    pos_target_true_; // this is for safety, in case there's no id match
   for (const ActuatorStatus& actuator_status : actuators_status)
   {
     if (actuator_status.id != motors_id_[0])
       continue;
-    double current_motor_pos = static_cast<double>(actuator_status.motor_position);
-    int32_t pos_target =
-      CalcPoly5Waypoint(actuator_status.motor_position, pos_target_true_);
-    if (pos_target != prev_pos_target)
-    {
-      pos_pid_.Reset();
-      prev_pos_target = pos_target;
-    }
-    motor_pos = pos_pid_.Calculate(pos_target, current_motor_pos);
-    // debug
-    printf("%d(%d) - %.1f -> %.1f\n", pos_target, pos_target_true_, current_motor_pos,
-           motor_pos);
+    pos_target =
+      CalcPoly5Waypoint(actuator_status.motor_position, pos_target_true_, kAbsMaxSpeed_);
+    on_target_ = pos_target == pos_target_true_;
     break;
   }
-  on_target_ = (std::abs(pos_pid_.GetError()) + std::abs(pos_pid_.GetPrevError())) <
-               (2 * pos_ss_err_tol_);
-  return static_cast<int32_t>(round(motor_pos));
+  return pos_target;
 }
 
 int16_t
@@ -221,21 +208,25 @@ ControllerSingleDrive::CalcMotorTorque(const vect<ActuatorStatus>& actuators_sta
   return static_cast<int16_t>(round(motor_torque));
 }
 
-int32_t ControllerSingleDrive::CalcPoly5Waypoint(const int32_t q, const int32_t q_final)
+int32_t ControllerSingleDrive::CalcPoly5Waypoint(const int32_t q, const int32_t q_final,
+                                                 const int32_t max_dq)
 {
   static double a0, a3, a4, a5; // polynomial coefficients for null init/final vel/acc
   static grabrt::Clock clock;
 
   // Check if a trajectory was requested
-  if (traj_time_ <= 0.0)
+  if (!apply_trajectory_)
     return q_final;
 
   if (new_trajectory_)
   {
+    double dq = q_final - q;
+    if (traj_time_ <= 0.0)
+      traj_time_ = std::max(1.0, std::abs(dq) / max_dq);
     a0              = q; // this is q_init for a new trajectory
-    a3              = 20. / (2 * pow(traj_time_, 3.)) * (q_final - q);
-    a4              = 30. / (2 * pow(traj_time_, 4.)) * (q - q_final);
-    a5              = 12. / (2 * pow(traj_time_, 5.)) * (q_final - q);
+    a3              = 20. / (2 * pow(traj_time_, 3.)) * dq;
+    a4              = -30. / (2 * pow(traj_time_, 4.)) * dq;
+    a5              = 12. / (2 * pow(traj_time_, 5.)) * dq;
     new_trajectory_ = false;
     clock.Reset();
   }
