@@ -51,14 +51,15 @@ class ControllerSingleDrive: public ControllerBase
                   const vect<ActuatorStatus>& actuators_status) override;
 
  private:
-  static constexpr double kAbsDeltaLengthMicroPerSec_ = 0.005;  // [m/s]
-  static constexpr double kAbsDeltaLengthPerSec_      = 0.02;   // [m/s]
-  static constexpr int32_t kAbsMaxPos_                = 5;      // [counts]
-  static constexpr int32_t kDefaultPosSsErrTol_       = 5;      // [counts]
-  static constexpr int32_t kAbsMaxSpeed_              = 800000; // [counts/s]
-  static constexpr int16_t kAbsDeltaTorquePerSec_     = 20;     // [nominal points]
-  static constexpr int16_t kAbsMaxTorque_             = 600;    // [nominal points]
-  static constexpr int16_t kDefaultTorqueSsErrTol_    = 5;      // [nominal points]
+  static constexpr double kAbsDeltaLengthMicroPerSec_ = 0.005;     // [m/s]
+  static constexpr double kAbsDeltaLengthPerSec_      = 0.02;      // [m/s]
+  static constexpr int32_t kMaxPos_                   = 12000000;  // [counts]
+  static constexpr int32_t kMinPos_                   = -16500000; // [counts]
+  static constexpr int32_t kDefaultPosSsErrTol_       = 5;         // [counts]
+  static constexpr int32_t kAbsMaxSpeed_              = 800000;    // [counts/s]
+  static constexpr int16_t kAbsDeltaTorquePerSec_     = 20;        // [nominal points]
+  static constexpr int16_t kAbsMaxTorque_             = 600;       // [nominal points]
+  static constexpr int16_t kDefaultTorqueSsErrTol_    = 5;         // [nominal points]
 
   enum BitPosition
   {
@@ -95,10 +96,10 @@ class ControllerSingleDrive: public ControllerBase
   double delta_torque_;
 
   PID pos_pid_;
-  ParamsPID pos_pid_params_ = {0.0263, 0., 15.847, 0., kAbsMaxPos_, -kAbsMaxPos_};
+  const ParamsPID pos_pid_params_ = {0.0011, 2.2647, 0., 0., kMaxPos_, kMinPos_};
   PID torque_pid_;
-  ParamsPID torque_pid_params_ = {0.0263,         0., 15.847, 0., kAbsMaxTorque_,
-                                  -kAbsMaxTorque_};
+  const ParamsPID torque_pid_params_ = {0.0263, 15.847,         0.,
+                                        0.,     kAbsMaxTorque_, -kAbsMaxTorque_};
 
   int32_t CalcMotorPos(const vect<ActuatorStatus>& actuators_status);
   int16_t CalcMotorTorque(const vect<ActuatorStatus>& actuators_status);

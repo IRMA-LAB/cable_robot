@@ -3,9 +3,11 @@
 ControllerSingleDrive::ControllerSingleDrive(const uint32_t period_nsec)
   : ControllerBase(), period_sec_(period_nsec * 0.000000001),
     pos_ss_err_tol_(kDefaultPosSsErrTol_), torque_ss_err_tol_(kDefaultTorqueSsErrTol_),
-    pos_pid_(period_sec_, pos_pid_params_), torque_pid_(period_sec_, torque_pid_params_)
+    pos_pid_(period_sec_), torque_pid_(period_sec_)
 {
   Clear();
+  pos_pid_.SetParams(pos_pid_params_);
+  torque_pid_.SetParams(torque_pid_params_);
   abs_delta_torque_ = period_sec_ * kAbsDeltaTorquePerSec_; // delta per cycle
 }
 
@@ -13,9 +15,11 @@ ControllerSingleDrive::ControllerSingleDrive(const id_t motor_id,
                                              const uint32_t period_nsec)
   : ControllerBase(vect<id_t>(1, motor_id)), period_sec_(period_nsec * 0.000000001),
     pos_ss_err_tol_(kDefaultPosSsErrTol_), torque_ss_err_tol_(kDefaultTorqueSsErrTol_),
-    pos_pid_(period_sec_, pos_pid_params_), torque_pid_(period_sec_, torque_pid_params_)
+    pos_pid_(period_sec_), torque_pid_(period_sec_)
 {
   Clear();
+  pos_pid_.SetParams(pos_pid_params_);
+  torque_pid_.SetParams(torque_pid_params_);
   abs_delta_torque_ = period_sec_ * kAbsDeltaTorquePerSec_; // delta per cycle
 }
 
@@ -32,6 +36,8 @@ void ControllerSingleDrive::SetMotorPosTarget(const int32_t target)
 {
   Clear();
   pos_target_true_ = target;
+  pos_target_      = static_cast<double>(pos_target_true_);
+  pos_pid_.Reset();
   target_flags_.Set(POSITION);
 }
 
@@ -45,7 +51,9 @@ void ControllerSingleDrive::SetMotorSpeedTarget(const int32_t target)
 void ControllerSingleDrive::SetMotorTorqueTarget(const int16_t target)
 {
   Clear();
-  torque_target_ = static_cast<double>(torque_target_true_);
+  torque_target_true_ = target;
+  torque_target_      = static_cast<double>(torque_target_true_);
+  torque_pid_.Reset();
   target_flags_.Set(TORQUE);
 }
 
@@ -169,8 +177,7 @@ int32_t ControllerSingleDrive::CalcMotorPos(const vect<ActuatorStatus>& actuator
       continue;
     double current_motor_pos = static_cast<double>(actuator_status.motor_position);
     motor_pos                = pos_pid_.Calculate(pos_target_, current_motor_pos);
-    printf("%.1f/%.1f --> %d/%d\n", current_motor_pos, pos_target_,
-           static_cast<int32_t>(round(motor_pos)), pos_target_true_);
+    printf("%d - %.1f -> %.1f\n", pos_target_true_, current_motor_pos, motor_pos);
     break;
   }
   on_target_ = (std::abs(pos_pid_.GetError()) + std::abs(pos_pid_.GetPrevError())) <
@@ -192,21 +199,19 @@ ControllerSingleDrive::CalcMotorTorque(const vect<ActuatorStatus>& actuators_sta
       continue;
     double current_motor_torque = static_cast<double>(actuator_status.motor_torque);
     motor_torque = torque_pid_.Calculate(torque_target_, current_motor_torque);
-    printf("%.1f/%.1f --> %d/%d\n", current_motor_torque, torque_target_,
-           static_cast<int16_t>(round(motor_torque)), torque_target_true_);
+//    printf("%d - %.1f -> %.1f\n", torque_target_true_, current_motor_torque,
+//           motor_torque);
     break;
   }
   on_target_ = (std::abs(torque_pid_.GetError()) + std::abs(torque_pid_.GetPrevError())) <
                (2 * torque_ss_err_tol_);
-  //  return static_cast<int16_t>(round(motor_torque));
-  return torque_target_true_;
+  return static_cast<int16_t>(round(motor_torque));
 }
 
 void ControllerSingleDrive::Clear()
 {
   target_flags_.ClearAll();
 
-  torque_pid_.Reset();
   on_target_ = false;
 
   change_length_target_ = false;
