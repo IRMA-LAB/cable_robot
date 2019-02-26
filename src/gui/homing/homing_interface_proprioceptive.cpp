@@ -430,10 +430,10 @@ bool HomingInterfaceProprioceptive::ParseExtFile(HomingProprioceptiveHomeData* h
   {
     for (size_t i = 0; i < static_cast<size_t>(init_torque_forms_.size()); i++)
     {
-      field = "init_lengths";
-      home_data->init_lengths.push_back(optimization_results[field.toStdString()].at(i));
       field = "init_angles";
       home_data->init_angles.push_back(optimization_results[field.toStdString()].at(i));
+      field = "init_lengths";
+      home_data->init_lengths.push_back(optimization_results[field.toStdString()].at(i));
     }
   }
   catch (json::type_error)

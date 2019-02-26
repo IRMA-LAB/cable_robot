@@ -509,36 +509,46 @@ STATE_DEFINE(HomingProprioceptive, Optimizing, NoEventData)
   HomingProprioceptiveHomeData* home_data = new HomingProprioceptiveHomeData;
   try
   {
+    // Add necessary folders to path
+    QString cmd = QString("addpath(genpath('%1/matlab'))").arg(SRCDIR);
+    matlabPtr->eval(cmd.toStdU16String(), output_buff, err_buff);
     // Call MATLAB function
     matlab::data::TypedArray<double> results = matlabPtr->feval(
       u"ExternalHomingFun", factory.createCharArray("/tmp/cable-robot-logs/data.log"),
       output_buff, err_buff);
-    // Distribute results over home data
+    // Check if output dimension are consistent
     const size_t N = active_actuators_id_.size();
+    if (N != results.getDimensions()[0])
+      throw std::out_of_range("inconsistent matlab optimization results dimension");
+    // Distribute results over home data
     for (size_t i = 0; i < N; i++)
     {
-      home_data->init_angles.push_back(results[i]);
-      home_data->init_lengths.push_back(results[i + N]);
+      home_data->init_angles.push_back(results[i][0]);
+      home_data->init_lengths.push_back(results[i][1]);
     }
-
     // Display MATLAB output in C++
     matlab::engine::String output = output_buff.get()->str();
     std::cout << matlab::engine::convertUTF16StringToUTF8String(output) << std::endl;
 
     emit printToQConsole("Optimization complete");
     InternalEvent(ST_HOME, home_data);
+    return;
   }
-  catch (...)
+  catch (matlab::execution::MATLABExecutionException&)
   {
-    delete home_data;
-
-    // Display MATLAB output in C++
+    // Display MATLAB errors in C++
     matlab::engine::String output = err_buff.get()->str();
-    emit printToQConsole(QString("WARNING: %s").arg(*output.c_str()));
-
-    emit printToQConsole("Optimization failed");
-    InternalEvent(ST_ENABLED);
+    emit printToQConsole(
+      QString("ERROR: %1")
+        .arg(matlab::engine::convertUTF16StringToUTF8String(output).c_str()));
   }
+  catch (std::exception& e)
+  {
+    emit printToQConsole(QString("ERROR: %1").arg(e.what()));
+  }
+  delete home_data;
+  emit printToQConsole("WARNING: Optimization failed");
+  InternalEvent(ST_ENABLED);
 }
 
 STATE_DEFINE(HomingProprioceptive, Home, HomingProprioceptiveHomeData)

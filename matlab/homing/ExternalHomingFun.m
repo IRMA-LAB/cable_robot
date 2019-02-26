@@ -1,5 +1,4 @@
 function res = ExternalHomingFun(filepath)
-addpath('Common')
 addpath('dati_vicon_homing')
 
 [cdpr_parameters, cdpr_variables, ~, record,utilities] = ...
