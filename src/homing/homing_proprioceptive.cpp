@@ -511,7 +511,7 @@ STATE_DEFINE(HomingProprioceptive, Optimizing, NoEventData)
   {
     // Call MATLAB function
     matlab::data::TypedArray<double> results = matlabPtr->feval(
-      u"homingScript", factory.createCharArray("/tmp/cable-robot-logs/data.log"),
+      u"ExternalHomingFun", factory.createCharArray("/tmp/cable-robot-logs/data.log"),
       output_buff, err_buff);
     // Distribute results over home data
     const size_t N = active_actuators_id_.size();

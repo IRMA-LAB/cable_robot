@@ -239,7 +239,7 @@ bool CableRobot::GoHome()
     pthread_mutex_lock(&mutex_);
     controller.SetMotorID(actuator_ptr->ID());
     controller.SetMode(ControlMode::MOTOR_POSITION);
-    controller.SetMotorPosTarget(actuator_ptr->GetWinch().GetServoHomePos());
+    controller.SetMotorPosTarget(actuator_ptr->GetWinch().GetServoHomePos(), true, 3.0);
     pthread_mutex_unlock(&mutex_);
 
     if (WaitUntilTargetReached() != RetVal::OK)
