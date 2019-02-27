@@ -102,6 +102,7 @@ class HomingProprioceptive: public QObject, public StateMachine
   vect<qint16> init_torques_;
   vect<qint16> max_torques_;
   vect<qint16> torques_;
+  vect<qint32> reg_pos_;
   bool stop_cmd_recv_;
   bool disable_cmd_recv_;
 

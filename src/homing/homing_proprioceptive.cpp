@@ -343,6 +343,7 @@ STATE_DEFINE(HomingProprioceptive, StartUp, HomingProprioceptiveStartData)
   init_torques_.clear();
   max_torques_ = data->max_torques;
   torques_.resize(num_meas_);
+  reg_pos_.resize(num_meas_);
 
   robot_ptr_->SetController(&controller_);
   for (size_t i = 0; i < active_actuators_id_.size(); ++i)
@@ -406,8 +407,7 @@ STATE_DEFINE(HomingProprioceptive, SwitchCable, NoEventData)
     (static_cast<qint16>(num_meas_) - 1);
   for (quint8 i = 0; i < num_meas_ - 1; ++i)
     torques_[i] = init_torques_[working_actuator_idx_] + i * delta_torque;
-  torques_.back() =
-    max_torques_[working_actuator_idx_]; // last element is forced to be = max torque
+  torques_.back() = max_torques_[working_actuator_idx_]; // last element = max torque
 
   // Setup first setpoint of the sequence
   pthread_mutex_lock(&robot_ptr_->Mutex());
@@ -420,7 +420,6 @@ STATE_DEFINE(HomingProprioceptive, SwitchCable, NoEventData)
     QString("Switched to actuator #%1.\nInitial torque setpoint = %2 ‰")
       .arg(motors_id[working_actuator_idx_])
       .arg(torques_.front()));
-  working_actuator_idx_++;
   meas_step_ = 0; // reset
 
   if (robot_ptr_->WaitUntilTargetReached() == RetVal::OK &&
@@ -432,7 +431,14 @@ STATE_DEFINE(HomingProprioceptive, SwitchCable, NoEventData)
   InternalEvent(ST_ENABLED);
 }
 
-ENTRY_DEFINE(HomingProprioceptive, EntryCoiling, NoEventData) { DumpMeasAndMoveNext(); }
+ENTRY_DEFINE(HomingProprioceptive, EntryCoiling, NoEventData)
+{
+  // Record initial motor position for future uncoiling phase
+  reg_pos_[0] = robot_ptr_->GetActuatorStatus(active_actuators_id_[working_actuator_idx_])
+                  .motor_position;
+
+  DumpMeasAndMoveNext();
+}
 
 STATE_DEFINE(HomingProprioceptive, Coiling, NoEventData)
 {
@@ -453,6 +459,13 @@ STATE_DEFINE(HomingProprioceptive, Coiling, NoEventData)
   if (robot_ptr_->WaitUntilTargetReached() == RetVal::OK &&
       WaitUntilPlatformSteady() == RetVal::OK)
   {
+    // Record motor position for future uncoiling phase
+    reg_pos_[meas_step_] =
+      robot_ptr_->GetActuatorStatus(active_actuators_id_[working_actuator_idx_])
+        .motor_position;
+    emit printToQConsole(QString("Torque setpoint reached with motor position = %1")
+                           .arg(reg_pos_[meas_step_]));
+
     DumpMeasAndMoveNext();
     emit stateChanged(ST_COILING);
     return;
@@ -469,20 +482,38 @@ STATE_DEFINE(HomingProprioceptive, Uncoiling, NoEventData)
 
   if (meas_step_ == 2 * num_meas_)
   {
+    // At the end of uncoiling phase, restore torque control before moving to next cable
+    pthread_mutex_lock(&robot_ptr_->Mutex());
+    controller_.SetMode(ControlMode::MOTOR_TORQUE);
+    controller_.SetMotorTorqueTarget(torques_.front());
+    pthread_mutex_unlock(&robot_ptr_->Mutex());
+    robot_ptr_->WaitUntilTargetReached();
+    working_actuator_idx_++;
     InternalEvent(ST_SWITCH_CABLE);
     return;
   }
 
   const ulong kOffset = num_tot_meas_ / active_actuators_id_.size();
+  // Uncoiling done in position control to return to previous steps. In torque control
+  // this wouldn't happen due to friction.
   pthread_mutex_lock(&robot_ptr_->Mutex());
-  controller_.SetMotorTorqueTarget(torques_[kOffset - meas_step_]);
+  controller_.SetMode(ControlMode::MOTOR_POSITION);
+  controller_.SetMotorPosTarget(reg_pos_[kOffset - meas_step_], true, 3.0);
   pthread_mutex_unlock(&robot_ptr_->Mutex());
   emit printToQConsole(
-    QString("Next torque setpoint = %1 ‰").arg(torques_[kOffset - meas_step_]));
+    QString("Next position setpoint = %1 ‰").arg(reg_pos_[kOffset - meas_step_]));
 
   if (robot_ptr_->WaitUntilTargetReached() == RetVal::OK &&
       WaitUntilPlatformSteady() == RetVal::OK)
   {
+    int16_t actual_torque =
+      robot_ptr_->GetActuatorStatus(active_actuators_id_[working_actuator_idx_])
+        .motor_torque;
+    emit printToQConsole(
+      QString("Position setpoint reached with torque = %1 ‰ (original was %2 ‰)")
+        .arg(actual_torque)
+        .arg(reg_pos_[kOffset - meas_step_]));
+
     DumpMeasAndMoveNext();
     emit stateChanged(ST_UNCOILING);
     return;
@@ -644,7 +675,7 @@ void HomingProprioceptive::DumpMeasAndMoveNext()
   emit printToQConsole("Measurements dumped onto log file");
   meas_step_++;
   double normalized_value =
-    round(100. * ((working_actuator_idx_ - 1.0) / active_actuators_id_.size() +
+    round(100. * (working_actuator_idx_ / active_actuators_id_.size() +
                   static_cast<double>(meas_step_) / num_tot_meas_));
   emit progressValue(static_cast<int>(normalized_value));
 }
