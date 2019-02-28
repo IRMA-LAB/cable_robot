@@ -1,6 +1,4 @@
 function res = ExternalHomingFun(filepath)
-addpath('dati_vicon_homing')
-
 [cdpr_parameters, cdpr_variables, ~, record,utilities] = ...
     LoadConfigAndInit("my_config_copt.json", "homing");
 

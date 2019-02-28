@@ -625,7 +625,7 @@ RetVal HomingProprioceptive::WaitUntilPlatformSteady()
         break;
     }
     // Check if timeout expired (safety feature to prevent hanging in forever)
-    if (clock.ElapsedFromStart() > CableRobot::kCycleWaitTimeSec)
+    if (clock.ElapsedFromStart() > CableRobot::kMaxWaitTimeSec)
     {
       emit printToQConsole(
         "WARNING: Platform is taking too long to stabilize: operation aborted");
