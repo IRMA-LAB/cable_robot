@@ -216,7 +216,7 @@ void HomingInterfaceProprioceptive::on_pushButton_ok_clicked()
   }
 
   HomingProprioceptiveHomeData* home_data = new HomingProprioceptiveHomeData;
-  if (!ParseExtFile(home_data))
+  if (!app_.ParseExtFile(ui->lineEdit_extFile->text(), home_data))
   {
     QMessageBox::warning(this, "File Error",
                          "File content is not valid!\nPlease load a different file.");
@@ -405,44 +405,6 @@ void HomingInterfaceProprioceptive::UpdateTorquesLimits()
     }
     ui->spinBox_maxTorque->setMaximum(max_torque_minimum);
   }
-}
-
-bool HomingInterfaceProprioceptive::ParseExtFile(HomingProprioceptiveHomeData* home_data)
-{
-  // Open file
-  QString filename = ui->lineEdit_extFile->text();
-  appendText2Browser("Parsing file '" + filename + "'...");
-  std::ifstream ifile(filename.toStdString());
-  if (!ifile.is_open())
-  {
-    appendText2Browser("ERROR: Could not open file '" + filename + "'");
-    return false;
-  }
-
-  // Parse JSON (generic) data
-  json optimization_results;
-  ifile >> optimization_results;
-  ifile.close();
-
-  // Fill home_data structure
-  QString field;
-  try
-  {
-    for (size_t i = 0; i < static_cast<size_t>(init_torque_forms_.size()); i++)
-    {
-      field = "init_angles";
-      home_data->init_angles.push_back(optimization_results[field.toStdString()].at(i));
-      field = "init_lengths";
-      home_data->init_lengths.push_back(optimization_results[field.toStdString()].at(i));
-    }
-  }
-  catch (json::type_error)
-  {
-    appendText2Browser("ERROR: Missing, invalid or incomplete optimization result: " +
-                       field);
-    return false;
-  }
-  return true;
 }
 
 void HomingInterfaceProprioceptive::Close()

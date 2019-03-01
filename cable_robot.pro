@@ -152,14 +152,3 @@ FORMS += \
 
 RESOURCES += \
     resources/resources.qrc
-
-# Matlab engine
-HEADERS += $$PWD/../../../../usr/local/MATLAB/R2018b/extern/include/MatlabEngine.hpp \
-           $$PWD/../../../../usr/local/MATLAB/R2018b/extern/include/MatlabDataArray.hpp
-unix:!macx: LIBS += -L$$PWD/../../../../usr/local/MATLAB/R2018b/extern/bin/glnxa64/ -lMatlabEngine
-unix:!macx: LIBS += -L$$PWD/../../../../usr/local/MATLAB/R2018b/extern/bin/glnxa64/ -lMatlabDataArray
-INCLUDEPATH += $$PWD/../../../../usr/local/MATLAB/R2018b/extern/bin/glnxa64 \
-           $$PWD/../../../../usr/local/MATLAB/R2018b/extern/include/
-DEPENDPATH += $$PWD/../../../../usr/local/MATLAB/R2018b/extern/bin/glnxa64
-
-

@@ -4,8 +4,7 @@
 #include <QObject>
 #include <QString>
 
-#include "MatlabDataArray.hpp"
-#include "MatlabEngine.hpp"
+#include "json.hpp"
 
 #include "StateMachine.h"
 #include "easylogging++.h"
@@ -15,6 +14,9 @@
 #include "robot/cablerobot.h"
 #include "utils/types.h"
 
+
+// Aliases -----------------------------------------
+using json = nlohmann::json; // JSON library support
 
 class HomingProprioceptiveStartData: public EventData
 {
@@ -64,8 +66,11 @@ class HomingProprioceptive: public QObject, public StateMachine
   };
 
   bool IsCollectingData();
+
   vect<id_t> GetActuatorsID() const { return active_actuators_id_; }
   ActuatorStatus GetActuatorStatus(const id_t id);
+
+  bool ParseExtFile(const QString& filepath, HomingProprioceptiveHomeData*);
 
  public:
   //--------- External events -------------------------------------------------------//
@@ -112,8 +117,8 @@ class HomingProprioceptive: public QObject, public StateMachine
   vect<ActuatorStatus> actuators_status_;
 
   // Tuning params for detecting platform steadyness
-  static constexpr double kBufferingTimeSec_  = 3.0;    // [sec]
-  static constexpr double kCutoffFreq_        = 20.0;   // [Hz]
+  static constexpr double kBufferingTimeSec_  = 3.0;     // [sec]
+  static constexpr double kCutoffFreq_        = 20.0;    // [Hz]
   static constexpr double kMaxAngleDeviation_ = 0.00005; // [rad]
 
   RetVal WaitUntilPlatformSteady();
