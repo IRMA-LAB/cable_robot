@@ -420,6 +420,9 @@ STATE_DEFINE(CableRobot, Ready, NoEventData)
 {
   PrintStateTransition(prev_state_, ST_READY);
   prev_state_ = ST_READY;
+
+  StopTimers();
+  motor_status_timer_->start(kMotorStatusIntervalMsec_);
 }
 
 STATE_DEFINE(CableRobot, Operational, NoEventData)
@@ -476,10 +479,6 @@ void CableRobot::emitActuatorStatus()
   emit actuatorStatus(active_actuators_status_[idx++]);
   if (idx >= active_actuators_id_.size())
     idx = 0;
-
-  // debug
-  ActuatorStatusMsg msg(clock_.Elapsed(), active_actuators_status_[idx]);
-  emit sendMsg(msg.serialized());
 }
 
 //--------- Miscellaneous private ---------------------------------------------------//

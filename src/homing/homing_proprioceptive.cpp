@@ -345,6 +345,7 @@ STATE_DEFINE(HomingProprioceptive, StartUp, HomingProprioceptiveStartData)
   torques_.resize(num_meas_);
   reg_pos_.resize(num_meas_);
 
+  RetVal ret = RetVal::OK;
   robot_ptr_->SetController(&controller_);
   for (size_t i = 0; i < active_actuators_id_.size(); ++i)
   {
@@ -356,16 +357,16 @@ STATE_DEFINE(HomingProprioceptive, StartUp, HomingProprioceptiveStartData)
     controller_.SetMotorTorqueTarget(init_torques_.back()); // = data->init_torques[i]
     pthread_mutex_unlock(&robot_ptr_->Mutex());
     // Wait until each motor reached user-given initial torque setpoint
-    RetVal ret = robot_ptr_->WaitUntilTargetReached();
+    ret = robot_ptr_->WaitUntilTargetReached();
     if (ret != RetVal::OK)
-    {
-      if (ret == RetVal::ETIMEOUT)
-        emit printToQConsole(
-          "WARNING: Start up phase is taking too long: operation aborted");
-      InternalEvent(ST_ENABLED);
-      return;
-    }
+      break;
     msg.append(QString("\n\t%1±%2 ‰").arg(init_torques_.back()).arg(kTorqueSsErrTol_));
+  }
+  if (ret != RetVal::OK || WaitUntilPlatformSteady() != RetVal::OK)
+  {
+    emit printToQConsole("WARNING: Start up phase failed");
+    InternalEvent(ST_ENABLED);
+    return;
   }
   // At the beginning we don't know where we are, neither we care.
   // Just update encoder home position to be used as reference to compute deltas.
@@ -487,9 +488,14 @@ STATE_DEFINE(HomingProprioceptive, Uncoiling, NoEventData)
     controller_.SetMode(ControlMode::MOTOR_TORQUE);
     controller_.SetMotorTorqueTarget(torques_.front());
     pthread_mutex_unlock(&robot_ptr_->Mutex());
-    robot_ptr_->WaitUntilTargetReached();
-    working_actuator_idx_++;
-    InternalEvent(ST_SWITCH_CABLE);
+    if (robot_ptr_->WaitUntilTargetReached() == RetVal::OK &&
+        WaitUntilPlatformSteady() == RetVal::OK)
+    {
+      working_actuator_idx_++;
+      InternalEvent(ST_SWITCH_CABLE);
+    }
+    else
+      InternalEvent(ST_ENABLED);
     return;
   }
 
@@ -512,7 +518,7 @@ STATE_DEFINE(HomingProprioceptive, Uncoiling, NoEventData)
     emit printToQConsole(
       QString("Position setpoint reached with torque = %1 ‰ (original was %2 ‰)")
         .arg(actual_torque)
-        .arg(reg_pos_[kOffset - meas_step_]));
+        .arg(torques_[kOffset - meas_step_]));
 
     DumpMeasAndMoveNext();
     emit stateChanged(ST_UNCOILING);
@@ -617,7 +623,7 @@ RetVal HomingProprioceptive::WaitUntilPlatformSteady()
         break;
     }
     // Check if timeout expired (safety feature to prevent hanging in forever)
-    if (clock.ElapsedFromStart() > CableRobot::kCycleWaitTimeSec)
+    if (clock.ElapsedFromStart() > CableRobot::kMaxWaitTimeSec)
     {
       emit printToQConsole(
         "WARNING: Platform is taking too long to stabilize: operation aborted");

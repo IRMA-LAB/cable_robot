@@ -328,6 +328,7 @@ void HomingInterfaceProprioceptive::handleAcquisitionComplete()
 {
   CLOG(INFO, "event") << "Acquisition complete";
   ui->radioButton_internal->setEnabled(true);
+  ui->pushButton_ok->setEnabled(true);
   acquisition_complete_ = true;
 }
 

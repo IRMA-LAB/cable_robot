@@ -1,6 +1,4 @@
 function res = ExternalHomingFun(filepath)
-addpath('dati_vicon_homing')
-
 [cdpr_parameters, cdpr_variables, ~, record,utilities] = ...
     LoadConfigAndInit("my_config_copt.json", "homing");
 
@@ -83,6 +81,11 @@ end
     (cdpr_parameters, record, vLength, vSwivelAngle, v), ...
     initial_guess1, [], [], utilities.lsqnonlin_options_grad);
 angles = sol2(1:3);
-lenghts = sol2(4:6);
-res = [ angles lenghts ];
+lengths = sol2(4:6);
+res = [ angles lengths ];
+
+json.startup;
+r.init_angles = angles';
+r.init_lengths = lengths';
+json.write(r, 'results.json')
 end
