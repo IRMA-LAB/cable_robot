@@ -504,14 +504,12 @@ STATE_DEFINE(HomingProprioceptive, Coiling, NoEventData)
   InternalEvent(ST_ENABLED);
 }
 
-ENTRY_DEFINE(HomingProprioceptive, EntryUncoiling, NoEventData) { meas_step_++; }
-
 STATE_DEFINE(HomingProprioceptive, Uncoiling, NoEventData)
 {
   PrintStateTransition(prev_state_, ST_UNCOILING);
   prev_state_ = ST_UNCOILING;
 
-  if (meas_step_ == 2 * num_meas_)
+  if (meas_step_ == (2 * num_meas_ - 1))
   {
     // At the end of uncoiling phase, restore torque control before moving to next cable
     pthread_mutex_lock(&robot_ptr_->Mutex());
@@ -529,7 +527,7 @@ STATE_DEFINE(HomingProprioceptive, Uncoiling, NoEventData)
     return;
   }
 
-  const ulong kOffset = num_tot_meas_ / active_actuators_id_.size();
+  const ulong kOffset = num_tot_meas_ / active_actuators_id_.size() + 1;
   // Uncoiling done in position control to return to previous steps. In torque control
   // this wouldn't happen due to friction.
   pthread_mutex_lock(&robot_ptr_->Mutex());
