@@ -11,6 +11,7 @@
 #include "inc/filters.h"
 
 #include "ctrl/controller_singledrive.h"
+#include "homing/matlab_thread.h"
 #include "robot/cablerobot.h"
 #include "utils/types.h"
 
@@ -93,14 +94,16 @@ class HomingProprioceptive: public QObject, public StateMachine
 
  private slots:
   void handleActuatorStatusUpdate(const ActuatorStatus& actuator_status);
+  void handleMatlabResultsReady();
+  void updateOptimizationProgress();
 
  private:
-  static constexpr size_t kNumMeasMin_     = 1;
-  static constexpr qint16 kTorqueSsErrTol_ = 5;
-
   CableRobot* robot_ptr_ = NULL;
   ControllerSingleDrive controller_;
-  size_t num_meas_ = kNumMeasMin_;
+
+  static constexpr size_t kNumMeasMin_     = 1;
+  static constexpr qint16 kTorqueSsErrTol_ = 5;
+  size_t num_meas_                         = kNumMeasMin_;
   size_t num_tot_meas_;
   size_t working_actuator_idx_;
   size_t meas_step_;
@@ -108,6 +111,7 @@ class HomingProprioceptive: public QObject, public StateMachine
   vect<qint16> max_torques_;
   vect<qint16> torques_;
   vect<qint32> reg_pos_;
+
   bool stop_cmd_recv_;
   bool disable_cmd_recv_;
 
@@ -115,6 +119,10 @@ class HomingProprioceptive: public QObject, public StateMachine
 
   vect<id_t> active_actuators_id_;
   vect<ActuatorStatus> actuators_status_;
+
+  static constexpr int kOptProgressIntervalMsec_ = 150;
+  QTimer optimization_progess_timer_;
+  int optimization_progress_counter_;
 
   // Tuning params for detecting platform steadyness
   static constexpr double kBufferingTimeSec_  = 3.0;     // [sec]

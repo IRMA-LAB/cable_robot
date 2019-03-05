@@ -12,6 +12,7 @@ HEADERS = \
     $$PWD/inc/gui/homing/homing_interface_proprioceptive.h \
     $$PWD/inc/gui/homing/init_torque_form.h \
     $$PWD/inc/homing/homing_proprioceptive.h \
+    $$PWD/inc/homing/matlab_thread.h \
     $$PWD/inc/ctrl/controller_base.h \
     $$PWD/inc/ctrl/controller_singledrive.h \
     $$PWD/inc/utils/types.h \
@@ -37,6 +38,7 @@ SOURCES = \
     $$PWD/src/gui/homing/homing_interface_proprioceptive.cpp \
     $$PWD/src/gui/homing/init_torque_form.cpp \
     $$PWD/src/homing/homing_proprioceptive.cpp \
+    $$PWD/src/homing/matlab_thread.cpp \
     $$PWD/src/ctrl/controller_base.cpp \
     $$PWD/src/ctrl/controller_singledrive.cpp \
     $$PWD/src/utils/msgs.cpp \

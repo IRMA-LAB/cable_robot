@@ -20,8 +20,6 @@ HomingInterfaceProprioceptive::HomingInterfaceProprioceptive(QWidget* parent,
           SLOT(appendText2Browser(QString)), Qt::ConnectionType::QueuedConnection);
   connect(&app_, SIGNAL(printToQConsole(QString)), this,
           SLOT(appendText2Browser(QString)), Qt::ConnectionType::DirectConnection);
-  connect(&app_, SIGNAL(progressValue(int)), this, SLOT(updateAcquisitionProgress(int)),
-          Qt::ConnectionType::DirectConnection);
   connect(&app_, SIGNAL(acquisitionComplete()), this, SLOT(handleAcquisitionComplete()));
   connect(&app_, SIGNAL(homingComplete()), this, SLOT(handleHomingComplete()));
   connect(&app_, SIGNAL(stateChanged(quint8)), this, SLOT(handleStateChanged(quint8)),
@@ -148,7 +146,11 @@ void HomingInterfaceProprioceptive::on_pushButton_start_clicked()
     QCoreApplication::processEvents(); // debug
     CLOG(TRACE, "event") << "(STOP?) --> " << (reply == QMessageBox::Yes);
     if (reply == QMessageBox::Yes)
+    {
       app_.Stop(); // any --> ENABLED
+      disconnect(&app_, SIGNAL(progressValue(int)), this,
+                 SLOT(updateAcquisitionProgress(int)));
+    }
     return;
   }
 
@@ -168,6 +170,8 @@ void HomingInterfaceProprioceptive::on_pushButton_start_clicked()
   ui->radioButton_external->toggled(true);
   ui->pushButton_ok->setDisabled(true);
   acquisition_complete_ = false;
+  connect(&app_, SIGNAL(progressValue(int)), this, SLOT(updateAcquisitionProgress(int)),
+          Qt::ConnectionType::DirectConnection);
   app_.Start(data);
 }
 
@@ -208,13 +212,17 @@ void HomingInterfaceProprioceptive::on_pushButton_ok_clicked()
 {
   CLOG(TRACE, "event");
   ui->pushButton_ok->setChecked(false);
+  ui->progressBar_optimization->setValue(0);
+  connect(&app_, SIGNAL(progressValue(int)), this, SLOT(updateOptimizationProgress(int)),
+          Qt::ConnectionType::DirectConnection);
+  // "Internal" optimization (ext call to Matlab)
   if (ui->radioButton_internal->isChecked())
   {
     ui->groupBox_dataCollection->setEnabled(false);
     app_.Optimize();
     return;
   }
-
+  // "External" optimization = load results obtained somehow externally
   HomingProprioceptiveHomeData* home_data = new HomingProprioceptiveHomeData;
   if (!app_.ParseExtFile(ui->lineEdit_extFile->text(), home_data))
   {
@@ -222,6 +230,7 @@ void HomingInterfaceProprioceptive::on_pushButton_ok_clicked()
                          "File content is not valid!\nPlease load a different file.");
     return;
   }
+  ui->progressBar_optimization->setValue(100);
   ui->groupBox_dataCollection->setEnabled(false);
   app_.GoHome(home_data);
 }
@@ -330,6 +339,9 @@ void HomingInterfaceProprioceptive::handleAcquisitionComplete()
   ui->radioButton_internal->setEnabled(true);
   ui->pushButton_ok->setEnabled(true);
   acquisition_complete_ = true;
+
+  disconnect(&app_, SIGNAL(progressValue(int)), this,
+             SLOT(updateAcquisitionProgress(int)));
 }
 
 void HomingInterfaceProprioceptive::handleHomingComplete()
@@ -377,6 +389,10 @@ void HomingInterfaceProprioceptive::handleStateChanged(const quint8& state)
       ui->pushButton_enable->setText(tr("Enable"));
       ui->pushButton_start->setDisabled(true);
       ui->pushButton_clearFaults->setEnabled(true);
+      break;
+    case HomingProprioceptive::ST_HOME:
+      disconnect(&app_, SIGNAL(progressValue(int)), this,
+                 SLOT(updateOptimizationProgress(int)));
       break;
     default:
       break;

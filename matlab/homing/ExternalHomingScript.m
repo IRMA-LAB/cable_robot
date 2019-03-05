@@ -30,8 +30,8 @@ end
 % making use of banal extimation of the workspace center (geometrical
 % property  of the robot) and acquired data. No need for user interaction.
 
-[imported_data_coarse, ~] = parseCableRobotLogFile('data.log');
-% [imported_data_coarse, ~] = parseCableRobotLogFile('/tmp/cable-robot-logs/data.log');
+% [imported_data_coarse, ~] = parseCableRobotLogFile('data.log');
+[imported_data_coarse, ~] = parseCableRobotLogFile('/tmp/cable-robot-logs/data.log');
 imported_data = Reparse(imported_data_coarse.actuator_status.values,...
     cdpr_parameters);
 sizes=size(imported_data);
@@ -89,5 +89,5 @@ res = [ angles lenghts ];
 j_struct.init_angles = res(:, 1)';
 j_struct.init_lengths = res(:, 2)';
 json.startup
-json.write(j_struct, 'res.json')
-fprintf('Results dumped in %s\n', strcat(pwd, '/res.json'))
+json.write(j_struct, 'results.json')
+fprintf('Results dumped in %s\n', strcat(pwd, '/results.json'))
