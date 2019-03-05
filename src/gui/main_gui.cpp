@@ -103,10 +103,6 @@ void MainGUI::on_pushButton_enable_clicked()
   if (!(ec_network_valid_ && rt_thread_running_))
     return;
 
-  if (robot_ptr_->GetCurrentState() == CableRobot::ST_READY)
-    if (!ExitReadyStateRequest())
-      return;
-
   bool manual_ctrl_enabled = !manual_ctrl_enabled_;
 
   SetupDirectMotorCtrl(manual_ctrl_enabled);
@@ -118,6 +114,18 @@ void MainGUI::on_pushButton_faultReset_clicked()
 {
   CLOG(TRACE, "event");
   robot_ptr_->ClearFaults();
+}
+
+void MainGUI::on_pushButton_exitReady_clicked()
+{
+  CLOG(TRACE, "event");
+  if (robot_ptr_->GetCurrentState() != CableRobot::ST_READY)
+    return;
+  if (!ExitReadyStateRequest())
+    return;
+  robot_ptr_->DisableMotors();
+  robot_ptr_->stop();
+  ui->pushButton_exitReady->setDisabled(true);
 }
 
 void MainGUI::on_radioButton_posMode_clicked()
@@ -309,6 +317,7 @@ void MainGUI::enableInterface(const bool op_outcome /*= false*/)
   ui->pushButton_calib->setEnabled(true);
   ui->groupBox_app->setEnabled(op_outcome);
   ui->frame_manualControl->setEnabled(true);
+  ui->pushButton_exitReady->setEnabled(op_outcome);
   CVLOG(2, "event") << "Interface enabled with app selection "
                     << (op_outcome ? "enabled" : "disabled");
 }
@@ -395,6 +404,7 @@ void MainGUI::handleMotorStatusUpdate(const id_t& id,
     ui->pushButton_enable->setText(tr("Enable"));
     ui->pushButton_enable->setDisabled(true);
     ui->pushButton_faultReset->setEnabled(true);
+    ui->pushButton_exitReady->setDisabled(true);
     ui->pushButton_homing->setDisabled(true);
     ui->pushButton_calib->setDisabled(true);
     ui->groupBox_app->setDisabled(true);
@@ -496,10 +506,12 @@ void MainGUI::UpdateDriveCtrlPanel(const Actuator::States state)
   if (waiting_for_response_.CheckBit(Actuator::ST_IDLE) && state != Actuator::ST_IDLE)
     return;
 
-  manual_ctrl_enabled_ = (state == Actuator::ST_ENABLED);
+  bool robot_ready     = robot_ptr_->GetCurrentState() == CableRobot::ST_READY;
+  manual_ctrl_enabled_ = (state == Actuator::ST_ENABLED) && !robot_ready;
 
-  ui->pushButton_enable->setEnabled(true);
-  ui->pushButton_enable->setText(tr(manual_ctrl_enabled_ ? "Disable" : "Enable"));
+  ui->pushButton_enable->setEnabled(!robot_ready);
+  ui->pushButton_enable->setText(
+    tr(state == Actuator::ST_ENABLED ? "Disable" : "Enable"));
   ui->pushButton_faultReset->setDisabled(true);
   ui->comboBox_motorAxis->setDisabled(
     manual_ctrl_enabled_); // prevent switching drive during manual control
@@ -539,13 +551,12 @@ void MainGUI::UpdateDriveCtrlButtons(const ControlMode ctrl_mode)
 
 bool MainGUI::ExitReadyStateRequest()
 {
-  QMessageBox::StandardButton reply =
-    QMessageBox::question(this, "Robot ready",
-                          "If you proceed with direct manual motor control all homing "
-                          "results will be lost and you will have to repeat the "
-                          "procedure before starting a new application.\nAre you sure "
-                          "you want to continue?",
-                          QMessageBox::Yes | QMessageBox::No);
+  QMessageBox::StandardButton reply = QMessageBox::question(
+    this, "Robot ready",
+    "If you proceed with direct manual motor control motors will be"
+    "disabled and you will have to repeat the homing procedure "
+    "before starting a new application.\nAre you sure you want to continue?",
+    QMessageBox::Yes | QMessageBox::No);
   CLOG(TRACE, "event") << "--> " << (reply == QMessageBox::Yes);
   return (reply == QMessageBox::Yes);
 }

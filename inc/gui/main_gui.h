@@ -36,6 +36,7 @@ class MainGUI: public QDialog
 
   void on_pushButton_enable_clicked();
   void on_pushButton_faultReset_clicked();
+  void on_pushButton_exitReady_clicked();
 
   void on_radioButton_posMode_clicked();
   void on_radioButton_velMode_clicked();
