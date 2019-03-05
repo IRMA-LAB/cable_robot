@@ -14,7 +14,7 @@ class InitTorqueForm: public QWidget {
   InitTorqueForm(const id_t motor_id, QWidget* parent = NULL);
   ~InitTorqueForm();
 
-  void SetInitTorque(const qint16 value);
+  void SetInitTorque(const int value);
   void SetMaxTorque(const int value);
 
   qint16 GetInitTorque() const;

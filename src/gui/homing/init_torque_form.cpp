@@ -14,7 +14,7 @@ InitTorqueForm::InitTorqueForm(const id_t motor_id, QWidget* parent)
 
 InitTorqueForm::~InitTorqueForm() { delete ui; }
 
-void InitTorqueForm::SetInitTorque(const qint16 value)
+void InitTorqueForm::SetInitTorque(const int value)
 {
   ui->spinBox_initTorque->setValue(value);
   // Update maximum torque minimum value (max torque >= init torque)

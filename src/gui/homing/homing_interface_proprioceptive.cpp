@@ -9,7 +9,7 @@ HomingInterfaceProprioceptive::HomingInterfaceProprioceptive(QWidget* parent,
 {
   ui->setupUi(this);
 
-  quint8 pos = 4; // insert position in vertical layout
+  quint8 pos = 5; // insert position in vertical layout
   for (id_t motor_id : robot->GetActiveMotorsID())
   {
     init_torque_forms_.append(new InitTorqueForm(motor_id, this));
@@ -112,15 +112,34 @@ void HomingInterfaceProprioceptive::on_pushButton_clearFaults_clicked()
 void HomingInterfaceProprioceptive::on_checkBox_useCurrentTorque_stateChanged(int)
 {
   CLOG(TRACE, "event");
+  if (ui->checkBox_useCurrentTorque->isChecked())
+    ui->checkBox_initTorque->setChecked(false);
   for (auto* form : init_torque_forms_)
     form->EnableInitTorque(!ui->checkBox_useCurrentTorque->isChecked());
   UpdateTorquesLimits();
 }
 
+void HomingInterfaceProprioceptive::on_checkBox_initTorque_stateChanged(int)
+{
+  CLOG(TRACE, "event");
+  if (ui->checkBox_initTorque->isChecked())
+    ui->checkBox_useCurrentTorque->setChecked(false);
+  for (auto* init_torque_form : init_torque_forms_)
+    init_torque_form->EnableInitTorque(!ui->checkBox_initTorque->isChecked());
+  ui->spinBox_initTorque->setEnabled(ui->checkBox_initTorque->isChecked());
+  UpdateTorquesLimits();
+}
+
+void HomingInterfaceProprioceptive::on_spinBox_initTorque_valueChanged(int value)
+{
+  for (auto* init_torque_form : init_torque_forms_)
+    init_torque_form->SetInitTorque(value);
+}
+
 void HomingInterfaceProprioceptive::on_checkBox_maxTorque_stateChanged(int)
 {
   CLOG(TRACE, "event");
-  for (auto& init_torque_form : init_torque_forms_)
+  for (auto* init_torque_form : init_torque_forms_)
     init_torque_form->EnableMaxTorque(!ui->checkBox_maxTorque->isChecked());
   ui->spinBox_maxTorque->setEnabled(ui->checkBox_maxTorque->isChecked());
   UpdateTorquesLimits();

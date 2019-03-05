@@ -28,6 +28,8 @@ class HomingInterfaceProprioceptive: public HomingInterface
   void on_pushButton_enable_clicked();
   void on_pushButton_clearFaults_clicked();
   void on_checkBox_useCurrentTorque_stateChanged(int);
+  void on_checkBox_initTorque_stateChanged(int);
+  void on_spinBox_initTorque_valueChanged(int value);
   void on_checkBox_maxTorque_stateChanged(int);
   void on_spinBox_maxTorque_valueChanged(int value);
   void on_pushButton_start_clicked();
