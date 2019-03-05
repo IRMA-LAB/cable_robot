@@ -39,8 +39,8 @@ vLength = imported_data(1, 1:sizes(2)/2)';
 vSwivelAngle = imported_data(1, sizes(2)/2+1:sizes(2))';
 for j=2:sizes(1)
     vLength = [vLength ; imported_data(j, 1:sizes(2)/2)'];
-    vSwivelAngle = [vSwivelAngle ; 
-                     imported_data(j, sizes(2)/2+1:sizes(2))'];
+    vSwivelAngle = [vSwivelAngle ;
+        imported_data(j, sizes(2)/2+1:sizes(2))'];
 end
 [meas_stage, ~] = size(vLength);
 meas_stage = meas_stage / cdpr_parameters.n_cables;
