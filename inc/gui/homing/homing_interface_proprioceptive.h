@@ -38,7 +38,7 @@ class HomingInterfaceProprioceptive: public HomingInterface
  public:
   /**
    * @brief HomingInterfaceProprioceptive constructor.
-   * @param parent The parent Qt object, in our case the main GUI.
+   * @param parent The parent Qt object, in our case the homing dialog.
    * @param robot Pointer to the cable robot instance, to be passed to the inner app.
    */
   explicit HomingInterfaceProprioceptive(QWidget* parent, CableRobot* robot);

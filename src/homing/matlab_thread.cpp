@@ -1,3 +1,10 @@
+/**
+ * @file matlab_thread.cpp
+ * @author Simone Comari
+ * @date 07 Mar 2019
+ * @brief This file includes definitions of class present in matlab_thread.h.
+ */
+
 #include "homing/matlab_thread.h"
 
 void MatlabThread::run()

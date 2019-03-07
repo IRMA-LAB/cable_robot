@@ -1,3 +1,10 @@
+/**
+ * @file homing_dialog.cpp
+ * @author Simone Comari
+ * @date 07 Mar 2019
+ * @brief This file includes definitions of class present in homing_dialog.h.
+ */
+
 #include "gui/homing/homing_dialog.h"
 #include "ui_homing_dialog.h"
 
