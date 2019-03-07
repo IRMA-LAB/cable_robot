@@ -534,7 +534,7 @@ STATE_DEFINE(HomingProprioceptive, Uncoiling, NoEventData)
     return;
   }
 
-  const ulong kOffset = num_tot_meas_ / active_actuators_id_.size() + 1;
+  const ulong kOffset = num_tot_meas_ / active_actuators_id_.size() - 1;
   // Uncoiling done in position control to return to previous steps. In torque control
   // this wouldn't happen due to friction.
   pthread_mutex_lock(&robot_ptr_->Mutex());

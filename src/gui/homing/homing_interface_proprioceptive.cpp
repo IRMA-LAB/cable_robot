@@ -131,7 +131,11 @@ void HomingInterfaceProprioceptive::on_checkBox_initTorque_stateChanged(int)
 {
   CLOG(TRACE, "event");
   if (ui->checkBox_initTorque->isChecked())
+  {
     ui->checkBox_useCurrentTorque->setChecked(false);
+    for (auto* init_torque_form : init_torque_forms_)
+      init_torque_form->SetInitTorque(ui->spinBox_initTorque->value());
+  }
   for (auto* init_torque_form : init_torque_forms_)
     init_torque_form->EnableInitTorque(!ui->checkBox_initTorque->isChecked());
   ui->spinBox_initTorque->setEnabled(ui->checkBox_initTorque->isChecked());
