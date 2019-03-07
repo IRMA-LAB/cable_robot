@@ -1,3 +1,10 @@
+/**
+ * @file homing_proprioceptive.cpp
+ * @author Simone Comari
+ * @date 07 Mar 2019
+ * @brief This file includes definitions of classes present in homing_proprioceptive.h.
+ */
+
 #include "homing/homing_proprioceptive.h"
 
 //------------------------------------------------------------------------------------//

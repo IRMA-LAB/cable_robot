@@ -1,3 +1,15 @@
+/**
+ * @file homing_interface_proprioceptive.h
+ * @author Simone Comari
+ * @date 07 Mar 2019
+ * @brief This file takes care of the functionalities of the proprioceptive homing
+ * interface of cable robot app.
+ *
+ * The functionalities of the proprioceptive homing interface include buttons management
+ * and signaling with the proprioceptive homing app, where the actual algorithm is
+ * implemented.
+ */
+
 #ifndef CABLE_ROBOT_HOMING_INTERFACE_PROPRIOCEPTIVE_H
 #define CABLE_ROBOT_HOMING_INTERFACE_PROPRIOCEPTIVE_H
 
@@ -14,11 +26,21 @@ namespace Ui {
 class HomingInterfaceProprioceptive;
 }
 
+/**
+ * @brief This class implements the controls of the proprioceptive homing process and
+ * allows the user to triggers events, set important parameters and interact with the
+ * homing applications.
+ */
 class HomingInterfaceProprioceptive: public HomingInterface
 {
   Q_OBJECT
 
  public:
+  /**
+   * @brief HomingInterfaceProprioceptive constructor.
+   * @param parent The parent Qt object, in our case the main GUI.
+   * @param robot Pointer to the cable robot instance, to be passed to the inner app.
+   */
   explicit HomingInterfaceProprioceptive(QWidget* parent, CableRobot* robot);
   ~HomingInterfaceProprioceptive() override final;
 

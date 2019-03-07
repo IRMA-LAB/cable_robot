@@ -1,3 +1,13 @@
+/**
+ * @file main_gui.h
+ * @author Simone Comari
+ * @date 07 Mar 2019
+ * @brief This file takes care of the functionalities of the main GUI of cable robot app.
+ *
+ * The functionalities of the main GUI include buttons management, signaling with children
+ * widgets and, more importantly, direct drive manual control.
+ */
+
 #ifndef MAIN_GUI_H
 #define MAIN_GUI_H
 
@@ -17,11 +27,29 @@ namespace Ui {
 class MainGUI;
 }
 
+/**
+ * @brief This class implements the control logic of the main GUI of cable robot app.
+ *
+ * MainGUI class represents the central control panel of cable robot app.
+ * From here calibration, homing and operational procedure can be launched, moreover a
+ * feedback about the status of the network and the real time thread is provided by means
+ * of colored LEDs.
+ * A text browser displays important informations about recent events, warnings and
+ * errors. At the bottom the direct drive control panel allows the user to interact with
+ * each available drive and move it in either position, velocity or torque mode. Please
+ * note that this control mode is enabled only before robot completed the homing
+ * procedure, i.e. when robot is in ENABLED state.
+ */
 class MainGUI: public QDialog
 {
   Q_OBJECT
 
  public:
+  /**
+   * @brief MainGUI constructor.
+   * @param parent The parent Qt object.
+   * @param config The configuration parameters of the cable robot.
+   */
   MainGUI(QWidget* parent, const grabcdpr::Params& config);
   ~MainGUI();
 
@@ -33,6 +61,9 @@ class MainGUI: public QDialog
   void on_pushButton_homing_clicked();
 
   void on_pushButton_startApp_clicked();
+
+private slots:
+  //--------- Direct drive control panel buttons -------------------------------------//
 
   void on_pushButton_enable_clicked();
   void on_pushButton_faultReset_clicked();
@@ -85,6 +116,7 @@ class MainGUI: public QDialog
 
  private:
   //--------- Direct drive control stuff ---------------------------------------------//
+
   static constexpr int16_t kTorqueSsErrTol_ = 5;
 
   bool manual_ctrl_enabled_ = false;

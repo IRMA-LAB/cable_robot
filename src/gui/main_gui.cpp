@@ -1,3 +1,10 @@
+/**
+ * @file main_gui.cpp
+ * @author Simone Comari
+ * @date 07 Mar 2019
+ * @brief This file includes definitions of classes present in main_gui.h.
+ */
+
 #include "gui/main_gui.h"
 #include "ui_main_gui.h"
 
@@ -95,6 +102,8 @@ void MainGUI::on_pushButton_startApp_clicked()
   ui->groupBox_app->setDisabled(true);
   ui->frame_manualControl->setDisabled(true);
 }
+
+//--------- Public GUI slots of direct drive control panel --------------------------//
 
 void MainGUI::on_pushButton_enable_clicked()
 {

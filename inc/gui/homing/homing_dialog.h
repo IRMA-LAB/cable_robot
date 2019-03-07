@@ -1,5 +1,5 @@
-#ifndef HOMING_DIALOG_H
-#define HOMING_DIALOG_H
+#ifndef CABLE_ROBOT_HOMING_DIALOG_H
+#define CABLE_ROBOT_HOMING_DIALOG_H
 
 #include <QDialog>
 
@@ -53,4 +53,4 @@ class HomingDialog: public QDialog
   void DeleteInterface();
 };
 
-#endif // HOMING_DIALOG_H
+#endif // CABLE_ROBOT_HOMING_DIALOG_H

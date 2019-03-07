@@ -1,3 +1,11 @@
+/**
+ * @file homing_interface_proprioceptive.cpp
+ * @author Simone Comari
+ * @date 07 Mar 2019
+ * @brief This file includes definitions of classes present in
+ * homing_interface_proprioceptive.h.
+ */
+
 #include "gui/homing/homing_interface_proprioceptive.h"
 #include "ui_homing_interface_proprioceptive.h"
 
