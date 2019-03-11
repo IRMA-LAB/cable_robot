@@ -1,7 +1,7 @@
 /**
- * @file cablerobot.cpp
+ * @file cablerobot.h
  * @author Simone Comari, Edoardo Idà
- * @date 07 Mar 2019
+ * @date 11 Mar 2019
  * @brief File containing the virtualization of the physical cable robot, in terms of
  * components, signalig and low level operations.
  */
@@ -29,7 +29,42 @@
 #include "utils/easylog_wrapper.h"
 
 /**
- * @brief The CableRobot class
+ * @brief The virtualization of physical GRAB CDPR.
+ *
+ * This class allows the user to interact with the physical robot on different levels.
+ *
+ * The cable robot operations are organized as a finite state machine, whose details can
+ * be found on the relative documentation in a more friendly and schematic format.
+ * Therefore most of its public slots consists of external transition events.
+ *
+ * CableRobot class is also a derived class of EthercatMaster, because it acts in fact as
+ * master of the ethercat network, where its motors are the main slaves.
+ * Most cable robot methods live in the main (non real time) thread, except for the ones
+ * starting with "Ec", such as EcWorkFun(), and all functions called within those, for
+ * instance ControlStep(). Because the real time thread cycles at 1ms, make sure to limit
+ * the operations inside these functions to simple, fast operations, avoiding unnecessary
+ * prints.
+ *
+ * This class also includes some timers to be able to synchronously emit useful
+ * information to the extern at need, such as motors status.
+ *
+ * It also takes care of exception and error handling, such as real time deadline missed
+ * or ethercat network failures.
+ *
+ * Robot status logging is also implemented here and can be exploited with CollectMeas()
+ * and DumpMeas() functions.
+ *
+ * Last important remark regards the controller. The controller is called at every cycle
+ * of the real time thread and provides commands to the motors, if present and its output
+ * is valid. Any controller is a derived class of ControllerBase which provides the
+ * virtual API which is used and called here. Make sure that the computational time of
+ * your new controller stays largely within 1ms to have some margin for other cyclic
+ * operations. Because the controller is a shared pointer between threads, be sure to lock
+ * the robot mutex when accessing it from outside. There is no need to do so when calling
+ * methods of this class as they already are thread safe, such as SetController().
+ *
+ * Please refer to the class public methods description for other ancillary functions,
+ * such as GoHome().
  */
 class CableRobot: public QObject,
                   public virtual grabec::EthercatMaster,
@@ -40,8 +75,8 @@ class CableRobot: public QObject,
  public:
   /**
    * @brief CableRobot constructor.
-   * @param parent The parent Qt object.
-   * @param config Configuration parameters of the cable robot.
+   * @param[in] parent The parent Qt object.
+   * @param[in] config Configuration parameters of the cable robot.
    */
   CableRobot(QObject* parent, const grabcdpr::Params& config);
   ~CableRobot() override;
@@ -67,7 +102,7 @@ class CableRobot: public QObject,
 
   /**
    * @brief Get inquired actuator status.
-   * @param motor_id The ID of the inquired actuator.
+   * @param[in] motor_id The ID of the inquired actuator.
    * @return The status of the inquired actuator.
    */
   const ActuatorStatus GetActuatorStatus(const id_t motor_id);
@@ -76,22 +111,23 @@ class CableRobot: public QObject,
    *
    * When updating the home configuration new values for cable lengths and swivel pulley
    * angles are assigned for the current motor pose.
-   * @param cable_len Cable lengths at homing position.
-   * @param pulley_angle Swivel pulleys angles at homing position.
+   * @param[in] cable_len Cable lengths at homing position.
+   * @param[in] pulley_angle Swivel pulleys angles at homing position.
    */
   void UpdateHomeConfig(const double cable_len, const double pulley_angle);
   /**
    * @brief Update home configuration of a single actuator.
-   * @param motor_id The ID of the actuator to update.
-   * @param cable_len Cable length at homing position for specified actuator.
-   * @param pulley_angle Swivel pulley angle at homing position for specified actuator.
+   * @param[in] motor_id The ID of the actuator to update.
+   * @param[in] cable_len Cable length at homing position for specified actuator.
+   * @param[in] pulley_angle Swivel pulley angle at homing position for specified
+   * actuator.
    */
   void UpdateHomeConfig(const id_t motor_id, const double cable_len,
                         const double pulley_angle);
 
   /**
    * @brief Check if inquired motor is enabled.
-   * @param motor_id The ID of the inquired motor.
+   * @param[in] motor_id The ID of the inquired motor.
    * @return _True_ if motor is enabled, _false_ otherwise.
    */
   bool MotorEnabled(const id_t motor_id);
@@ -107,7 +143,7 @@ class CableRobot: public QObject,
   bool MotorsEnabled();
   /**
    * @brief Enable a single motor.
-   * @param motor_id The ID of the motor to enable.
+   * @param[in] motor_id The ID of the motor to enable.
    */
   void EnableMotor(const id_t motor_id);
   /**
@@ -116,12 +152,12 @@ class CableRobot: public QObject,
   void EnableMotors();
   /**
    * @brief Enable a set of motors.
-   * @param motors_id The IDs of the motor to enable.
+   * @param[in] motors_id The IDs of the motor to enable.
    */
   void EnableMotors(const vect<id_t>& motors_id);
   /**
    * @brief Disable a single motor.
-   * @param motor_id The ID of the motor to disable.
+   * @param[in] motor_id The ID of the motor to disable.
    */
   void DisableMotor(const id_t motor_id);
   /**
@@ -130,24 +166,24 @@ class CableRobot: public QObject,
   void DisableMotors();
   /**
    * @brief Disable a set of motors.
-   * @param motors_id The IDs of the motor to disable.
+   * @param[in] motors_id The IDs of the motor to disable.
    */
   void DisableMotors(const vect<id_t>& motors_id);
   /**
    * @brief Set a single motor operational mode.
-   * @param motor_id The ID of the motor whose operational mode is to be set.
-   * @param op_mode See grabec::GoldSoloWhistleOperationModes
+   * @param[in] motor_id The ID of the motor whose operational mode is to be set.
+   * @param[in] op_mode See grabec::GoldSoloWhistleOperationModes
    */
   void SetMotorOpMode(const id_t motor_id, const qint8 op_mode);
   /**
    * @brief Set all motors operational mode at once.
-   * @param op_mode See grabec::GoldSoloWhistleOperationModes
+   * @param[in] op_mode See grabec::GoldSoloWhistleOperationModes
    */
   void SetMotorsOpMode(const qint8 op_mode);
   /**
    * @brief Set a set of motors operational mode at once.
-   * @param motors_id The IDs of the motors whose operational mode is to be set.
-   * @param op_mode See grabec::GoldSoloWhistleOperationModes
+   * @param[in] motors_id The IDs of the motors whose operational mode is to be set.
+   * @param[in] op_mode See grabec::GoldSoloWhistleOperationModes
    */
   void SetMotorsOpMode(const vect<id_t>& motors_id, const qint8 op_mode);
   /**
@@ -168,6 +204,7 @@ class CableRobot: public QObject,
    * @brief Dump latest collected cable robot measurements onto data.log file.
    */
   void DumpMeas() const;
+
   /**
    * @brief Go to home position.
    * @return _True_ if operation was successful, _false_ otherwise.
@@ -176,7 +213,7 @@ class CableRobot: public QObject,
 
   /**
    * @brief Set motors controller.
-   * @param controller Pointer to a controller.
+   * @param[in] controller Pointer to a controller.
    * @note The pointer is to the ControllerBase whose virtual methods have to be override
    * by any derived class of it. In particular, CalcCtrlActions() is called at every cycle
    * of the real time thread while TargetReached() is typically used asynchronously to
@@ -236,10 +273,17 @@ class CableRobot: public QObject,
   void stop();
 
  signals:
+  // Timer-triggered synchronous signals
   void motorStatus(const id_t&, const grabec::GSWDriveInPdos&) const;
   void actuatorStatus(const ActuatorStatus&) const;
+
+  // Logging
   void sendMsg(const QByteArray) const;
+
+  // Information prints
   void printToQConsole(const QString&) const;
+
+  // Important status changes
   void ecStateChanged(const Bitfield8&) const;
   void rtThreadStatusChanged(const bool) const;
 

@@ -1,3 +1,10 @@
+/**
+ * @file init_torque_form.cpp
+ * @author Simone Comari
+ * @date 11 Mar 2019
+ * @brief File containing definitions of widget class declared in init_torque_form.h.
+ */
+
 #include "gui/homing/init_torque_form.h"
 #include "ui_init_torque_form.h"
 

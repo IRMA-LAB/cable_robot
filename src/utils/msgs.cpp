@@ -1,6 +1,14 @@
+/**
+ * @file msgs.cpp
+ * @author Simone Comari
+ * @date 11 Mar 2019
+ * @brief This file includes definitions of functinos declared in msgs.h.
+ * @todo Compute kMaxMsgSize automatically somehow..
+ */
+
 #include "utils/msgs.h"
 
-//------- QDataStream operators for basic types --------------------------------------//
+//------- QDataStream operators for non-Qt types -------------------------------------//
 
 QDataStream& operator<<(QDataStream& ostream, const size_t& value)
 {
@@ -32,7 +40,7 @@ QDataStream& operator<<(QDataStream& ostream, const HeaderMsg& data)
 
 QDataStream& operator>>(QDataStream& istream, HeaderMsg& data)
 {
-  istream >>  data.msg_type >> data.timestamp;
+  istream >> data.msg_type >> data.timestamp;
   return istream;
 }
 

@@ -3,7 +3,7 @@
 
 #include "grabcommon.h"
 
-/*---------------------- DECLARATIONS ------------------------*/
+//---------------------- DECLARATIONS ------------------------------------------------//
 
 #ifndef MSG_SERIALIZATION_DECLARE
 #define MSG_SERIALIZATION_DECLARE(_MsgType)                                              \
@@ -15,14 +15,13 @@
 
 #ifndef MSG_STRUCT_DECLARE
 #define MSG_STRUCT_DECLARE(_MSG_TYPE, _BodyType)                                         \
-  struct _BodyType##Msg : BaseMsg                                                        \
+  struct _BodyType##Msg: BaseMsg                                                         \
   {                                                                                      \
     _BodyType##Msg() : BaseMsg(_MSG_TYPE) {}                                             \
     _BodyType##Msg(const _BodyType& data) : BaseMsg(_MSG_TYPE), body(data) {}            \
     _BodyType##Msg(const double time_sec, const _BodyType& data)                         \
       : BaseMsg(time_sec, _MSG_TYPE), body(data)                                         \
-    {                                                                                    \
-    }                                                                                    \
+    {}                                                                                   \
     _BodyType##Msg(const QByteArray data) : BaseMsg(_MSG_TYPE) { deserialize(data); }    \
     QByteArray serialized() const;                                                       \
     void deserialize(QByteArray data);                                                   \
@@ -30,7 +29,7 @@
   };
 #endif
 
-/*---------------------- DEFINITIONS ------------------------*/
+//---------------------- DEFINITIONS -------------------------------------------------//
 
 // Actions (WHAT)
 #define OSTREAM_MSG_FIELD(_field) << data._field

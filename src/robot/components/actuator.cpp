@@ -1,3 +1,10 @@
+/**
+ * @file actuator.cpp
+ * @author Simone Comari, Edoardo Idà
+ * @date 11 Mar 2019
+ * @brief This file includes definitions of class declared in actuator.h.
+ */
+
 #include "robot/components/actuator.h"
 
 // Must provide redundant definition of the static member as well as the declaration.
@@ -38,10 +45,10 @@ void Actuator::enable()
   if (!active_)
     return;
   // clang-format off
-  BEGIN_TRANSITION_MAP                            // - Current State -
-    TRANSITION_MAP_ENTRY(ST_ENABLED)              // ST_IDLE
-    TRANSITION_MAP_ENTRY(EVENT_IGNORED)           // ST_ENABLED
-    TRANSITION_MAP_ENTRY(EVENT_IGNORED)           // ST_FAULT
+  BEGIN_TRANSITION_MAP                              // - Current State -
+    TRANSITION_MAP_ENTRY(ST_ENABLED)                // ST_IDLE
+    TRANSITION_MAP_ENTRY(EVENT_IGNORED)             // ST_ENABLED
+    TRANSITION_MAP_ENTRY(EVENT_IGNORED)             // ST_FAULT
   END_TRANSITION_MAP(NULL)
   // clang-format on
 }
@@ -52,10 +59,10 @@ void Actuator::disable()
   if (!active_)
     return;
   // clang-format off
-  BEGIN_TRANSITION_MAP                                       // - Current State -
-    TRANSITION_MAP_ENTRY(EVENT_IGNORED)       // ST_IDLE
-    TRANSITION_MAP_ENTRY(ST_IDLE)                     // ST_ENABLED
-    TRANSITION_MAP_ENTRY(EVENT_IGNORED)       // ST_FAULT
+  BEGIN_TRANSITION_MAP                              // - Current State -
+    TRANSITION_MAP_ENTRY(EVENT_IGNORED)             // ST_IDLE
+    TRANSITION_MAP_ENTRY(ST_IDLE)                   // ST_ENABLED
+    TRANSITION_MAP_ENTRY(EVENT_IGNORED)             // ST_FAULT
   END_TRANSITION_MAP(NULL)
   // clang-format on
 }
@@ -80,10 +87,10 @@ void Actuator::faultReset()
   if (!active_)
     return;
   // clang-format off
-  BEGIN_TRANSITION_MAP                                       // - Current State -
-    TRANSITION_MAP_ENTRY(EVENT_IGNORED)       // ST_IDLE
-    TRANSITION_MAP_ENTRY(EVENT_IGNORED)       // ST_ENABLED
-    TRANSITION_MAP_ENTRY(ST_IDLE)                     // ST_FAULT
+  BEGIN_TRANSITION_MAP                              // - Current State -
+    TRANSITION_MAP_ENTRY(EVENT_IGNORED)             // ST_IDLE
+    TRANSITION_MAP_ENTRY(EVENT_IGNORED)             // ST_ENABLED
+    TRANSITION_MAP_ENTRY(ST_IDLE)                   // ST_FAULT
   END_TRANSITION_MAP(NULL)
   // clang-format on
 }
@@ -157,12 +164,12 @@ Actuator::States Actuator::DriveState2ActuatorState(const GSWDStates drive_state
 {
   switch (drive_state)
   {
-  case GSWDStates::ST_OPERATION_ENABLED:
-    return Actuator::States::ST_ENABLED;
-  case GSWDStates::ST_FAULT:
-    return Actuator::States::ST_FAULT;
-  default:
-    return Actuator::States::ST_IDLE;
+    case GSWDStates::ST_OPERATION_ENABLED:
+      return Actuator::States::ST_ENABLED;
+    case GSWDStates::ST_FAULT:
+      return Actuator::States::ST_FAULT;
+    default:
+      return Actuator::States::ST_IDLE;
   }
 }
 

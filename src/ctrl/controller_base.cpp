@@ -1,3 +1,10 @@
+/**
+ * @file controller_base.cpp
+ * @author Simone Comari, Edoardo Idà
+ * @date 08 Mar 2019
+ * @brief File containing definitions of virtual class declared in controller_base.h.
+ */
+
 #include "ctrl/controller_base.h"
 
 ControllerBase::ControllerBase(const id_t motor_id)

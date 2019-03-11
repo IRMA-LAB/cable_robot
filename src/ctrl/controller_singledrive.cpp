@@ -1,3 +1,11 @@
+/**
+ * @file controller_singledrive.cpp
+ * @author Simone Comari, Edoardo Idà
+ * @date 08 Mar 2019
+ * @brief File containing definitions of derived class declared in
+ * controller_singledrive.h.
+ */
+
 #include "ctrl/controller_singledrive.h"
 
 ControllerSingleDrive::ControllerSingleDrive(const uint32_t period_nsec)
@@ -89,24 +97,6 @@ void ControllerSingleDrive::MotorTorqueIncrement(const bool active,
   change_torque_target_ = active;
   if (change_torque_target_)
     delta_torque_ = sign * abs_delta_torque_;
-}
-
-bool ControllerSingleDrive::CableLenTargetReached(const double current_value)
-{
-  static const double tol = grabnum::EPSILON; // inserisci una tolleranza vera..
-  return grabnum::IsClose(length_target_, current_value, tol);
-}
-
-bool ControllerSingleDrive::MotorPosTargetReached(const int32_t current_value)
-{
-  static const int32_t tol = 1; // inserisci una tolleranza vera..
-  return abs(pos_target_true_ - current_value) < tol;
-}
-
-bool ControllerSingleDrive::MotorSpeedTargetReached(const int32_t current_value)
-{
-  static const int32_t tol = 1000; // inserisci una tolleranza vera..
-  return abs(speed_target_true_ - current_value) < tol;
 }
 
 vect<ControlAction>

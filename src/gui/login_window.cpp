@@ -1,3 +1,10 @@
+/**
+ * @file login_window.cpp
+ * @author Simone Comari
+ * @date 11 Mar 2019
+ * @brief This file includes definitions of window class present in login_window.h.
+ */
+
 #include "gui/login_window.h"
 #include "ui_login_window.h"
 

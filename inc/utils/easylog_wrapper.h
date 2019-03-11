@@ -1,70 +1,90 @@
+/**
+ * @file easylog_wrapper.h
+ * @author Simone Comari
+ * @date 11 Mar 2019
+ * @brief File containing the implementation of a custom wrapper to log cable robot data
+ * employing easylogging++ package.
+ */
+
 #ifndef CABLE_ROBOT_EASYLOG_WRAPPER_H
 #define CABLE_ROBOT_EASYLOG_WRAPPER_H
 
 #include <QCoreApplication>
-#include <QThread>
 #include <QMutex>
+#include <QThread>
 #include <QWaitCondition>
 
 #include "easylogging++.h"
 
-#include "utils/types.h"
 #include "utils/msgs.h"
+#include "utils/types.h"
 
-//---------------------- MESSAGE LOG FUNCTIONS -------------------------//
+//---------------------- MESSAGE LOG FUNCTIONS ---------------------------------------//
 
 /**
- * @brief LogMotorStatusMsg
- * @param data_logger
- * @param msg
+ * @brief Log MotorStatusMsg.
+ * @param[in] data_logger Pointer to easylogger employed.
+ * @param[in] msg Motor status message to be logged.
  */
 void LogMotorStatusMsg(el::Logger* data_logger, const MotorStatusMsg& msg);
 /**
- * @brief LogWinchStatusMsg
- * @param data_logger
- * @param msg
+ * @brief Log WinchStatusMsg.
+ * @param[in] data_logger Pointer to easylogger employed.
+ * @param[in] msg Winch status message to be logged.
  */
 void LogWinchStatusMsg(el::Logger* data_logger, const WinchStatusMsg& msg);
 /**
- * @brief LogActuatorStatusMsg
- * @param data_logger
- * @param msg
+ * @brief Log ActuatorStatusMsg.
+ * @param[in] data_logger Pointer to easylogger employed.
+ * @param[in] msg Actuator status message to be logged.
  */
 void LogActuatorStatusMsg(el::Logger* data_logger, const ActuatorStatusMsg& msg);
 
 // ... add new message log function declaration here
 
 /**
- * @brief The LogBuffer class
+ * @brief A log buffer to log data using easylogging++ in a thread safe way.
+ *
+ * Logging, despite being made very easy thanks to easylogging++ package, still takes some
+ * time, which can be critical in real time thread with short cycle periods.
+ * To account for this, this log buffer has been developed.
+ * It takes serialized information, which are thus received and copied very fast at high
+ * rates, and dumps them onto the log file whenever it can, without clogging the more
+ * demanding source thread.
+ *
+ * @note To the developer: the queued message needs to be serialized, have a _deserialize_
+ * option and for each message a new message-specific log function must be present, such
+ * as LogActuatorStatusMsg. Moreover a new case to LogData private function must be add,
+ * with the new message enum value.
+ * @see
  */
-class LogBuffer : public QThread
+class LogBuffer: public QThread
 {
   Q_OBJECT
-public:
+ public:
   /**
-   * @brief LogBuffer
-   * @param data_logger
-   * @param buffer_size
+   * @brief LogBuffer constructor.
+   * @param[in] data_logger Pointer to easylogger employed.
+   * @param[in] buffer_size Maximum buffer size, i.e. maximum queued messages number.
    */
   LogBuffer(el::Logger* data_logger, const size_t buffer_size = 2000)
     : logger_(data_logger), stop_requested_(false),
       buffer_(buffer_size, QByteArray(static_cast<int>(kMaxMsgSize), 0))
-  {
-  }
+  {}
 
   /**
-   * @brief Stop
+   * @brief Stop logging command.
    */
   void Stop();
 
-public slots:
+ public slots:
   /**
-   * @brief CollectMsg
-   * @param msg
+   * @brief Collect an incoming message to be logged.
+   * @param[in] msg The serialized message to be logged
    */
   void collectMsg(QByteArray msg);
 
-private:
+ private:
   el::Logger* logger_ = NULL;
 
   QMutex mutex_;

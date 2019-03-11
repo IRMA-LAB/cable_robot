@@ -1,3 +1,11 @@
+/**
+ * @file easylog_wrapper.cpp
+ * @author Simone Comari
+ * @date 11 Mar 2019
+ * @brief This file includes definitions of class and functinos declared in
+ * easylog_wrapper.h.
+ */
+
 #include "utils/easylog_wrapper.h"
 
 void LogMotorStatusMsg(el::Logger* data_logger, const MotorStatusMsg& msg)
@@ -50,7 +58,11 @@ void LogActuatorStatusMsg(el::Logger* data_logger, const ActuatorStatusMsg& msg)
 
 // ... add new message log function definition here
 
-//-------- LOG BUFFER ----------------------------------------------------------------//
+//------------------------------------------------------------------------------------//
+//--------- LogBuffer class ----------------------------------------------------------//
+//------------------------------------------------------------------------------------//
+
+//--------- Public function/slot -----------------------------------------------------//
 
 void LogBuffer::Stop()
 {
@@ -82,6 +94,8 @@ void LogBuffer::collectMsg(QByteArray msg)
   buffer_not_empty.wakeAll();
   mutex_.unlock();
 }
+
+//--------- Private functions --------------------------------------------------------//
 
 void LogBuffer::run()
 {

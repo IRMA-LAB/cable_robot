@@ -1,43 +1,61 @@
+/**
+ * @file login_window.h
+ * @author Simone Comari
+ * @date 11 Mar 2019
+ * @brief This file takes care of the implementation of the login window of cable robot
+ * app.
+ */
+
 #ifndef CABLE_ROBOT_LOGIN_WINDOW_H
 #define CABLE_ROBOT_LOGIN_WINDOW_H
 
+#include <QFileDialog>
 #include <QMainWindow>
 #include <QMessageBox>
-#include <QFileDialog>
 #include <QResource>
 #include <QStorageInfo>
 
-#include <iostream>
 #include <fstream>
+#include <iostream>
 
-#include "main_gui.h"
-#include "robotconfigjsonparser.h"
 #include "json.hpp"
 #include "libcdpr/inc/types.h"
+#include "main_gui.h"
+#include "robotconfigjsonparser.h"
 
 using json = nlohmann::json;
 
-namespace Ui
-{
+namespace Ui {
 class LoginWindow;
 }
 
-class LoginWindow : public QMainWindow
+/**
+ * @brief The login window class.
+ *
+ * This class manages the access to the cable robot app as well as the configuration file
+ * given by the user to setup the robot at software level according to the physical
+ * configuration.
+ */
+class LoginWindow: public QMainWindow
 {
   Q_OBJECT
 
-public:
+ public:
+  /**
+   * @brief LoginWindow constructor.
+   * @param[in] parent The parent QWidget, in this case the QApplication of cable robot app.
+   */
   explicit LoginWindow(QWidget* parent = 0);
   ~LoginWindow();
 
-private slots:
+ private slots:
   void on_pushButton_login_clicked();
 
   void on_pushButton_inputFile_clicked();
   void on_pushButton_load_clicked();
   void on_pushButton_loadDefault_clicked();
 
-private:
+ private:
   Ui::LoginWindow* ui;
   MainGUI* main_gui;
 
