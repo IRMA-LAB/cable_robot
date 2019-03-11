@@ -18,7 +18,7 @@
 #include "pulleys_system.h"
 #include "winch.h"
 
-using GSWDStates = grabec::GoldSoloWhistleDriveStates;
+using GSWDStates = grabec::GoldSoloWhistleDriveStates; /**< Shortcut for GSWD states. */
 
 /**
  * @brief The cable robot actuator class.
@@ -201,7 +201,13 @@ class Actuator: public QObject, public StateMachine
   void faultReset();
 
  signals:
+  /**
+   * @brief Signal including the changed state of this object.
+   */
   void stateChanged(const id_t&, const BYTE&) const;
+  /**
+   * @brief Signal including a message to any QConsole, for instance a QTextBrowser.
+   */
   void printToQConsole(const QString&) const;
 
  private slots:

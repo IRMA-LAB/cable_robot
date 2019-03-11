@@ -16,7 +16,7 @@
 
 #include "utils/types.h"
 
-template <typename T> using vect = std::vector<T>;
+template <typename T> using vect = std::vector<T>;  /**< Shortcut for vector type. */
 
 /**
  * @brief The possible control modes of any controller derived from ControllerBase.
@@ -87,16 +87,16 @@ class ControllerBase
   /**
    * @brief Set the ID of the motor to be controlled in single drive control.
    * @param[in] motor_id ID of the motor to be controlled, used for single drive control.
-   * @note This operation clear and reset the controller mode, which is initialized by
-   * default to ControlMode::NONE.
+   * @note This operation clears and resets the controller mode, which is initialized by
+   * default to _ControlMode::NONE_.
    */
   void SetMotorID(const id_t motor_id);
   /**
    * @brief Set the IDs of the motors to be controlled in multi drive control.
    * @param[in] motors_id IDs of the motors to be controlled, used for multi drive
    * control.
-   * @note This operation clear and reset any controller modes, which are initialized by
-   * default to ControlMode::NONE.
+   * @note This operation clears and resets any controller modes, which are initialized by
+   * default to _ControlMode::NONE_.
    */
   void SetMotorsID(const vect<id_t>& motors_id);
   /**

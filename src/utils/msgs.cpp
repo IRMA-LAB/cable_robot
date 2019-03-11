@@ -10,11 +10,23 @@
 
 //------- QDataStream operators for non-Qt types -------------------------------------//
 
+/**
+ * @brief operator << for size_t type serialization.
+ * @param[out] ostream
+ * @param[in] value Basic type value to be serialized
+ * @return
+ */
 QDataStream& operator<<(QDataStream& ostream, const size_t& value)
 {
   return ostream << static_cast<quint32>(value);
 }
 
+/**
+ * @brief operator >> for size_t type deserialization.
+ * @param[in] istream
+ * @param[out] value Basic type to be assigned.
+ * @return
+ */
 QDataStream& operator>>(QDataStream& istream, size_t& value)
 {
   quint32 qvalue;
@@ -23,6 +35,12 @@ QDataStream& operator>>(QDataStream& istream, size_t& value)
   return istream;
 }
 
+/**
+ * @brief operator >> for MsgType type deserialization.
+ * @param[in] istream
+ * @param[out] value Custom type to be assigned.
+ * @return
+ */
 QDataStream& operator>>(QDataStream& istream, MsgType& value)
 {
   quint32 qvalue;
@@ -49,6 +67,7 @@ QDataStream& operator>>(QDataStream& istream, HeaderMsg& data)
 const size_t kMaxMsgSize = 48; // TODO: compute automatically somehow..
 
 // clang-format off
+// @cond DO_NOT_DOCUMENT
 MSG_FIELDS_ORDER_DEFINE(MotorStatus,
                         id,
                         op_mode,
@@ -75,6 +94,7 @@ MSG_FIELDS_ORDER_DEFINE(ActuatorStatus,
                         pulley_angle)
 // ... message order goes here, this is how you need to handle data in parser for example.
 // E.g. MSG_FIELDS_ORDER_DEFINE(MyTypeStruct, field1, field2, ...)
+// @endcond
 // clang-format on
 
 MSG_SERIALIZATION_DEFINE(MOTOR_STATUS, MotorStatus)

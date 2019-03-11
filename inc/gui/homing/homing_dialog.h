@@ -1,7 +1,7 @@
 /**
  * @file homing_dialog.h
  * @author Simone Comari
- * @date 07 Mar 2019
+ * @date 11 Mar 2019
  * @brief This file include the homing dialog class.
  */
 
@@ -39,8 +39,17 @@ class HomingDialog: public QDialog
   ~HomingDialog();
 
  signals:
+  /**
+   * @brief Enable(_true_)/disable(_false_) main GUI command.
+   */
   void enableMainGUI(bool);
+  /**
+   * @brief Homing failure notice.
+   */
   void homingFailed();
+  /**
+   * @brief Homing success notice.
+   */
   void homingSuccess();
 
  private slots:

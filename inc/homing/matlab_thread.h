@@ -46,7 +46,13 @@ class MatlabThread: public QThread
   void run() override;
 
  signals:
+  /**
+   * @brief Results ready notice.
+   */
   void resultsReady() const;
+  /**
+   * @brief Signal including a message to any QConsole, for instance a QTextBrowser.
+   */
   void printToQConsole(const QString&) const;
 };
 

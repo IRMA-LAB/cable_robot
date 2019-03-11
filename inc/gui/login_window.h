@@ -23,7 +23,7 @@
 #include "main_gui.h"
 #include "robotconfigjsonparser.h"
 
-using json = nlohmann::json;
+using json = nlohmann::json; /**< Shortcut for json namespace. */
 
 namespace Ui {
 class LoginWindow;

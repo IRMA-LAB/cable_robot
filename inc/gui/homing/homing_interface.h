@@ -41,7 +41,13 @@ class HomingInterface: public QDialog
   virtual void Close() { close(); }
 
  signals:
+  /**
+   * @brief Homing failure notice.
+   */
   void homingFailed() const;
+  /**
+   * @brief Homing success notice.
+   */
   void homingSuccess() const;
 
  protected:

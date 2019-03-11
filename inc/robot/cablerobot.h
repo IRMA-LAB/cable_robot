@@ -9,7 +9,7 @@
 #ifndef CABLE_ROBOT_CABLEROBOT_H
 #define CABLE_ROBOT_CABLEROBOT_H
 
-#define INCLUDE_EASYCAT 0
+#define INCLUDE_EASYCAT 0 /**< @todo remove this debug flag */
 
 #include <QObject>
 #include <QTimer>
@@ -97,8 +97,8 @@ class CableRobot: public QObject,
   };
 
   // Tuning params for waiting functions
-  static constexpr double kCycleWaitTimeSec = 0.02; /*<< [sec] Cycle time when waiting. */
-  static constexpr double kMaxWaitTimeSec   = 25.0; /*<< [sec] Maximum waiting time. */
+  static constexpr double kCycleWaitTimeSec = 0.02; /**< [sec] Cycle time when waiting. */
+  static constexpr double kMaxWaitTimeSec   = 25.0; /**< [sec] Maximum waiting time. */
 
   /**
    * @brief Get inquired actuator status.
@@ -215,9 +215,10 @@ class CableRobot: public QObject,
    * @brief Set motors controller.
    * @param[in] controller Pointer to a controller.
    * @note The pointer is to the ControllerBase whose virtual methods have to be override
-   * by any derived class of it. In particular, CalcCtrlActions() is called at every cycle
-   * of the real time thread while TargetReached() is typically used asynchronously to
-   * inquire robot control status in waiting condition.
+   * by any derived class of it. In particular, ControllerBase::CalcCtrlActions() is
+   * called at every cycle of the real time thread while ControllerBase::TargetReached()
+   * is typically used asynchronously to inquire robot control status in waiting
+   * condition.
    */
   void SetController(ControllerBase* controller);
   /**
@@ -273,18 +274,38 @@ class CableRobot: public QObject,
   void stop();
 
  signals:
-  // Timer-triggered synchronous signals
+  /**
+   * @brief Signal including motor status, as GSWD input PDOs structure.
+   *
+   * @note This is a timer-triggered synchronous signal.
+   * @see actuatorStatus
+   */
   void motorStatus(const id_t&, const grabec::GSWDriveInPdos&) const;
+  /**
+   * @brief Signal including actuator status.
+   *
+   * @note This is a timer-triggered synchronous signal.
+   * @see motorStatus
+   */
   void actuatorStatus(const ActuatorStatus&) const;
 
-  // Logging
+  /**
+   * @brief Signal including a serialized message to be logged.
+   */
   void sendMsg(const QByteArray) const;
 
-  // Information prints
+  /**
+   * @brief Signal including a message to any QConsole, for instance a QTextBrowser.
+   */
   void printToQConsole(const QString&) const;
 
-  // Important status changes
+  /**
+   * @brief Signal including the changed state of the EtherCAT network.
+   */
   void ecStateChanged(const Bitfield8&) const;
+  /**
+   * @brief Signal including the changed state of the real-time thread.
+   */
   void rtThreadStatusChanged(const bool) const;
 
  private slots:

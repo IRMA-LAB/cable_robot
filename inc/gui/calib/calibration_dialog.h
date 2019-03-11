@@ -1,5 +1,5 @@
 /**
- * @file homing_dialog.h
+ * @file calibration_dialog.h
  * @author Simone Comari
  * @date 11 Mar 2019
  * @brief This file include the calibration dialog class.
@@ -38,7 +38,13 @@ class CalibrationDialog: public QDialog
   ~CalibrationDialog();
 
  signals:
+  /**
+   * @brief Enable main GUI command.
+   */
   void enableMainGUI();
+  /**
+   * @brief Calibration end notice.
+   */
   void calibrationEnd();
 
  private slots:

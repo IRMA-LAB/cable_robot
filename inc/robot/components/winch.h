@@ -145,8 +145,6 @@ class Winch
    * of the cable with respect to the drive motion.
    * @param[in] cable_len _[m]_ Cable length corresponding to the recorded home position
    * in motor counts.
-   * @param[in] cable_len_true _[rad]_ Swivel pulley angle corresponding to the recorded
-   * home position in encoder counts.
    */
   void UpdateHomeConfig(const double cable_len);
   /**

@@ -21,7 +21,7 @@
 #include "gui/homing/homing_dialog.h"
 #include "robot/cablerobot.h"
 
-using GSWDOpModes = grabec::GoldSoloWhistleOperationModes;
+using GSWDOpModes = grabec::GoldSoloWhistleOperationModes; /**< Shortcut for op modes. */
 
 namespace Ui {
 class MainGUI;

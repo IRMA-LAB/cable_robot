@@ -135,16 +135,6 @@ DEPENDPATH += $$PWD/lib/grab_common/libnumeric
 unix:!macx: PRE_TARGETDEPS += $$PWD/lib/grab_common/libnumeric/lib/libnumeric.a
 
 FORMS += \
-    $$PWD/gui/sub_win/actuatorinterface.ui \
-    $$PWD/gui/sub_win/actuatorpvtinterface33.ui \
-    $$PWD/gui/sub_win/calibrationinterface.ui \
-    $$PWD/gui/sub_win/demointerface33.ui \
-    $$PWD/gui/sub_win/demointerface66.ui \
-    $$PWD/gui/sub_win/hominginterface.ui \
-    $$PWD/gui/sub_win/manualinterface33.ui \
-    $$PWD/gui/sub_win/manualinterface66.ui \
-    $$PWD/gui/cablerobotinterface.ui
-FORMS += \
     $$PWD/widgets/main_gui.ui \
     $$PWD/widgets/login_window.ui \
     $$PWD/widgets/calib/calibration_dialog.ui \

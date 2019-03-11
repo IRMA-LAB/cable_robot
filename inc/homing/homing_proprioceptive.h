@@ -1,7 +1,7 @@
 /**
  * @file homing_proprioceptive.h
  * @author Simone Comari
- * @date 07 Mar 2019
+ * @date 11 Mar 2019
  * @brief This file includes classes necessary to implement the homing proprioceptive
  * algorithm.
  */
@@ -24,8 +24,7 @@
 #include "utils/types.h"
 
 
-// Aliases -----------------------------------------
-using json = nlohmann::json; // JSON library support
+using json = nlohmann::json; /**< Alias for JSON library support. */
 
 /**
  * @brief The HomingProprioceptiveStartData class is a derived class of EventData, which
@@ -44,9 +43,9 @@ class HomingProprioceptiveStartData: public EventData
   HomingProprioceptiveStartData();
   /**
    * @brief HomingProprioceptiveStartData
-   * @param _init_torques See init_torques.
-   * @param _max_torques See max_torques.
-   * @param _num_meas See num_meas.
+   * @param[in] _init_torques See init_torques.
+   * @param[in] _max_torques See max_torques.
+   * @param[in] _num_meas See num_meas.
    */
   HomingProprioceptiveStartData(const vect<qint16>& _init_torques,
                                 const vect<qint16>& _max_torques, const quint8 _num_meas);
@@ -72,8 +71,8 @@ class HomingProprioceptiveStartData: public EventData
 
 /**
  * @brief operator << to nicely print HomingProprioceptiveStartData.
- * @param stream
- * @param data
+ * @param[in] stream
+ * @param[in] data
  * @return New stream with HomingProprioceptiveStartData information.
  */
 std::ostream& operator<<(std::ostream& stream, const HomingProprioceptiveStartData& data);
@@ -101,8 +100,8 @@ class HomingProprioceptiveHomeData: public EventData
 
 /**
  * @brief operator << to nicely print HomingProprioceptiveHomeData.
- * @param stream
- * @param data
+ * @param[in] stream
+ * @param[in] data
  * @return New stream with HomingProprioceptiveHomeData information.
  */
 std::ostream& operator<<(std::ostream& stream, const HomingProprioceptiveHomeData& data);
@@ -125,8 +124,9 @@ class HomingProprioceptive: public QObject, public StateMachine
  public:
   /**
    * @brief HomingProprioceptive
-   * @param parent The parent Qt object, in this case the corresponding interface.
-   * @param robot Pointer to cable robot instance, to access robot features and commands.
+   * @param[in] parent The parent Qt object, in this case the corresponding interface.
+   * @param[in] robot Pointer to cable robot instance, to access robot features and
+   * commands.
    */
   HomingProprioceptive(QObject* parent, CableRobot* robot);
   ~HomingProprioceptive();
@@ -162,18 +162,19 @@ class HomingProprioceptive: public QObject, public StateMachine
 
   /**
    * @brief Get status of active actuator corresponding to given ID.
-   * @param id The ID of the inquired actuator.
+   * @param[in] id The ID of the inquired actuator.
    * @return The status of the inquired actuator.
    */
   ActuatorStatus GetActuatorStatus(const id_t id);
 
   /**
    * @brief Parse an external file with homing data and fill the relative structure.
-   * @param filepath The filepath of the external file with the homing data, resulting
+   * @param[in] filepath The filepath of the external file with the homing data, resulting
    * from an optimization process.
+   * @param[out] home_data
    * @return _True_ if parsing was successful, _false_ otherwise
    */
-  bool ParseExtFile(const QString& filepath, HomingProprioceptiveHomeData*);
+  bool ParseExtFile(const QString& filepath, HomingProprioceptiveHomeData* home_data);
 
  public:
   //--------- External events -------------------------------------------------------//
@@ -188,8 +189,8 @@ class HomingProprioceptive: public QObject, public StateMachine
    * - SWITCH_CABLE --> COILING
    * - COILING --> COILING (repeat)
    * - UNCOILING --> UNCOILING (repeat)
-   * @param data Data needed for starting the acquisition phase. This is only necessary
-   * for 2nd transition (ENABLED --> START_UP), ignored otherwise (set to NULL).
+   * @param[in] data Data needed for starting the acquisition phase. This is only
+   * necessary for 2nd transition (ENABLED --> START_UP), ignored otherwise (set to NULL).
    */
   void Start(HomingProprioceptiveStartData* data);
   /**
@@ -212,7 +213,7 @@ class HomingProprioceptive: public QObject, public StateMachine
   /**
    * @brief Go home command, moves the robot to home position and assign newly computed
    * homing values (cable lengths and swivel angles values at homing position).
-   * @param data
+   * @param[in] data
    */
   void GoHome(HomingProprioceptiveHomeData* data);
   /**
@@ -225,11 +226,29 @@ class HomingProprioceptive: public QObject, public StateMachine
   void FaultReset();
 
  signals:
+  /**
+   * @brief Signal including a message to any QConsole, for instance a QTextBrowser.
+   */
   void printToQConsole(const QString&) const;
+  /**
+   * @brief Acquisition complete signal.
+   */
   void acquisitionComplete() const;
+  /**
+   * @brief Homing complete signal.
+   */
   void homingComplete() const;
+  /**
+   * @brief Signal including the changed state of this object.
+   */
   void stateChanged(const quint8&) const;
+  /**
+   * @brief Signal including an operation progress value, from 0 to 100.
+   */
   void progressValue(const int&) const;
+  /**
+   * @brief Stop waiting command.
+   */
   void stopWaitingCmd() const;
 
  private slots:
