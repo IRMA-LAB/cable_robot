@@ -55,6 +55,7 @@ build
 /lib/grab_common/libcdpr/doc*
 /lib/grab_common/libgrabrt/doc*
 /lib/grab_common/libgrabec/doc*
+doc/*
 Doxyfile
 
 # Logs
