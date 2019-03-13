@@ -9,6 +9,7 @@ HEADERS = \
     $$PWD/inc/gui/calib/calibration_dialog.h \
     $$PWD/inc/gui/homing/homing_dialog.h \
     $$PWD/inc/gui/homing/homing_interface.h \
+    $$PWD/inc/gui/homing/homing_interface_vision.h \
     $$PWD/inc/gui/homing/homing_interface_proprioceptive.h \
     $$PWD/inc/gui/homing/init_torque_form.h \
     $$PWD/inc/homing/homing_proprioceptive.h \
@@ -35,6 +36,7 @@ SOURCES = \
     $$PWD/src/gui/calib/calibration_dialog.cpp \
     $$PWD/src/gui/homing/homing_dialog.cpp \
     $$PWD/src/gui/homing/homing_interface.cpp \
+    $$PWD/src/gui/homing/homing_interface_vision.cpp \
     $$PWD/src/gui/homing/homing_interface_proprioceptive.cpp \
     $$PWD/src/gui/homing/init_torque_form.cpp \
     $$PWD/src/homing/homing_proprioceptive.cpp \
@@ -139,6 +141,7 @@ FORMS += \
     $$PWD/widgets/login_window.ui \
     $$PWD/widgets/calib/calibration_dialog.ui \
     $$PWD/widgets/homing/homing_dialog.ui \
+    $$PWD/widgets/homing/homing_interface_vision.ui \
     $$PWD/widgets/homing/homing_interface_proprioceptive.ui\
     $$PWD/widgets/homing/init_torque_form.ui
 

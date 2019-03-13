@@ -40,7 +40,7 @@
       </font>
      </property>
      <property name="text">
-      <string>Homing Control Panel</string>
+      <string>Homing Proprioceptive Control Panel</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignCenter</set>
