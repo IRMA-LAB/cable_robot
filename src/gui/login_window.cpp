@@ -1,7 +1,7 @@
 /**
  * @file login_window.cpp
  * @author Simone Comari
- * @date 11 Mar 2019
+ * @date 13 Mar 2019
  * @brief This file includes definitions of window class present in login_window.h.
  */
 
@@ -12,8 +12,6 @@ LoginWindow::LoginWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::Logi
 {
   ui->setupUi(this);
   setFixedHeight(this->geometry().height());
-  // debug
-  ui->groupBox_config->setEnabled(true);
 }
 
 LoginWindow::~LoginWindow()
@@ -58,30 +56,27 @@ LoginWindow::RetVal LoginWindow::IsValidUser(QString& username, QString& passwor
 void LoginWindow::on_pushButton_login_clicked()
 {
   CLOG(TRACE, "event");
-  username_ = ui->lineEdit_username->text();
+  username_        = ui->lineEdit_username->text();
   QString password = ui->lineEdit_password->text();
 
   RetVal ret = IsValidUser(username_, password);
   switch (ret)
   {
-  case OK:
-    //    QMessageBox::information(this, "Login Success",
-    //                             "Username and password are correct.\n"
-    //                             "Please load a configuration file or use default
-    //                             one.");
-    CLOG(INFO, "event") << "Login in success. Current user: " << username_;
-    ui->groupBox_config->setEnabled(true);
-    ui->groupBox_signIn->setDisabled(true);
-    break;
-  case ERR_IO:
-    CLOG(WARNING, "event") << "Login in failed: missing USB stick ";
-    QMessageBox::warning(this, "I/O Error",
-                         "Please insert authentication usb stick and try again");
-    break;
-  case ERR_INVAL:
-    CLOG(WARNING, "event") << "Login in failed: invalid user";
-    QMessageBox::warning(this, "Login Error", "Username and/or password is not correct");
-    break;
+    case OK:
+      CLOG(INFO, "event") << "Login in success. Current user: " << username_;
+      ui->groupBox_config->setEnabled(true);
+      ui->groupBox_signIn->setDisabled(true);
+      break;
+    case ERR_IO:
+      CLOG(WARNING, "event") << "Login in failed: missing USB stick ";
+      QMessageBox::warning(this, "I/O Error",
+                           "Please insert authentication usb stick and try again");
+      break;
+    case ERR_INVAL:
+      CLOG(WARNING, "event") << "Login in failed: invalid user";
+      QMessageBox::warning(this, "Login Error",
+                           "Username and/or password is not correct");
+      break;
   }
 }
 

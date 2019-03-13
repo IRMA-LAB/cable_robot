@@ -1,7 +1,7 @@
 /**
  * @file login_window.h
  * @author Simone Comari
- * @date 11 Mar 2019
+ * @date 13 Mar 2019
  * @brief This file takes care of the implementation of the login window of cable robot
  * app.
  */
@@ -23,7 +23,7 @@
 #include "main_gui.h"
 #include "robotconfigjsonparser.h"
 
-using json = nlohmann::json; /**< Shortcut for json namespace. */
+using json = nlohmann::json; /**< Alias for json namespace. */
 
 namespace Ui {
 class LoginWindow;
@@ -43,7 +43,8 @@ class LoginWindow: public QMainWindow
  public:
   /**
    * @brief LoginWindow constructor.
-   * @param[in] parent The parent QWidget, in this case the QApplication of cable robot app.
+   * @param[in] parent The parent QWidget, in this case the QApplication of cable robot
+   * app.
    */
   explicit LoginWindow(QWidget* parent = 0);
   ~LoginWindow();
