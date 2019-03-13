@@ -8,6 +8,8 @@
 #include "gui/login_window.h"
 #include "ui_login_window.h"
 
+#define USB_STORAGE_NAME "2EDA-2625" /**< Authentication USB stick name. */
+
 LoginWindow::LoginWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::LoginWindow)
 {
   ui->setupUi(this);
@@ -25,7 +27,9 @@ LoginWindow::RetVal LoginWindow::IsValidUser(QString& username, QString& passwor
   std::string usb_path = "";
   foreach (const QStorageInfo& storage, QStorageInfo::mountedVolumes())
   {
-    if (storage.name() == "sbb")
+    if (storage.name() == USB_STORAGE_NAME ||
+        storage.rootPath().mid(storage.rootPath().lastIndexOf("/") + 1) ==
+          USB_STORAGE_NAME)
     {
       usb_path = storage.rootPath().toStdString();
       break;
