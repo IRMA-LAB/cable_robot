@@ -1,5 +1,5 @@
 /**
- * @file types.h
+ * @file utils/types.h
  * @author Simone Comari
  * @date 11 Mar 2019
  * @brief File containing the implementation of a custom wrapper to log cable robot data

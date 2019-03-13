@@ -2,7 +2,7 @@
  * @file msgs.cpp
  * @author Simone Comari
  * @date 11 Mar 2019
- * @brief This file includes definitions of functinos declared in msgs.h.
+ * @brief This file includes definitions of functions declared in msgs.h.
  * @todo Compute kMaxMsgSize automatically somehow..
  */
 
