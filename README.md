@@ -45,7 +45,7 @@ To obtain it, follow the instructions below:
 
 ```bash
 cd Download
-tar xvfj linux-4.13.13.tar.xz
+tar xf linux-4.13.13.tar.xz
 cd linux-4.13.13
 xzcat ../patch-4.13.13-rt5.patch.xz | patch -p1
 cp /boot/config-$(uname -r) .config
@@ -85,8 +85,7 @@ mq =
 Save, exit and return to the open terminal:
 ```bash
 cd /usr/src
-hg clone -u 33b922ec1871 http://hg.code.sf.net/p/etherlabmaster/code ether-
-lab
+hg clone -u 33b922ec1871 http://hg.code.sf.net/p/etherlabmaster/code etherlab
 hg clone http://hg.code.sf.net/u/uecasm/etherlab-patches etherlab/.hg/patches
 cd etherlab
 hg qpush -a
