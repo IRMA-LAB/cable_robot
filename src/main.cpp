@@ -1,20 +1,30 @@
-#include <QApplication> // Common Qt inslusion
+#include <QApplication>
+#include <QtDebug>
 
-#include "cablerobotmaster.h"    //User includes, the master we programmed,
-#include "cablerobotinterface.h" // And its inteface
+#include "gui/login_window.h"
+#include "lib/easyloggingpp/src/easylogging++.h"
+#include "utils/easylog_wrapper.h"
 
-// Declare master as global variable (usefull for qt signal and slot system)
-static CableRobotMaster cable_robot_master;
+INITIALIZE_EASYLOGGINGPP
+
+// static el::Logger *logger = el::Loggers::getLogger("default");
+// static LogBuffer buffer(logger);
 
 int main(int argc, char* argv[])
 {
-  QApplication a(argc, argv);                                          // Qt default
-  CableRobotInterface cable_robot_interface(nullptr, &cable_robot_master); // the GUI
+  START_EASYLOGGINGPP(argc, argv);
+  // Configure all loggers
+  el::Loggers::configureFromGlobal(SRCDIR "/config/logs.conf");
 
-  // Master properties are left to defaults
-  cable_robot_master.Start();      // Start the master
-  cable_robot_interface.show();  // Show Gui
-  qRegisterMetaType<QVector<double>>("QVector<double>");
+  QApplication a(argc, argv);
+  qRegisterMetaType<grabec::GSWDriveInPdos>("grabec::GSWDriveInPdos");
+  qRegisterMetaType<Bitfield8>("Bitfield8");
+  qRegisterMetaType<id_t>("id_t");
+  CLOG(INFO, "event") << "App START";
+
+  LoginWindow w;
+  w.show();
+  CLOG(INFO, "event") << "Prompt login window";
 
   return a.exec();
 }
