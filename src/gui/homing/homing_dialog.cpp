@@ -1,7 +1,7 @@
 /**
  * @file homing_dialog.cpp
  * @author Simone Comari
- * @date 07 Mar 2019
+ * @date 21 Mar 2019
  * @brief This file includes definitions of class present in homing_dialog.h.
  */
 
@@ -36,9 +36,8 @@ void HomingDialog::on_buttonBox_accepted()
         interface_ = new HomingInterfaceProprioceptive(parentWidget(), robot_ptr_);
         break;
       case VISION:
-        interface_ = NULL;
-        fwdHomingSuccess(); // TODO: replace with homing vision interface
-        return;
+        interface_ = new HomingInterfaceVision(parentWidget(), robot_ptr_);
+        break;
       case FUSION:
         interface_ = NULL;
         fwdHomingSuccess(); // TODO: replace with homing fusion interface

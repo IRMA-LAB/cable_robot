@@ -1,3 +1,10 @@
+/**
+ * @file main.cpp
+ * @author Simone Comari
+ * @date 22 Mar 2019
+ * @brief This file includes the main function where the CableRobot app is started.
+ */
+
 #include <QApplication>
 #include <QtDebug>
 
@@ -20,6 +27,8 @@ int main(int argc, char* argv[])
   qRegisterMetaType<grabec::GSWDriveInPdos>("grabec::GSWDriveInPdos");
   qRegisterMetaType<Bitfield8>("Bitfield8");
   qRegisterMetaType<id_t>("id_t");
+  qRegisterMetaType<cv::Mat>("cv::Mat");
+  qRegisterMetaType<CalibParams>("CalibParams");
   CLOG(INFO, "event") << "App START";
 
   LoginWindow w;

@@ -1,7 +1,7 @@
 /**
  * @file homing_dialog.h
  * @author Simone Comari
- * @date 11 Mar 2019
+ * @date 22 Mar 2019
  * @brief This file include the homing dialog class.
  */
 
@@ -14,6 +14,7 @@
 #include "libcdpr/inc/types.h"
 
 #include "gui/homing/homing_interface_proprioceptive.h"
+#include "gui/homing/homing_interface_vision.h"
 
 
 namespace Ui {

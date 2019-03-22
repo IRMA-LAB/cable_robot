@@ -5,6 +5,7 @@
         <file>img/red_button.png</file>
         <file>img/grey_button.png</file>
         <file>img/green_button.png</file>
+        <file>img/shutter.svg</file>
     </qresource>
     <qresource prefix="/config">
         <file>default.json</file>

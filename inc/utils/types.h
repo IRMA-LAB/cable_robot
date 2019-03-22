@@ -1,7 +1,7 @@
 /**
  * @file utils/types.h
  * @author Simone Comari
- * @date 11 Mar 2019
+ * @date 22 Mar 2019
  * @brief File containing the implementation of a custom wrapper to log cable robot data
  * employing easylogging++ package.
  */
@@ -154,6 +154,13 @@ struct ActuatorStatus: WinchStatus
 
   uint8_t state;       /**< see Actuator::States */
   double pulley_angle; /**< [rad] */
+};
+
+/**
+ * @brief The CalibParams struct
+ */
+struct CalibParams
+{
 };
 
 #endif // CABLE_ROBOT_TYPES_H

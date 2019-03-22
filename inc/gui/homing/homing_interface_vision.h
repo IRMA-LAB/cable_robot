@@ -1,7 +1,7 @@
 /**
  * @file homing_interface_vision.h
  * @author Simone Comari
- * @date 13 Mar 2019
+ * @date 22 Mar 2019
  * @brief This file takes care of the functionalities of the vision-based homing
  * interface of cable robot app.
  *
@@ -16,7 +16,9 @@
 #include <QMessageBox>
 #include <QWidget>
 
+#include "gui/homing/camera_widget.h"
 #include "gui/homing/homing_interface.h"
+#include "homing/homing_vision_app.h"
 
 namespace Ui {
 class HomingInterfaceVision;
@@ -48,8 +50,18 @@ class HomingInterfaceVision: public HomingInterface
   void on_pushButton_cancel_clicked();
   void on_pushButton_done_clicked();
 
+ private slots:
+  void appendText2Browser(const QString& text);
+  void setCalibParams(const CalibParams& params) { app_.setCalibParams(params); }
+
  private:
   Ui::HomingInterfaceVision* ui;
+  CameraWidget* camera_widget_ = NULL;
+
+  HomingVisionApp app_;
+  bool ext_close_cmd_;
+
+  void closeEvent(QCloseEvent* event) override final;
 };
 
 #endif // CABLE_ROBOT_HOMING_INTERFACE_VISION_H
