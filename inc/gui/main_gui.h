@@ -20,6 +20,7 @@
 #include "gui/calib/calibration_dialog.h"
 #include "gui/homing/homing_dialog.h"
 #include "robot/cablerobot.h"
+#include "utils/single_drive_sysid.h"
 
 using GSWDOpModes = grabec::GoldSoloWhistleOperationModes; /**< Shortcut for op modes. */
 

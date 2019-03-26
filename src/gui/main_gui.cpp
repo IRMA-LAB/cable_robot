@@ -23,6 +23,9 @@ MainGUI::MainGUI(QWidget* parent, const grabcdpr::Params& config)
       ui->comboBox_motorAxis->addItem(QString::number(i));
 
   StartRobot(); // instantiate cable robot object
+
+  // debug
+  ui->groupBox_app->setEnabled(true);
 }
 
 MainGUI::~MainGUI()
@@ -101,6 +104,19 @@ void MainGUI::on_pushButton_startApp_clicked()
   ui->pushButton_calib->setDisabled(true);
   ui->groupBox_app->setDisabled(true);
   ui->frame_manualControl->setDisabled(true);
+
+  QString app_name = ui->comboBox_apps->currentText();
+  if (app_name != "Single Drive Sys ID")
+    return;
+  if (!robot_ptr_->MotorEnabled(motor_id_))
+    return;
+  if (!desired_ctrl_mode_.CheckBit(ControlMode::CABLE_LENGTH))
+    return;
+
+  static SingleDriveSysID temp_app(this, robot_ptr_, man_ctrl_ptr_);
+
+  double cable_len = robot_ptr_->GetActuatorStatus(motor_id_).cable_length;
+  temp_app.start(cable_len);
 }
 
 //--------- Public GUI slots of direct drive control panel --------------------------//

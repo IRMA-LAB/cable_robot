@@ -67,6 +67,15 @@ void ControllerSingleDrive::SetMotorTorqueTarget(const int16_t target)
   target_flags_.Set(TORQUE);
 }
 
+void ControllerSingleDrive::SetCableLenTrajectory(const std::vector<double>& trajectory)
+{
+  Clear();
+  apply_trajectory_ = true;
+  new_trajectory_   = true;
+  cable_len_traj_   = trajectory;
+  target_flags_.Set(LENGTH);
+}
+
 void ControllerSingleDrive::CableLenIncrement(const bool active,
                                               const Sign sign /*= Sign::POS*/,
                                               const bool micromove /*= true*/)
@@ -116,6 +125,8 @@ ControllerSingleDrive::CalcCtrlActions(const grabcdpr::Vars&,
       {
         if (change_length_target_)
           length_target_ += delta_length_;
+        if (apply_trajectory_)
+          length_target_ = GetTrajectoryPoint();
         res.cable_length = length_target_;
       }
       else
@@ -228,6 +239,22 @@ int32_t ControllerSingleDrive::CalcPoly5Waypoint(const int32_t q, const int32_t 
   return static_cast<int32_t>(round(q_t));
 }
 
+double ControllerSingleDrive::GetTrajectoryPoint()
+{
+  static size_t counter = 0;
+
+  if (new_trajectory_)
+  {
+    counter         = 0;
+    new_trajectory_ = false;
+  }
+
+  double traj_point = cable_len_traj_[counter++];
+  apply_trajectory_ = counter < cable_len_traj_.size();
+
+  return traj_point;
+}
+
 void ControllerSingleDrive::Clear()
 {
   target_flags_.ClearAll();
@@ -237,4 +264,6 @@ void ControllerSingleDrive::Clear()
   change_length_target_ = false;
   change_torque_target_ = false;
   delta_length_         = 0.0;
+
+  apply_trajectory_ = false;
 }

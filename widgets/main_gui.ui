@@ -381,6 +381,11 @@
             </property>
             <item>
              <property name="text">
+              <string>Single Drive Sys ID</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
               <string>Manual Control</string>
              </property>
             </item>

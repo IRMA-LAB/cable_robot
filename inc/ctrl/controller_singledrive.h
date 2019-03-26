@@ -122,6 +122,7 @@ class ControllerSingleDrive: public ControllerBase
    */
   int16_t GetMotorTorqueTarget() const { return torque_target_true_; }
 
+  void SetCableLenTrajectory(const std::vector<double>& trajectory);
   /**
    * @brief Change cable length increment.
    *
@@ -245,10 +246,14 @@ class ControllerSingleDrive: public ControllerBase
   bool new_trajectory_ = false;
   bool apply_trajectory_;
 
+  vect<double> cable_len_traj_;
+
   int32_t CalcMotorPos(const vect<ActuatorStatus>& actuators_status);
   int16_t CalcMotorTorque(const vect<ActuatorStatus>& actuators_status);
 
   int32_t CalcPoly5Waypoint(const int32_t q, const int32_t q_final, const int32_t max_dq);
+
+  double GetTrajectoryPoint();
 
   void Clear();
 };
