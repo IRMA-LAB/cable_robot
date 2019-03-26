@@ -22,7 +22,8 @@ HEADERS = \
     $$PWD/lib/easyloggingpp/src/easylogging++.h \
     $$PWD/lib/grab_common/grabcommon.h \
     $$PWD/lib/grab_common/bitfield.h \
-    $$PWD/lib/grab_common/pid/pid.h
+    $$PWD/lib/grab_common/pid/pid.h \
+    $$PWD/inc/state_estimation/ext_kalman_filter.h
 
 SOURCES = \
     $$PWD/src/main.cpp \
@@ -45,7 +46,8 @@ SOURCES = \
     $$PWD/src/utils/easylog_wrapper.cpp \
     $$PWD/lib/easyloggingpp/src/easylogging++.cc \
     $$PWD/lib/grab_common/grabcommon.cpp \
-    $$PWD/lib/grab_common/pid/pid.cpp
+    $$PWD/lib/grab_common/pid/pid.cpp \
+    $$PWD/src/state_estimation/ext_kalman_filter.cpp
 
 INCLUDEPATH += \
     $$PWD/inc \

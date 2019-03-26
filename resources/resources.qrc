@@ -8,5 +8,6 @@
     </qresource>
     <qresource prefix="/config">
         <file>default.json</file>
+        <file>tuning.json</file>
     </qresource>
 </RCC>
