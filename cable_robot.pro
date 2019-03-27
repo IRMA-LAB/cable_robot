@@ -24,7 +24,7 @@ HEADERS = \
     $$PWD/lib/grab_common/bitfield.h \
     $$PWD/lib/grab_common/pid/pid.h \
     $$PWD/inc/state_estimation/ext_kalman_filter.h \
-    inc/utils/single_drive_sysid.h
+    $$PWD/inc/debug/single_drive_sysid.h
 
 SOURCES = \
     $$PWD/src/main.cpp \
@@ -49,7 +49,7 @@ SOURCES = \
     $$PWD/lib/grab_common/grabcommon.cpp \
     $$PWD/lib/grab_common/pid/pid.cpp \
     $$PWD/src/state_estimation/ext_kalman_filter.cpp \
-    src/utils/single_drive_sysid.cpp
+    $$PWD/src/debug/single_drive_sysid.cpp
 
 INCLUDEPATH += \
     $$PWD/inc \

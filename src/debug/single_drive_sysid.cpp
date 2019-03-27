@@ -1,10 +1,14 @@
-#include "utils/single_drive_sysid.h"
+#include "debug/single_drive_sysid.h"
 #include <QDebug>
+
+const std::string SingleDriveSysID::kTrajFilepath_ = "/tmp/trajectory.txt";
 
 SingleDriveSysID::SingleDriveSysID(QObject* parent, CableRobot* robot,
                                    ControllerSingleDrive* controller)
   : QObject(parent), robot_(robot), controller_(controller)
 {
+  motor_id_ = controller_->GetMotorsID()[0];
+
   log_timer_ = new QTimer(this);
   connect(log_timer_, SIGNAL(timeout()), this, SLOT(logData()));
 }
@@ -19,7 +23,12 @@ SingleDriveSysID::~SingleDriveSysID()
 
 void SingleDriveSysID::start(const double cable_len)
 {
-  std::vector<double> traj = ComputeTrajectory(cable_len);
+  if (!robot_->MotorEnabled(motor_id_))
+    return;
+  if (controller_->GetMode(motor_id_) != ControlMode::CABLE_LENGTH)
+    return;
+
+  std::vector<double> traj = computeTrajectory(cable_len);
 
   log_timer_->start(kLogIntervalMsec_);
 
@@ -30,28 +39,23 @@ void SingleDriveSysID::start(const double cable_len)
   QTimer::singleShot(kTrajLength_, this, SLOT(stopLogging(())));
 }
 
-void SingleDriveSysID::logData()
-{
-  robot_->CollectMeas();
-  robot_->DumpMeas();
-}
+void SingleDriveSysID::logData() { robot_->CollectAndDumpMeas(motor_id_); }
 
 void SingleDriveSysID::stopLogging()
 {
   log_timer_->stop();
 
-  id_t motor_id = controller_->GetMotorsID()[0];
-  controller_->SetCableLenTarget(robot_->GetActuatorStatus(motor_id).cable_length);
+  controller_->SetCableLenTarget(robot_->GetActuatorStatus(motor_id_).cable_length);
   pthread_mutex_lock(&robot_->Mutex());
   controller_->SetMode(ControlMode::CABLE_LENGTH);
   pthread_mutex_unlock(&robot_->Mutex());
 }
 
-std::vector<double> SingleDriveSysID::ComputeTrajectory(const double cable_len)
+std::vector<double> SingleDriveSysID::computeTrajectory(const double cable_len)
 {
   std::vector<double> traj(kTrajLength_, cable_len);
 
-  std::ifstream traj_file("/tmp/trajectory.txt");
+  std::ifstream traj_file(kTrajFilepath_);
 
   double traj_pt;
   uint i = 0;

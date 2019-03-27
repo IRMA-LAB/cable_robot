@@ -82,7 +82,7 @@
       </widget>
      </item>
      <item>
-      <layout class="QVBoxLayout" name="verticalLayout">
+      <layout class="QVBoxLayout" name="verticalLayout_main">
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout">
          <item>
@@ -379,11 +379,6 @@
             <property name="sizeAdjustPolicy">
              <enum>QComboBox::AdjustToContents</enum>
             </property>
-            <item>
-             <property name="text">
-              <string>Single Drive Sys ID</string>
-             </property>
-            </item>
             <item>
              <property name="text">
               <string>Manual Control</string>

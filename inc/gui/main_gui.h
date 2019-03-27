@@ -12,6 +12,7 @@
 #define MAIN_GUI_H
 
 #include <QDialog>
+#include <QSpacerItem>
 
 #include "easylogging++.h"
 #include "libcdpr/inc/types.h"
@@ -21,6 +22,8 @@
 #include "gui/homing/homing_dialog.h"
 #include "robot/cablerobot.h"
 #include "utils/single_drive_sysid.h"
+
+#define DEBUG_GUI 1
 
 using GSWDOpModes = grabec::GoldSoloWhistleOperationModes; /**< Shortcut for op modes. */
 
@@ -62,6 +65,10 @@ class MainGUI: public QDialog
   void on_pushButton_homing_clicked();
 
   void on_pushButton_startApp_clicked();
+
+#if DEBUG_GUI
+  void pushButton_debug_clicked();
+#endif
 
  private slots:
   //--------- Direct drive control panel buttons -------------------------------------//
@@ -114,6 +121,11 @@ class MainGUI: public QDialog
   void DeleteRobot();
   bool ExitReadyStateRequest();
   void CloseAllApps();
+
+#if DEBUG_GUI
+  QPushButton* pushButton_debug;
+  QSpacerItem* verticalSpacer_5;
+#endif
 
  private:
   //--------- Direct drive control stuff ---------------------------------------------//

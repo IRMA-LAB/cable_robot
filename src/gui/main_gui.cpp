@@ -24,14 +24,29 @@ MainGUI::MainGUI(QWidget* parent, const grabcdpr::Params& config)
 
   StartRobot(); // instantiate cable robot object
 
-  // debug
-  ui->groupBox_app->setEnabled(true);
+#if DEBUG_GUI
+  pushButton_debug = new QPushButton("Debug", this);
+  pushButton_debug->setMinimumSize(ui->pushButton_calib->size());
+  pushButton_debug->setFont(ui->pushButton_calib->font());
+  ui->verticalLayout_main->insertWidget(9, pushButton_debug, 0);
+  ui->verticalSpacer_4->changeSize(0, 13, QSizePolicy::Policy::Expanding,
+                                   QSizePolicy::Policy::MinimumExpanding);
+  verticalSpacer_5 =
+    new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::MinimumExpanding);
+  ui->verticalLayout_main->insertItem(10, verticalSpacer_5);
+  connect(pushButton_debug, SIGNAL(clicked()), this, SLOT(pushButton_debug_clicked()));
+#endif
 }
 
 MainGUI::~MainGUI()
 {
   CloseAllApps();
   DeleteRobot();
+#if DEBUG_GUI
+  disconnect(pushButton_debug, SIGNAL(clicked()), this,
+             SLOT(pushButton_debug_clicked()));
+  delete pushButton_debug;
+#endif
   delete ui;
   CLOG(INFO, "event") << "Main window closed";
 }
@@ -104,20 +119,22 @@ void MainGUI::on_pushButton_startApp_clicked()
   ui->pushButton_calib->setDisabled(true);
   ui->groupBox_app->setDisabled(true);
   ui->frame_manualControl->setDisabled(true);
+}
 
-  QString app_name = ui->comboBox_apps->currentText();
-  if (app_name != "Single Drive Sys ID")
-    return;
-  if (!robot_ptr_->MotorEnabled(motor_id_))
-    return;
-  if (!desired_ctrl_mode_.CheckBit(ControlMode::CABLE_LENGTH))
+#if DEBUG_GUI
+void MainGUI::pushButton_debug_clicked()
+{
+  CLOG(TRACE, "event");
+  if (!(ec_network_valid_ && rt_thread_running_))
     return;
 
+  // Insert debug operations/app here..
   static SingleDriveSysID temp_app(this, robot_ptr_, man_ctrl_ptr_);
 
   double cable_len = robot_ptr_->GetActuatorStatus(motor_id_).cable_length;
   temp_app.start(cable_len);
 }
+#endif
 
 //--------- Public GUI slots of direct drive control panel --------------------------//
 

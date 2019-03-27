@@ -1,5 +1,5 @@
-#ifndef SINGLE_DRIVE_SYSID_H
-#define SINGLE_DRIVE_SYSID_H
+#ifndef CABLE_ROBOT_DEBUG_SINGLE_DRIVE_SYSID_H
+#define CABLE_ROBOT_DEBUG_SINGLE_DRIVE_SYSID_H
 
 #include <fstream>
 
@@ -22,12 +22,14 @@ class SingleDriveSysID: public QObject
  private:
   CableRobot* robot_;
   ControllerSingleDrive* controller_;
+  id_t motor_id_;
 
+  static const std::string kTrajFilepath_;
   static constexpr size_t kTrajLength_   = 30001;
   static constexpr int kLogIntervalMsec_ = 10;
   QTimer* log_timer_                     = NULL;
 
-  std::vector<double> ComputeTrajectory(const double cable_len);
+  std::vector<double> computeTrajectory(const double cable_len);
 };
 
-#endif // SINGLE_DRIVE_SYSID_H
+#endif // CABLE_ROBOT_DEBUG_SINGLE_DRIVE_SYSID_H

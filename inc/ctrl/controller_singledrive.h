@@ -1,7 +1,7 @@
 /**
  * @file controller_singledrive.h
  * @author Simone Comari
- * @date 11 Mar 2019
+ * @date 27 Mar 2019
  * @brief File containing a simple single drive controller class for cable robot.
  */
 
@@ -122,6 +122,11 @@ class ControllerSingleDrive: public ControllerBase
    */
   int16_t GetMotorTorqueTarget() const { return torque_target_true_; }
 
+  /**
+   * @brief Set cable length trajectory.
+   * @param trajectory A trajectory vector where each waypoint is equally spaced at 1ms
+   * from the next one.
+   */
   void SetCableLenTrajectory(const std::vector<double>& trajectory);
   /**
    * @brief Change cable length increment.
