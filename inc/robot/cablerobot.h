@@ -1,7 +1,7 @@
 /**
  * @file cablerobot.h
  * @author Simone Comari, Edoardo Idà
- * @date 11 Mar 2019
+ * @date 27 Mar 2019
  * @brief File containing the virtualization of the physical cable robot, in terms of
  * components, signalig and low level operations.
  */
@@ -204,6 +204,16 @@ class CableRobot: public QObject,
    * @brief Dump latest collected cable robot measurements onto data.log file.
    */
   void DumpMeas() const;
+  /**
+   * @brief Collect and dump current cable robot measurements onto data.log file.
+   */
+  void CollectAndDumpMeas();
+  /**
+   * @brief Collect and dump current cable robot measurements of a single actuator onto
+   * data.log file.
+   * @param[in] actuator_id ID of inquired actuator.
+   */
+  void CollectAndDumpMeas(const id_t actuator_id);
 
   /**
    * @brief Go to home position.

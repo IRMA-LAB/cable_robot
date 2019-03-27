@@ -1,7 +1,7 @@
 /**
  * @file homing_proprioceptive.cpp
  * @author Simone Comari
- * @date 07 Mar 2019
+ * @date 27 Mar 2019
  * @brief This file includes definitions of classes present in homing_proprioceptive.h.
  */
 
@@ -666,10 +666,8 @@ RetVal HomingProprioceptive::WaitUntilPlatformSteady()
 
 void HomingProprioceptive::DumpMeasAndMoveNext()
 {
-  robot_ptr_->CollectMeas();
-  emit printToQConsole("Measurements collected");
-  robot_ptr_->DumpMeas();
-  emit printToQConsole("Measurements dumped onto log file");
+  robot_ptr_->CollectAndDumpMeas();
+  emit printToQConsole("Measurements collected and dumped onto log file");
   meas_step_++;
   double normalized_value = round(
     100. * (static_cast<double>(working_actuator_idx_) / active_actuators_id_.size() +

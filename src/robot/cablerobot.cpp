@@ -1,7 +1,7 @@
 /**
  * @file cablerobot.cpp
  * @author Simone Comari, Edoardo Idà
- * @date 20 Feb 2019
+ * @date 27 Feb 2019
  * @brief File containing definitions of functions and class declared in cablerobot.h.
  */
 
@@ -218,6 +218,26 @@ void CableRobot::DumpMeas() const
 {
   for (const ActuatorStatusMsg& msg : meas_)
     emit sendMsg(msg.serialized());
+}
+
+void CableRobot::CollectAndDumpMeas()
+{
+  CollectMeas();
+  DumpMeas();
+}
+
+void CableRobot::CollectAndDumpMeas(const id_t actuator_id)
+{
+  for (size_t i = 0; i < active_actuators_id_.size(); i++)
+  {
+    if (actuator_id != active_actuators_id_[i])
+      continue;
+    pthread_mutex_lock(&mutex_);
+    ActuatorStatusMsg msg(clock_.Elapsed(), active_actuators_ptrs_[i]->GetStatus());
+    pthread_mutex_unlock(&mutex_);
+    emit sendMsg(msg.serialized());
+    break;
+  }
 }
 
 bool CableRobot::GoHome()
