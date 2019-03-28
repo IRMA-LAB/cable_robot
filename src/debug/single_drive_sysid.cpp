@@ -1,5 +1,4 @@
 #include "debug/single_drive_sysid.h"
-#include <QDebug>
 
 const std::string SingleDriveSysID::kTrajFilepath_ = "/tmp/trajectory.txt";
 
@@ -36,7 +35,7 @@ void SingleDriveSysID::start(const double cable_len)
   controller_->SetCableLenTrajectory(traj);
   pthread_mutex_unlock(&robot_->Mutex());
 
-  QTimer::singleShot(kTrajLength_, this, SLOT(stopLogging(())));
+  QTimer::singleShot(kTrajLength_ + 1000, this, SLOT(stopLogging()));
 }
 
 void SingleDriveSysID::logData() { robot_->CollectAndDumpMeas(motor_id_); }
@@ -49,6 +48,8 @@ void SingleDriveSysID::stopLogging()
   pthread_mutex_lock(&robot_->Mutex());
   controller_->SetMode(ControlMode::CABLE_LENGTH);
   pthread_mutex_unlock(&robot_->Mutex());
+
+  emit debugCompleted();
 }
 
 std::vector<double> SingleDriveSysID::computeTrajectory(const double cable_len)
@@ -60,10 +61,8 @@ std::vector<double> SingleDriveSysID::computeTrajectory(const double cable_len)
   double traj_pt;
   uint i = 0;
   while (traj_file >> traj_pt)
-  {
     traj[i++] += traj_pt;
-    //    qDebug() << i-1 << traj[i-1];
-  }
 
+  traj_file.close();
   return traj;
 }

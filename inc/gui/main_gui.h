@@ -68,6 +68,7 @@ class MainGUI: public QDialog
 
 #if DEBUG_GUI
   void pushButton_debug_clicked();
+  void handleDebugCompleted();
 #endif
 
  private slots:
@@ -125,6 +126,8 @@ class MainGUI: public QDialog
 #if DEBUG_GUI
   QPushButton* pushButton_debug;
   QSpacerItem* verticalSpacer_5;
+  // insert your debug object here..
+  SingleDriveSysID* temp_app = NULL;
 #endif
 
  private:
