@@ -15,6 +15,7 @@ HEADERS = \
     $$PWD/inc/homing/matlab_thread.h \
     $$PWD/inc/ctrl/controller_base.h \
     $$PWD/inc/ctrl/controller_singledrive.h \
+    $$PWD/inc/ctrl/controller_joints_pvt.h \
     $$PWD/inc/utils/types.h \
     $$PWD/inc/utils/macros.h \
     $$PWD/inc/utils/msgs.h \
@@ -24,7 +25,7 @@ HEADERS = \
     $$PWD/lib/grab_common/bitfield.h \
     $$PWD/lib/grab_common/pid/pid.h \
     $$PWD/inc/state_estimation/ext_kalman_filter.h \
-    $$PWD/inc/debug/single_drive_sysid.h
+    $$PWD/inc/debug/single_drive_sysid.h \
 
 SOURCES = \
     $$PWD/src/main.cpp \
@@ -43,13 +44,14 @@ SOURCES = \
     $$PWD/src/homing/matlab_thread.cpp \
     $$PWD/src/ctrl/controller_base.cpp \
     $$PWD/src/ctrl/controller_singledrive.cpp \
+    $$PWD/src/ctrl/controller_joints_pvt.cpp \
     $$PWD/src/utils/msgs.cpp \
     $$PWD/src/utils/easylog_wrapper.cpp \
     $$PWD/lib/easyloggingpp/src/easylogging++.cc \
     $$PWD/lib/grab_common/grabcommon.cpp \
     $$PWD/lib/grab_common/pid/pid.cpp \
     $$PWD/src/state_estimation/ext_kalman_filter.cpp \
-    $$PWD/src/debug/single_drive_sysid.cpp
+    $$PWD/src/debug/single_drive_sysid.cpp \
 
 INCLUDEPATH += \
     $$PWD/inc \

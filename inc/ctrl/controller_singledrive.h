@@ -196,7 +196,7 @@ class ControllerSingleDrive: public ControllerBase
    */
   vect<ControlAction>
   CalcCtrlActions(const grabcdpr::Vars& robot_status,
-                  const vect<ActuatorStatus>& actuators_status) override;
+                  const vect<ActuatorStatus>& actuators_status) override final;
 
  private:
   static constexpr double kAbsDeltaLengthMicroPerSec_ = 0.005;     // [m/s]

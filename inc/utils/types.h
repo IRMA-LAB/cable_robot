@@ -22,7 +22,8 @@
  */
 typedef std::basic_stringbuf<char16_t> StringBuf;
 
-template <typename T> using vect = std::vector<T>;  /**< Shortcut for vector type. */
+template <typename T> using vect = std::vector<T>;  /**< Alias for vector type. */
+using vectD = vect<double>;
 
 /**
  * @brief A structure including motor status information.
