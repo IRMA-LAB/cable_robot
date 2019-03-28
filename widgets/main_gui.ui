@@ -381,17 +381,17 @@
             </property>
             <item>
              <property name="text">
+              <string>Joint PVT 33</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
               <string>Manual Control</string>
              </property>
             </item>
             <item>
              <property name="text">
               <string>Banal 66 Demo</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Joint PVT 33</string>
              </property>
             </item>
            </widget>

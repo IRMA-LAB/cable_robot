@@ -1,7 +1,7 @@
 /**
  * @file main_gui.cpp
  * @author Simone Comari
- * @date 07 Mar 2019
+ * @date 28 Mar 2019
  * @brief This file includes definitions of classes present in main_gui.h.
  */
 
