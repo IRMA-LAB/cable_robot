@@ -11,6 +11,7 @@ HEADERS = \
     $$PWD/inc/gui/homing/homing_interface.h \
     $$PWD/inc/gui/homing/homing_interface_proprioceptive.h \
     $$PWD/inc/gui/homing/init_torque_form.h \
+    $$PWD/inc/gui/apps/joints_pvt_dialog.h \
     $$PWD/inc/homing/homing_proprioceptive.h \
     $$PWD/inc/homing/matlab_thread.h \
     $$PWD/inc/ctrl/controller_base.h \
@@ -52,6 +53,7 @@ SOURCES = \
     $$PWD/lib/grab_common/pid/pid.cpp \
     $$PWD/src/state_estimation/ext_kalman_filter.cpp \
     $$PWD/src/debug/single_drive_sysid.cpp \
+    $$PWD/src/gui/apps/joints_pvt_dialog.cpp
 
 INCLUDEPATH += \
     $$PWD/inc \
@@ -146,7 +148,8 @@ FORMS += \
     $$PWD/widgets/calib/calibration_dialog.ui \
     $$PWD/widgets/homing/homing_dialog.ui \
     $$PWD/widgets/homing/homing_interface_proprioceptive.ui\
-    $$PWD/widgets/homing/init_torque_form.ui
+    $$PWD/widgets/homing/init_torque_form.ui \
+    $$PWD/widgets/apps/joints_pvt_dialog.ui
 
 RESOURCES += \
     resources/resources.qrc

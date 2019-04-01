@@ -72,16 +72,23 @@ using TrajectoryD = Trajectory<double>;
 using TrajectoryI = Trajectory<int>;
 using TrajectoryS = Trajectory<short>;
 
-class ControllerJointsPVT: public ControllerBase
+class ControllerJointsPVT: public QObject, public ControllerBase
 {
+  Q_OBJECT
+
  public:
-  ControllerJointsPVT();
+  explicit ControllerJointsPVT(QObject* parent = NULL);
+  ~ControllerJointsPVT() {}
 
   bool SetCablesLenTrajectories(const vect<TrajectoryD>& trajectories);
   bool SetMotorsPosTrajectories(const vect<TrajectoryI>& trajectories);
   bool SetMotorsVelTrajectories(const vect<TrajectoryI>& trajectories);
   bool SetMotorsTorqueTrajectories(const vect<TrajectoryS>& trajectories);
 
+  void PauseTrajectoryFollowing(const bool value) { pause_ = value; }
+  void StopTrajectoryFollowing() { traj_completed_ = true; }
+
+  bool IsPaused() const { return pause_; }
   /**
    * @brief Check if active target is reached, independently from the control mode.
    * @return _True_ if target is reached, _false_ otherwise.
@@ -112,6 +119,9 @@ class ControllerJointsPVT: public ControllerBase
   vect<ControlAction> CalcCtrlActions(const grabcdpr::Vars& robot_status,
                                       const vect<ActuatorStatus>&) override final;
 
+ signals:
+  void trajectoryCompleted() const;
+
  private:
   enum BitPosition
   {
@@ -127,6 +137,7 @@ class ControllerJointsPVT: public ControllerBase
   double traj_time_;
   bool traj_completed_;
   bool new_trajectory_;
+  bool pause_;
 
   vect<TrajectoryD> traj_cables_len_;
   vect<TrajectoryI> traj_motors_pos_;

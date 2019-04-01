@@ -1,6 +1,10 @@
 #include "ctrl/controller_joints_pvt.h"
 
-ControllerJointsPVT::ControllerJointsPVT() : ControllerBase() { Reset(); }
+ControllerJointsPVT::ControllerJointsPVT(QObject* parent)
+  : QObject(parent), ControllerBase()
+{
+  Reset();
+}
 
 bool ControllerJointsPVT::SetCablesLenTrajectories(const vect<TrajectoryD>& trajectories)
 {
@@ -109,6 +113,9 @@ T ControllerJointsPVT::GetTrajectoryPointValue(const id_t id,
     traj_completed_ = waypoint.ts >= traj.timestamps.back();
     break;
   }
+  if (traj_completed_)
+    emit trajectoryCompleted();
+
   return waypoint.value;
 }
 
