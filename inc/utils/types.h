@@ -13,6 +13,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include "opencv2/calib3d.hpp"
+#include "opencv2/core.hpp"
+
 #include "libgrabec/inc/slaves/goldsolowhistledrive.h"
 
 
@@ -159,8 +162,23 @@ struct ActuatorStatus: WinchStatus
 /**
  * @brief The CalibParams struct
  */
-struct CalibParams
+struct CameraParams
 {
+  // TODO..
+};
+
+struct CameraCalibSettings
+{
+  CameraCalibSettings() {}
+  CameraCalibSettings(const int frames_num, const bool tangential_dist)
+    : target_frames_num(frames_num), use_tangential_dist(tangential_dist)
+  {}
+
+  int target_frames_num    = 15;
+  bool use_tangential_dist = false;
+
+  int chessboard_flags     = cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_NORMALIZE_IMAGE;
+  cv::Size chessboard_size = cv::Size(18, 13);
 };
 
 #endif // CABLE_ROBOT_TYPES_H

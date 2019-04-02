@@ -13,7 +13,7 @@ class HomingVisionApp: public QObject
  public:
   explicit HomingVisionApp(QObject* parent, CableRobot* robot);
 
-  void setCalibParams(const CalibParams& params) { calib_params_ = params; }
+  void setCameraParams(const CameraParams& params) { calib_params_ = params; }
 
  signals:
   void printToQConsole(const QString&) const;
@@ -23,7 +23,7 @@ class HomingVisionApp: public QObject
 
  private:
   CableRobot* robot_ptr_ = NULL;
-  CalibParams calib_params_;
+  CameraParams calib_params_;
 
   QMutex mutex_;
   cv::Mat frame_;

@@ -1,7 +1,7 @@
 /**
  * @file camera_calib_dialog.h
  * @author Simone Comari
- * @date 22 Mar 2019
+ * @date 02 Apr 2019
  * @brief This file includes the camera calibration dialog.
  */
 
@@ -19,6 +19,9 @@
 #include "json.hpp"
 
 #include "utils/types.h"
+
+#include "gui/homing/camera_calib_app.h"
+#include "gui/homing/camera_calib_settings_dialog.h"
 
 using json = nlohmann::json; /**< Alias for JSON library support. */
 
@@ -45,35 +48,33 @@ class CameraCalibDialog: public QDialog
   /**
    * @brief calibParamsReady
    */
-  void calibParamsReady(const CalibParams&) const;
+  void cameraParamsReady(const CameraParams&) const;
   /**
    * @brief printToQConsole
    */
   void printToQConsole(const QString&) const;
 
  public slots:
-  /**
-   * @brief getNewVideoFrame
-   * @param frame
-   */
-  void getNewVideoFrame(const cv::Mat& frame);
+  void getNewVideoFrame(const cv::Mat&);
+
+ private slots:
+  void startCalibration(const CameraCalibSettings& settings);
+  void handleCalibrationFailure();
+  void handleCalibrationSuccess(const CameraParams& params);
 
  private slots:
   void on_pushButton_newCalib_clicked();
-
   void on_pushButton_load_clicked();
-
   void on_pushButton_loadDefault_clicked();
 
  private:
   static const QString kDefaultCalibFile_;
 
   Ui::CameraCalibDialog* ui;
-  CalibParams calib_params_;
+  CameraCalibSettingsDialog settings_win_;
+  CameraCalibApp app_;
 
-  QMutex mutex_;
-  cv::Mat frame_;
-  bool new_frame_available_;
+  CameraParams calib_params_;
 
   bool parseCalibFile(
     const QString& filepath); // dummy, implement once we know calib params and file
