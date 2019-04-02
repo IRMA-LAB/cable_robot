@@ -1,7 +1,7 @@
 /**
  * @file camera_widget.h
  * @author Simone Comari
- * @date 22 Mar 2019
+ * @date 02 Apr 2019
  * @brief This file includes a widget to stream a USB camera.
  */
 
@@ -28,11 +28,9 @@
 
 #include "gui/homing/camera_calib_dialog.h"
 
-QT_BEGIN_NAMESPACE
 namespace Ui {
 class CameraWidget;
 }
-QT_END_NAMESPACE
 
 /**
  * @brief The VideoStreamType enum
@@ -106,7 +104,7 @@ class CameraWidget: public QWidget
   /**
    * @brief calibParamsReady
    */
-  void calibParamsReady(const CalibParams&) const;
+  void calibParamsReady(const CameraParams&) const;
 
  private slots:
   void on_comboBox_channel_currentIndexChanged(const QString& arg1);
@@ -123,7 +121,7 @@ class CameraWidget: public QWidget
   void on_pushButton_stopRec_clicked();
 
 private slots:
-  void saveCalibParams(const CalibParams& params);
+  void storeCameraParams(const CameraParams& params);
   void frwPrintToQConsole(const QString& msg) { emit printToQConsole(msg); }
 
 private:
@@ -137,7 +135,7 @@ private:
   QImage qimg_;
   VideoStreamType stream_type_;
 
-  CalibParams calib_params_;
+  CameraParams camera_params_;
 
   void stream();
 

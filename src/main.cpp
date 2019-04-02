@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
   qRegisterMetaType<Bitfield8>("Bitfield8");
   qRegisterMetaType<id_t>("id_t");
   qRegisterMetaType<cv::Mat>("cv::Mat");
-  qRegisterMetaType<CalibParams>("CalibParams");
+  qRegisterMetaType<CameraParams>("CameraParams");
   CLOG(INFO, "event") << "App START";
 
   LoginWindow w;

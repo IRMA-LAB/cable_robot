@@ -14,6 +14,8 @@ HEADERS = \
     $$PWD/inc/gui/homing/init_torque_form.h \
     $$PWD/inc/gui/homing/camera_widget.h \
     $$PWD/inc/gui/homing/camera_calib_dialog.h \
+    $$PWD/inc/gui/homing/camera_calib_settings_dialog.h \
+    $$PWD/inc/gui/homing/camera_calib_app.h \
     $$PWD/inc/homing/homing_proprioceptive.h \
     $$PWD/inc/homing/homing_vision_app.h \
     $$PWD/inc/homing/matlab_thread.h \
@@ -44,6 +46,8 @@ SOURCES = \
     $$PWD/src/gui/homing/init_torque_form.cpp \
     $$PWD/src/gui/homing/camera_widget.cpp \
     $$PWD/src/gui/homing/camera_calib_dialog.cpp \
+    $$PWD/src/gui/homing/camera_calib_settings_dialog.cpp \
+    $$PWD/src/gui/homing/camera_calib_app.cpp \
     $$PWD/src/homing/homing_proprioceptive.cpp \
     $$PWD/src/homing/homing_vision_app.cpp \
     $$PWD/src/homing/matlab_thread.cpp \
@@ -156,6 +160,8 @@ FORMS += \
     $$PWD/widgets/homing/homing_interface_proprioceptive.ui\
     $$PWD/widgets/homing/init_torque_form.ui \
     $$PWD/widgets/homing/camera_widget.ui \
-    $$PWD/widgets/homing/camera_calib_dialog.ui
+    $$PWD/widgets/homing/camera_calib_dialog.ui \
+    $$PWD/widgets/homing/camera_calib_app.ui \
+    $$PWD/widgets/homing/camera_calib_settings_dialog.ui
 
 RESOURCES += resources/resources.qrc

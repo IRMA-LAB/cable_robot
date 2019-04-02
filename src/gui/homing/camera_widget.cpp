@@ -1,7 +1,7 @@
 /**
  * @file camera_widget.cpp
  * @author Simone Comari
- * @date 22 Mar 2019
+ * @date 02 Apr 2019
  * @brief This file includes definitions of classes present in camera_widget.h.
  */
 
@@ -103,8 +103,7 @@ void CameraWidget::stopVideoStream()
   ui->graphicsView_video->fitInView(&video_streamer_, Qt::KeepAspectRatio);
 }
 
-//--------- Private GUI slots
-//-----------------------------------------------------------//
+//--------- Private GUI slots -------------------------------------------------------//
 
 void CameraWidget::on_comboBox_channel_currentIndexChanged(const QString& arg1)
 {
@@ -150,8 +149,8 @@ void CameraWidget::on_pushButton_calib_clicked()
   calib_dialog_ = new CameraCalibDialog(this);
   connect(this, SIGNAL(newFrameGrabbed(cv::Mat)), calib_dialog_,
           SLOT(getNewVideoFrame(cv::Mat)));
-  connect(calib_dialog_, SIGNAL(calibParamsReady(CalibParams)), this,
-          SLOT(saveCalibParams(CalibParams)));
+  connect(calib_dialog_, SIGNAL(cameraParamsReady(CameraParams)), this,
+          SLOT(storeCameraParams(CameraParams)));
   connect(calib_dialog_, SIGNAL(printToQConsole(QString)), this,
           SLOT(frwPrintToQConsole(QString)));
   calib_dialog_->show();
@@ -273,10 +272,10 @@ void CameraWidget::on_pushButton_stopRec_clicked()
 
 //--------- Private slots -----------------------------------------------------------//
 
-void CameraWidget::saveCalibParams(const CalibParams& params)
+void CameraWidget::storeCameraParams(const CameraParams& params)
 {
-  calib_params_ = params;
-  emit calibParamsReady(calib_params_);
+  camera_params_ = params;
+  emit calibParamsReady(camera_params_);
   deleteCalibDialog();
 }
 
@@ -371,8 +370,8 @@ void CameraWidget::deleteCalibDialog()
 
   disconnect(this, SIGNAL(newFrameGrabbed(cv::Mat)), calib_dialog_,
              SLOT(getNewVideoFrame(cv::Mat)));
-  disconnect(calib_dialog_, SIGNAL(calibParamsReady(CalibParams)), this,
-             SLOT(saveCalibParams(CalibParams)));
+  disconnect(calib_dialog_, SIGNAL(cameraParamsReady(CameraParams)), this,
+             SLOT(storeCameraParams(CameraParams)));
   disconnect(calib_dialog_, SIGNAL(printToQConsole(QString)), this,
              SLOT(frwPrintToQConsole(QString)));
   calib_dialog_->close();
