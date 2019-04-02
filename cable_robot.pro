@@ -31,7 +31,7 @@ HEADERS = \
     $$PWD/lib/grab_common/pid/pid.h \
 
 SOURCES = \
-    $$PWD/src/main.cpp \
+    $$PWD/src/main_cam_test.cpp \
     $$PWD/src/robot/cablerobot.cpp \
     $$PWD/src/robot/components/actuator.cpp \
     $$PWD/src/robot/components/winch.cpp \
@@ -57,7 +57,7 @@ SOURCES = \
     $$PWD/src/utils/easylog_wrapper.cpp \
     $$PWD/lib/easyloggingpp/src/easylogging++.cc \
     $$PWD/lib/grab_common/grabcommon.cpp \
-    $$PWD/lib/grab_common/pid/pid.cpp \
+    $$PWD/lib/grab_common/pid/pid.cpp
 
 INCLUDEPATH += \
     $$PWD/inc \
