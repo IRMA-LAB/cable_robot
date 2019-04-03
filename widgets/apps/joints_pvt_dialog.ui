@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>590</width>
+    <width>592</width>
     <height>386</height>
    </rect>
   </property>
@@ -118,7 +118,7 @@
     </widget>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_2">
+    <layout class="QHBoxLayout" name="horizontalLayout_display">
      <item>
       <layout class="QVBoxLayout" name="verticalLayout">
        <property name="spacing">
@@ -180,9 +180,6 @@
         </widget>
        </item>
       </layout>
-     </item>
-     <item>
-      <widget class="QOpenGLWidget" name="openGLWidget"/>
      </item>
     </layout>
    </item>

@@ -27,6 +27,7 @@ HEADERS = \
     $$PWD/lib/grab_common/pid/pid.h \
     $$PWD/inc/state_estimation/ext_kalman_filter.h \
     $$PWD/inc/debug/single_drive_sysid.h \
+    inc/gui/apps/my3dscatterwidget.h
 
 SOURCES = \
     $$PWD/src/main.cpp \
@@ -53,7 +54,8 @@ SOURCES = \
     $$PWD/lib/grab_common/pid/pid.cpp \
     $$PWD/src/state_estimation/ext_kalman_filter.cpp \
     $$PWD/src/debug/single_drive_sysid.cpp \
-    $$PWD/src/gui/apps/joints_pvt_dialog.cpp
+    $$PWD/src/gui/apps/joints_pvt_dialog.cpp \
+    inc/gui/apps/my3dscatterwidget.cpp
 
 INCLUDEPATH += \
     $$PWD/inc \
@@ -61,7 +63,7 @@ INCLUDEPATH += \
     $$PWD/lib/easyloggingpp/src
 
 
-QT += core gui widgets
+QT += core gui widgets datavisualization
 
 CONFIG += c++11 console static
 CONFIG -= app_bundle
@@ -149,7 +151,8 @@ FORMS += \
     $$PWD/widgets/homing/homing_dialog.ui \
     $$PWD/widgets/homing/homing_interface_proprioceptive.ui\
     $$PWD/widgets/homing/init_torque_form.ui \
-    $$PWD/widgets/apps/joints_pvt_dialog.ui
+    $$PWD/widgets/apps/joints_pvt_dialog.ui \
+    inc/gui/apps/my3dscatterwidget.ui
 
 RESOURCES += \
     resources/resources.qrc

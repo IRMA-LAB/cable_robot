@@ -18,12 +18,13 @@
 #include "libcdpr/inc/types.h"
 
 #include "ctrl/controller_singledrive.h"
+#include "debug/single_drive_sysid.h"
+#include "gui/apps/joints_pvt_dialog.h"
 #include "gui/calib/calibration_dialog.h"
 #include "gui/homing/homing_dialog.h"
 #include "robot/cablerobot.h"
-#include "debug/single_drive_sysid.h"
 
-#define DEBUG_GUI 1
+#define DEBUG_GUI 0
 
 using GSWDOpModes = grabec::GoldSoloWhistleOperationModes; /**< Shortcut for op modes. */
 
@@ -100,7 +101,7 @@ class MainGUI: public QDialog
   void on_pushButton_torquePlus_released();
 
  private slots:
-  void enableInterface(const bool op_outcome = false);
+  void enableInterface(const bool op_outcome = true);
   void appendText2Browser(const QString& text);
   void updateEcStatusLED(const Bitfield8& ec_status_flags);
   void updateRtThreadStatusLED(const bool active);
@@ -113,6 +114,8 @@ class MainGUI: public QDialog
   Ui::MainGUI* ui                  = NULL;
   CalibrationDialog* calib_dialog_ = NULL;
   HomingDialog* homing_dialog_     = NULL;
+
+  JointsPVTDialog* joints_pvt_dialog_ = NULL;
 
   grabcdpr::Params config_params_;
   CableRobot* robot_ptr_ = NULL;

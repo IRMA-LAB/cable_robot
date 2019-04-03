@@ -1,7 +1,7 @@
 /**
  * @file calibration_dialog.h
  * @author Simone Comari
- * @date 11 Mar 2019
+ * @date 03 Apr 2019
  * @brief This file include the calibration dialog class.
  */
 
@@ -41,7 +41,7 @@ class CalibrationDialog: public QDialog
   /**
    * @brief Enable main GUI command.
    */
-  void enableMainGUI();
+  void enableMainGUI(const bool);
   /**
    * @brief Calibration end notice.
    */

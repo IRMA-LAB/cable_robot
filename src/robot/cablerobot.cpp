@@ -1,7 +1,7 @@
 /**
  * @file cablerobot.cpp
  * @author Simone Comari, Edoardo Idà
- * @date 27 Feb 2019
+ * @date 03 Apr 2019
  * @brief File containing definitions of functions and class declared in cablerobot.h.
  */
 
@@ -362,10 +362,10 @@ void CableRobot::eventSuccess()
   // clang-format off
   BEGIN_TRANSITION_MAP                              // - Current State -
       TRANSITION_MAP_ENTRY (ST_ENABLED)             // ST_IDLE
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)          // ST_ENABLED
+      TRANSITION_MAP_ENTRY (ST_OPERATIONAL)         // ST_ENABLED
       TRANSITION_MAP_ENTRY (ST_ENABLED)             // ST_CALIBRATION
       TRANSITION_MAP_ENTRY (ST_READY)               // ST_HOMING
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)          // ST_READY
+      TRANSITION_MAP_ENTRY (ST_OPERATIONAL)         // ST_READY
       TRANSITION_MAP_ENTRY (ST_READY)               // ST_OPERATIONAL
       TRANSITION_MAP_ENTRY (ST_ENABLED)             // ST_ERROR
   END_TRANSITION_MAP(NULL)
@@ -376,14 +376,14 @@ void CableRobot::eventFailure()
 {
   CLOG(TRACE, "event");
   // clang-format off
-  BEGIN_TRANSITION_MAP			              		// - Current State -
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)		// ST_IDLE
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)    // ST_ENABLED
-      TRANSITION_MAP_ENTRY (ST_ENABLED)				// ST_CALIBRATION
-      TRANSITION_MAP_ENTRY (ST_ENABLED)				// ST_HOMING
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)    // ST_READY
-      TRANSITION_MAP_ENTRY (ST_ERROR)         // ST_OPERATIONAL
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)		// ST_ERROR
+  BEGIN_TRANSITION_MAP			            // - Current State -
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)	    // ST_IDLE
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)          // ST_ENABLED
+      TRANSITION_MAP_ENTRY (ST_ENABLED)             // ST_CALIBRATION
+      TRANSITION_MAP_ENTRY (ST_ENABLED)             // ST_HOMING
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)          // ST_READY
+      TRANSITION_MAP_ENTRY (ST_ERROR)               // ST_OPERATIONAL
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)          // ST_ERROR
   END_TRANSITION_MAP(NULL)
   // clang-format on
 }
@@ -392,14 +392,14 @@ void CableRobot::stop()
 {
   CLOG(TRACE, "event");
   // clang-format off
-  BEGIN_TRANSITION_MAP                        // - Current State -
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)		// ST_IDLE
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)    // ST_ENABLED
-      TRANSITION_MAP_ENTRY (ST_ENABLED)       // ST_CALIBRATION
-      TRANSITION_MAP_ENTRY (ST_ENABLED)       // ST_HOMING
-      TRANSITION_MAP_ENTRY (ST_ENABLED)       // ST_READY
-      TRANSITION_MAP_ENTRY (ST_READY)         // ST_OPERATIONAL
-      TRANSITION_MAP_ENTRY (ST_ENABLED)   		// ST_ERROR
+  BEGIN_TRANSITION_MAP                              // - Current State -
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)          // ST_IDLE
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)          // ST_ENABLED
+      TRANSITION_MAP_ENTRY (ST_ENABLED)             // ST_CALIBRATION
+      TRANSITION_MAP_ENTRY (ST_ENABLED)             // ST_HOMING
+      TRANSITION_MAP_ENTRY (ST_ENABLED)             // ST_READY
+      TRANSITION_MAP_ENTRY (ST_READY)               // ST_OPERATIONAL
+      TRANSITION_MAP_ENTRY (ST_ENABLED)             // ST_ERROR
   END_TRANSITION_MAP(NULL)
   // clang-format on
 }

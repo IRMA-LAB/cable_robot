@@ -1,7 +1,7 @@
 /**
  * @file main_gui.cpp
  * @author Simone Comari
- * @date 28 Mar 2019
+ * @date 03 Apr 2019
  * @brief This file includes definitions of classes present in main_gui.h.
  */
 
@@ -36,6 +36,8 @@ MainGUI::MainGUI(QWidget* parent, const grabcdpr::Params& config)
   ui->verticalLayout_main->insertItem(10, verticalSpacer_5);
   connect(pushButton_debug, SIGNAL(clicked()), this, SLOT(pushButton_debug_clicked()));
 #endif
+  // debug
+  ui->groupBox_app->setEnabled(true);
 }
 
 MainGUI::~MainGUI()
@@ -43,8 +45,7 @@ MainGUI::~MainGUI()
   CloseAllApps();
   DeleteRobot();
 #if DEBUG_GUI
-  disconnect(pushButton_debug, SIGNAL(clicked()), this,
-             SLOT(pushButton_debug_clicked()));
+  disconnect(pushButton_debug, SIGNAL(clicked()), this, SLOT(pushButton_debug_clicked()));
   delete pushButton_debug;
 #endif
   delete ui;
@@ -112,13 +113,23 @@ void MainGUI::on_pushButton_homing_clicked()
 void MainGUI::on_pushButton_startApp_clicked()
 {
   CLOG(TRACE, "event");
-  if (!(ec_network_valid_ && rt_thread_running_))
-    return;
+  //  if (!(ec_network_valid_ && rt_thread_running_))
+  //    return;
 
   ui->pushButton_homing->setDisabled(true);
   ui->pushButton_calib->setDisabled(true);
   ui->groupBox_app->setDisabled(true);
   ui->frame_manualControl->setDisabled(true);
+
+  if (ui->comboBox_apps->currentText() == "Joint PVT 33")
+  {
+    robot_ptr_->eventSuccess();
+    joints_pvt_dialog_ = new JointsPVTDialog(this, robot_ptr_);
+    connect(joints_pvt_dialog_, SIGNAL(destroyed()), robot_ptr_, SLOT(eventSuccess()));
+    connect(joints_pvt_dialog_, SIGNAL(destroyed()), this, SLOT(enableInterface()));
+    joints_pvt_dialog_->show();
+    CLOG(INFO, "event") << "Prompt joints pvt dialog";
+  }
 }
 
 #if DEBUG_GUI
@@ -353,7 +364,7 @@ void MainGUI::on_pushButton_torqueMinus_released()
 
 //--------- Private slots ------------------------------------------------------------//
 
-void MainGUI::enableInterface(const bool op_outcome /*= false*/)
+void MainGUI::enableInterface(const bool op_outcome /*= true*/)
 {
   ui->pushButton_homing->setEnabled(true);
   ui->pushButton_calib->setEnabled(true);
@@ -703,7 +714,8 @@ void MainGUI::CloseAllApps()
   if (calib_dialog_ != NULL)
   {
     disconnect(calib_dialog_, SIGNAL(calibrationEnd()), robot_ptr_, SLOT(eventSuccess()));
-    disconnect(calib_dialog_, SIGNAL(enableMainGUI()), this, SLOT(enableInterface()));
+    disconnect(calib_dialog_, SIGNAL(enableMainGUI(bool)), this,
+               SLOT(enableInterface(bool)));
     calib_dialog_->close();
     delete calib_dialog_;
   }

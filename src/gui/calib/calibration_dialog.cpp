@@ -1,7 +1,7 @@
 /**
  * @file calibration_dialog.cpp
  * @author Simone Comari
- * @date 11 Mar 2019
+ * @date 03 Apr 2019
  * @brief This file includes definitions of class present in calibration_dialog.h.
  */
 
@@ -26,13 +26,13 @@ CalibrationDialog::~CalibrationDialog()
 void CalibrationDialog::on_buttonBox_accepted()
 {
   emit calibrationEnd();
-  emit enableMainGUI();
+  emit enableMainGUI(true);
   close();
 }
 
 void CalibrationDialog::on_buttonBox_rejected()
 {
   emit calibrationEnd();
-  emit enableMainGUI();
+  emit enableMainGUI(false);
   close();
 }

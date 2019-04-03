@@ -9,6 +9,7 @@
 
 #include "ctrl/controller_joints_pvt.h"
 #include "robot/cablerobot.h"
+#include "gui/apps/my3dscatterwidget.h"
 
 namespace Ui {
 class JointsPVTDialog;
@@ -21,6 +22,8 @@ class JointsPVTDialog: public QDialog
  public:
   explicit JointsPVTDialog(QWidget* parent, CableRobot* robot);
   ~JointsPVTDialog();
+
+signals:
 
  private slots:
   void setTrajectoryCompleted();
@@ -39,10 +42,13 @@ class JointsPVTDialog: public QDialog
 
  private:
   Ui::JointsPVTDialog* ui;
+  My3DScatterWidget traj_display_;
+
   CableRobot* robot_ptr_;
   ControllerJointsPVT controller_;
 
   ControlMode traj_type_;
+  vect<TrajectoryD> traj_platform_;
   vect<TrajectoryD> traj_cables_len_;
   vect<TrajectoryI> traj_motors_pos_;
   vect<TrajectoryI> traj_motors_vel_;

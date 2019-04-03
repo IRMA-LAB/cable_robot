@@ -2,9 +2,11 @@
 #include "ui_joints_pvt_dialog.h"
 
 JointsPVTDialog::JointsPVTDialog(QWidget* parent, CableRobot* robot)
-  : QDialog(parent), ui(new Ui::JointsPVTDialog), robot_ptr_(robot), controller_(this)
+  : QDialog(parent), ui(new Ui::JointsPVTDialog), traj_display_(this), robot_ptr_(robot), controller_(this)
 {
   ui->setupUi(this);
+  ui->horizontalLayout_display->addWidget(&traj_display_, 1);
+  setAttribute(Qt::WA_DeleteOnClose);
 
   connect(&controller_, SIGNAL(trajectoryCompleted()), this,
           SLOT(setTrajectoryCompleted()), Qt::ConnectionType::QueuedConnection);
@@ -47,6 +49,7 @@ void JointsPVTDialog::on_pushButton_fileSelection_clicked()
 
 void JointsPVTDialog::on_pushButton_read_clicked()
 {
+  traj_display_.setTrajectory(traj_platform_);
   CLOG(TRACE, "event");
   QString input_filename = ui->lineEdit_inputFile->text();
   if (input_filename.isEmpty())
