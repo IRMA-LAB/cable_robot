@@ -12,6 +12,10 @@ template <typename T> struct WayPoint
   WayPoint(const double time, const T& _value) : ts(time), value(_value) {}
 };
 
+using WayPointD = WayPoint<double>;
+using WayPointI = WayPoint<int>;
+using WayPointS = WayPoint<short>;
+
 template <typename T> struct Trajectory
 {
   id_t id = 0;

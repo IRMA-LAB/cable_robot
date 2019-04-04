@@ -2,7 +2,8 @@
 #include "ui_joints_pvt_dialog.h"
 
 JointsPVTDialog::JointsPVTDialog(QWidget* parent, CableRobot* robot)
-  : QDialog(parent), ui(new Ui::JointsPVTDialog), traj_display_(this), robot_ptr_(robot), controller_(this)
+  : QDialog(parent), ui(new Ui::JointsPVTDialog), traj_display_(this), robot_ptr_(robot),
+    controller_(this)
 {
   ui->setupUi(this);
   ui->horizontalLayout_display->addWidget(&traj_display_, 1);
@@ -36,9 +37,8 @@ void JointsPVTDialog::setTrajectoryCompleted()
 void JointsPVTDialog::on_pushButton_fileSelection_clicked()
 {
   CLOG(TRACE, "event");
-  QString config_filename =
-    QFileDialog::getOpenFileName(this, tr("Load Optimization Results"), tr("../.."),
-                                 tr("Optimization results (*.json)"));
+  QString config_filename = QFileDialog::getOpenFileName(
+    this, tr("Load Trajectory"), tr("../.."), tr("Trajectory file (*.txt)"));
   if (config_filename.isEmpty())
   {
     QMessageBox::warning(this, "File Error", "File name is empty!");
@@ -49,7 +49,6 @@ void JointsPVTDialog::on_pushButton_fileSelection_clicked()
 
 void JointsPVTDialog::on_pushButton_read_clicked()
 {
-  traj_display_.setTrajectory(traj_platform_);
   CLOG(TRACE, "event");
   QString input_filename = ui->lineEdit_inputFile->text();
   if (input_filename.isEmpty())
@@ -68,6 +67,7 @@ void JointsPVTDialog::on_pushButton_read_clicked()
   }
   CLOG(INFO, "event") << "Read trajectories from '" << input_filename << "'";
   ui->pushButton_start->setEnabled(true);
+  updatePlots();
 }
 
 void JointsPVTDialog::on_checkBox_toggled(bool checked) {}
@@ -136,4 +136,146 @@ void JointsPVTDialog::on_pushButton_return_clicked()
 
 //--------- Private functions ------------------------------------------------------//
 
-bool JointsPVTDialog::readTrajectories(const QString& ifilepath) { return true; }
+bool JointsPVTDialog::readTrajectories(const QString& ifilepath)
+{
+  QFile ifile(ifilepath);
+  if (!ifile.open(QIODevice::ReadOnly | QIODevice::Text))
+    return false;
+
+  traj_cables_len_.clear();
+  traj_motors_pos_.clear();
+  traj_motors_vel_.clear();
+  traj_motors_torque_.clear();
+
+  // Read header yielding information about trajectory type and involved motors
+  QTextStream s(&ifile);
+  QStringList header = s.readLine().split(" ");
+  traj_type_         = static_cast<ControlMode>(header[0].toUShort());
+  vect<id_t> motors_id;
+  for (int i = 1; i < header.size(); i++)
+    motors_id.push_back(header[i].toUInt());
+
+  // Fill trajectories accordingly reading text body line-by-line
+  switch (traj_type_)
+  {
+    case CABLE_LENGTH:
+      traj_cables_len_.resize(motors_id.size());
+      for (size_t i = 0; i < motors_id.size(); i++)
+        traj_cables_len_[i].id = motors_id[i];
+      while (!s.atEnd())
+      {
+        QStringList line = s.readLine().split(" ");
+        for (auto& traj : traj_cables_len_)
+          traj.timestamps.push_back(line[0].toDouble());
+        for (int i = 1; i < line.size(); i++)
+          traj_cables_len_[static_cast<size_t>(i) - 1].values.push_back(
+            line[i].toDouble());
+      }
+      break;
+    case MOTOR_POSITION:
+      traj_motors_pos_.resize(motors_id.size());
+      for (size_t i = 0; i < motors_id.size(); i++)
+        traj_motors_pos_[i].id = motors_id[i];
+      while (!s.atEnd())
+      {
+        QStringList line = s.readLine().split(" ");
+        for (auto& traj : traj_motors_pos_)
+          traj.timestamps.push_back(line[0].toDouble());
+        for (int i = 1; i < line.size(); i++)
+          traj_motors_pos_[static_cast<size_t>(i) - 1].values.push_back(line[i].toInt());
+      }
+      break;
+    case MOTOR_SPEED:
+      traj_motors_vel_.resize(motors_id.size());
+      for (size_t i = 0; i < motors_id.size(); i++)
+        traj_motors_vel_[i].id = motors_id[i];
+      while (!s.atEnd())
+      {
+        QStringList line = s.readLine().split(" ");
+        for (auto& traj : traj_motors_vel_)
+          traj.timestamps.push_back(line[0].toDouble());
+        for (int i = 1; i < line.size(); i++)
+          traj_motors_vel_[static_cast<size_t>(i) - 1].values.push_back(line[i].toInt());
+      }
+      break;
+    case MOTOR_TORQUE:
+      traj_motors_torque_.resize(motors_id.size());
+      for (size_t i = 0; i < motors_id.size(); i++)
+        traj_motors_torque_[i].id = motors_id[i];
+      while (!s.atEnd())
+      {
+        QStringList line = s.readLine().split(" ");
+        for (auto& traj : traj_motors_torque_)
+          traj.timestamps.push_back(line[0].toDouble());
+        for (int i = 1; i < line.size(); i++)
+          traj_motors_torque_[static_cast<size_t>(i) - 1].values.push_back(
+            line[i].toShort());
+      }
+      break;
+    case NONE:
+      return false;
+  }
+  return true;
+}
+
+void JointsPVTDialog::updatePlots()
+{
+  traj_display_.setTrajectory(traj_platform_);
+
+  size_t num_plots = 0;
+  if (!traj_cables_len_.empty())
+    num_plots = traj_cables_len_.size();
+  else if (!traj_motors_pos_.empty())
+    num_plots = traj_motors_pos_.size();
+  else if (!traj_motors_vel_.empty())
+    num_plots = traj_motors_vel_.size();
+  else if (!traj_motors_torque_.empty())
+    num_plots = traj_motors_torque_.size();
+
+  if (grid_layout_ == NULL)
+  {
+    auto vLine = new QFrame;
+    vLine->setFrameShape(QFrame::VLine);
+    vLine->setFrameShadow(QFrame::Sunken);
+    ui->horizontalLayout_plots->addWidget(vLine);
+  }
+  else
+  {
+    ui->horizontalLayout_plots->removeItem(grid_layout_);
+    delete grid_layout_;
+  }
+
+  grid_layout_ = new QGridLayout;
+  for (size_t i = 0; i < num_plots; i++)
+  {
+    QChart* chart        = new QChart();
+    ChartView* chartView = new ChartView(chart);
+    switch (traj_type_)
+    {
+      case CABLE_LENGTH:
+        chartView->setCableTrajectory(traj_cables_len_[i]);
+        break;
+      case MOTOR_POSITION:
+        chartView->setMotorPosTrajectory(traj_motors_pos_[i]);
+        break;
+      case MOTOR_SPEED:
+        chartView->setMotorVelTrajectory(traj_motors_vel_[i]);
+        break;
+      case MOTOR_TORQUE:
+        chartView->setMotorTorqueTrajectory(traj_motors_torque_[i]);
+        break;
+      case NONE:
+        break;
+    }
+    chartView->setMinimumWidth(traj_display_.width() / 2);
+    int row = static_cast<int>(i) / 2;
+    int col = i % 2;
+    grid_layout_->addWidget(chartView, row, col);
+    grid_layout_->setColumnStretch(col, 1);
+    grid_layout_->setRowStretch(row, 1);
+  }
+
+  ui->horizontalLayout_plots->addLayout(grid_layout_, 1);
+  ui->horizontalLayout_plots->setStretch(0, 1);
+  ui->horizontalLayout_plots->setSpacing(12);
+}

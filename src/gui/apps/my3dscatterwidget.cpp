@@ -1,19 +1,5 @@
-#include "my3dscatterwidget.h"
+#include "gui/apps/my3dscatterwidget.h"
 #include "ui_my3dscatterwidget.h"
-
-#include <QScreen>
-#include <QtCore/qmath.h>
-#include <QtCore/qrandom.h>
-#include <QtDataVisualization/q3dcamera.h>
-#include <QtDataVisualization/q3dscene.h>
-#include <QtDataVisualization/q3dtheme.h>
-#include <QtDataVisualization/qscatter3dseries.h>
-#include <QtDataVisualization/qscatterdataproxy.h>
-#include <QtDataVisualization/qvalue3daxis.h>
-
-#include "libgeom/inc/rotations.h"
-
-using namespace QtDataVisualization;
 
 static QVector3D randVector()
 {
@@ -73,9 +59,9 @@ My3DScatterWidget::~My3DScatterWidget() { delete ui; }
 
 void My3DScatterWidget::setTrajectory(const vect<TrajectoryD>& trajectory)
 {
-  double data_min = 1e10;
-  double data_max = -1e10;
-  int m_itemCount = 900;
+  float data_min_f = 1e10;
+  float data_max_f = -1e10;
+  int m_itemCount  = 900;
 
   QScatterDataArray* dataArray = new QScatterDataArray;
   dataArray->resize(m_itemCount);
@@ -86,12 +72,14 @@ void My3DScatterWidget::setTrajectory(const vect<TrajectoryD>& trajectory)
     ptrToDataArray->setPosition(data_point);
     ptrToDataArray++;
 
-    double point_min = qMin(data_point.x(), qMin(data_point.y(), data_point.z()));
-    data_min         = qMin(data_min, point_min);
-    double point_max = qMax(data_point.x(), qMax(data_point.y(), data_point.z()));
-    data_max         = qMax(data_max, point_max);
+    float point_min = qMin(data_point.x(), qMin(data_point.y(), data_point.z()));
+    data_min_f      = qMin(data_min_f, point_min);
+    float point_max = qMax(data_point.x(), qMax(data_point.y(), data_point.z()));
+    data_max_f      = qMax(data_max_f, point_max);
   }
 
+  int data_min = qFloor(static_cast<double>(data_min_f));
+  int data_max = qCeil(static_cast<double>(data_max_f));
   ui->horizontalSlider_xmin->setRange(data_min, data_max);
   ui->horizontalSlider_ymin->setRange(data_min, data_max);
   ui->horizontalSlider_zmin->setRange(data_min, data_max);
@@ -107,9 +95,9 @@ void My3DScatterWidget::setTrajectory(const vect<TrajectoryD>& trajectory)
   ui->horizontalSlider_zmax->setValue(data_min);
 
   graph_->seriesList().at(0)->dataProxy()->resetArray(dataArray);
-  graph_->axisX()->setRange(data_min, data_max);
-  graph_->axisY()->setRange(data_min, data_max);
-  graph_->axisZ()->setRange(data_min, data_max);
+  graph_->axisX()->setRange(data_min_f, data_max_f);
+  graph_->axisY()->setRange(data_min_f, data_max_f);
+  graph_->axisZ()->setRange(data_min_f, data_max_f);
   graph_->setAspectRatio(1.0);
   graph_->setHorizontalAspectRatio(1.0);
   graph_->scene()->activeCamera()->setZoomLevel(140);
@@ -159,22 +147,16 @@ CustomInputHandler::CustomInputHandler(QObject* parent, const QSize& parent_widg
   setWidgetSize(parent_widget_size);
 }
 
-void CustomInputHandler::setWidgetSize(const QSize& size)
-{
-  widget_size_ = size;
-  qDebug() << widget_size_;
-}
+void CustomInputHandler::setWidgetSize(const QSize& size) { widget_size_ = size; }
 
 void CustomInputHandler::setWidgetWidth(const int& width)
 {
   widget_size_.setWidth(width);
-  qDebug() << widget_size_;
 }
 
 void CustomInputHandler::setWidgetHeight(const int& height)
 {
   widget_size_.setHeight(height);
-  qDebug() << widget_size_;
 }
 
 void CustomInputHandler::mousePressEvent(QMouseEvent* event, const QPoint& mousePos)

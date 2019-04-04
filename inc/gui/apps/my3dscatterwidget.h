@@ -1,13 +1,23 @@
-#ifndef MY3DSCATTERWIDGET_H
-#define MY3DSCATTERWIDGET_H
+#ifndef CABLE_ROBOT_JOINTS_PVTMY3DSCATTERWIDGET_H
+#define CABLE_ROBOT_JOINTS_PVTMY3DSCATTERWIDGET_H
 
+#include <QScreen>
 #include <QWidget>
+#include <QtCore/qmath.h>
+#include <QtCore/qrandom.h>
 #include <QtDataVisualization/Q3DInputHandler>
+#include <QtDataVisualization/q3dcamera.h>
 #include <QtDataVisualization/q3dscatter.h>
+#include <QtDataVisualization/q3dscene.h>
+#include <QtDataVisualization/q3dtheme.h>
 #include <QtDataVisualization/qabstract3dseries.h>
+#include <QtDataVisualization/qscatter3dseries.h>
+#include <QtDataVisualization/qscatterdataproxy.h>
+#include <QtDataVisualization/qvalue3daxis.h>
+
+#include "libgeom/inc/rotations.h"
 
 #include "ctrl/controller_joints_pvt.h"
-
 
 using namespace QtDataVisualization;
 
@@ -58,11 +68,11 @@ class My3DScatterWidget: public QWidget
   void on_horizontalSlider_ymax_valueChanged(int value);
   void on_horizontalSlider_zmax_valueChanged(int value);
 
-private:
+ private:
   Ui::My3DScatterWidget* ui;
 
   Q3DScatter* graph_;
   CustomInputHandler* input_handler_;
 };
 
-#endif // MY3DSCATTERWIDGET_H
+#endif // CABLE_ROBOT_JOINTS_PVTMY3DSCATTERWIDGET_H

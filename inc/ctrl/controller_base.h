@@ -26,10 +26,10 @@
  */
 enum ControlMode : uint8_t
 {
+  CABLE_LENGTH,
   MOTOR_POSITION,
   MOTOR_SPEED,
   MOTOR_TORQUE,
-  CABLE_LENGTH,
   NONE
 };
 

@@ -12,6 +12,8 @@ HEADERS = \
     $$PWD/inc/gui/homing/homing_interface_proprioceptive.h \
     $$PWD/inc/gui/homing/init_torque_form.h \
     $$PWD/inc/gui/apps/joints_pvt_dialog.h \
+    $$PWD/inc/gui/apps/my3dscatterwidget.h \
+    $$PWD/inc/gui/apps/chartview.h \
     $$PWD/inc/homing/homing_proprioceptive.h \
     $$PWD/inc/homing/matlab_thread.h \
     $$PWD/inc/ctrl/controller_base.h \
@@ -27,7 +29,6 @@ HEADERS = \
     $$PWD/lib/grab_common/pid/pid.h \
     $$PWD/inc/state_estimation/ext_kalman_filter.h \
     $$PWD/inc/debug/single_drive_sysid.h \
-    inc/gui/apps/my3dscatterwidget.h
 
 SOURCES = \
     $$PWD/src/main.cpp \
@@ -42,6 +43,9 @@ SOURCES = \
     $$PWD/src/gui/homing/homing_interface.cpp \
     $$PWD/src/gui/homing/homing_interface_proprioceptive.cpp \
     $$PWD/src/gui/homing/init_torque_form.cpp \
+    $$PWD/src/gui/apps/joints_pvt_dialog.cpp \
+    $$PWD/src/gui/apps/my3dscatterwidget.cpp \
+    $$PWD/src/gui/apps/chartview.cpp \
     $$PWD/src/homing/homing_proprioceptive.cpp \
     $$PWD/src/homing/matlab_thread.cpp \
     $$PWD/src/ctrl/controller_base.cpp \
@@ -54,8 +58,6 @@ SOURCES = \
     $$PWD/lib/grab_common/pid/pid.cpp \
     $$PWD/src/state_estimation/ext_kalman_filter.cpp \
     $$PWD/src/debug/single_drive_sysid.cpp \
-    $$PWD/src/gui/apps/joints_pvt_dialog.cpp \
-    inc/gui/apps/my3dscatterwidget.cpp
 
 INCLUDEPATH += \
     $$PWD/inc \
@@ -63,7 +65,7 @@ INCLUDEPATH += \
     $$PWD/lib/easyloggingpp/src
 
 
-QT += core gui widgets datavisualization
+QT += core gui widgets datavisualization charts
 
 CONFIG += c++11 console static
 CONFIG -= app_bundle
@@ -71,12 +73,6 @@ CONFIG -= app_bundle
 TEMPLATE = app
 
 TARGET = CableRobotApp
-
-# The following define makes your compiler emit warnings if you use
-# any feature of Qt which as been marked deprecated (the exact warnings
-# depend on your compiler). Please consult the documentation of the
-# deprecated API in order to know how to port your code away from it.
-DEFINES += QT_DEPRECATED_WARNINGS
 
 DEFINES += ELPP_QT_LOGGING    \
           ELPP_STL_LOGGING   \
@@ -152,7 +148,7 @@ FORMS += \
     $$PWD/widgets/homing/homing_interface_proprioceptive.ui\
     $$PWD/widgets/homing/init_torque_form.ui \
     $$PWD/widgets/apps/joints_pvt_dialog.ui \
-    inc/gui/apps/my3dscatterwidget.ui
+    $$PWD/widgets/apps/my3dscatterwidget.ui
 
 RESOURCES += \
     resources/resources.qrc

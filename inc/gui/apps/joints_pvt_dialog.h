@@ -3,13 +3,17 @@
 
 #include <QDialog>
 #include <QFileDialog>
+#include <QLineSeries>
 #include <QMessageBox>
+#include <QtMath>
+#include <QGridLayout>
 
 #include "easylogging++.h"
 
 #include "ctrl/controller_joints_pvt.h"
-#include "robot/cablerobot.h"
+#include "gui/apps/chartview.h"
 #include "gui/apps/my3dscatterwidget.h"
+#include "robot/cablerobot.h"
 
 namespace Ui {
 class JointsPVTDialog;
@@ -23,7 +27,7 @@ class JointsPVTDialog: public QDialog
   explicit JointsPVTDialog(QWidget* parent, CableRobot* robot);
   ~JointsPVTDialog();
 
-signals:
+ signals:
 
  private slots:
   void setTrajectoryCompleted();
@@ -43,6 +47,7 @@ signals:
  private:
   Ui::JointsPVTDialog* ui;
   My3DScatterWidget traj_display_;
+  QGridLayout* grid_layout_ = NULL;
 
   CableRobot* robot_ptr_;
   ControllerJointsPVT controller_;
@@ -55,6 +60,8 @@ signals:
   vect<TrajectoryS> traj_motors_torque_;
 
   bool readTrajectories(const QString& ifilepath);
+
+  void updatePlots();
 };
 
 #endif // CABLE_ROBOT_JOINTS_PVT_DIALOG_H
