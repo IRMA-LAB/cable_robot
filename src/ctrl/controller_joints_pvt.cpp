@@ -47,15 +47,25 @@ bool ControllerJointsPVT::SetMotorsTorqueTrajectories(
   return true;
 }
 
+void ControllerJointsPVT::PauseTrajectoryFollowing(const bool value)
+{
+  static timespec start_pause_time_;
+  if (value)
+    start_pause_time_ = clock_.GetCurrentTime();
+  else
+    pause_time_ += clock_.Elapsed(start_pause_time_);
+  pause_ = value;
+}
+
 vect<ControlAction> ControllerJointsPVT::CalcCtrlActions(const grabcdpr::Vars&,
                                                          const vect<ActuatorStatus>&)
 {
-  traj_time_ = clock_.Elapsed();
+  traj_time_ = clock_.Elapsed() - pause_time_;
   vect<ControlAction> actions(modes_.size());
   for (size_t i = 0; i < actions.size(); i++)
   {
     actions[i].motor_id  = motors_id_[i];
-    actions[i].ctrl_mode = traj_completed_ ? NONE : modes_[i];
+    actions[i].ctrl_mode = (stop_ || pause_) ? NONE : modes_[i];
     switch (actions[i].ctrl_mode)
     {
       case CABLE_LENGTH:
@@ -109,11 +119,11 @@ T ControllerJointsPVT::GetTrajectoryPointValue(const id_t id,
   {
     if (traj.id != id)
       continue;
-    waypoint        = traj.waypointFromRelTime(traj_time_);
-    traj_completed_ = waypoint.ts >= traj.timestamps.back();
+    waypoint = traj.waypointFromRelTime(traj_time_);
+    stop_    = waypoint.ts >= traj.timestamps.back();
     break;
   }
-  if (traj_completed_)
+  if (stop_)
     emit trajectoryCompleted();
 
   return waypoint.value;
@@ -122,9 +132,10 @@ T ControllerJointsPVT::GetTrajectoryPointValue(const id_t id,
 void ControllerJointsPVT::Reset()
 {
   target_flags_.ClearAll();
-  traj_completed_ = false;
+  stop_           = false;
   new_trajectory_ = true;
-  pause_ = false;
+  pause_          = false;
+  pause_time_     = 0.0;
 }
 
 template <typename T>

@@ -10,23 +10,25 @@ JointsPVTDialog::JointsPVTDialog(QWidget* parent, CableRobot* robot)
   setAttribute(Qt::WA_DeleteOnClose);
 
   connect(&controller_, SIGNAL(trajectoryCompleted()), this,
-          SLOT(setTrajectoryCompleted()), Qt::ConnectionType::QueuedConnection);
+          SLOT(handleTrajectoryCompleted()), Qt::ConnectionType::QueuedConnection);
   robot->SetController(&controller_);
 }
 
 JointsPVTDialog::~JointsPVTDialog()
 {
   disconnect(&controller_, SIGNAL(trajectoryCompleted()), this,
-             SLOT(setTrajectoryCompleted()));
+             SLOT(handleTrajectoryCompleted()));
   robot_ptr_->SetController(NULL);
   delete ui;
 }
 
 //--------- Private slots -----------------------------------------------------------//
 
-void JointsPVTDialog::setTrajectoryCompleted()
+void JointsPVTDialog::handleTrajectoryCompleted()
 {
+  ui->checkBox->setEnabled(true);
   ui->pushButton_start->setEnabled(true);
+  ui->pushButton_pause->setText("Pause");
   ui->pushButton_pause->setDisabled(true);
   ui->pushButton_stop->setDisabled(true);
   ui->groupBox->setEnabled(true);
@@ -66,8 +68,8 @@ void JointsPVTDialog::on_pushButton_read_clicked()
     return;
   }
   CLOG(INFO, "event") << "Read trajectories from '" << input_filename << "'";
-  ui->pushButton_start->setEnabled(true);
   updatePlots();
+  ui->pushButton_start->setEnabled(true);
 }
 
 void JointsPVTDialog::on_checkBox_toggled(bool checked)
@@ -130,12 +132,7 @@ void JointsPVTDialog::on_pushButton_stop_clicked()
   controller_.StopTrajectoryFollowing();
   pthread_mutex_unlock(&robot_ptr_->Mutex());
 
-  ui->checkBox->setEnabled(true);
-  ui->pushButton_start->setEnabled(true);
-  ui->pushButton_pause->setText("Pause");
-  ui->pushButton_pause->setDisabled(true);
-  ui->pushButton_stop->setDisabled(true);
-  ui->groupBox->setEnabled(true);
+  handleTrajectoryCompleted(); // update gui
 }
 
 void JointsPVTDialog::on_pushButton_return_clicked()
@@ -163,40 +160,64 @@ bool JointsPVTDialog::readTrajectories(const QString& ifilepath)
   QTextStream s(&ifile);
   QStringList header = s.readLine().split(" ");
   traj_type_         = static_cast<ControlMode>(header[0].toUShort());
+  bool relative      = static_cast<bool>(header[1].toUShort());
   vect<id_t> motors_id;
-  for (int i = 1; i < header.size(); i++)
+  for (int i = 2; i < header.size(); i++)
     motors_id.push_back(header[i].toUInt());
 
   // Fill trajectories accordingly reading text body line-by-line
   switch (traj_type_)
   {
     case CABLE_LENGTH:
+    {
       traj_cables_len_.resize(motors_id.size());
+      vectD current_cables_len(traj_cables_len_.size());
       for (size_t i = 0; i < motors_id.size(); i++)
+      {
         traj_cables_len_[i].id = motors_id[i];
+        current_cables_len[i]  = robot_ptr_->GetActuatorStatus(motors_id[i]).cable_length;
+      }
       while (!s.atEnd())
       {
         QStringList line = s.readLine().split(" ");
         for (auto& traj : traj_cables_len_)
           traj.timestamps.push_back(line[0].toDouble());
         for (int i = 1; i < line.size(); i++)
+        {
           traj_cables_len_[static_cast<size_t>(i) - 1].values.push_back(
             line[i].toDouble());
+          if (relative)
+            traj_cables_len_[static_cast<size_t>(i) - 1].values.back() +=
+              current_cables_len[static_cast<size_t>(i) - 1];
+        }
       }
       break;
+    }
     case MOTOR_POSITION:
+    {
       traj_motors_pos_.resize(motors_id.size());
+      vectI current_motors_pos(traj_cables_len_.size());
       for (size_t i = 0; i < motors_id.size(); i++)
+      {
         traj_motors_pos_[i].id = motors_id[i];
+        current_motors_pos[i] =
+          robot_ptr_->GetActuatorStatus(motors_id[i]).motor_position;
+      }
       while (!s.atEnd())
       {
         QStringList line = s.readLine().split(" ");
         for (auto& traj : traj_motors_pos_)
           traj.timestamps.push_back(line[0].toDouble());
         for (int i = 1; i < line.size(); i++)
+        {
           traj_motors_pos_[static_cast<size_t>(i) - 1].values.push_back(line[i].toInt());
+          if (relative)
+            traj_cables_len_[static_cast<size_t>(i) - 1].values.back() +=
+              current_motors_pos[static_cast<size_t>(i) - 1];
+        }
       }
       break;
+    }
     case MOTOR_SPEED:
       traj_motors_vel_.resize(motors_id.size());
       for (size_t i = 0; i < motors_id.size(); i++)
@@ -211,19 +232,31 @@ bool JointsPVTDialog::readTrajectories(const QString& ifilepath)
       }
       break;
     case MOTOR_TORQUE:
+    {
       traj_motors_torque_.resize(motors_id.size());
+      vectS current_motors_torque(traj_cables_len_.size());
       for (size_t i = 0; i < motors_id.size(); i++)
+      {
         traj_motors_torque_[i].id = motors_id[i];
+        current_motors_torque[i] =
+          robot_ptr_->GetActuatorStatus(motors_id[i]).motor_torque;
+      }
       while (!s.atEnd())
       {
         QStringList line = s.readLine().split(" ");
         for (auto& traj : traj_motors_torque_)
           traj.timestamps.push_back(line[0].toDouble());
         for (int i = 1; i < line.size(); i++)
+        {
           traj_motors_torque_[static_cast<size_t>(i) - 1].values.push_back(
             line[i].toShort());
+          if (relative)
+            traj_cables_len_[static_cast<size_t>(i) - 1].values.back() +=
+              current_motors_torque[static_cast<size_t>(i) - 1];
+        }
       }
       break;
+    }
     case NONE:
       return false;
   }

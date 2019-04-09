@@ -30,7 +30,7 @@ class JointsPVTDialog: public QDialog
  signals:
 
  private slots:
-  void setTrajectoryCompleted();
+  void handleTrajectoryCompleted();
 
  private slots:
   void on_pushButton_fileSelection_clicked();

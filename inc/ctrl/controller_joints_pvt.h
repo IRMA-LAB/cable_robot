@@ -16,15 +16,15 @@ class ControllerJointsPVT: public QObject, public ControllerBase
   bool SetMotorsVelTrajectories(const vect<TrajectoryI>& trajectories);
   bool SetMotorsTorqueTrajectories(const vect<TrajectoryS>& trajectories);
 
-  void PauseTrajectoryFollowing(const bool value) { pause_ = value; }
-  void StopTrajectoryFollowing() { traj_completed_ = true; }
+  void PauseTrajectoryFollowing(const bool value);
+  void StopTrajectoryFollowing() { stop_ = true; }
 
   bool IsPaused() const { return pause_; }
   /**
    * @brief Check if active target is reached, independently from the control mode.
    * @return _True_ if target is reached, _false_ otherwise.
    */
-  bool TargetReached() const override final { return traj_completed_; }
+  bool TargetReached() const override final { return stop_; }
 
   /**
    * @brief Calculate control actions depending on current robot status.
@@ -66,9 +66,12 @@ class ControllerJointsPVT: public QObject, public ControllerBase
 
   grabrt::Clock clock_;
   double traj_time_;
-  bool traj_completed_;
+  bool stop_;
   bool new_trajectory_;
+
   bool pause_;
+  double pause_time_;
+
 
   vect<TrajectoryD> traj_cables_len_;
   vect<TrajectoryI> traj_motors_pos_;
