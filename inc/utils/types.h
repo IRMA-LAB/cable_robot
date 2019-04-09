@@ -1,7 +1,7 @@
 /**
  * @file utils/types.h
  * @author Simone Comari
- * @date 22 Mar 2019
+ * @date 09 Apr 2019
  * @brief File containing the implementation of a custom wrapper to log cable robot data
  * employing easylogging++ package.
  */
@@ -22,8 +22,8 @@
  */
 typedef std::basic_stringbuf<char16_t> StringBuf;
 
-template <typename T> using vect = std::vector<T>;  /**< Alias for vector type. */
-using vectD = vect<double>;
+template <typename T> using vect = std::vector<T>; /**< Alias for vector type. */
+using vectD                      = vect<double>;
 
 /**
  * @brief A structure including motor status information.
@@ -159,5 +159,128 @@ struct ActuatorStatus: WinchStatus
   uint8_t state;       /**< see Actuator::States */
   double pulley_angle; /**< [rad] */
 };
+
+
+template <typename T>
+/**
+ * @brief The WayPoint struct
+ */
+struct WayPoint
+{
+  double ts = -1.0; /**< .. */
+  T value;          /**< .. */
+
+  /**
+   * @brief WayPoint
+   */
+  WayPoint() {}
+  /**
+   * @brief WayPoint
+   * @param time
+   * @param _value
+   */
+  WayPoint(const double time, const T& _value) : ts(time), value(_value) {}
+};
+
+using WayPointD = WayPoint<double>; /**< .. */
+using WayPointI = WayPoint<int>;    /**< .. */
+using WayPointS = WayPoint<short>;  /**< .. */
+
+template <typename T>
+/**
+ * @brief The Trajectory struct
+ */
+struct Trajectory
+{
+  id_t id = 0;      /**< .. */
+  vectD timestamps; /**< .. */
+  vect<T> values;   /**< .. */
+
+  /**
+   * @brief Trajectory
+   */
+  Trajectory() {}
+  /**
+   * @brief Trajectory
+   * @param _id
+   */
+  Trajectory(const id_t _id) : id(_id) {}
+  /**
+   * @brief Trajectory
+   * @param _id
+   * @param _values
+   */
+  Trajectory(const id_t _id, const vect<T>& _values) : id(_id), values(_values)
+  {
+    timestamps = vectD(values.size(), -1.0);
+  }
+  /**
+   * @brief Trajectory
+   * @param _id
+   * @param _values
+   * @param times
+   */
+  Trajectory(const id_t _id, const vect<T>& _values, const vectD& times)
+    : id(_id), values(_values), timestamps(times)
+  {
+    assert(times.size() == _values.size());
+  }
+
+  /**
+   * @brief waypointFromIndex
+   * @param index
+   * @return
+   */
+  WayPoint<T> waypointFromIndex(const size_t index) const
+  {
+    assert(index < timestamps.size() && index < values.size());
+    return WayPoint<T>(timestamps[index], values[index]);
+  }
+
+  /**
+   * @brief waypointFromAbsTime
+   * @param time
+   * @return
+   */
+  WayPoint<T> waypointFromAbsTime(const double time) const
+  {
+    assert(timestamps.front() >= 0.0);
+
+    if (time <= timestamps.front())
+      return WayPoint<T>(timestamps.front(), values.front());
+    if (time >= timestamps.back())
+      return WayPoint<T>(timestamps.back(), values.back());
+    // Find nearest neighbor
+    vectD::const_iterator low =
+      std::lower_bound(timestamps.begin(), timestamps.end(), time);
+    if (low == timestamps.end())
+      low -= 1; // no bigger value than val in vector
+    const ulong lower_idx = low - timestamps.begin();
+    const ulong upper_idx = lower_idx + 1;
+    // Interpolate
+    const double slope = (values[upper_idx] - values[lower_idx]) /
+                         (timestamps[upper_idx] - timestamps[lower_idx]);
+    const double offset = values[upper_idx] - slope * timestamps[upper_idx];
+    const double value  = slope * time + offset;
+
+    return WayPoint<T>(time, static_cast<T>(value));
+  }
+
+  /**
+   * @brief waypointFromRelTime
+   * @param time
+   * @return
+   */
+  WayPoint<T> waypointFromRelTime(const double time) const
+  {
+    assert(timestamps.front() >= 0.0);
+
+    return waypointFromAbsTime(time + timestamps.front());
+  }
+};
+
+using TrajectoryD = Trajectory<double>; /**< .. */
+using TrajectoryI = Trajectory<int>;    /**< .. */
+using TrajectoryS = Trajectory<short>;  /**< .. */
 
 #endif // CABLE_ROBOT_TYPES_H
