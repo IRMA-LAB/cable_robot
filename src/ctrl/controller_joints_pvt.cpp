@@ -111,22 +111,31 @@ template <typename T>
 T ControllerJointsPVT::GetTrajectoryPointValue(const id_t id,
                                                const vect<Trajectory<T>>& trajectories)
 {
+  static constexpr uint kProgressTriggerCounts = 10;
+  static ulong progress_counter                = 0;
+
   if (new_trajectory_)
   {
     new_trajectory_ = false;
     clock_.Reset();
-    traj_time_ = 0.0;
+    traj_time_       = 0.0;
+    progress_counter = 0;
   }
 
   WayPoint<T> waypoint;
+  double progress = -1;
   for (const Trajectory<T>& traj : trajectories)
   {
     if (traj.id != id)
       continue;
     waypoint = traj.waypointFromRelTime(traj_time_);
-    stop_    = waypoint.ts >= traj.timestamps.back();
+    progress = waypoint.ts / traj.timestamps.back();
+    stop_    = progress >= 1.0;
     break;
   }
+
+  if (progress > 0 && (progress_counter++ % kProgressTriggerCounts == 0))
+    emit trajectoryProgressStatus(qRound(progress));
   if (stop_)
     emit trajectoryCompleted();
 

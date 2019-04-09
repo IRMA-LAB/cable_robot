@@ -32,6 +32,7 @@ class JointsPVTDialog: public QDialog
 
  private slots:
   void handleTrajectoryCompleted();
+  void progressUpdate(const int progress_value);
 
  private slots:
   void on_pushButton_fileSelection_clicked();

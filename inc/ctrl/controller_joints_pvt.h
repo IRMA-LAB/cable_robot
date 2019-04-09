@@ -55,6 +55,7 @@ class ControllerJointsPVT: public QObject, public ControllerBase
 
  signals:
   void trajectoryCompleted() const;
+  void trajectoryProgressStatus(const int) const;
 
  private:
   enum BitPosition

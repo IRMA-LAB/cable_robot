@@ -10,6 +10,8 @@ JointsPVTDialog::JointsPVTDialog(QWidget* parent, CableRobot* robot,
   ui->horizontalLayout_display->addWidget(&traj_display_, 1);
   setAttribute(Qt::WA_DeleteOnClose);
 
+  connect(&controller_, SIGNAL(trajectoryProgressStatus(int)), this,
+          SLOT(progressUpdate(int)), Qt::ConnectionType::QueuedConnection);
   connect(&controller_, SIGNAL(trajectoryCompleted()), this,
           SLOT(handleTrajectoryCompleted()), Qt::ConnectionType::QueuedConnection);
   robot->SetController(&controller_);
@@ -17,6 +19,8 @@ JointsPVTDialog::JointsPVTDialog(QWidget* parent, CableRobot* robot,
 
 JointsPVTDialog::~JointsPVTDialog()
 {
+  disconnect(&controller_, SIGNAL(trajectoryProgressStatus(int)), this,
+             SLOT(progressUpdate(int)));
   disconnect(&controller_, SIGNAL(trajectoryCompleted()), this,
              SLOT(handleTrajectoryCompleted()));
   robot_ptr_->SetController(NULL);
@@ -33,6 +37,11 @@ void JointsPVTDialog::handleTrajectoryCompleted()
   ui->pushButton_pause->setDisabled(true);
   ui->pushButton_stop->setDisabled(true);
   ui->groupBox->setEnabled(true);
+}
+
+void JointsPVTDialog::progressUpdate(const int progress_value)
+{
+  ui->progressBar->setValue(progress_value);
 }
 
 //--------- Private GUI slots -------------------------------------------------------//
