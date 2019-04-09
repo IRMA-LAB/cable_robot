@@ -37,7 +37,7 @@ My3DScatterWidget::My3DScatterWidget(QWidget* parent)
   graph_->axisY()->setTitleVisible(true);
   graph_->axisZ()->setTitle("Y [m]");
   graph_->axisZ()->setTitleVisible(true);
-  input_handler_ = new CustomInputHandler(this);
+  input_handler_ = new CustomInputHandler(graph_);
   graph_->setActiveInputHandler(input_handler_);
 
   QWidget* container = QWidget::createWindowContainer(graph_);
@@ -180,19 +180,29 @@ void CustomInputHandler::mouseReleaseEvent(QMouseEvent* event, const QPoint& mou
 void CustomInputHandler::mouseMoveEvent(QMouseEvent* event, const QPoint& mousePos)
 {
   Q3DInputHandler::mouseMoveEvent(event, mousePos);
-  if (pressed_)
-  {
-    float du = -(2 * (mousePos.x() - start_pos_.x()) / widget_size_.width());
-    float dv = 2 * (mousePos.y() - start_pos_.y()) / widget_size_.height();
-    grabnum::Vector3d view_vec;
-    view_vec.Fill({du, dv, 0});
-    grabnum::Matrix3d R =
-      grabgeom::EulerXYZ2Rot(0, qDegreesToRadians(scene()->activeCamera()->yRotation()),
-                             qDegreesToRadians(scene()->activeCamera()->xRotation()));
-    grabnum::Vector3d camera_view = R.Transpose() * view_vec;
-    scene()->activeCamera()->setTarget(
-      QVector3D(camera_view(1), camera_view(2), camera_view(3)) + prev_target_);
-    //    qDebug() << du << scene()->activeCamera()->xRotation()
-    //             << scene()->activeCamera()->yRotation();
-  }
+  if (!pressed_)
+    return;
+
+  // Scale mouse motion in 2D normalized vector.
+  float du =
+    2 * (mousePos.x() - start_pos_.x()) / static_cast<float>(widget_size_.width());
+  float dv =
+    2 * (mousePos.y() - start_pos_.y()) / static_cast<float>(widget_size_.height());
+  // Target motion is opposite to mouse one.
+  // Note: image y-axis points points downwards.
+  grabnum::Vector3f view_vec({-du, dv, 0});
+
+  // Build rotation matrix from fixed camera frame (XY plane parallel to image plane) to
+  // moving plot frame using RPY.
+  // Note: x and y rotation are swapped here (xRotation = pitch, yRotation = roll).
+  grabnum::Matrix3f R =
+    grabgeom::RPY2Rot(qDegreesToRadians(scene()->activeCamera()->yRotation()),
+                      qDegreesToRadians(scene()->activeCamera()->xRotation()), 0.0);
+
+  // Transform target motion into plot frame.
+  grabnum::Vector3f camera_target = R.Transpose() * view_vec;
+
+  // Actual plot frame is not standard: Z frame is opposite to cartesian rule.
+  scene()->activeCamera()->setTarget(
+    QVector3D(camera_target(1), camera_target(2), -camera_target(3)) + prev_target_);
 }

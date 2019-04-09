@@ -70,10 +70,15 @@ void JointsPVTDialog::on_pushButton_read_clicked()
   updatePlots();
 }
 
-void JointsPVTDialog::on_checkBox_toggled(bool checked) {}
+void JointsPVTDialog::on_checkBox_toggled(bool checked)
+{
+  CLOG(TRACE, "event") << checked;
+  ui->progressBar->setDisabled(checked);
+}
 
 void JointsPVTDialog::on_pushButton_start_clicked()
 {
+  CLOG(TRACE, "event");
   switch (traj_type_)
   {
     case CABLE_LENGTH:
@@ -100,6 +105,7 @@ void JointsPVTDialog::on_pushButton_start_clicked()
       return;
   }
 
+  ui->checkBox->setDisabled(true);
   ui->pushButton_start->setDisabled(true);
   ui->pushButton_pause->setEnabled(true);
   ui->pushButton_stop->setEnabled(true);
@@ -108,8 +114,10 @@ void JointsPVTDialog::on_pushButton_start_clicked()
 
 void JointsPVTDialog::on_pushButton_pause_clicked()
 {
+  CLOG(TRACE, "event") << !controller_.IsPaused();
   pthread_mutex_lock(&robot_ptr_->Mutex());
-  controller_.PauseTrajectoryFollowing(!controller_.IsPaused());
+  bool is_paused = controller_.IsPaused();
+  controller_.PauseTrajectoryFollowing(!is_paused);
   pthread_mutex_unlock(&robot_ptr_->Mutex());
 
   ui->pushButton_pause->setText(controller_.IsPaused() ? "Resume" : "Pause");
@@ -117,11 +125,14 @@ void JointsPVTDialog::on_pushButton_pause_clicked()
 
 void JointsPVTDialog::on_pushButton_stop_clicked()
 {
+  CLOG(TRACE, "event");
   pthread_mutex_lock(&robot_ptr_->Mutex());
   controller_.StopTrajectoryFollowing();
   pthread_mutex_unlock(&robot_ptr_->Mutex());
 
+  ui->checkBox->setEnabled(true);
   ui->pushButton_start->setEnabled(true);
+  ui->pushButton_pause->setText("Pause");
   ui->pushButton_pause->setDisabled(true);
   ui->pushButton_stop->setDisabled(true);
   ui->groupBox->setEnabled(true);
@@ -129,6 +140,7 @@ void JointsPVTDialog::on_pushButton_stop_clicked()
 
 void JointsPVTDialog::on_pushButton_return_clicked()
 {
+  CLOG(TRACE, "event");
   if (!controller_.TargetReached())
     on_pushButton_stop_clicked();
   close();

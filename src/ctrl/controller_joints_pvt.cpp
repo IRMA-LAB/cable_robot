@@ -124,6 +124,7 @@ void ControllerJointsPVT::Reset()
   target_flags_.ClearAll();
   traj_completed_ = false;
   new_trajectory_ = true;
+  pause_ = false;
 }
 
 template <typename T>
