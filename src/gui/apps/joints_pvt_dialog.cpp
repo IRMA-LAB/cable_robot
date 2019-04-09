@@ -1,9 +1,10 @@
 #include "gui/apps/joints_pvt_dialog.h"
 #include "ui_joints_pvt_dialog.h"
 
-JointsPVTDialog::JointsPVTDialog(QWidget* parent, CableRobot* robot)
+JointsPVTDialog::JointsPVTDialog(QWidget* parent, CableRobot* robot,
+                                 const vect<grabcdpr::ActuatorParams>& params)
   : QDialog(parent), ui(new Ui::JointsPVTDialog), traj_display_(this), robot_ptr_(robot),
-    controller_(this)
+    controller_(params, this)
 {
   ui->setupUi(this);
   ui->horizontalLayout_display->addWidget(&traj_display_, 1);

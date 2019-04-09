@@ -124,7 +124,7 @@ void MainGUI::on_pushButton_startApp_clicked()
   if (ui->comboBox_apps->currentText() == "Joint PVT 33")
   {
     robot_ptr_->eventSuccess();
-    joints_pvt_dialog_ = new JointsPVTDialog(this, robot_ptr_);
+    joints_pvt_dialog_ = new JointsPVTDialog(this, robot_ptr_, config_params_.actuators);
     connect(joints_pvt_dialog_, SIGNAL(destroyed()), robot_ptr_, SLOT(eventSuccess()));
     connect(joints_pvt_dialog_, SIGNAL(destroyed()), this, SLOT(enableInterface()));
     joints_pvt_dialog_->show();

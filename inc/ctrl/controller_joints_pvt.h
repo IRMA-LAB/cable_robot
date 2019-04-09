@@ -2,13 +2,15 @@
 #define CABLE_ROBOT_CONTROLLER_JOINTS_PVT_H
 
 #include "ctrl/controller_base.h"
+#include "ctrl/winch_torque_controller.h"
 
 class ControllerJointsPVT: public QObject, public ControllerBase
 {
   Q_OBJECT
 
  public:
-  explicit ControllerJointsPVT(QObject* parent = NULL);
+  explicit ControllerJointsPVT(const vect<grabcdpr::ActuatorParams>& params,
+                               QObject* parent = NULL);
   ~ControllerJointsPVT() {}
 
   bool SetCablesLenTrajectories(const vect<TrajectoryD>& trajectories);
@@ -47,8 +49,9 @@ class ControllerJointsPVT: public QObject, public ControllerBase
    * and cables configuration.
    * @return Control actions for each targeted motor.
    */
-  vect<ControlAction> CalcCtrlActions(const grabcdpr::Vars& robot_status,
-                                      const vect<ActuatorStatus>&) override final;
+  vect<ControlAction>
+  CalcCtrlActions(const grabcdpr::Vars& robot_status,
+                  const vect<ActuatorStatus>& actuators_status) override final;
 
  signals:
   void trajectoryCompleted() const;
@@ -72,6 +75,7 @@ class ControllerJointsPVT: public QObject, public ControllerBase
   bool pause_;
   double pause_time_;
 
+  WinchesTorqueControl winches_controller_;
 
   vect<TrajectoryD> traj_cables_len_;
   vect<TrajectoryI> traj_motors_pos_;

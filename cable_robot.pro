@@ -19,6 +19,7 @@ HEADERS = \
     $$PWD/inc/ctrl/controller_base.h \
     $$PWD/inc/ctrl/controller_singledrive.h \
     $$PWD/inc/ctrl/controller_joints_pvt.h \
+    $$PWD/inc/ctrl/winch_torque_controller.h \
     $$PWD/inc/utils/types.h \
     $$PWD/inc/utils/macros.h \
     $$PWD/inc/utils/msgs.h \
@@ -51,6 +52,7 @@ SOURCES = \
     $$PWD/src/ctrl/controller_base.cpp \
     $$PWD/src/ctrl/controller_singledrive.cpp \
     $$PWD/src/ctrl/controller_joints_pvt.cpp \
+    $$PWD/src/ctrl/winch_torque_controller.cpp \
     $$PWD/src/utils/msgs.cpp \
     $$PWD/src/utils/easylog_wrapper.cpp \
     $$PWD/lib/easyloggingpp/src/easylogging++.cc \

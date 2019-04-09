@@ -3,10 +3,10 @@
 
 #include <QDialog>
 #include <QFileDialog>
+#include <QGridLayout>
 #include <QLineSeries>
 #include <QMessageBox>
 #include <QtMath>
-#include <QGridLayout>
 
 #include "easylogging++.h"
 
@@ -24,7 +24,8 @@ class JointsPVTDialog: public QDialog
   Q_OBJECT
 
  public:
-  explicit JointsPVTDialog(QWidget* parent, CableRobot* robot);
+  explicit JointsPVTDialog(QWidget* parent, CableRobot* robot,
+                           const vect<grabcdpr::ActuatorParams>& params);
   ~JointsPVTDialog();
 
  signals:

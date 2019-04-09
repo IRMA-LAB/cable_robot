@@ -1,7 +1,8 @@
 #include "ctrl/controller_joints_pvt.h"
 
-ControllerJointsPVT::ControllerJointsPVT(QObject* parent)
-  : QObject(parent), ControllerBase()
+ControllerJointsPVT::ControllerJointsPVT(const vect<grabcdpr::ActuatorParams>& params,
+                                         QObject* parent)
+  : QObject(parent), ControllerBase(), winches_controller_(params)
 {
   Reset();
 }
@@ -57,8 +58,9 @@ void ControllerJointsPVT::PauseTrajectoryFollowing(const bool value)
   pause_ = value;
 }
 
-vect<ControlAction> ControllerJointsPVT::CalcCtrlActions(const grabcdpr::Vars&,
-                                                         const vect<ActuatorStatus>&)
+vect<ControlAction>
+ControllerJointsPVT::CalcCtrlActions(const grabcdpr::Vars&,
+                                     const vect<ActuatorStatus>& actuators_status)
 {
   traj_time_ = clock_.Elapsed() - pause_time_;
   vect<ControlAction> actions(modes_.size());
@@ -92,7 +94,9 @@ vect<ControlAction> ControllerJointsPVT::CalcCtrlActions(const grabcdpr::Vars&,
       case MOTOR_TORQUE:
         if (target_flags_.CheckBit(TORQUE))
           actions[i].motor_torque =
-            GetTrajectoryPointValue(actions[i].motor_id, traj_motors_torque_);
+            winches_controller_[actions[i].motor_id].calcServoTorqueSetpoint(
+              actuators_status[i],
+              GetTrajectoryPointValue(actions[i].motor_id, traj_motors_torque_));
         else
           actions[i].ctrl_mode = NONE;
         break;

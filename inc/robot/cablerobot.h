@@ -106,6 +106,7 @@ class CableRobot: public QObject,
    * @return The status of the inquired actuator.
    */
   const ActuatorStatus GetActuatorStatus(const id_t motor_id);
+
   /**
    * @brief Update home configuration of all actuators at once.
    *
