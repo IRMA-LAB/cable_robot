@@ -24,9 +24,21 @@ private:
   qreal tot_scroll_x_zoomed_ = 0;
   qreal tot_scroll_y_zoomed_ = 0;
 
-  void keyPressEvent(QKeyEvent* event);
+  bool scrolling_ = false;
+  QPointF prev_pos_;
+
+  void resizeEvent(QResizeEvent *event) override;
+
+  void keyPressEvent(QKeyEvent* event) override;
+
+  void mouseDoubleClickEvent(QMouseEvent *event) override;
+  void mousePressEvent(QMouseEvent *event) override;
+  void mouseMoveEvent(QMouseEvent *event) override;
+  void mouseReleaseEvent(QMouseEvent *event) override;
+  void wheelEvent(QWheelEvent *event) override;
 
   void setTitles(const id_t& id, const QString& traj_type, const QString& unit);
+  void resetView();
 };
 
 #endif // CABLE_ROBOT_JOINTS_PVT_

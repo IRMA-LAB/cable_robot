@@ -68,6 +68,20 @@ void ChartView::setMotorTorqueTrajectory(const TrajectoryS& traj)
   setTitles(traj.id, "motor torque", "nominal points");
 }
 
+void ChartView::resizeEvent(QResizeEvent* event)
+{
+  qreal scaling_factor_x =
+    static_cast<qreal>(event->size().width()) / event->oldSize().width();
+  qreal scaling_factor_y =
+    static_cast<qreal>(event->size().height()) / event->oldSize().height();
+  tot_scroll_x_ *= scaling_factor_x;
+  tot_scroll_y_ *= scaling_factor_y;
+  tot_scroll_x_zoomed_ *= scaling_factor_x;
+  tot_scroll_y_zoomed_ *= scaling_factor_y;
+
+  QChartView::resizeEvent(event);
+}
+
 void ChartView::keyPressEvent(QKeyEvent* event)
 {
   switch (event->key())
@@ -79,11 +93,7 @@ void ChartView::keyPressEvent(QKeyEvent* event)
       chart()->zoomOut();
       break;
     case Qt::Key_R:
-      chart()->scroll(-tot_scroll_x_zoomed_, -tot_scroll_y_zoomed_);
-      chart()->zoomReset();
-      chart()->scroll(-tot_scroll_x_, -tot_scroll_y_);
-      tot_scroll_x_ = 0;
-      tot_scroll_y_ = 0;
+      resetView();
       break;
     case Qt::Key_Left:
       chart()->isZoomed() ? tot_scroll_x_zoomed_ : tot_scroll_x_ -= 10;
@@ -107,6 +117,68 @@ void ChartView::keyPressEvent(QKeyEvent* event)
   }
 }
 
+void ChartView::mouseDoubleClickEvent(QMouseEvent* event)
+{
+  if (event->button() == Qt::MouseButton::RightButton)
+  {
+    resetView();
+    return;
+  }
+  QChartView::mouseDoubleClickEvent(event);
+}
+
+void ChartView::mousePressEvent(QMouseEvent* event)
+{
+  if (event->button() == Qt::MouseButton::RightButton)
+  {
+    scrolling_ = true;
+    prev_pos_  = event->localPos();
+    return;
+  }
+  QChartView::mousePressEvent(event);
+}
+
+void ChartView::mouseMoveEvent(QMouseEvent* event)
+{
+  if (scrolling_)
+  {
+    QPointF new_pos = event->localPos();
+    QPointF delta   = new_pos - prev_pos_;
+    chart()->scroll(-delta.x(), delta.y());
+    if (chart()->isZoomed())
+    {
+      tot_scroll_x_zoomed_ -= delta.x();
+      tot_scroll_y_zoomed_ += delta.y();
+    }
+    else
+    {
+      tot_scroll_x_ -= delta.x();
+      tot_scroll_y_ += delta.y();
+    }
+    prev_pos_ = new_pos;
+    return;
+  }
+  QChartView::mouseMoveEvent(event);
+}
+
+void ChartView::mouseReleaseEvent(QMouseEvent* event)
+{
+  if (event->button() == Qt::MouseButton::RightButton)
+  {
+    scrolling_ = false;
+    return;
+  }
+  QChartView::mouseReleaseEvent(event);
+}
+
+void ChartView::wheelEvent(QWheelEvent* event)
+{
+  if (event->delta() > 0)
+    chart()->zoomIn();
+  else if (event->delta() < 0)
+    chart()->zoomOut();
+}
+
 void ChartView::setTitles(const id_t& id, const QString& traj_type, const QString& unit)
 {
   chart()->setTitle(tr("Actuator #%1 %2 trajectory").arg(id).arg(traj_type));
@@ -121,4 +193,13 @@ void ChartView::setTitles(const id_t& id, const QString& traj_type, const QStrin
   chart()->axisY()->setTitleText(tr("set-point [%1]").arg(unit));
   chart()->axisY()->setTitleFont(QFont(chart()->font().family(), 11, QFont::Medium));
   chart()->axisY()->setTitleVisible();
+}
+
+void ChartView::resetView()
+{
+  chart()->scroll(-tot_scroll_x_zoomed_, -tot_scroll_y_zoomed_);
+  chart()->zoomReset();
+  chart()->scroll(-tot_scroll_x_, -tot_scroll_y_);
+  tot_scroll_x_ = 0;
+  tot_scroll_y_ = 0;
 }

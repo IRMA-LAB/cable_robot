@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>594</width>
-    <height>390</height>
+    <height>426</height>
    </rect>
   </property>
   <property name="font">
@@ -180,6 +180,13 @@
              </property>
              <property name="text">
               <string>Stop</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QProgressBar" name="progressBar">
+             <property name="value">
+              <number>0</number>
              </property>
             </widget>
            </item>
