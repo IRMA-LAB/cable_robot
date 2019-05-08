@@ -46,7 +46,8 @@ MainGUI::~MainGUI()
   DeleteRobot();
 #if DEBUG_GUI
   disconnect(pushButton_debug, SIGNAL(clicked()), this, SLOT(pushButton_debug_clicked()));
-  delete pushButton_debug;
+  disconnect(temp_app, SIGNAL(debugCompleted()), this, SLOT(handleDebugCompleted()));
+  delete temp_app;
 #endif
   delete ui;
   CLOG(INFO, "event") << "Main window closed";
@@ -138,13 +139,19 @@ void MainGUI::pushButton_debug_clicked()
   CLOG(TRACE, "event");
   if (!(ec_network_valid_ && rt_thread_running_))
     return;
+  pushButton_debug->setDisabled(true);
 
   // Insert debug operations/app here..
-  static SingleDriveSysID temp_app(this, robot_ptr_, man_ctrl_ptr_);
-
+  if (temp_app == NULL)
+  {
+    temp_app = new SingleDriveSysID(this, robot_ptr_, man_ctrl_ptr_);
+    connect(temp_app, SIGNAL(debugCompleted()), this, SLOT(handleDebugCompleted()));
+  }
   double cable_len = robot_ptr_->GetActuatorStatus(motor_id_).cable_length;
-  temp_app.start(cable_len);
+  temp_app->start(cable_len);
 }
+
+void MainGUI::handleDebugCompleted() { pushButton_debug->setEnabled(true); }
 #endif
 
 //--------- Public GUI slots of direct drive control panel --------------------------//

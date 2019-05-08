@@ -15,6 +15,9 @@ class SingleDriveSysID: public QObject
 
   void start(const double cable_len);
 
+ signals:
+  void debugCompleted() const;
+
  private slots:
   void logData();
   void stopLogging();
