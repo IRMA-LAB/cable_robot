@@ -114,6 +114,7 @@ void MainGUI::on_pushButton_homing_clicked()
 void MainGUI::on_pushButton_startApp_clicked()
 {
   CLOG(TRACE, "event");
+  // debug
   //  if (!(ec_network_valid_ && rt_thread_running_))
   //    return;
 
@@ -144,11 +145,9 @@ void MainGUI::pushButton_debug_clicked()
   // Insert debug operations/app here..
   if (temp_app == NULL)
   {
-    temp_app = new SingleDriveSysID(this, robot_ptr_, man_ctrl_ptr_);
+    temp_app = new MyDebugClass(...);
     connect(temp_app, SIGNAL(debugCompleted()), this, SLOT(handleDebugCompleted()));
   }
-  double cable_len = robot_ptr_->GetActuatorStatus(motor_id_).cable_length;
-  temp_app->start(cable_len);
 }
 
 void MainGUI::handleDebugCompleted() { pushButton_debug->setEnabled(true); }

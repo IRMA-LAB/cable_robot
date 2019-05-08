@@ -1,7 +1,7 @@
 /**
  * @file main_gui.h
  * @author Simone Comari
- * @date 11 Mar 2019
+ * @date 08 May 2019
  * @brief This file takes care of the functionalities of the main GUI of cable robot app.
  *
  * The functionalities of the main GUI include buttons management, signaling with children
@@ -18,7 +18,6 @@
 #include "libcdpr/inc/types.h"
 
 #include "ctrl/controller_singledrive.h"
-#include "debug/single_drive_sysid.h"
 #include "gui/apps/joints_pvt_dialog.h"
 #include "gui/calib/calibration_dialog.h"
 #include "gui/homing/homing_dialog.h"
@@ -129,8 +128,8 @@ class MainGUI: public QDialog
 #if DEBUG_GUI
   QPushButton* pushButton_debug;
   QSpacerItem* verticalSpacer_5;
-  // insert your debug object here..
-  SingleDriveSysID* temp_app = NULL;
+  // Insert your debug object here..
+  MyDebugClass* temp_app = NULL;
 #endif
 
  private:
