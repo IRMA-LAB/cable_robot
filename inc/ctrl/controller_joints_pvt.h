@@ -66,7 +66,7 @@ class ControllerJointsPVT: public QObject, public ControllerBase
     TORQUE
   };
 
-  Bitfield8 target_flags_;
+  std::bitset<4> target_flags_;
 
   grabrt::Clock clock_;
   double traj_time_;

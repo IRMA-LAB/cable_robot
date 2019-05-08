@@ -26,7 +26,6 @@ HEADERS = \
     $$PWD/inc/utils/easylog_wrapper.h \
     $$PWD/lib/easyloggingpp/src/easylogging++.h \
     $$PWD/lib/grab_common/grabcommon.h \
-    $$PWD/lib/grab_common/bitfield.h \
     $$PWD/lib/grab_common/pid/pid.h \
     $$PWD/inc/state_estimation/ext_kalman_filter.h \
     $$PWD/inc/debug/single_drive_sysid.h \

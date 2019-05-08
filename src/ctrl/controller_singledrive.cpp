@@ -1,7 +1,7 @@
 /**
  * @file controller_singledrive.cpp
  * @author Simone Comari, Edoardo Idà
- * @date 26 Mar 2019
+ * @date 08 May 2019
  * @brief File containing definitions of derived class declared in
  * controller_singledrive.h.
  */
@@ -35,7 +35,7 @@ void ControllerSingleDrive::SetCableLenTarget(const double target)
 {
   Clear();
   length_target_ = target;
-  target_flags_.Set(LENGTH);
+  target_flags_.set(LENGTH);
 }
 
 void ControllerSingleDrive::SetMotorPosTarget(const int32_t target,
@@ -48,14 +48,14 @@ void ControllerSingleDrive::SetMotorPosTarget(const int32_t target,
   traj_time_        = time;
   new_trajectory_   = true;
   apply_trajectory_ = apply_traj;
-  target_flags_.Set(POSITION);
+  target_flags_.set(POSITION);
 }
 
 void ControllerSingleDrive::SetMotorSpeedTarget(const int32_t target)
 {
   Clear();
   speed_target_true_ = target;
-  target_flags_.Set(SPEED);
+  target_flags_.set(SPEED);
 }
 
 void ControllerSingleDrive::SetMotorTorqueTarget(const int16_t target)
@@ -64,7 +64,7 @@ void ControllerSingleDrive::SetMotorTorqueTarget(const int16_t target)
   torque_target_true_ = target;
   torque_target_      = static_cast<double>(torque_target_true_);
   torque_pid_.Reset();
-  target_flags_.Set(TORQUE);
+  target_flags_.set(TORQUE);
 }
 
 void ControllerSingleDrive::SetCableLenTrajectory(const std::vector<double>& trajectory)
@@ -73,7 +73,7 @@ void ControllerSingleDrive::SetCableLenTrajectory(const std::vector<double>& tra
   apply_trajectory_ = true;
   new_trajectory_   = true;
   cable_len_traj_   = trajectory;
-  target_flags_.Set(LENGTH);
+  target_flags_.set(LENGTH);
 }
 
 void ControllerSingleDrive::CableLenIncrement(const bool active,
@@ -121,7 +121,7 @@ ControllerSingleDrive::CalcCtrlActions(const grabcdpr::Vars&,
   switch (res.ctrl_mode)
   {
     case CABLE_LENGTH:
-      if (target_flags_.CheckBit(LENGTH))
+      if (target_flags_.test(LENGTH))
       {
         if (change_length_target_)
           length_target_ += delta_length_;
@@ -133,19 +133,19 @@ ControllerSingleDrive::CalcCtrlActions(const grabcdpr::Vars&,
         res.ctrl_mode = NONE;
       break;
     case MOTOR_POSITION:
-      if (target_flags_.CheckBit(POSITION))
+      if (target_flags_.test(POSITION))
         res.motor_position = CalcMotorPos(actuators_status);
       else
         res.ctrl_mode = NONE;
       break;
     case MOTOR_SPEED:
-      if (target_flags_.CheckBit(SPEED))
+      if (target_flags_.test(SPEED))
         res.motor_speed = speed_target_true_;
       else
         res.ctrl_mode = NONE;
       break;
     case MOTOR_TORQUE:
-      if (target_flags_.CheckBit(TORQUE))
+      if (target_flags_.test(TORQUE))
       {
         if (change_torque_target_)
         {
@@ -257,7 +257,7 @@ double ControllerSingleDrive::GetTrajectoryPoint()
 
 void ControllerSingleDrive::Clear()
 {
-  target_flags_.ClearAll();
+  target_flags_.reset();
 
   on_target_ = false;
 

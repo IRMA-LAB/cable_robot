@@ -1,17 +1,18 @@
 /**
  * @file controller_singledrive.h
  * @author Simone Comari
- * @date 27 Mar 2019
+ * @date 08 May 2019
  * @brief File containing a simple single drive controller class for cable robot.
  */
 
 #ifndef CABLE_ROBOT_CONTROLLER_SINGLEDRIVE_H
 #define CABLE_ROBOT_CONTROLLER_SINGLEDRIVE_H
 
+#include <bitset>
+
 #include "lib/grab_common/pid/pid.h"
 
 #include "ctrl/controller_base.h"
-#include "grabcommon.h"
 
 /**
  * @brief A numerical sign enum
@@ -218,7 +219,7 @@ class ControllerSingleDrive: public ControllerBase
   };
 
   double period_sec_;
-  Bitfield8 target_flags_;
+  std::bitset<4> target_flags_;
   bool on_target_;
 
   double length_target_;

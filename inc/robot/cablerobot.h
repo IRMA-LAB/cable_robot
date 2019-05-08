@@ -313,7 +313,7 @@ class CableRobot: public QObject,
   /**
    * @brief Signal including the changed state of the EtherCAT network.
    */
-  void ecStateChanged(const Bitfield8&) const;
+  void ecStateChanged(const std::bitset<3>&) const;
   /**
    * @brief Signal including the changed state of the real-time thread.
    */
@@ -327,7 +327,7 @@ class CableRobot: public QObject,
  private:
   //-------- Pseudo-signals from EthercatMaster base class (live in RT thread) --------//
 
-  void EcStateChangedCb(const Bitfield8& new_state) override final;
+  void EcStateChangedCb(const std::bitset<3>& new_state) override final;
   void EcPrintCb(const std::string& msg, const char color = 'w') const override final;
   void EcRtThreadStatusChanged(const bool active) override final;
 

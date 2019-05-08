@@ -103,7 +103,7 @@ class MainGUI: public QDialog
  private slots:
   void enableInterface(const bool op_outcome = true);
   void appendText2Browser(const QString& text);
-  void updateEcStatusLED(const Bitfield8& ec_status_flags);
+  void updateEcStatusLED(const std::bitset<3>& ec_status_flags);
   void updateRtThreadStatusLED(const bool active);
   void handleMotorStatusUpdate(const id_t&, const grabec::GSWDriveInPdos& motor_status);
 
@@ -136,8 +136,8 @@ class MainGUI: public QDialog
   static constexpr int16_t kTorqueSsErrTol_ = 5;
 
   bool manual_ctrl_enabled_ = false;
-  Bitfield8 waiting_for_response_;
-  Bitfield8 desired_ctrl_mode_;
+  std::bitset<3> waiting_for_response_;
+  std::bitset<5> desired_ctrl_mode_;
   id_t motor_id_;
   ControllerSingleDrive* man_ctrl_ptr_;
 

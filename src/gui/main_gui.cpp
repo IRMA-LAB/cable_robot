@@ -1,7 +1,7 @@
 /**
  * @file main_gui.cpp
  * @author Simone Comari
- * @date 03 Apr 2019
+ * @date 08 May 2019
  * @brief This file includes definitions of classes present in main_gui.h.
  */
 
@@ -14,9 +14,9 @@ MainGUI::MainGUI(QWidget* parent, const grabcdpr::Params& config)
   ui->setupUi(this);
 
   // Setup flags
-  waiting_for_response_.ClearAll();
-  desired_ctrl_mode_.ClearAll();
-  desired_ctrl_mode_.Set(ControlMode::CABLE_LENGTH);
+  waiting_for_response_.reset();
+  desired_ctrl_mode_.reset();
+  desired_ctrl_mode_.set(ControlMode::CABLE_LENGTH);
 
   for (size_t i = 0; i < config.actuators.size(); i++)
     if (config.actuators[i].active)
@@ -159,7 +159,7 @@ void MainGUI::on_pushButton_enable_clicked()
   bool manual_ctrl_enabled = !manual_ctrl_enabled_;
 
   SetupDirectMotorCtrl(manual_ctrl_enabled);
-  waiting_for_response_.Set(manual_ctrl_enabled ? Actuator::ST_ENABLED
+  waiting_for_response_.set(manual_ctrl_enabled ? Actuator::ST_ENABLED
                                                 : Actuator::ST_IDLE);
 }
 
@@ -188,10 +188,10 @@ void MainGUI::on_radioButton_posMode_clicked()
   ui->radioButton_velMode->setChecked(false);
   ui->radioButton_torqueMode->setChecked(false);
 
-  if (desired_ctrl_mode_.CheckBit(ControlMode::CABLE_LENGTH))
+  if (desired_ctrl_mode_.test(ControlMode::CABLE_LENGTH))
     return;
-  desired_ctrl_mode_.ClearAll();
-  desired_ctrl_mode_.Set(ControlMode::CABLE_LENGTH);
+  desired_ctrl_mode_.reset();
+  desired_ctrl_mode_.set(ControlMode::CABLE_LENGTH);
 
   if (manual_ctrl_enabled_)
   {
@@ -200,7 +200,7 @@ void MainGUI::on_radioButton_posMode_clicked()
     pthread_mutex_lock(&robot_ptr_->Mutex());
     man_ctrl_ptr_->SetMode(ControlMode::CABLE_LENGTH);
     pthread_mutex_unlock(&robot_ptr_->Mutex());
-    waiting_for_response_.Set(Actuator::ST_ENABLED);
+    waiting_for_response_.set(Actuator::ST_ENABLED);
   }
 }
 
@@ -211,10 +211,10 @@ void MainGUI::on_radioButton_velMode_clicked()
   ui->radioButton_velMode->setChecked(true);
   ui->radioButton_torqueMode->setChecked(false);
 
-  if (desired_ctrl_mode_.CheckBit(ControlMode::MOTOR_SPEED))
+  if (desired_ctrl_mode_.test(ControlMode::MOTOR_SPEED))
     return;
-  desired_ctrl_mode_.ClearAll();
-  desired_ctrl_mode_.Set(ControlMode::MOTOR_SPEED);
+  desired_ctrl_mode_.reset();
+  desired_ctrl_mode_.set(ControlMode::MOTOR_SPEED);
 
   if (manual_ctrl_enabled_)
   {
@@ -222,7 +222,7 @@ void MainGUI::on_radioButton_velMode_clicked()
     pthread_mutex_lock(&robot_ptr_->Mutex());
     man_ctrl_ptr_->SetMode(ControlMode::MOTOR_SPEED);
     pthread_mutex_unlock(&robot_ptr_->Mutex());
-    waiting_for_response_.Set(Actuator::ST_ENABLED);
+    waiting_for_response_.set(Actuator::ST_ENABLED);
   }
 }
 
@@ -233,10 +233,10 @@ void MainGUI::on_radioButton_torqueMode_clicked()
   ui->radioButton_velMode->setChecked(false);
   ui->radioButton_torqueMode->setChecked(true);
 
-  if (desired_ctrl_mode_.CheckBit(ControlMode::MOTOR_TORQUE))
+  if (desired_ctrl_mode_.test(ControlMode::MOTOR_TORQUE))
     return;
-  desired_ctrl_mode_.ClearAll();
-  desired_ctrl_mode_.Set(ControlMode::MOTOR_TORQUE);
+  desired_ctrl_mode_.reset();
+  desired_ctrl_mode_.set(ControlMode::MOTOR_TORQUE);
 
   if (manual_ctrl_enabled_)
   {
@@ -245,7 +245,7 @@ void MainGUI::on_radioButton_torqueMode_clicked()
     pthread_mutex_lock(&robot_ptr_->Mutex());
     man_ctrl_ptr_->SetMode(ControlMode::MOTOR_TORQUE);
     pthread_mutex_unlock(&robot_ptr_->Mutex());
-    waiting_for_response_.Set(Actuator::ST_ENABLED);
+    waiting_for_response_.set(Actuator::ST_ENABLED);
   }
 }
 
@@ -395,9 +395,9 @@ void MainGUI::appendText2Browser(const QString& text)
   }
 }
 
-void MainGUI::updateEcStatusLED(const Bitfield8& ec_status_flags)
+void MainGUI::updateEcStatusLED(const std::bitset<3>& ec_status_flags)
 {
-  switch (ec_status_flags.Count())
+  switch (ec_status_flags.count())
   {
     case 3: // OK (all 3 checks passed)
       ui->label_ec_status_led->setPixmap(
@@ -433,8 +433,8 @@ void MainGUI::updateRtThreadStatusLED(const bool active)
     CloseAllApps();
 
     // Simulate a motor disabled event
-    waiting_for_response_.ClearAll();
-    waiting_for_response_.Set(Actuator::ST_IDLE);
+    waiting_for_response_.reset();
+    waiting_for_response_.set(Actuator::ST_IDLE);
     UpdateDriveCtrlPanel(Actuator::ST_IDLE);
   }
 }
@@ -464,8 +464,8 @@ void MainGUI::handleMotorStatusUpdate(const id_t& id,
     DisablePosCtrlButtons(true);
     DisableVelCtrlButtons(true);
     DisableTorqueCtrlButtons(true);
-    waiting_for_response_.ClearAll();
-    waiting_for_response_.Set(Actuator::ST_IDLE);
+    waiting_for_response_.reset();
+    waiting_for_response_.set(Actuator::ST_IDLE);
     return;
   }
 
@@ -553,10 +553,9 @@ void MainGUI::UpdateDriveStatusTable(const grabec::GSWDriveInPdos& status)
 
 void MainGUI::UpdateDriveCtrlPanel(const Actuator::States state)
 {
-  if (waiting_for_response_.CheckBit(Actuator::ST_ENABLED) &&
-      state != Actuator::ST_ENABLED)
+  if (waiting_for_response_.test(Actuator::ST_ENABLED) && state != Actuator::ST_ENABLED)
     return;
-  if (waiting_for_response_.CheckBit(Actuator::ST_IDLE) && state != Actuator::ST_IDLE)
+  if (waiting_for_response_.test(Actuator::ST_IDLE) && state != Actuator::ST_IDLE)
     return;
 
   bool robot_ready     = robot_ptr_->GetCurrentState() == CableRobot::ST_READY;
@@ -578,21 +577,21 @@ void MainGUI::UpdateDriveCtrlPanel(const Actuator::States state)
     DisablePosCtrlButtons(true);
     DisableVelCtrlButtons(true);
     DisableTorqueCtrlButtons(true);
-    waiting_for_response_.ClearAll();
+    waiting_for_response_.reset();
   }
 }
 
 void MainGUI::UpdateDriveCtrlButtons(const ControlMode ctrl_mode)
 {
-  if (!waiting_for_response_.AnyOn())
+  if (!waiting_for_response_.any())
     return;
 
-  if (desired_ctrl_mode_.CheckBit(ctrl_mode))
+  if (desired_ctrl_mode_.test(ctrl_mode))
   {
     DisablePosCtrlButtons(ctrl_mode != ControlMode::CABLE_LENGTH);
     DisableVelCtrlButtons(ctrl_mode != ControlMode::MOTOR_SPEED);
     DisableTorqueCtrlButtons(ctrl_mode != ControlMode::MOTOR_TORQUE);
-    waiting_for_response_.ClearAll();
+    waiting_for_response_.reset();
   }
   else
   {

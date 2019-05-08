@@ -13,7 +13,7 @@ bool ControllerJointsPVT::SetCablesLenTrajectories(const vect<TrajectoryD>& traj
     return false;
   Reset();
   traj_cables_len_ = trajectories;
-  target_flags_.Set(LENGTH);
+  target_flags_.set(LENGTH);
   return true;
 }
 
@@ -23,7 +23,7 @@ bool ControllerJointsPVT::SetMotorsPosTrajectories(const vect<TrajectoryI>& traj
     return false;
   Reset();
   traj_motors_pos_ = trajectories;
-  target_flags_.Set(POSITION);
+  target_flags_.set(POSITION);
   return true;
 }
 
@@ -33,7 +33,7 @@ bool ControllerJointsPVT::SetMotorsVelTrajectories(const vect<TrajectoryI>& traj
     return false;
   Reset();
   traj_motors_vel_ = trajectories;
-  target_flags_.Set(SPEED);
+  target_flags_.set(SPEED);
   return true;
 }
 
@@ -44,7 +44,7 @@ bool ControllerJointsPVT::SetMotorsTorqueTrajectories(
     return false;
   Reset();
   traj_motors_torque_ = trajectories;
-  target_flags_.Set(TORQUE);
+  target_flags_.set(TORQUE);
   return true;
 }
 
@@ -71,28 +71,28 @@ ControllerJointsPVT::CalcCtrlActions(const grabcdpr::Vars&,
     switch (actions[i].ctrl_mode)
     {
       case CABLE_LENGTH:
-        if (target_flags_.CheckBit(LENGTH))
+        if (target_flags_.test(LENGTH))
           actions[i].cable_length =
             GetTrajectoryPointValue(actions[i].motor_id, traj_cables_len_);
         else
           actions[i].ctrl_mode = NONE;
         break;
       case MOTOR_POSITION:
-        if (target_flags_.CheckBit(POSITION))
+        if (target_flags_.test(POSITION))
           actions[i].motor_position =
             GetTrajectoryPointValue(actions[i].motor_id, traj_motors_pos_);
         else
           actions[i].ctrl_mode = NONE;
         break;
       case MOTOR_SPEED:
-        if (target_flags_.CheckBit(SPEED))
+        if (target_flags_.test(SPEED))
           actions[i].motor_speed =
             GetTrajectoryPointValue(actions[i].motor_id, traj_motors_vel_);
         else
           actions[i].ctrl_mode = NONE;
         break;
       case MOTOR_TORQUE:
-        if (target_flags_.CheckBit(TORQUE))
+        if (target_flags_.test(TORQUE))
           actions[i].motor_torque =
             winches_controller_[actions[i].motor_id].calcServoTorqueSetpoint(
               actuators_status[i],
@@ -144,7 +144,7 @@ T ControllerJointsPVT::GetTrajectoryPointValue(const id_t id,
 
 void ControllerJointsPVT::Reset()
 {
-  target_flags_.ClearAll();
+  target_flags_.reset();
   stop_           = false;
   new_trajectory_ = true;
   pause_          = false;

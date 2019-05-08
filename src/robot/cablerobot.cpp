@@ -525,9 +525,9 @@ void CableRobot::StopTimers()
 
 //--------- Ethercat related private functions --------------------------------------//
 
-void CableRobot::EcStateChangedCb(const Bitfield8& new_state)
+void CableRobot::EcStateChangedCb(const std::bitset<3> &new_state)
 {
-  ec_network_valid_ = (new_state.Count() == 3);
+  ec_network_valid_ = new_state.all();
   emit ecStateChanged(new_state);
 }
 
