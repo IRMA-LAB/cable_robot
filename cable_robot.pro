@@ -29,6 +29,7 @@ HEADERS = \
     $$PWD/lib/grab_common/pid/pid.h \
     $$PWD/inc/state_estimation/ext_kalman_filter.h \
     $$PWD/inc/debug/single_drive_sysid.h \
+    $$PWD/inc/gui/apps/input_form.h
 
 SOURCES = \
     $$PWD/src/main.cpp \
@@ -59,6 +60,7 @@ SOURCES = \
     $$PWD/lib/grab_common/pid/pid.cpp \
     $$PWD/src/state_estimation/ext_kalman_filter.cpp \
     $$PWD/src/debug/single_drive_sysid.cpp \
+    $$PWD/src/gui/apps/input_form.cpp
 
 INCLUDEPATH += \
     $$PWD/inc \
@@ -149,7 +151,8 @@ FORMS += \
     $$PWD/widgets/homing/homing_interface_proprioceptive.ui\
     $$PWD/widgets/homing/init_torque_form.ui \
     $$PWD/widgets/apps/joints_pvt_dialog.ui \
-    $$PWD/widgets/apps/my3dscatterwidget.ui
+    $$PWD/widgets/apps/my3dscatterwidget.ui \
+    $$PWD/widgets/apps/input_form.ui
 
 RESOURCES += \
     resources/resources.qrc

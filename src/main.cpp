@@ -19,6 +19,7 @@ int main(int argc, char* argv[])
   QApplication a(argc, argv);
   qRegisterMetaType<grabec::GSWDriveInPdos>("grabec::GSWDriveInPdos");
   qRegisterMetaType<id_t>("id_t");
+  qRegisterMetaType<std::bitset<3>>("std::bitset<3>");
   CLOG(INFO, "event") << "App START";
 
   LoginWindow w;
