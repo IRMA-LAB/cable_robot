@@ -14,6 +14,7 @@ HEADERS = \
     $$PWD/inc/gui/apps/joints_pvt_dialog.h \
     $$PWD/inc/gui/apps/my3dscatterwidget.h \
     $$PWD/inc/gui/apps/chartview.h \
+    $$PWD/inc/gui/apps/input_form.h \
     $$PWD/inc/homing/homing_proprioceptive.h \
     $$PWD/inc/homing/matlab_thread.h \
     $$PWD/inc/ctrl/controller_base.h \
@@ -24,12 +25,12 @@ HEADERS = \
     $$PWD/inc/utils/macros.h \
     $$PWD/inc/utils/msgs.h \
     $$PWD/inc/utils/easylog_wrapper.h \
+    $$PWD/inc/state_estimation/ext_kalman_filter.h \
+    $$PWD/inc/debug/single_drive_sysid.h \
+    $$PWD/inc/apps/joints_pvt_app.h \
     $$PWD/lib/easyloggingpp/src/easylogging++.h \
     $$PWD/lib/grab_common/grabcommon.h \
     $$PWD/lib/grab_common/pid/pid.h \
-    $$PWD/inc/state_estimation/ext_kalman_filter.h \
-    $$PWD/inc/debug/single_drive_sysid.h \
-    $$PWD/inc/gui/apps/input_form.h
 
 SOURCES = \
     $$PWD/src/main.cpp \
@@ -47,6 +48,7 @@ SOURCES = \
     $$PWD/src/gui/apps/joints_pvt_dialog.cpp \
     $$PWD/src/gui/apps/my3dscatterwidget.cpp \
     $$PWD/src/gui/apps/chartview.cpp \
+    $$PWD/src/gui/apps/input_form.cpp \
     $$PWD/src/homing/homing_proprioceptive.cpp \
     $$PWD/src/homing/matlab_thread.cpp \
     $$PWD/src/ctrl/controller_base.cpp \
@@ -55,12 +57,12 @@ SOURCES = \
     $$PWD/src/ctrl/winch_torque_controller.cpp \
     $$PWD/src/utils/msgs.cpp \
     $$PWD/src/utils/easylog_wrapper.cpp \
+    $$PWD/src/state_estimation/ext_kalman_filter.cpp \
+    $$PWD/src/debug/single_drive_sysid.cpp \
+    $$PWD/src/apps/joints_pvt_app.cpp \
     $$PWD/lib/easyloggingpp/src/easylogging++.cc \
     $$PWD/lib/grab_common/grabcommon.cpp \
     $$PWD/lib/grab_common/pid/pid.cpp \
-    $$PWD/src/state_estimation/ext_kalman_filter.cpp \
-    $$PWD/src/debug/single_drive_sysid.cpp \
-    $$PWD/src/gui/apps/input_form.cpp
 
 INCLUDEPATH += \
     $$PWD/inc \

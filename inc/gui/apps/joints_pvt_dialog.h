@@ -15,6 +15,7 @@
 #include "gui/apps/input_form.h"
 #include "gui/apps/my3dscatterwidget.h"
 #include "robot/cablerobot.h"
+#include "apps/joints_pvt_app.h"
 
 namespace Ui {
 class JointsPVTDialog;
@@ -29,9 +30,8 @@ class JointsPVTDialog: public QDialog
                            const vect<grabcdpr::ActuatorParams>& params);
   ~JointsPVTDialog();
 
- signals:
-
  private slots:
+  void handleTransitionCompleted();
   void handleTrajectoryCompleted();
   void progressUpdate(const int progress_value);
 
@@ -57,39 +57,11 @@ class JointsPVTDialog: public QDialog
   QVector<InputForm*> line_edits_;
   quint8 input_form_pos_;
 
-  CableRobot* robot_ptr_;
-  ControllerJointsPVT controller_;
-
-  struct TrajectorySet
-  {
-    ControlMode traj_type;
-    vect<TrajectoryD> traj_platform;
-    vect<TrajectoryD> traj_cables_len;
-    vect<TrajectoryI> traj_motors_pos;
-    vect<TrajectoryI> traj_motors_vel;
-    vect<TrajectoryS> traj_motors_torque;
-  };
-
-  QVector<TrajectorySet> traj_sets_;
-  quint8 traj_counter_;
-  bool transition_in_progress_;
-
-  bool readTrajectories(const QString& ifilepath);
-
-  void setCablesLenTraj(const bool relative, const vect<id_t>& motors_id, QTextStream& s,
-                        TrajectorySet& traj_set);
-  void setMotorPosTraj(const bool relative, const vect<id_t>& motors_id, QTextStream& s,
-                       TrajectorySet& traj_set);
-  void setMotorVelTraj(const vect<id_t>& motors_id, QTextStream& s,
-                       TrajectorySet& traj_set);
-  void setMotorTorqueTraj(const bool relative, const vect<id_t>& motors_id,
-                          QTextStream& s, TrajectorySet& traj_set);
+  JointsPVTApp app_;
+  int traj_counter_;
+  int num_traj_;
 
   void updatePlots(const TrajectorySet& traj_set);
-
-  void runTransition(const TrajectorySet& traj_set);
-
-  void sendTrajectories(const TrajectorySet& traj_set);
 
   void stop();
 };
