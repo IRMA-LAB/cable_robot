@@ -41,7 +41,7 @@ class JointsPVTDialog: public QDialog
 
   void on_pushButton_read_clicked();
 
-  void on_checkBox_toggled(bool checked);
+  void on_checkBox_infLoop_toggled(bool checked);
 
   void on_pushButton_start_clicked();
   void on_pushButton_pause_clicked();
@@ -49,9 +49,8 @@ class JointsPVTDialog: public QDialog
 
   void on_pushButton_return_clicked();
 
-
  private:
-  static const quint8 kInputFormPos0_ = 2;
+  static const quint8 kInputFormPosInit_ = 2;
   Ui::JointsPVTDialog* ui;
   My3DScatterWidget traj_display_;
   QGridLayout* grid_layout_ = NULL;
@@ -72,6 +71,8 @@ class JointsPVTDialog: public QDialog
   };
 
   QVector<TrajectorySet> traj_sets_;
+  quint8 traj_counter_;
+  bool transition_in_progress_;
 
   bool readTrajectories(const QString& ifilepath);
 
@@ -89,6 +90,8 @@ class JointsPVTDialog: public QDialog
   void runTransition(const TrajectorySet& traj_set);
 
   void sendTrajectories(const TrajectorySet& traj_set);
+
+  void stop();
 };
 
 #endif // CABLE_ROBOT_JOINTS_PVT_DIALOG_H

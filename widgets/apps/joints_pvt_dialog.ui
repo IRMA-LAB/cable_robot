@@ -48,7 +48,7 @@
      <item>
       <layout class="QVBoxLayout" name="verticalLayout_2">
        <item>
-        <widget class="QGroupBox" name="groupBox">
+        <widget class="QGroupBox" name="groupBox_inputs">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
            <horstretch>0</horstretch>
@@ -160,7 +160,7 @@
             <number>10</number>
            </property>
            <item>
-            <widget class="QCheckBox" name="checkBox">
+            <widget class="QCheckBox" name="checkBox_infLoop">
              <property name="text">
               <string>  Infinite loop</string>
              </property>
@@ -229,6 +229,9 @@
         <widget class="QProgressBar" name="progressBar">
          <property name="value">
           <number>0</number>
+         </property>
+         <property name="format">
+          <string>%p%</string>
          </property>
         </widget>
        </item>

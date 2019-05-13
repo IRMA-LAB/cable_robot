@@ -4,14 +4,15 @@
 JointsPVTDialog::JointsPVTDialog(QWidget* parent, CableRobot* robot,
                                  const vect<grabcdpr::ActuatorParams>& params)
   : QDialog(parent), ui(new Ui::JointsPVTDialog), traj_display_(this),
-    input_form_pos_(kInputFormPos0_), robot_ptr_(robot), controller_(params, this)
+    input_form_pos_(kInputFormPosInit_), robot_ptr_(robot), controller_(params, this),
+    traj_counter_(0), transition_in_progress_(false)
 {
   ui->setupUi(this);
   ui->horizontalLayout_display->addWidget(&traj_display_, 1);
   setAttribute(Qt::WA_DeleteOnClose);
 
   line_edits_.append(new InputForm(this));
-  ui->verticalLayout_inputSource->insertWidget(kInputFormPos0_ - 1, line_edits_.last());
+  ui->verticalLayout_inputSource->insertWidget(kInputFormPosInit_ - 1, line_edits_.last());
 
   connect(&controller_, SIGNAL(trajectoryProgressStatus(int)), this,
           SLOT(progressUpdate(int)), Qt::ConnectionType::QueuedConnection);
@@ -34,12 +35,44 @@ JointsPVTDialog::~JointsPVTDialog()
 
 void JointsPVTDialog::handleTrajectoryCompleted()
 {
-  ui->checkBox->setEnabled(true);
+  if (transition_in_progress_)
+  {
+    transition_in_progress_ = false;
+    ui->progressBar->setFormat(
+      QString("Trajectory %1 in progress... %p%").arg(traj_counter_));
+    ui->progressBar->setValue(0);
+    sendTrajectories(traj_sets_[traj_counter_]);
+    return;
+  }
+
+  if (++traj_counter_ >= traj_sets_.size())
+  {
+    if (!ui->checkBox_infLoop->isChecked())
+    {
+      stop(); // all trajectories completed
+      return;
+    }
+    traj_counter_ = 0; // infinite loop --> start over
+  }
+
+  // Run next trajectory.
+  updatePlots(traj_sets_[traj_counter_]);
+  ui->progressBar->setFormat(
+    QString("Transition %1 in progress... %p%").arg(traj_counter_));
+  ui->progressBar->setValue(0);
+  runTransition(traj_sets_[traj_counter_]);
+}
+
+void JointsPVTDialog::stop()
+{
   ui->pushButton_start->setEnabled(true);
   ui->pushButton_pause->setText("Pause");
   ui->pushButton_pause->setDisabled(true);
   ui->pushButton_stop->setDisabled(true);
-  ui->groupBox->setEnabled(true);
+  ui->pushButton_return->setEnabled(true);
+  ui->groupBox_inputs->setEnabled(true);
+  ui->progressBar->setFormat("%p%");
+  ui->progressBar->setValue(0);
 }
 
 void JointsPVTDialog::progressUpdate(const int progress_value)
@@ -61,7 +94,7 @@ void JointsPVTDialog::on_pushButton_removeTraj_clicked()
   ui->verticalLayout_inputSource->removeWidget(line_edits_.last());
   delete line_edits_.last();
   line_edits_.pop_back();
-  if (--input_form_pos_ <= kInputFormPos0_)
+  if (--input_form_pos_ <= kInputFormPosInit_)
     ui->pushButton_removeTraj->setDisabled(true);
 }
 
@@ -102,28 +135,26 @@ void JointsPVTDialog::on_pushButton_read_clicked()
   ui->pushButton_start->setEnabled(true);
 }
 
-void JointsPVTDialog::on_checkBox_toggled(bool checked)
+void JointsPVTDialog::on_checkBox_infLoop_toggled(bool checked)
 {
   CLOG(TRACE, "event") << checked;
-  ui->progressBar->setDisabled(checked);
 }
 
 void JointsPVTDialog::on_pushButton_start_clicked()
 {
   CLOG(TRACE, "event");
 
-  ui->checkBox->setDisabled(true);
   ui->pushButton_start->setDisabled(true);
   ui->pushButton_pause->setEnabled(true);
   ui->pushButton_stop->setEnabled(true);
-  ui->groupBox->setDisabled(true);
+  ui->pushButton_return->setDisabled(true);
+  ui->groupBox_inputs->setDisabled(true);
 
-  for (int i = 0; i < traj_sets_.size(); i++)
-  {
-    updatePlots(traj_sets_[i]);
-    runTransition(traj_sets_[i]);
-    sendTrajectories(traj_sets_[i]);
-  }
+  traj_counter_ = 0; // reset
+  ui->progressBar->setFormat(
+    QString("Transition %1 in progress... %p%").arg(traj_counter_));
+  ui->progressBar->setValue(0);
+  runTransition(traj_sets_.first());
 }
 
 void JointsPVTDialog::on_pushButton_pause_clicked()
@@ -144,7 +175,7 @@ void JointsPVTDialog::on_pushButton_stop_clicked()
   controller_.StopTrajectoryFollowing();
   pthread_mutex_unlock(&robot_ptr_->Mutex());
 
-  handleTrajectoryCompleted(); // update gui
+  stop(); // update gui
 }
 
 void JointsPVTDialog::on_pushButton_return_clicked()
@@ -357,52 +388,56 @@ void JointsPVTDialog::updatePlots(const TrajectorySet& traj_set)
 void JointsPVTDialog::runTransition(const TrajectorySet& traj_set)
 {
   static constexpr double kMaxCableSpeed = 0.001; // [m/s]
-  static constexpr double kMaxMotorSpeed = 10.0;  // [counts/s]
 
-  if (traj_set.traj_type == MOTOR_SPEED || traj_set.traj_type == MOTOR_TORQUE)
-    return;
   if (traj_set.traj_type == CABLE_LENGTH)
   {
-    vect<TrajectoryD> transition_traj = traj_set.traj_cables_len;
-    vectD current_cables_len(transition_traj.size());
-    for (size_t i = 0; i < transition_traj.size(); i++)
+    transition_in_progress_                   = true;
+    vect<TrajectoryD> transition_trajectories = traj_set.traj_cables_len;
+    for (size_t i = 0; i < transition_trajectories.size(); i++)
     {
-      double target_cable_len = transition_traj[i].values.front();
-      transition_traj[i].timestamps.clear();
-      transition_traj[i].values.clear();
+      // First waypoint of next trajectory becomes end point of transition.
+      double target_cable_len = transition_trajectories[i].values.front();
+      transition_trajectories[i].timestamps.clear();
+      transition_trajectories[i].values.clear();
+      // Current cable length becomes start point of transition.
       double current_cable_len =
-        robot_ptr_->GetActuatorStatus(transition_traj[i].id).cable_length;
-      // Calculate necessary time to move from length A to B with fixed constant velocity.
+        robot_ptr_->GetActuatorStatus(transition_trajectories[i].id).cable_length;
+      // Calculate necessary time to move from A to B with fixed constant velocity.
       double t = std::abs(target_cable_len - current_cable_len) / kMaxCableSpeed;
       // Set a simple trajectory composed by two waypoints (begin, end).
-      transition_traj[i].timestamps = {0, t};
-      transition_traj[i].values     = {current_cable_len, target_cable_len};
+      transition_trajectories[i].timestamps = {0, t};
+      transition_trajectories[i].values     = {current_cable_len, target_cable_len};
     }
     // Send trajectories
     pthread_mutex_lock(&robot_ptr_->Mutex());
-    controller_.SetCablesLenTrajectories(transition_traj);
+    controller_.SetCablesLenTrajectories(transition_trajectories);
     pthread_mutex_unlock(&robot_ptr_->Mutex());
   }
   else if (traj_set.traj_type == MOTOR_POSITION)
   {
-    vect<TrajectoryI> transition_traj = traj_set.traj_motors_pos;
-    vectD current_cables_len(transition_traj.size());
-    for (size_t i = 0; i < transition_traj.size(); i++)
+    transition_in_progress_                   = true;
+    vect<TrajectoryI> transition_trajectories = traj_set.traj_motors_pos;
+    for (size_t i = 0; i < transition_trajectories.size(); i++)
     {
-      int target_motor_pos = transition_traj[i].values.front();
-      transition_traj[i].timestamps.clear();
-      transition_traj[i].values.clear();
+      // First waypoint of next trajectory becomes end point of transition.
+      int target_motor_pos = transition_trajectories[i].values.front();
+      transition_trajectories[i].timestamps.clear();
+      transition_trajectories[i].values.clear();
+      double max_motor_speed = robot_ptr_->GetActuator(transition_trajectories[i].id)
+                                 ->GetWinch()
+                                 .LengthToCounts(kMaxCableSpeed); // [counts/s]
+      // Current motor position becomes start point of transition.
       int current_motor_pos =
-        robot_ptr_->GetActuatorStatus(transition_traj[i].id).motor_position;
-      // Calculate necessary time to move from length A to B with fixed constant velocity.
-      double t = std::abs(target_motor_pos - current_motor_pos) / kMaxMotorSpeed;
+        robot_ptr_->GetActuatorStatus(transition_trajectories[i].id).motor_position;
+      // Calculate necessary time to move from A to B with fixed constant velocity.
+      double t = std::abs(target_motor_pos - current_motor_pos) / max_motor_speed;
       // Set a simple trajectory composed by two waypoints (begin, end).
-      transition_traj[i].timestamps = {0, t};
-      transition_traj[i].values     = {current_motor_pos, target_motor_pos};
+      transition_trajectories[i].timestamps = {0, t};
+      transition_trajectories[i].values     = {current_motor_pos, target_motor_pos};
     }
     // Send trajectories
     pthread_mutex_lock(&robot_ptr_->Mutex());
-    controller_.SetMotorsPosTrajectories(transition_traj);
+    controller_.SetMotorsPosTrajectories(transition_trajectories);
     pthread_mutex_unlock(&robot_ptr_->Mutex());
   }
 }

@@ -1,7 +1,7 @@
 /**
  * @file cablerobot.h
  * @author Simone Comari, Edoardo Idà
- * @date 27 Mar 2019
+ * @date 13 May 2019
  * @brief File containing the virtualization of the physical cable robot, in terms of
  * components, signalig and low level operations.
  */
@@ -99,6 +99,13 @@ class CableRobot: public QObject,
   // Tuning params for waiting functions
   static constexpr double kCycleWaitTimeSec = 0.02; /**< [sec] Cycle time when waiting. */
   static constexpr double kMaxWaitTimeSec   = 25.0; /**< [sec] Maximum waiting time. */
+
+  /**
+   * @brief Get a pointer to inquired actuator.
+   * @param[in] motor_id The ID of the inquired actuator.
+   * @return A pointer to inquired actuator.
+   */
+  const Actuator* GetActuator(const id_t motor_id);
 
   /**
    * @brief Get inquired actuator status.

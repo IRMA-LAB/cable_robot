@@ -1,7 +1,7 @@
 /**
  * @file cablerobot.cpp
  * @author Simone Comari, Edoardo Idà
- * @date 03 Apr 2019
+ * @date 13 May 2019
  * @brief File containing definitions of functions and class declared in cablerobot.h.
  */
 
@@ -94,6 +94,11 @@ CableRobot::~CableRobot()
 }
 
 //--------- Public Functions --------------------------------------------------------//
+
+const Actuator* CableRobot::GetActuator(const id_t motor_id)
+{
+  return actuators_ptrs_[motor_id];
+}
 
 const ActuatorStatus CableRobot::GetActuatorStatus(const id_t motor_id)
 {
@@ -525,7 +530,7 @@ void CableRobot::StopTimers()
 
 //--------- Ethercat related private functions --------------------------------------//
 
-void CableRobot::EcStateChangedCb(const std::bitset<3> &new_state)
+void CableRobot::EcStateChangedCb(const std::bitset<3>& new_state)
 {
   ec_network_valid_ = new_state.all();
   emit ecStateChanged(new_state);
