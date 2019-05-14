@@ -64,3 +64,4 @@ logs
 # Matlab
 *.m~
 /matlab/homing/results.json
+/.qmake.stash
