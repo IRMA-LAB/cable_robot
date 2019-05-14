@@ -11,7 +11,7 @@ class ControllerJointsPVT: public QObject, public ControllerBase
  public:
   explicit ControllerJointsPVT(const vect<grabcdpr::ActuatorParams>& params,
                                QObject* parent = NULL);
-  ~ControllerJointsPVT() {}
+  ~ControllerJointsPVT() override {}
 
   bool SetCablesLenTrajectories(const vect<TrajectoryD>& trajectories);
   bool SetMotorsPosTrajectories(const vect<TrajectoryI>& trajectories);

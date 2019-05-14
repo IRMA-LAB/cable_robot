@@ -15,12 +15,9 @@ JointsPVTDialog::JointsPVTDialog(QWidget* parent, CableRobot* robot,
   ui->verticalLayout_inputSource->insertWidget(kInputFormPosInit_ - 1,
                                                line_edits_.last());
 
-  connect(&app_, SIGNAL(transitionComplete()), this, SLOT(handleTransitionCompleted()),
-          Qt::ConnectionType::QueuedConnection);
-  connect(&app_, SIGNAL(trajectoryComplete()), this, SLOT(handleTrajectoryCompleted()),
-          Qt::ConnectionType::QueuedConnection);
-  connect(&app_, SIGNAL(trajectoryProgress(int)), this, SLOT(progressUpdate(int)),
-          Qt::ConnectionType::QueuedConnection);
+  connect(&app_, SIGNAL(transitionComplete()), this, SLOT(handleTransitionCompleted()));
+  connect(&app_, SIGNAL(trajectoryComplete()), this, SLOT(handleTrajectoryCompleted()));
+  connect(&app_, SIGNAL(trajectoryProgress(int)), this, SLOT(progressUpdate(int)));
 }
 
 JointsPVTDialog::~JointsPVTDialog()

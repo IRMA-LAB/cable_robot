@@ -25,7 +25,10 @@ JointsPVTApp::JointsPVTApp(QObject* parent, CableRobot* robot,
   connect(&controller_, SIGNAL(trajectoryCompleted()), this,
           SLOT(handleTrajectoryCompleted()), Qt::ConnectionType::QueuedConnection);
 
+  controller_.SetMotorsID(robot_ptr_->GetActiveMotorsID());
   robot->SetController(&controller_);
+
+  prev_state_ = ST_MAX_STATES;
   ExternalEvent(ST_IDLE);
 }
 
@@ -382,9 +385,9 @@ void JointsPVTApp::PrintStateTransition(const States current_state,
     return;
   QString msg;
   if (current_state != ST_MAX_STATES)
-    msg = QString("Homing state transition: %1 --> %2")
+    msg = QString("Joints PVT app state transition: %1 --> %2")
             .arg(kStatesStr[current_state], kStatesStr[new_state]);
   else
-    msg = QString("Homing initial state: %1").arg(kStatesStr[new_state]);
+    msg = QString("Joints PVT app initial state: %1").arg(kStatesStr[new_state]);
   emit printToQConsole(msg);
 }

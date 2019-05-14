@@ -166,13 +166,13 @@ class Winch
    * @param counts Motor (encoder) counts.
    * @return Corresponding cable length in meters.
    */
-  inline double CountsToLength(const int counts) const;
+  double CountsToLength(const int counts) const;
   /**
    * @brief Convert cable length to motor counts.
    * @param length Cable length in meters.
    * @return Corresponding motor (encoder) counts.
    */
-  inline int LengthToCounts(const double length) const;
+  int LengthToCounts(const double length) const;
 
  private:
   grabcdpr::WinchParams params_;

@@ -13,6 +13,7 @@ bool ControllerJointsPVT::SetCablesLenTrajectories(const vect<TrajectoryD>& traj
     return false;
   Reset();
   traj_cables_len_ = trajectories;
+  SetMode(ControlMode::CABLE_LENGTH);
   target_flags_.set(LENGTH);
   return true;
 }
@@ -23,6 +24,7 @@ bool ControllerJointsPVT::SetMotorsPosTrajectories(const vect<TrajectoryI>& traj
     return false;
   Reset();
   traj_motors_pos_ = trajectories;
+  SetMode(ControlMode::MOTOR_POSITION);
   target_flags_.set(POSITION);
   return true;
 }
@@ -33,6 +35,7 @@ bool ControllerJointsPVT::SetMotorsVelTrajectories(const vect<TrajectoryI>& traj
     return false;
   Reset();
   traj_motors_vel_ = trajectories;
+  SetMode(ControlMode::MOTOR_SPEED);
   target_flags_.set(SPEED);
   return true;
 }
@@ -44,6 +47,7 @@ bool ControllerJointsPVT::SetMotorsTorqueTrajectories(
     return false;
   Reset();
   traj_motors_torque_ = trajectories;
+  SetMode(ControlMode::MOTOR_TORQUE);
   target_flags_.set(TORQUE);
   return true;
 }
@@ -135,7 +139,7 @@ T ControllerJointsPVT::GetTrajectoryPointValue(const id_t id,
   }
 
   if (progress > 0 && (progress_counter++ % kProgressTriggerCounts == 0))
-    emit trajectoryProgressStatus(qRound(progress));
+    emit trajectoryProgressStatus(qRound(progress * 100.));
   if (stop_)
     emit trajectoryCompleted();
 

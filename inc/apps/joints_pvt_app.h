@@ -37,7 +37,7 @@ class JointsPVTApp: public QObject, public StateMachine
  public:
   explicit JointsPVTApp(QObject* parent, CableRobot* robot,
                         const vect<grabcdpr::ActuatorParams>& params);
-  ~JointsPVTApp();
+  ~JointsPVTApp() override;
 
   void pause();
   bool isPaused() { return controller_.IsPaused(); }
