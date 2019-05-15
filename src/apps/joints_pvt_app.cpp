@@ -87,6 +87,11 @@ bool JointsPVTApp::readTrajectories(const QString& ifilepath)
     return false;
   }
 
+  // debug
+  robot_ptr_->EnableMotors();
+  robot_ptr_->UpdateHomeConfig(0.0, 0.0);
+  // end debug
+
   // Read header yielding information about trajectory type and involved motors
   QTextStream s(&ifile);
   QStringList header = s.readLine().split(" ");
@@ -161,6 +166,9 @@ void JointsPVTApp::stop()
       TRANSITION_MAP_ENTRY (ST_READY)          // ST_TRAJECTORY_FOLLOW
   END_TRANSITION_MAP(NULL)
   // clang-format on
+
+  // debug
+  robot_ptr_->DisableMotors();
 }
 
 //--------- Private slots -----------------------------------------------------------//

@@ -115,8 +115,8 @@ void MainGUI::on_pushButton_startApp_clicked()
 {
   CLOG(TRACE, "event") << ui->comboBox_apps->currentText();
   // debug
-  //  if (!(ec_network_valid_ && rt_thread_running_))
-  //    return;
+  if (!(ec_network_valid_ && rt_thread_running_))
+    return;
 
   ui->pushButton_homing->setDisabled(true);
   ui->pushButton_calib->setDisabled(true);
@@ -576,7 +576,7 @@ void MainGUI::UpdateDriveCtrlPanel(const Actuator::States state)
 
   ui->pushButton_homing->setDisabled(manual_ctrl_enabled_);
   ui->pushButton_calib->setDisabled(manual_ctrl_enabled_);
-  ui->groupBox_app->setDisabled(true); // after we move we need to do the homing again
+//  ui->groupBox_app->setDisabled(true); // after we move we need to do the homing again
 
   if (!manual_ctrl_enabled_)
   {
