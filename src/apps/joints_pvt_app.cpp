@@ -36,6 +36,8 @@ JointsPVTApp::JointsPVTApp(QObject* parent, CableRobot* robot,
 
 JointsPVTApp::~JointsPVTApp()
 {
+  clearAllTrajectories();
+
   disconnect(&controller_, SIGNAL(trajectoryProgressStatus(int)), this,
              SLOT(progressUpdate(int)));
   disconnect(&controller_, SIGNAL(trajectoryCompleted()), this,

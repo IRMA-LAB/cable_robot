@@ -28,6 +28,12 @@ JointsPVTDialog::~JointsPVTDialog()
              SLOT(handleTrajectoryCompleted()));
   disconnect(&app_, SIGNAL(trajectoryProgress(int)), this, SLOT(progressUpdate(int)));
 
+  while (!line_edits_.empty())
+  {
+    ui->verticalLayout_inputSource->removeWidget(line_edits_.last());
+    delete line_edits_.last();
+    line_edits_.pop_back();
+  }
   delete ui;
   CLOG(INFO, "event") << "Joints PVT dialog closed";
 }
