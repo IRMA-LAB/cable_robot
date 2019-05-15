@@ -29,12 +29,14 @@ JointsPVTDialog::~JointsPVTDialog()
   disconnect(&app_, SIGNAL(trajectoryProgress(int)), this, SLOT(progressUpdate(int)));
 
   delete ui;
+  CLOG(INFO, "event") << "Joints PVT dialog closed";
 }
 
 //--------- Private slots -----------------------------------------------------------//
 
 void JointsPVTDialog::handleTransitionCompleted()
 {
+  CLOG(TRACE, "event");
   ui->progressBar->setFormat(
     QString("Trajectory %1 in progress... %p%").arg(traj_counter_));
   ui->progressBar->setValue(0);
@@ -43,6 +45,7 @@ void JointsPVTDialog::handleTransitionCompleted()
 
 void JointsPVTDialog::handleTrajectoryCompleted()
 {
+  CLOG(TRACE, "event");
   if (++traj_counter_ >= num_traj_)
   {
     if (!ui->checkBox_infLoop->isChecked())
@@ -72,6 +75,7 @@ void JointsPVTDialog::progressUpdate(const int progress_value)
 
 void JointsPVTDialog::on_pushButton_addTraj_clicked()
 {
+  CLOG(TRACE, "event");
   line_edits_.append(new InputForm(this));
   ui->verticalLayout_inputSource->insertWidget(input_form_pos_++, line_edits_.last());
   ui->pushButton_removeTraj->setEnabled(true);
@@ -79,6 +83,7 @@ void JointsPVTDialog::on_pushButton_addTraj_clicked()
 
 void JointsPVTDialog::on_pushButton_removeTraj_clicked()
 {
+  CLOG(TRACE, "event");
   ui->verticalLayout_inputSource->removeWidget(line_edits_.last());
   delete line_edits_.last();
   line_edits_.pop_back();
@@ -119,7 +124,6 @@ void JointsPVTDialog::on_pushButton_read_clicked()
       return;
     }
     num_traj_++;
-    CLOG(INFO, "event") << "Read trajectories from '" << input_filename << "'";
   }
 
   updatePlots(app_.getTrajectorySet(0)); // display first trajectory in queue
@@ -232,6 +236,7 @@ void JointsPVTDialog::updatePlots(const TrajectorySet& traj_set)
   ui->horizontalLayout_plots->addLayout(grid_layout_, 1);
   ui->horizontalLayout_plots->setStretch(0, 1);
   ui->horizontalLayout_plots->setSpacing(12);
+  CLOG(INFO, "event") << "Joints PVT plots update";
 }
 
 void JointsPVTDialog::stop()

@@ -66,8 +66,11 @@ class JointsPVTApp: public QObject, public StateMachine
   void trajectoryProgress(const int) const;
 
  private slots:
+  // For signals emitted by controller
   void handleTrajectoryCompleted();
   void progressUpdate(const int progress_value);
+
+  void logInfo(const QString&text) const;
 
  private:
   CableRobot* robot_ptr_;

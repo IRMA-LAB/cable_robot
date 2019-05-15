@@ -113,7 +113,7 @@ void MainGUI::on_pushButton_homing_clicked()
 
 void MainGUI::on_pushButton_startApp_clicked()
 {
-  CLOG(TRACE, "event");
+  CLOG(TRACE, "event") << ui->comboBox_apps->currentText();
   // debug
   //  if (!(ec_network_valid_ && rt_thread_running_))
   //    return;
@@ -130,7 +130,7 @@ void MainGUI::on_pushButton_startApp_clicked()
     connect(joints_pvt_dialog_, SIGNAL(destroyed()), robot_ptr_, SLOT(eventSuccess()));
     connect(joints_pvt_dialog_, SIGNAL(destroyed()), this, SLOT(enableInterface()));
     joints_pvt_dialog_->show();
-    CLOG(INFO, "event") << "Prompt joints pvt dialog";
+    CLOG(INFO, "event") << "Prompt joints PVT dialog";
   }
 }
 

@@ -24,6 +24,8 @@ JointsPVTApp::JointsPVTApp(QObject* parent, CableRobot* robot,
           SLOT(progressUpdate(int)), Qt::ConnectionType::QueuedConnection);
   connect(&controller_, SIGNAL(trajectoryCompleted()), this,
           SLOT(handleTrajectoryCompleted()), Qt::ConnectionType::QueuedConnection);
+  connect(this, SIGNAL(printToQConsole(QString)), this, SLOT(logInfo(QString)),
+          Qt::ConnectionType::DirectConnection);
 
   controller_.SetMotorsID(robot_ptr_->GetActiveMotorsID());
   robot->SetController(&controller_);
@@ -38,6 +40,7 @@ JointsPVTApp::~JointsPVTApp()
              SLOT(progressUpdate(int)));
   disconnect(&controller_, SIGNAL(trajectoryCompleted()), this,
              SLOT(handleTrajectoryCompleted()));
+  disconnect(this, SIGNAL(printToQConsole(QString)), this, SLOT(logInfo(QString)));
 
   robot_ptr_->SetController(NULL);
 }
@@ -61,6 +64,7 @@ const TrajectorySet& JointsPVTApp::getTrajectorySet(const int traj_idx) const
 
 void JointsPVTApp::clearAllTrajectories()
 {
+  CLOG(TRACE, "event");
   // clang-format off
   BEGIN_TRANSITION_MAP                         // - Current State -
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)     // ST_IDLE
@@ -73,6 +77,7 @@ void JointsPVTApp::clearAllTrajectories()
 
 bool JointsPVTApp::readTrajectories(const QString& ifilepath)
 {
+  CLOG(TRACE, "event") << "from '" << ifilepath << "'";
   QFile ifile(ifilepath);
   if (!ifile.open(QIODevice::ReadOnly | QIODevice::Text))
   {
@@ -109,12 +114,14 @@ bool JointsPVTApp::readTrajectories(const QString& ifilepath)
       return false;
   }
   traj_sets_.append(traj_set);
+  CLOG(INFO, "event") << "Trajectory parsed";
   ExternalEvent(ST_READY);
   return true;
 }
 
 void JointsPVTApp::runTransition(const int traj_idx)
 {
+  CLOG(TRACE, "event") << "of trajectory #" << traj_idx;
   JointsPVTAppData* data = new JointsPVTAppData(traj_idx);
 
   // clang-format off
@@ -129,6 +136,7 @@ void JointsPVTApp::runTransition(const int traj_idx)
 
 void JointsPVTApp::sendTrajectories(const int traj_idx)
 {
+  CLOG(TRACE, "event") << "of trajectory #" << traj_idx;
   JointsPVTAppData* data = new JointsPVTAppData(traj_idx);
 
   // clang-format off
@@ -166,6 +174,16 @@ void JointsPVTApp::handleTrajectoryCompleted()
 void JointsPVTApp::progressUpdate(const int progress_value)
 {
   emit trajectoryProgress(progress_value);
+}
+
+void JointsPVTApp::logInfo(const QString& text) const
+{
+  if (text.contains("warning", Qt::CaseSensitivity::CaseInsensitive))
+    CLOG(WARNING, "event") << text;
+  else if (text.contains("error", Qt::CaseSensitivity::CaseInsensitive))
+    CLOG(ERROR, "event") << text;
+  else
+    CLOG(INFO, "event") << text;
 }
 
 //--------- States actions -----------------------------------------------------------//
@@ -213,6 +231,10 @@ STATE_DEFINE(JointsPVTApp, Transition, JointsPVTAppData)
       // Set a simple trajectory composed by two waypoints (begin, end).
       transition_trajectories[i].timestamps = {0, t};
       transition_trajectories[i].values     = {current_cable_len, target_cable_len};
+      CLOG(INFO, "event") << QString("Cable #%1 transitioning from %2 m to %3 m")
+                               .arg(transition_trajectories[i].id)
+                               .arg(current_cable_len)
+                               .arg(target_cable_len);
     }
     // Send trajectories
     pthread_mutex_lock(&robot_ptr_->Mutex());
@@ -240,6 +262,10 @@ STATE_DEFINE(JointsPVTApp, Transition, JointsPVTAppData)
       // Set a simple trajectory composed by two waypoints (begin, end).
       transition_trajectories[i].timestamps = {0, t};
       transition_trajectories[i].values     = {current_motor_pos, target_motor_pos};
+      CLOG(INFO, "event") << QString("Motor #%1 transitioning from %2 to %3")
+                               .arg(transition_trajectories[i].id)
+                               .arg(current_motor_pos)
+                               .arg(target_motor_pos);
     }
     // Send trajectories
     pthread_mutex_lock(&robot_ptr_->Mutex());
@@ -286,6 +312,8 @@ STATE_DEFINE(JointsPVTApp, TrajectoryFollow, JointsPVTAppData)
 void JointsPVTApp::setCablesLenTraj(const bool relative, const vect<id_t>& motors_id,
                                     QTextStream& s, TrajectorySet& traj_set)
 {
+  CLOG(INFO, "event") << QString("File contains %1 cables length trajectories")
+                           .arg(relative ? "relative" : "absolute");
   traj_set.traj_cables_len.resize(motors_id.size());
   vectD current_cables_len(traj_set.traj_cables_len.size());
   for (size_t i = 0; i < motors_id.size(); i++)
@@ -312,6 +340,8 @@ void JointsPVTApp::setCablesLenTraj(const bool relative, const vect<id_t>& motor
 void JointsPVTApp::setMotorPosTraj(const bool relative, const vect<id_t>& motors_id,
                                    QTextStream& s, TrajectorySet& traj_set)
 {
+  CLOG(INFO, "event") << QString("File contains %1 motors position trajectories")
+                           .arg(relative ? "relative" : "absolute");
   traj_set.traj_motors_pos.resize(motors_id.size());
   vectI current_motors_pos(traj_set.traj_cables_len.size());
   for (size_t i = 0; i < motors_id.size(); i++)
@@ -338,6 +368,7 @@ void JointsPVTApp::setMotorPosTraj(const bool relative, const vect<id_t>& motors
 void JointsPVTApp::setMotorVelTraj(const vect<id_t>& motors_id, QTextStream& s,
                                    TrajectorySet& traj_set)
 {
+  CLOG(INFO, "event") << "File contains motors velocity trajectories";
   traj_set.traj_motors_vel.resize(motors_id.size());
   for (size_t i = 0; i < motors_id.size(); i++)
     traj_set.traj_motors_vel[i].id = motors_id[i];
@@ -355,6 +386,8 @@ void JointsPVTApp::setMotorVelTraj(const vect<id_t>& motors_id, QTextStream& s,
 void JointsPVTApp::setMotorTorqueTraj(const bool relative, const vect<id_t>& motors_id,
                                       QTextStream& s, TrajectorySet& traj_set)
 {
+  CLOG(INFO, "event") << QString("File contains %1 motors torque trajectories")
+                           .arg(relative ? "relative" : "absolute");
   traj_set.traj_motors_torque.resize(motors_id.size());
   vectS current_motors_torque(traj_set.traj_cables_len.size());
   for (size_t i = 0; i < motors_id.size(); i++)
