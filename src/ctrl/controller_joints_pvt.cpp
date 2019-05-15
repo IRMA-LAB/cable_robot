@@ -128,20 +128,24 @@ T ControllerJointsPVT::GetTrajectoryPointValue(const id_t id,
 
   WayPoint<T> waypoint;
   double progress = -1;
+  bool stop       = true;
   for (const Trajectory<T>& traj : trajectories)
   {
     if (traj.id != id)
       continue;
     waypoint = traj.waypointFromRelTime(traj_time_);
     progress = waypoint.ts / traj.timestamps.back();
-    stop_    = progress >= 1.0;
+    stop &= progress >= 1.0;
     break;
   }
 
   if (progress > 0 && (progress_counter++ % kProgressTriggerCounts == 0))
     emit trajectoryProgressStatus(qRound(progress * 100.));
-  if (stop_)
+  if (stop)
+  {
+    stop_ = true;
     emit trajectoryCompleted();
+  }
 
   return waypoint.value;
 }
