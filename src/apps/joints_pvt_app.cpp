@@ -45,6 +45,8 @@ JointsPVTApp::~JointsPVTApp()
   disconnect(this, SIGNAL(printToQConsole(QString)), this, SLOT(logInfo(QString)));
 
   robot_ptr_->SetController(NULL);
+  // debug
+  stop();
 }
 
 //--------- Public functions --------------------------------------------------------//
@@ -86,11 +88,6 @@ bool JointsPVTApp::readTrajectories(const QString& ifilepath)
     ExternalEvent(ST_IDLE);
     return false;
   }
-
-  // debug
-  robot_ptr_->EnableMotors();
-  robot_ptr_->UpdateHomeConfig(0.0, 0.0);
-  // end debug
 
   // Read header yielding information about trajectory type and involved motors
   QTextStream s(&ifile);
@@ -210,6 +207,11 @@ STATE_DEFINE(JointsPVTApp, Ready, NoEventData)
 {
   PrintStateTransition(prev_state_, ST_READY);
   prev_state_ = ST_READY;
+
+  // debug
+  robot_ptr_->EnableMotors();
+  robot_ptr_->UpdateHomeConfig(0.0, 0.0);
+  // end debug
 
   pthread_mutex_lock(&robot_ptr_->Mutex());
   controller_.StopTrajectoryFollowing();
