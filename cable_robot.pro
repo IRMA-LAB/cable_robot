@@ -31,6 +31,8 @@ HEADERS = \
     $$PWD/lib/easyloggingpp/src/easylogging++.h \
     $$PWD/lib/grab_common/grabcommon.h \
     $$PWD/lib/grab_common/pid/pid.h \
+    $$PWD/inc/gui/apps/manual_control_dialog.h \
+    $$PWD/inc/apps/manual_control_app.h
 
 SOURCES = \
     $$PWD/src/main.cpp \
@@ -63,6 +65,8 @@ SOURCES = \
     $$PWD/lib/easyloggingpp/src/easylogging++.cc \
     $$PWD/lib/grab_common/grabcommon.cpp \
     $$PWD/lib/grab_common/pid/pid.cpp \
+    $$PWD/src/gui/apps/manual_control_dialog.cpp \
+    $$PWD/src/apps/manual_control_app.cpp
 
 INCLUDEPATH += \
     $$PWD/inc \
@@ -154,7 +158,8 @@ FORMS += \
     $$PWD/widgets/homing/init_torque_form.ui \
     $$PWD/widgets/apps/joints_pvt_dialog.ui \
     $$PWD/widgets/apps/my3dscatterwidget.ui \
-    $$PWD/widgets/apps/input_form.ui
+    $$PWD/widgets/apps/input_form.ui \
+    $$PWD/widgets/apps/manual_control_dialog.ui
 
 RESOURCES += \
     resources/resources.qrc

@@ -1,7 +1,7 @@
 /**
  * @file main_gui.cpp
  * @author Simone Comari
- * @date 08 May 2019
+ * @date 16 May 2019
  * @brief This file includes definitions of classes present in main_gui.h.
  */
 
@@ -131,6 +131,16 @@ void MainGUI::on_pushButton_startApp_clicked()
     connect(joints_pvt_dialog_, SIGNAL(destroyed()), this, SLOT(enableInterface()));
     joints_pvt_dialog_->show();
     CLOG(INFO, "event") << "Prompt joints PVT dialog";
+  }
+  else if (ui->comboBox_apps->currentText() == "Manual Control")
+  {
+    robot_ptr_->eventSuccess();
+    man_ctrl_dialog_ = new ManualControlDialog(this, robot_ptr_);
+    connect(man_ctrl_dialog_, SIGNAL(destroyed()), robot_ptr_, SLOT(eventSuccess()));
+    connect(man_ctrl_dialog_, SIGNAL(destroyed()), this, SLOT(enableInterface()));
+    CLOG(INFO, "event") << "checkpoint 2";
+    man_ctrl_dialog_->show();
+    CLOG(INFO, "event") << "Prompt manual control dialog";
   }
 }
 

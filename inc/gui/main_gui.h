@@ -1,7 +1,7 @@
 /**
  * @file main_gui.h
  * @author Simone Comari
- * @date 08 May 2019
+ * @date 16 May 2019
  * @brief This file takes care of the functionalities of the main GUI of cable robot app.
  *
  * The functionalities of the main GUI include buttons management, signaling with children
@@ -19,6 +19,7 @@
 
 #include "ctrl/controller_singledrive.h"
 #include "gui/apps/joints_pvt_dialog.h"
+#include "gui/apps/manual_control_dialog.h"
 #include "gui/calib/calibration_dialog.h"
 #include "gui/homing/homing_dialog.h"
 #include "robot/cablerobot.h"
@@ -111,14 +112,15 @@ class MainGUI: public QDialog
   bool ec_network_valid_  = false;
   bool rt_thread_running_ = false;
 
-  Ui::MainGUI* ui                  = NULL;
-  CalibrationDialog* calib_dialog_ = NULL;
-  HomingDialog* homing_dialog_     = NULL;
+  Ui::MainGUI* ui                  = nullptr;
+  CalibrationDialog* calib_dialog_ = nullptr;
+  HomingDialog* homing_dialog_     = nullptr;
 
-  JointsPVTDialog* joints_pvt_dialog_ = NULL;
+  JointsPVTDialog* joints_pvt_dialog_ = nullptr;
+  ManualControlDialog* man_ctrl_dialog_ = nullptr;
 
   grabcdpr::Params config_params_;
-  CableRobot* robot_ptr_ = NULL;
+  CableRobot* robot_ptr_ = nullptr;
 
   void StartRobot();
   void DeleteRobot();
