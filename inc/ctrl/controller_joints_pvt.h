@@ -19,7 +19,7 @@ class ControllerJointsPVT: public QObject, public ControllerBase
   bool SetMotorsTorqueTrajectories(const vect<TrajectoryS>& trajectories);
 
   void PauseTrajectoryFollowing(const bool value);
-  void StopTrajectoryFollowing() { stop_ = true; }
+  void StopTrajectoryFollowing();
 
   bool IsPaused() const { return pause_; }
   /**
@@ -58,6 +58,8 @@ class ControllerJointsPVT: public QObject, public ControllerBase
   void trajectoryProgressStatus(const int) const;
 
  private:
+  static constexpr double kArrestTime_ = 1.0; // sec
+
   enum BitPosition
   {
     LENGTH,
@@ -70,7 +72,10 @@ class ControllerJointsPVT: public QObject, public ControllerBase
 
   grabrt::Clock clock_;
   double traj_time_;
+  double true_traj_time_;
   bool stop_;
+  bool stop_request_;
+  double stop_time_;
   bool new_trajectory_;
 
   bool pause_;
@@ -82,6 +87,8 @@ class ControllerJointsPVT: public QObject, public ControllerBase
   vect<TrajectoryI> traj_motors_pos_;
   vect<TrajectoryI> traj_motors_vel_;
   vect<TrajectoryS> traj_motors_torque_;
+
+  double GetProcessedTrajTime();
 
   template <typename T>
   T GetTrajectoryPointValue(const id_t id, const vect<Trajectory<T>>& trajectories);

@@ -52,13 +52,20 @@ bool ControllerJointsPVT::SetMotorsTorqueTrajectories(
   return true;
 }
 
+void ControllerJointsPVT::StopTrajectoryFollowing()
+{
+  stop_request_ = true;
+  stop_time_    = true_traj_time_;
+  traj_time_    = true_traj_time_;
+}
+
 void ControllerJointsPVT::PauseTrajectoryFollowing(const bool value)
 {
-  static timespec start_pause_time_;
+  static timespec start_pause_time;
   if (value)
-    start_pause_time_ = clock_.GetCurrentTime();
+    start_pause_time = clock_.GetCurrentTime();
   else
-    pause_time_ += clock_.Elapsed(start_pause_time_);
+    pause_time_ += clock_.Elapsed(start_pause_time);
   pause_ = value;
 }
 
@@ -66,7 +73,7 @@ vect<ControlAction>
 ControllerJointsPVT::CalcCtrlActions(const grabcdpr::Vars&,
                                      const vect<ActuatorStatus>& actuators_status)
 {
-  traj_time_ = clock_.Elapsed() - pause_time_;
+  true_traj_time_ = clock_.Elapsed() - pause_time_;
   vect<ControlAction> actions(modes_.size());
   for (size_t i = 0; i < actions.size(); i++)
   {
@@ -111,6 +118,23 @@ ControllerJointsPVT::CalcCtrlActions(const grabcdpr::Vars&,
   return actions;
 }
 
+double ControllerJointsPVT::GetProcessedTrajTime()
+{
+  static constexpr double kSlowingExp = -4.0;
+
+  if (stop_request_)
+  {
+    double time_since_stop = true_traj_time_ - stop_time_;
+    if (time_since_stop < kArrestTime_)
+      traj_time_ += (true_traj_time_ - traj_time_) * exp(kSlowingExp * time_since_stop);
+    else
+      stop_ = true;
+  }
+  else
+    traj_time_ = true_traj_time_;
+  return traj_time_;
+}
+
 template <typename T>
 T ControllerJointsPVT::GetTrajectoryPointValue(const id_t id,
                                                const vect<Trajectory<T>>& trajectories)
@@ -123,6 +147,7 @@ T ControllerJointsPVT::GetTrajectoryPointValue(const id_t id,
     new_trajectory_ = false;
     clock_.Reset();
     traj_time_       = 0.0;
+    true_traj_time_  = 0.0;
     progress_counter = 0;
   }
 
@@ -133,7 +158,7 @@ T ControllerJointsPVT::GetTrajectoryPointValue(const id_t id,
   {
     if (traj.id != id)
       continue;
-    waypoint = traj.waypointFromRelTime(traj_time_);
+    waypoint = traj.waypointFromRelTime(GetProcessedTrajTime());
     progress = waypoint.ts / traj.timestamps.back();
     stop &= progress >= 1.0;
     break;
@@ -154,9 +179,11 @@ void ControllerJointsPVT::Reset()
 {
   target_flags_.reset();
   stop_           = false;
+  stop_request_   = false;
   new_trajectory_ = true;
   pause_          = false;
   pause_time_     = 0.0;
+  stop_time_      = 0.0;
 }
 
 template <typename T>
