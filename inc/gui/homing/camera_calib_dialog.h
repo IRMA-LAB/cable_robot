@@ -74,7 +74,7 @@ class CameraCalibDialog: public QDialog
   CameraCalibSettingsDialog settings_win_;
   CameraCalibApp app_;
 
-  CameraParams calib_params_;
+  CameraParams camera_params_;
 
   bool parseCalibFile(
     const QString& filepath); // dummy, implement once we know calib params and file

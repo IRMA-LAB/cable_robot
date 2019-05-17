@@ -84,13 +84,13 @@ void CameraCalibDialog::on_pushButton_load_clicked()
     QMessageBox::warning(this, "File Error", "File is not valid!");
     return;
   }
-  emit cameraParamsReady(calib_params_);
+  emit cameraParamsReady(camera_params_);
 }
 
 void CameraCalibDialog::on_pushButton_loadDefault_clicked()
 {
   parseCalibFile(kDefaultCalibFile_);
-  emit cameraParamsReady(calib_params_);
+  emit cameraParamsReady(camera_params_);
 }
 
 //--------- Private functions --------------------------------------------------------//

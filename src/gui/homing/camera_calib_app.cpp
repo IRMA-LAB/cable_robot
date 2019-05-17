@@ -59,9 +59,10 @@ bool WorkerThread::processFrame(const cv::Mat& frame)
 {
   static int counter = 0; // dummy
   // TODO ... (store valid frames)
-  emit calibFrameCaptured(counter++, settings_.target_frames_num);
-  if (counter < settings_.target_frames_num)
+  emit calibFrameCaptured(counter++, settings_.num_frames);
+  if (counter < settings_.num_frames)
     return false;
+
   counter = 0;
   // TODO ... (perform calibration)
   CameraParams p;

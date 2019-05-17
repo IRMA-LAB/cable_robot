@@ -51,7 +51,7 @@ class CameraCalibApp: public QDialog
   Q_OBJECT
 
  public:
-  explicit CameraCalibApp(QWidget* parent = 0);
+  explicit CameraCalibApp(QWidget* parent = nullptr);
   ~CameraCalibApp();
 
   void start(const CameraCalibSettings& settings);
@@ -73,7 +73,7 @@ class CameraCalibApp: public QDialog
 
  private:
   Ui::CameraCalibApp* ui;
-  WorkerThread* worker_thread_ = NULL;
+  WorkerThread* worker_thread_ = nullptr;
 
   void saveCameraParams(const CameraParams& params);
 };

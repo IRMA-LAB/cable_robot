@@ -169,16 +169,31 @@ struct CameraParams
 
 struct CameraCalibSettings
 {
-  CameraCalibSettings() {}
-  CameraCalibSettings(const int frames_num, const bool tangential_dist)
-    : target_frames_num(frames_num), use_tangential_dist(tangential_dist)
-  {}
+  CameraCalibSettings() : num_frames(0)
+  {
+    grid_width = square_size * (board_size.width - 1);
+  }
+  CameraCalibSettings(const size_t number_frames) : num_frames(number_frames)
+  {
+    grid_width = square_size * (board_size.width - 1);
+  }
 
-  int target_frames_num    = 15;
-  bool use_tangential_dist = false;
+  size_t num_frames; // The number of frames to use from the input for calibration
 
-  int chessboard_flags     = cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_NORMALIZE_IMAGE;
-  cv::Size chessboard_size = cv::Size(18, 13);
+  cv::Size board_size   = cv::Size(9, 6);
+  float square_size     = 26.f; // The size of a square in mm
+  int delay             = 5000; // In case of a video input
+  bool write_points     = true; // Write detected feature points
+  bool write_extrinsics = true; // Write extrinsic parameters
+  bool write_grid       = true; // Write refined 3D target grid points
+  int chess_board_flags =
+    cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_NORMALIZE_IMAGE | cv::CALIB_CB_FAST_CHECK;
+  std::string pattern_to_use = "CHESSBOARD";
+  int calib_flags = cv::fisheye::CALIB_FIX_SKEW | cv::fisheye::CALIB_RECOMPUTE_EXTRINSIC |
+                    cv::fisheye::CALIB_FIX_PRINCIPAL_POINT |
+                    cv::fisheye::CALIB_CHECK_COND;
+  std::string ofilepath = SRCDIR "/output_camera_calibration.json";
+  float grid_width;
 };
 
 #endif // CABLE_ROBOT_TYPES_H
