@@ -18,7 +18,7 @@ constexpr char* JointsPVTApp::kStatesStr[];
 JointsPVTApp::JointsPVTApp(QObject* parent, CableRobot* robot,
                            const vect<grabcdpr::ActuatorParams>& params)
   : QObject(parent), StateMachine(ST_MAX_STATES), robot_ptr_(robot),
-    controller_(params, this)
+    controller_(params, robot->GetRtCycleTimeNsec(), this)
 {
   connect(&controller_, SIGNAL(trajectoryProgressStatus(int)), this,
           SLOT(progressUpdate(int)), Qt::ConnectionType::QueuedConnection);

@@ -10,7 +10,7 @@ class ControllerJointsPVT: public QObject, public ControllerBase
 
  public:
   explicit ControllerJointsPVT(const vect<grabcdpr::ActuatorParams>& params,
-                               QObject* parent = NULL);
+                               const uint32_t cycle_t_nsec, QObject* parent = NULL);
   ~ControllerJointsPVT() override {}
 
   bool SetCablesLenTrajectories(const vect<TrajectoryD>& trajectories);
@@ -21,7 +21,7 @@ class ControllerJointsPVT: public QObject, public ControllerBase
   void PauseTrajectoryFollowing(const bool value);
   void StopTrajectoryFollowing();
 
-  bool IsPaused() const { return pause_; }
+  bool IsPaused() const { return stop_; }
   /**
    * @brief Check if active target is reached, independently from the control mode.
    * @return _True_ if target is reached, _false_ otherwise.
@@ -71,15 +71,19 @@ class ControllerJointsPVT: public QObject, public ControllerBase
   std::bitset<4> target_flags_;
 
   grabrt::Clock clock_;
+  double cycle_time_;
   double traj_time_;
   double true_traj_time_;
   bool stop_;
-  bool stop_request_;
   double stop_time_;
+  bool stop_request_;
+  double stop_request_time_;
   bool new_trajectory_;
 
-  bool pause_;
-  double pause_time_;
+  double paused_time_;
+  double resume_request_time_;
+  bool resume_request_;
+
 
   WinchesTorqueControl winches_controller_;
 

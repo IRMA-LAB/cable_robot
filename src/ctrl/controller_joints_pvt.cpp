@@ -1,9 +1,10 @@
 #include "ctrl/controller_joints_pvt.h"
 
 ControllerJointsPVT::ControllerJointsPVT(const vect<grabcdpr::ActuatorParams>& params,
-                                         QObject* parent)
+                                         const uint32_t cycle_t_nsec, QObject* parent)
   : QObject(parent), ControllerBase(), winches_controller_(params)
 {
+  cycle_time_ = grabrt::NanoSec2Sec(cycle_t_nsec);
   Reset();
 }
 
@@ -54,31 +55,35 @@ bool ControllerJointsPVT::SetMotorsTorqueTrajectories(
 
 void ControllerJointsPVT::StopTrajectoryFollowing()
 {
-  stop_request_ = true;
-  stop_time_    = true_traj_time_;
-  traj_time_    = true_traj_time_;
+  stop_request_      = true;
+  stop_request_time_ = true_traj_time_;
+  traj_time_         = true_traj_time_;
 }
 
 void ControllerJointsPVT::PauseTrajectoryFollowing(const bool value)
 {
-  static timespec start_pause_time;
   if (value)
-    start_pause_time = clock_.GetCurrentTime();
+    StopTrajectoryFollowing();
   else
-    pause_time_ += clock_.Elapsed(start_pause_time);
-  pause_ = value;
+  {
+    paused_time_ += true_traj_time_ - stop_time_;
+    stop_                = false;
+    resume_request_      = true;
+    resume_request_time_ = true_traj_time_ - paused_time_;
+    traj_time_           = resume_request_time_;
+  }
 }
 
 vect<ControlAction>
 ControllerJointsPVT::CalcCtrlActions(const grabcdpr::Vars&,
                                      const vect<ActuatorStatus>& actuators_status)
 {
-  true_traj_time_ = clock_.Elapsed() - pause_time_;
+  true_traj_time_ = clock_.Elapsed() - paused_time_;
   vect<ControlAction> actions(modes_.size());
   for (size_t i = 0; i < actions.size(); i++)
   {
     actions[i].motor_id  = motors_id_[i];
-    actions[i].ctrl_mode = (stop_ || pause_) ? NONE : modes_[i];
+    actions[i].ctrl_mode = stop_ ? NONE : modes_[i];
     switch (actions[i].ctrl_mode)
     {
       case CABLE_LENGTH:
@@ -124,11 +129,27 @@ double ControllerJointsPVT::GetProcessedTrajTime()
 
   if (stop_request_)
   {
-    double time_since_stop = true_traj_time_ - stop_time_;
-    if (time_since_stop < kArrestTime_)
-      traj_time_ += (true_traj_time_ - traj_time_) * exp(kSlowingExp * time_since_stop);
+    double time_since_stop_request = true_traj_time_ - stop_request_time_;
+    if (time_since_stop_request <= kArrestTime_)
+      traj_time_ += cycle_time_ * exp(kSlowingExp * time_since_stop_request);
     else
-      stop_ = true;
+    {
+      stop_         = true;
+      stop_time_    = traj_time_;
+      stop_request_ = false;
+    }
+  }
+  else if (resume_request_)
+  {
+    double time_since_resume_request = true_traj_time_ - resume_request_time_;
+    if (time_since_resume_request <= kArrestTime_)
+      traj_time_ +=
+        cycle_time_ * exp(kSlowingExp * (kArrestTime_ - time_since_resume_request));
+    else
+    {
+      resume_request_ = false;
+      paused_time_ += true_traj_time_ - traj_time_;
+    }
   }
   else
     traj_time_ = true_traj_time_;
@@ -178,12 +199,12 @@ T ControllerJointsPVT::GetTrajectoryPointValue(const id_t id,
 void ControllerJointsPVT::Reset()
 {
   target_flags_.reset();
-  stop_           = false;
-  stop_request_   = false;
-  new_trajectory_ = true;
-  pause_          = false;
-  pause_time_     = 0.0;
-  stop_time_      = 0.0;
+  stop_              = false;
+  stop_request_      = false;
+  new_trajectory_    = true;
+  paused_time_       = 0.0;
+  stop_request_time_ = 0.0;
+  stop_time_         = 0.0;
 }
 
 template <typename T>
