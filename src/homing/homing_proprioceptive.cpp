@@ -1,7 +1,7 @@
 /**
  * @file homing_proprioceptive.cpp
  * @author Simone Comari
- * @date 27 Mar 2019
+ * @date 20 May 2019
  * @brief This file includes definitions of classes present in homing_proprioceptive.h.
  */
 
@@ -51,7 +51,6 @@ std::ostream& operator<<(std::ostream& stream, const HomingProprioceptiveHomeDat
 //------------------------------------------------------------------------------------//
 
 // For static constexpr passed by reference we need a dummy definition no matter what
-constexpr double HomingProprioceptive::kCutoffFreq_;
 constexpr char* HomingProprioceptive::kStatesStr[];
 
 HomingProprioceptive::HomingProprioceptive(QObject* parent, CableRobot* robot)
@@ -151,9 +150,6 @@ void HomingProprioceptive::Stop()
 {
   CLOG(TRACE, "event");
 
-  qmutex_.lock();
-  stop_cmd_recv_ = true;
-  qmutex_.unlock();
   emit stopWaitingCmd();
 }
 
@@ -360,7 +356,6 @@ STATE_DEFINE(HomingProprioceptive, Enabled, NoEventData)
 
   robot_ptr_->SetMotorsOpMode(grabec::CYCLIC_TORQUE);
   qmutex_.lock();
-  stop_cmd_recv_ = false; // reset
   if (disable_cmd_recv_)
     InternalEvent(ST_IDLE);
   qmutex_.unlock();
@@ -399,7 +394,7 @@ STATE_DEFINE(HomingProprioceptive, StartUp, HomingProprioceptiveStartData)
       break;
     msg.append(QString("\n\t%1±%2 ‰").arg(init_torques_.back()).arg(kTorqueSsErrTol_));
   }
-  if (ret != RetVal::OK || WaitUntilPlatformSteady() != RetVal::OK)
+  if (ret != RetVal::OK || robot_ptr_->WaitUntilPlatformSteady() != RetVal::OK)
   {
     emit printToQConsole("WARNING: Start up phase failed");
     InternalEvent(ST_ENABLED);
@@ -461,7 +456,7 @@ STATE_DEFINE(HomingProprioceptive, SwitchCable, NoEventData)
   meas_step_ = 0; // reset
 
   if (robot_ptr_->WaitUntilTargetReached() == RetVal::OK &&
-      WaitUntilPlatformSteady() == RetVal::OK)
+      robot_ptr_->WaitUntilPlatformSteady() == RetVal::OK)
   {
     emit stateChanged(ST_SWITCH_CABLE);
     return;
@@ -495,7 +490,7 @@ STATE_DEFINE(HomingProprioceptive, Coiling, NoEventData)
   emit printToQConsole(QString("Next torque setpoint = %1 ‰").arg(torques_[meas_step_]));
 
   if (robot_ptr_->WaitUntilTargetReached() == RetVal::OK &&
-      WaitUntilPlatformSteady() == RetVal::OK)
+      robot_ptr_->WaitUntilPlatformSteady() == RetVal::OK)
   {
     // Record motor position for future uncoiling phase
     reg_pos_[meas_step_] =
@@ -524,7 +519,7 @@ STATE_DEFINE(HomingProprioceptive, Uncoiling, NoEventData)
     controller_.SetMotorTorqueTarget(torques_.front());
     pthread_mutex_unlock(&robot_ptr_->Mutex());
     if (robot_ptr_->WaitUntilTargetReached() == RetVal::OK &&
-        WaitUntilPlatformSteady() == RetVal::OK)
+        robot_ptr_->WaitUntilPlatformSteady() == RetVal::OK)
     {
       working_actuator_idx_++;
       InternalEvent(ST_SWITCH_CABLE);
@@ -545,7 +540,7 @@ STATE_DEFINE(HomingProprioceptive, Uncoiling, NoEventData)
     QString("Next position setpoint = %1").arg(reg_pos_[kOffset - meas_step_]));
 
   if (robot_ptr_->WaitUntilTargetReached() == RetVal::OK &&
-      WaitUntilPlatformSteady() == RetVal::OK)
+      robot_ptr_->WaitUntilPlatformSteady() == RetVal::OK)
   {
     int16_t actual_torque =
       robot_ptr_->GetActuatorStatus(active_actuators_id_[working_actuator_idx_])
@@ -611,58 +606,6 @@ STATE_DEFINE(HomingProprioceptive, Fault, NoEventData)
 }
 
 //--------- Private functions --------------------------------------------------------//
-
-RetVal HomingProprioceptive::WaitUntilPlatformSteady()
-{
-  // Compute these once for all
-  static constexpr size_t kBuffSize =
-    static_cast<size_t>(kBufferingTimeSec_ / CableRobot::kCycleWaitTimeSec);
-  // LP filters setup
-  static std::vector<grabnum::LowPassFilter> lp_filters(
-    active_actuators_id_.size(),
-    grabnum::LowPassFilter(kCutoffFreq_, CableRobot::kCycleWaitTimeSec));
-  for (size_t i = 0; i < active_actuators_id_.size(); i++)
-    lp_filters[i].Reset();
-
-  // Init
-  bool swinging = true;
-  std::vector<RingBufferD> pulleys_angles(active_actuators_id_.size(),
-                                          RingBufferD(kBuffSize));
-  grabrt::ThreadClock clock(grabrt::Sec2NanoSec(CableRobot::kCycleWaitTimeSec));
-  // Start waiting
-  while (swinging)
-  {
-    for (size_t i = 0; i < active_actuators_id_.size(); i++)
-    {
-      QCoreApplication::processEvents();
-      qmutex_.lock();
-      // Check if external abort signal is received
-      if (stop_cmd_recv_ || disable_cmd_recv_)
-      {
-        qmutex_.unlock();
-        return RetVal::EINT;
-      }
-      pulleys_angles[i].Add(
-        lp_filters[i].Filter(actuators_status_[i].pulley_angle)); // add filtered angle
-      qmutex_.unlock();
-      if (!pulleys_angles[i].IsFull()) // wait at least until buffer is full
-        continue;
-      // Condition to detect steadyness
-      swinging = grabnum::Std(pulleys_angles[i].Data()) > kMaxAngleDeviation_;
-      if (swinging)
-        break;
-    }
-    // Check if timeout expired (safety feature to prevent hanging in forever)
-    if (clock.ElapsedFromStart() > CableRobot::kMaxWaitTimeSec)
-    {
-      emit printToQConsole(
-        "WARNING: Platform is taking too long to stabilize: operation aborted");
-      return RetVal::ETIMEOUT;
-    }
-    clock.WaitUntilNext();
-  }
-  return RetVal::OK;
-}
 
 void HomingProprioceptive::DumpMeasAndMoveNext()
 {

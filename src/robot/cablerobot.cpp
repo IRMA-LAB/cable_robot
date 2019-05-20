@@ -1,7 +1,7 @@
 /**
  * @file cablerobot.cpp
  * @author Simone Comari, Edoardo Idà
- * @date 13 May 2019
+ * @date 20 May 2019
  * @brief File containing definitions of functions and class declared in cablerobot.h.
  */
 
@@ -9,7 +9,8 @@
 
 constexpr double CableRobot::kMaxWaitTimeSec;
 constexpr double CableRobot::kCycleWaitTimeSec;
-constexpr char* CableRobot::kStatesStr[];
+constexpr char* CableRobot::kStatesStr_[];
+constexpr double CableRobot::kCutoffFreq_;
 
 CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
   : QObject(parent), StateMachine(ST_MAX_STATES), platform_(grabcdpr::TILT_TORSION),
@@ -288,6 +289,9 @@ void CableRobot::SetController(ControllerBase* controller)
 
 RetVal CableRobot::WaitUntilTargetReached()
 {
+  qmutex_.lock();
+  is_waiting_ = true;
+  qmutex_.unlock();
   grabrt::ThreadClock clock(grabrt::Sec2NanoSec(kCycleWaitTimeSec));
   while (1)
   {
@@ -296,6 +300,9 @@ RetVal CableRobot::WaitUntilTargetReached()
     if (controller_->TargetReached())
     {
       pthread_mutex_unlock(&mutex_);
+      qmutex_.lock();
+      is_waiting_ = false;
+      qmutex_.unlock();
       return RetVal::OK;
     }
     pthread_mutex_unlock(&mutex_);
@@ -304,6 +311,7 @@ RetVal CableRobot::WaitUntilTargetReached()
     qmutex_.lock();
     if (stop_waiting_cmd_recv_)
     {
+      is_waiting_            = false;
       stop_waiting_cmd_recv_ = false;
       qmutex_.unlock();
       return RetVal::EINT;
@@ -312,12 +320,80 @@ RetVal CableRobot::WaitUntilTargetReached()
     // Check if timeout expired (safety feature to prevent hanging in forever)
     if (clock.ElapsedFromStart() > kMaxWaitTimeSec)
     {
+      qmutex_.lock();
+      is_waiting_ = false;
+      qmutex_.unlock();
       emit printToQConsole(
         "WARNING: Actuator is taking too long to reach target: operation aborted");
       return RetVal::ETIMEOUT;
     }
     clock.WaitUntilNext();
   }
+}
+
+RetVal CableRobot::WaitUntilPlatformSteady()
+{
+  // Compute these once for all
+  static constexpr size_t kBuffSize =
+    static_cast<size_t>(kBufferingTimeSec_ / kCycleWaitTimeSec);
+  // LP filters setup
+  static std::vector<grabnum::LowPassFilter> lp_filters(
+    active_actuators_id_.size(), grabnum::LowPassFilter(kCutoffFreq_, kCycleWaitTimeSec));
+  for (size_t i = 0; i < active_actuators_id_.size(); i++)
+    lp_filters[i].Reset();
+
+  // Init
+  qmutex_.lock();
+  is_waiting_ = true;
+  qmutex_.unlock();
+  bool swinging = true;
+  std::vector<RingBufferD> pulleys_angles(active_actuators_id_.size(),
+                                          RingBufferD(kBuffSize));
+  grabrt::ThreadClock clock(grabrt::Sec2NanoSec(kCycleWaitTimeSec));
+  // Start waiting
+  while (swinging)
+  {
+    for (size_t i = 0; i < active_actuators_id_.size(); i++)
+    {
+      // Check if external abort signal is received
+      QCoreApplication::processEvents();
+      qmutex_.lock();
+      if (stop_waiting_cmd_recv_)
+      {
+        is_waiting_            = false;
+        stop_waiting_cmd_recv_ = false;
+        qmutex_.unlock();
+        return RetVal::EINT;
+      }
+      qmutex_.unlock();
+      // Add filtered angle
+      pthread_mutex_lock(&mutex_);
+      double current_pulley_angle = active_actuators_ptrs_[i]->GetStatus().pulley_angle;
+      pthread_mutex_unlock(&mutex_);
+      pulleys_angles[i].Add(lp_filters[i].Filter(current_pulley_angle));
+      if (!pulleys_angles[i].IsFull()) // wait at least until buffer is full
+        continue;
+      // Condition to detect steadyness
+      swinging = grabnum::Std(pulleys_angles[i].Data()) > kMaxAngleDeviation_;
+      if (swinging)
+        break;
+    }
+    // Check if timeout expired (safety feature to prevent hanging in forever)
+    if (clock.ElapsedFromStart() > kMaxWaitTimeSec)
+    {
+      qmutex_.lock();
+      is_waiting_ = false;
+      qmutex_.unlock();
+      emit printToQConsole(
+        "WARNING: Platform is taking too long to stabilize: operation aborted");
+      return RetVal::ETIMEOUT;
+    }
+    clock.WaitUntilNext();
+  }
+  qmutex_.lock();
+  is_waiting_ = false;
+  qmutex_.unlock();
+  return RetVal::OK;
 }
 
 //--------- External Events (Public slots) ------------------------------------------//
@@ -516,9 +592,9 @@ void CableRobot::PrintStateTransition(const States current_state,
   QString msg;
   if (current_state != ST_MAX_STATES)
     msg = QString("CableRobot state transition: %1 --> %2")
-            .arg(kStatesStr[current_state], kStatesStr[new_state]);
+            .arg(kStatesStr_[current_state], kStatesStr_[new_state]);
   else
-    msg = QString("CableRobot initial state: %1").arg(kStatesStr[new_state]);
+    msg = QString("CableRobot initial state: %1").arg(kStatesStr_[new_state]);
   emit printToQConsole(msg);
 }
 

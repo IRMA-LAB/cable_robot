@@ -1,7 +1,7 @@
 /**
  * @file cablerobot.h
  * @author Simone Comari, Edoardo Idà
- * @date 13 May 2019
+ * @date 20 May 2019
  * @brief File containing the virtualization of the physical cable robot, in terms of
  * components, signalig and low level operations.
  */
@@ -16,6 +16,7 @@
 
 #include "StateMachine.h"
 #include "easylogging++.h"
+#include "inc/filters.h"
 #include "libcdpr/inc/types.h"
 #include "libgrabec/inc/ethercatmaster.h"
 #if INCLUDE_EASYCAT
@@ -246,6 +247,18 @@ class CableRobot: public QObject,
    */
   RetVal WaitUntilTargetReached();
 
+  /**
+   * @brief WaitUntilPlatformSteady
+   * @return
+   */
+  RetVal WaitUntilPlatformSteady();
+
+  /**
+   * @brief isWaiting
+   * @return
+   */
+  bool isWaiting() const { return is_waiting_; }
+
  public slots:
   /**
    * @brief Stop waiting command, to be used to manually interrupt a waiting cycle.
@@ -370,18 +383,26 @@ class CableRobot: public QObject,
   void EcWorkFun() override final;      // lives in the RT thread
   void EcEmergencyFun() override final; // lives in the RT thread
 
-  // Control related
-  ControllerBase* controller_ = NULL;
+  // Waiting functions
   QMutex qmutex_;
   bool stop_waiting_cmd_recv_ = false;
+  bool is_waiting_            = false;
+
+  // Control related
+  ControllerBase* controller_ = NULL;
 
   void ControlStep();
+
+  // Tuning params for detecting platform steadyness
+  static constexpr double kBufferingTimeSec_  = 3.0;     // [sec]
+  static constexpr double kCutoffFreq_        = 20.0;    // [Hz]
+  static constexpr double kMaxAngleDeviation_ = 0.00005; // [rad]
 
  private:
   //--------- State machine --------------------------------------------------//
 
   // clang-format off
-  static constexpr char* kStatesStr[] = {
+  static constexpr char* kStatesStr_[] = {
     const_cast<char*>("IDLE"),
     const_cast<char*>("ENABLED"),
     const_cast<char*>("CALIBRATION"),

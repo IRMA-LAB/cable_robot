@@ -1,7 +1,7 @@
 /**
  * @file homing_proprioceptive.h
  * @author Simone Comari
- * @date 11 Mar 2019
+ * @date 20 May 2019
  * @brief This file includes classes necessary to implement the homing proprioceptive
  * algorithm.
  */
@@ -16,7 +16,6 @@
 
 #include "StateMachine.h"
 #include "easylogging++.h"
-#include "inc/filters.h"
 
 #include "ctrl/controller_singledrive.h"
 #include "homing/matlab_thread.h"
@@ -271,9 +270,7 @@ class HomingProprioceptive: public QObject, public StateMachine
   vect<qint16> torques_;
   vect<qint32> reg_pos_;
 
-  bool stop_cmd_recv_;
   bool disable_cmd_recv_;
-
   QMutex qmutex_;
 
   vect<id_t> active_actuators_id_;
@@ -282,13 +279,6 @@ class HomingProprioceptive: public QObject, public StateMachine
   static constexpr int kOptProgressIntervalMsec_ = 150;
   QTimer optimization_progess_timer_;
   int optimization_progress_counter_;
-
-  // Tuning params for detecting platform steadyness
-  static constexpr double kBufferingTimeSec_  = 3.0;     // [sec]
-  static constexpr double kCutoffFreq_        = 20.0;    // [Hz]
-  static constexpr double kMaxAngleDeviation_ = 0.00005; // [rad]
-
-  RetVal WaitUntilPlatformSteady();
 
   void DumpMeasAndMoveNext();
 
