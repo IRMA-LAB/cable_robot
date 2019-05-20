@@ -64,6 +64,10 @@ class JointsPVTApp: public QObject, public StateMachine
   void trajectoryComplete() const;
 
   void trajectoryProgress(const int) const;
+  /**
+   * @brief Stop waiting command.
+   */
+  void stopWaitingCmd() const;
 
  private slots:
   // For signals emitted by controller

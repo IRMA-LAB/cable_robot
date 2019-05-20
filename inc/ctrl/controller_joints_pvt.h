@@ -18,10 +18,12 @@ class ControllerJointsPVT: public QObject, public ControllerBase
   bool SetMotorsVelTrajectories(const vect<TrajectoryI>& trajectories);
   bool SetMotorsTorqueTrajectories(const vect<TrajectoryS>& trajectories);
 
-  void PauseTrajectoryFollowing(const bool value);
-  void StopTrajectoryFollowing();
+  void pauseTrajectoryFollowing();
+  void resumeTrajectoryFollowing();
+  void stopTrajectoryFollowing();
 
-  bool IsPaused() const { return stop_; }
+  bool requestPending() const { return stop_request_ || resume_request_; }
+  bool IsPaused() const { return (stop_ || stop_request_) && !resume_request_; }
   /**
    * @brief Check if active target is reached, independently from the control mode.
    * @return _True_ if target is reached, _false_ otherwise.
@@ -92,7 +94,7 @@ class ControllerJointsPVT: public QObject, public ControllerBase
   vect<TrajectoryI> traj_motors_vel_;
   vect<TrajectoryS> traj_motors_torque_;
 
-  double GetProcessedTrajTime();
+  void processTrajTime();
 
   template <typename T>
   T GetTrajectoryPointValue(const id_t id, const vect<Trajectory<T>>& trajectories);

@@ -26,6 +26,7 @@ JointsPVTApp::JointsPVTApp(QObject* parent, CableRobot* robot,
           SLOT(handleTrajectoryCompleted()), Qt::ConnectionType::QueuedConnection);
   connect(this, SIGNAL(printToQConsole(QString)), this, SLOT(logInfo(QString)),
           Qt::ConnectionType::DirectConnection);
+  connect(this, SIGNAL(stopWaitingCmd()), robot_ptr_, SLOT(stopWaiting()));
 
   controller_.SetMotorsID(robot_ptr_->GetActiveMotorsID());
   robot->SetController(&controller_);
@@ -43,6 +44,7 @@ JointsPVTApp::~JointsPVTApp()
   disconnect(&controller_, SIGNAL(trajectoryCompleted()), this,
              SLOT(handleTrajectoryCompleted()));
   disconnect(this, SIGNAL(printToQConsole(QString)), this, SLOT(logInfo(QString)));
+  disconnect(this, SIGNAL(stopWaitingCmd()), robot_ptr_, SLOT(stopWaiting()));
 
   robot_ptr_->SetController(NULL);
   // debug
@@ -54,8 +56,13 @@ JointsPVTApp::~JointsPVTApp()
 void JointsPVTApp::pause()
 {
   pthread_mutex_lock(&robot_ptr_->Mutex());
-  bool is_paused = controller_.IsPaused();
-  controller_.PauseTrajectoryFollowing(!is_paused);
+  if (!controller_.requestPending())
+  {
+    if (controller_.IsPaused())
+      controller_.resumeTrajectoryFollowing();
+    else
+      controller_.pauseTrajectoryFollowing();
+  }
   pthread_mutex_unlock(&robot_ptr_->Mutex());
 }
 
@@ -155,6 +162,9 @@ void JointsPVTApp::sendTrajectories(const int traj_idx)
 
 void JointsPVTApp::stop()
 {
+  if (robot_ptr_->isWaiting())
+    emit stopWaitingCmd();
+
   // clang-format off
   BEGIN_TRANSITION_MAP                         // - Current State -
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)     // ST_IDLE
@@ -214,7 +224,7 @@ STATE_DEFINE(JointsPVTApp, Ready, NoEventData)
   // end debug
 
   pthread_mutex_lock(&robot_ptr_->Mutex());
-  controller_.StopTrajectoryFollowing();
+  controller_.stopTrajectoryFollowing();
   pthread_mutex_unlock(&robot_ptr_->Mutex());
 }
 
@@ -223,7 +233,7 @@ STATE_DEFINE(JointsPVTApp, Transition, JointsPVTAppData)
   PrintStateTransition(prev_state_, ST_TRANSITION);
   prev_state_ = ST_TRANSITION;
 
-  static constexpr double kMaxCableSpeed = 0.001; // [m/s]
+  static constexpr double kMaxCableSpeed = 0.002; // [m/s]
 
   if (traj_sets_[data->traj_idx].traj_type == CABLE_LENGTH)
   {
@@ -290,6 +300,9 @@ STATE_DEFINE(JointsPVTApp, TrajectoryFollow, JointsPVTAppData)
 {
   PrintStateTransition(prev_state_, ST_TRAJECTORY_FOLLOW);
   prev_state_ = ST_TRAJECTORY_FOLLOW;
+
+  if (robot_ptr_->WaitUntilPlatformSteady() != RetVal::OK)
+    return;
 
   switch (traj_sets_[data->traj_idx].traj_type)
   {

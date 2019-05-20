@@ -53,25 +53,22 @@ bool ControllerJointsPVT::SetMotorsTorqueTrajectories(
   return true;
 }
 
-void ControllerJointsPVT::StopTrajectoryFollowing()
+void ControllerJointsPVT::stopTrajectoryFollowing()
 {
   stop_request_      = true;
   stop_request_time_ = true_traj_time_;
   traj_time_         = true_traj_time_;
 }
 
-void ControllerJointsPVT::PauseTrajectoryFollowing(const bool value)
+void ControllerJointsPVT::pauseTrajectoryFollowing() { stopTrajectoryFollowing(); }
+
+void ControllerJointsPVT::resumeTrajectoryFollowing()
 {
-  if (value)
-    StopTrajectoryFollowing();
-  else
-  {
-    paused_time_ += true_traj_time_ - stop_time_;
-    stop_                = false;
-    resume_request_      = true;
-    resume_request_time_ = true_traj_time_ - paused_time_;
-    traj_time_           = resume_request_time_;
-  }
+  paused_time_ += true_traj_time_ - stop_time_;
+  stop_                = false;
+  resume_request_      = true;
+  resume_request_time_ = true_traj_time_ - paused_time_;
+  traj_time_           = resume_request_time_;
 }
 
 vect<ControlAction>
@@ -123,7 +120,7 @@ ControllerJointsPVT::CalcCtrlActions(const grabcdpr::Vars&,
   return actions;
 }
 
-double ControllerJointsPVT::GetProcessedTrajTime()
+void ControllerJointsPVT::processTrajTime()
 {
   static constexpr double kSlowingExp = -4.0;
 
@@ -153,7 +150,6 @@ double ControllerJointsPVT::GetProcessedTrajTime()
   }
   else
     traj_time_ = true_traj_time_;
-  return traj_time_;
 }
 
 template <typename T>
@@ -179,7 +175,8 @@ T ControllerJointsPVT::GetTrajectoryPointValue(const id_t id,
   {
     if (traj.id != id)
       continue;
-    waypoint = traj.waypointFromRelTime(GetProcessedTrajTime());
+    processTrajTime();  // possibly apply smooth resume/stop
+    waypoint = traj.waypointFromRelTime(traj_time_);
     progress = waypoint.ts / traj.timestamps.back();
     stop &= progress >= 1.0;
     break;
@@ -201,6 +198,7 @@ void ControllerJointsPVT::Reset()
   target_flags_.reset();
   stop_              = false;
   stop_request_      = false;
+  resume_request_    = false;
   new_trajectory_    = true;
   paused_time_       = 0.0;
   stop_request_time_ = 0.0;
