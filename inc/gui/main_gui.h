@@ -24,7 +24,7 @@
 #include "gui/homing/homing_dialog.h"
 #include "robot/cablerobot.h"
 
-#define DEBUG_GUI 0
+#define DEBUG_GUI 1
 
 using GSWDOpModes = grabec::GoldSoloWhistleOperationModes; /**< Shortcut for op modes. */
 
@@ -131,7 +131,7 @@ class MainGUI: public QDialog
   QPushButton* pushButton_debug;
   QSpacerItem* verticalSpacer_5;
   // Insert your debug object here..
-  MyDebugClass* temp_app = NULL;
+//  MyDebugClass* temp_app = NULL;
 #endif
 
  private:

@@ -47,8 +47,6 @@ JointsPVTApp::~JointsPVTApp()
   disconnect(this, SIGNAL(stopWaitingCmd()), robot_ptr_, SLOT(stopWaiting()));
 
   robot_ptr_->SetController(NULL);
-  // debug
-  stop();
 }
 
 //--------- Public functions --------------------------------------------------------//
@@ -173,9 +171,6 @@ void JointsPVTApp::stop()
       TRANSITION_MAP_ENTRY (ST_READY)          // ST_TRAJECTORY_FOLLOW
   END_TRANSITION_MAP(NULL)
   // clang-format on
-
-  // debug
-  robot_ptr_->DisableMotors();
 }
 
 //--------- Private slots -----------------------------------------------------------//
@@ -218,11 +213,6 @@ STATE_DEFINE(JointsPVTApp, Ready, NoEventData)
   PrintStateTransition(prev_state_, ST_READY);
   prev_state_ = ST_READY;
 
-  // debug
-  robot_ptr_->EnableMotors();
-  robot_ptr_->UpdateHomeConfig(0.0, 0.0);
-  // end debug
-
   pthread_mutex_lock(&robot_ptr_->Mutex());
   controller_.stopTrajectoryFollowing();
   pthread_mutex_unlock(&robot_ptr_->Mutex());
@@ -233,7 +223,7 @@ STATE_DEFINE(JointsPVTApp, Transition, JointsPVTAppData)
   PrintStateTransition(prev_state_, ST_TRANSITION);
   prev_state_ = ST_TRANSITION;
 
-  static constexpr double kMaxCableSpeed = 0.002; // [m/s]
+  static constexpr double kMaxCableSpeed = 0.001; // [m/s]
 
   if (traj_sets_[data->traj_idx].traj_type == CABLE_LENGTH)
   {

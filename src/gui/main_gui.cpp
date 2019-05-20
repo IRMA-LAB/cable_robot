@@ -46,8 +46,8 @@ MainGUI::~MainGUI()
   DeleteRobot();
 #if DEBUG_GUI
   disconnect(pushButton_debug, SIGNAL(clicked()), this, SLOT(pushButton_debug_clicked()));
-  disconnect(temp_app, SIGNAL(debugCompleted()), this, SLOT(handleDebugCompleted()));
-  delete temp_app;
+//  disconnect(temp_app, SIGNAL(debugCompleted()), this, SLOT(handleDebugCompleted()));
+//  delete temp_app;
 #endif
   delete ui;
   CLOG(INFO, "event") << "Main window closed";
@@ -150,14 +150,23 @@ void MainGUI::pushButton_debug_clicked()
   CLOG(TRACE, "event");
   if (!(ec_network_valid_ && rt_thread_running_))
     return;
-  pushButton_debug->setDisabled(true);
 
-  // Insert debug operations/app here..
-  if (temp_app == NULL)
+  if (robot_ptr_->AnyMotorEnabled())
+    robot_ptr_->DisableMotors();
+  else
   {
-    temp_app = new MyDebugClass(...);
-    connect(temp_app, SIGNAL(debugCompleted()), this, SLOT(handleDebugCompleted()));
+    robot_ptr_->EnableMotors();
+    robot_ptr_->UpdateHomeConfig(0.0, 0.0);
   }
+
+  //  pushButton_debug->setDisabled(true);
+
+  //  // Insert debug operations/app here..
+  //  if (temp_app == NULL)
+  //  {
+  //    temp_app = new MyDebugClass(...);
+  //    connect(temp_app, SIGNAL(debugCompleted()), this, SLOT(handleDebugCompleted()));
+  //  }
 }
 
 void MainGUI::handleDebugCompleted() { pushButton_debug->setEnabled(true); }
@@ -586,7 +595,7 @@ void MainGUI::UpdateDriveCtrlPanel(const Actuator::States state)
 
   ui->pushButton_homing->setDisabled(manual_ctrl_enabled_);
   ui->pushButton_calib->setDisabled(manual_ctrl_enabled_);
-//  ui->groupBox_app->setDisabled(true); // after we move we need to do the homing again
+  //  ui->groupBox_app->setDisabled(true); // after we move we need to do the homing again
 
   if (!manual_ctrl_enabled_)
   {
