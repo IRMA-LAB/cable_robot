@@ -132,7 +132,7 @@ bool JointsPVTApp::readTrajectories(const QString& ifilepath)
 
 void JointsPVTApp::runTransition(const int traj_idx)
 {
-  CLOG(TRACE, "event") << "of trajectory #" << traj_idx;
+  CLOG(TRACE, "event") << "of trajectory set #" << traj_idx;
   JointsPVTAppData* data = new JointsPVTAppData(traj_idx);
 
   // clang-format off
@@ -147,7 +147,7 @@ void JointsPVTApp::runTransition(const int traj_idx)
 
 void JointsPVTApp::sendTrajectories(const int traj_idx)
 {
-  CLOG(TRACE, "event") << "of trajectory #" << traj_idx;
+  CLOG(TRACE, "event") << "of trajectory set #" << traj_idx;
   JointsPVTAppData* data = new JointsPVTAppData(traj_idx);
 
   // clang-format off
@@ -250,13 +250,16 @@ STATE_DEFINE(JointsPVTApp, Transition, JointsPVTAppData)
         robot_ptr_->GetActuatorStatus(transition_trajectories[i].id).cable_length;
       // Calculate necessary time to move from A to B with fixed constant velocity.
       double t = std::abs(target_cable_len - current_cable_len) / kMaxCableSpeed;
+      t        = std::max(t, grabrt::NanoSec2Sec(robot_ptr_->GetRtCycleTimeNsec()));
       // Set a simple trajectory composed by two waypoints (begin, end).
       transition_trajectories[i].timestamps = {0, t};
       transition_trajectories[i].values     = {current_cable_len, target_cable_len};
-      CLOG(INFO, "event") << QString("Cable #%1 transitioning from %2 m to %3 m")
+      CLOG(INFO, "event") << QString(
+                               "Cable #%1 transitioning from %2 m to %3 m in %4 sec")
                                .arg(transition_trajectories[i].id)
                                .arg(current_cable_len)
-                               .arg(target_cable_len);
+                               .arg(target_cable_len)
+                               .arg(t);
     }
     // Send trajectories
     pthread_mutex_lock(&robot_ptr_->Mutex());
@@ -298,11 +301,16 @@ STATE_DEFINE(JointsPVTApp, Transition, JointsPVTAppData)
 
 STATE_DEFINE(JointsPVTApp, TrajectoryFollow, JointsPVTAppData)
 {
+  static constexpr double kMaxWaitTimeSec = 100000;
+
   PrintStateTransition(prev_state_, ST_TRAJECTORY_FOLLOW);
   prev_state_ = ST_TRAJECTORY_FOLLOW;
 
-  if (robot_ptr_->WaitUntilPlatformSteady() != RetVal::OK)
+  if (robot_ptr_->WaitUntilPlatformSteady(kMaxWaitTimeSec) != RetVal::OK)
+  {
+    InternalEvent(ST_READY);
     return;
+  }
 
   switch (traj_sets_[data->traj_idx].traj_type)
   {

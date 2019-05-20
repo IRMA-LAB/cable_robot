@@ -287,7 +287,7 @@ void CableRobot::SetController(ControllerBase* controller)
   pthread_mutex_unlock(&mutex_);
 }
 
-RetVal CableRobot::WaitUntilTargetReached()
+RetVal CableRobot::WaitUntilTargetReached(const double max_wait_time_sec)
 {
   qmutex_.lock();
   is_waiting_ = true;
@@ -318,7 +318,7 @@ RetVal CableRobot::WaitUntilTargetReached()
     }
     qmutex_.unlock();
     // Check if timeout expired (safety feature to prevent hanging in forever)
-    if (clock.ElapsedFromStart() > kMaxWaitTimeSec)
+    if (clock.ElapsedFromStart() > max_wait_time_sec)
     {
       qmutex_.lock();
       is_waiting_ = false;
@@ -331,7 +331,7 @@ RetVal CableRobot::WaitUntilTargetReached()
   }
 }
 
-RetVal CableRobot::WaitUntilPlatformSteady()
+RetVal CableRobot::WaitUntilPlatformSteady(const double max_wait_time_sec)
 {
   // Compute these once for all
   static constexpr size_t kBuffSize =
@@ -379,7 +379,7 @@ RetVal CableRobot::WaitUntilPlatformSteady()
         break;
     }
     // Check if timeout expired (safety feature to prevent hanging in forever)
-    if (clock.ElapsedFromStart() > kMaxWaitTimeSec)
+    if (clock.ElapsedFromStart() > max_wait_time_sec)
     {
       qmutex_.lock();
       is_waiting_ = false;

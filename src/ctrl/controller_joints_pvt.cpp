@@ -175,14 +175,15 @@ T ControllerJointsPVT::GetTrajectoryPointValue(const id_t id,
   {
     if (traj.id != id)
       continue;
-    processTrajTime();  // possibly apply smooth resume/stop
+    processTrajTime(); // possibly apply smooth resume/stop
     waypoint = traj.waypointFromRelTime(traj_time_);
     progress = waypoint.ts / traj.timestamps.back();
     stop &= progress >= 1.0;
     break;
   }
 
-  if (progress > 0 && (progress_counter++ % kProgressTriggerCounts == 0))
+  if (progress > 0 && (progress_counter++ % kProgressTriggerCounts == 0) &&
+      !stop_request_)
     emit trajectoryProgressStatus(qRound(progress * 100.));
   if (stop)
   {

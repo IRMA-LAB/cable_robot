@@ -245,13 +245,13 @@ class CableRobot: public QObject,
    * @return 0 if target was reached, a positive number otherwise, yielding the error
    * type.
    */
-  RetVal WaitUntilTargetReached();
+  RetVal WaitUntilTargetReached(const double max_wait_time_sec = kMaxWaitTimeSec);
 
   /**
    * @brief WaitUntilPlatformSteady
    * @return
    */
-  RetVal WaitUntilPlatformSteady();
+  RetVal WaitUntilPlatformSteady(const double max_wait_time_sec = kMaxWaitTimeSec);
 
   /**
    * @brief isWaiting
