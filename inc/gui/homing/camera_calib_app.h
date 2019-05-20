@@ -1,13 +1,13 @@
-#ifndef CABLE_ROBOT_HOMING_CAMERA_CALIB_APP_H
+﻿#ifndef CABLE_ROBOT_HOMING_CAMERA_CALIB_APP_H
 #define CABLE_ROBOT_HOMING_CAMERA_CALIB_APP_H
 
+#include <QDialog>
+#include <QFileDialog>
+#include <QMessageBox>
 #include <QMutex>
 #include <QThread>
 #include <QWaitCondition>
 #include <QWidget>
-#include <QDialog>
-#include <QMessageBox>
-#include <QFileDialog>
 
 #include "opencv2/opencv.hpp"
 
@@ -39,6 +39,60 @@ class WorkerThread: public QThread
 
   void run();
   bool processFrame(const cv::Mat& frame);
+
+
+  enum CalibMode
+  {
+    DETECTION  = 0,
+    CAPTURING  = 1,
+    CALIBRATED = 2
+  };
+  std::vector<cv::Point2f> point_buf_;
+  std::vector<std::vector<cv::Point2f>> image_points_;
+  CameraParams camera_params_;
+  cv::Size image_size_;
+
+  // Mettere qua probabilmente mode = CAPTURING
+  CalibMode calib_mode_ = CAPTURING;
+
+  clock_t prev_timestamp_ = 0;
+
+  double error_x_ = 180;
+  double error_y_ = 30;
+  uint counter_x_ = 0;
+  uint counter_y_ = 0;
+  uint delta_x_   = 0;
+  uint delta_y_   = 0;
+  uint counter_   = 0;
+
+  bool checkFrameAgainstPrev();
+
+  bool runCalibrationAndSave(CameraParams & params);
+
+  bool runCalibration(std::vector<cv::Mat>& rvecs, std::vector<cv::Mat>& tvecs,
+                      std::vector<float>& reproj_errs, double& total_avg_err,
+                      std::vector<cv::Point3f>& new_obj_points);
+
+  double
+  computeCalibReprojectionErr(const std::vector<std::vector<cv::Point3f>>& object_points,
+                              const std::vector<cv::Mat>& rvecs,
+                              const std::vector<cv::Mat>& tvecs,
+                              std::vector<float>& per_view_errors) const;
+
+  bool isCalibrated() const { return calib_mode_ == CalibMode::CALIBRATED; }
+
+  cv::Mat getUndistortedImage(const cv::Mat &image);
+
+  bool findChessboard(const cv::Mat &image);
+
+  bool catchCalibrationSample(const cv::Mat &image);
+
+  int getCurrentSamplesNum() const {
+    return static_cast<int>(image_points_.size());
+  }
+
+  bool storeValidFrame(const cv::Mat & view);
+
 };
 
 
@@ -75,7 +129,9 @@ class CameraCalibApp: public QDialog
   Ui::CameraCalibApp* ui;
   WorkerThread* worker_thread_ = nullptr;
 
+
   void saveCameraParams(const CameraParams& params);
 };
+
 
 #endif // CABLE_ROBOT_HOMING_CAMERA_CALIB_APP_H

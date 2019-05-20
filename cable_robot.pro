@@ -29,6 +29,7 @@ HEADERS = \
     $$PWD/lib/grab_common/grabcommon.h \
     $$PWD/lib/grab_common/bitfield.h \
     $$PWD/lib/grab_common/pid/pid.h \
+    $$PWD/inc/utils/cameraparamsjsonparser.h \
 
 SOURCES = \
     $$PWD/src/main_cam_test.cpp \
@@ -57,7 +58,8 @@ SOURCES = \
     $$PWD/src/utils/easylog_wrapper.cpp \
     $$PWD/lib/easyloggingpp/src/easylogging++.cc \
     $$PWD/lib/grab_common/grabcommon.cpp \
-    $$PWD/lib/grab_common/pid/pid.cpp
+    $$PWD/lib/grab_common/pid/pid.cpp \
+    $$PWD/src/utils/cameraparamsjsonparser.cpp
 
 INCLUDEPATH += \
     $$PWD/inc \
