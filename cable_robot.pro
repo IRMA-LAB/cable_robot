@@ -134,9 +134,9 @@ DEPENDPATH += $$PWD/lib/grab_common/libnumeric
 unix:!macx: PRE_TARGETDEPS += $$PWD/lib/grab_common/libnumeric/lib/libnumeric.a
 
 # OpenCV
-INCLUDEPATH += /home/simo/opencv-4.0.1/build/include \
+INCLUDEPATH += /home/giuseppe/opencv-4.0.1/build/include \
                /usr/local/include/opencv4
-LIBS += -L"/home/simo/opencv-4.0.1/build/lib"
+LIBS += -L"/home/giuseppe/opencv-4.0.1/build/lib"
 LIBS += -lopencv_calib3d
 LIBS += -lopencv_core
 LIBS += -lopencv_features2d
