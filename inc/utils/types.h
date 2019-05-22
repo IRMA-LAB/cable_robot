@@ -214,7 +214,7 @@ struct CameraCalibSettings
 
   cv::Size board_size   = cv::Size(9, 6);
   float square_size     = 26.f;     // The size of a square in mm
-  int delay             = 5000;     // In case of a video input
+  int delay             = 500;     // In case of a video input
   bool write_points     = true;     // Write detected feature points
   bool write_extrinsics = true;     // Write extrinsic parameters
   bool write_grid       = true;     // Write refined 3D target grid points
