@@ -29,6 +29,7 @@ HEADERS = \
     $$PWD/lib/grab_common/grabcommon.h \
     $$PWD/lib/grab_common/bitfield.h \
     $$PWD/lib/grab_common/pid/pid.h \
+    $$PWD/inc/utils/cameraparamsjsonparser.h \
 
 SOURCES = \
     $$PWD/src/main_cam_test.cpp \
@@ -57,7 +58,8 @@ SOURCES = \
     $$PWD/src/utils/easylog_wrapper.cpp \
     $$PWD/lib/easyloggingpp/src/easylogging++.cc \
     $$PWD/lib/grab_common/grabcommon.cpp \
-    $$PWD/lib/grab_common/pid/pid.cpp
+    $$PWD/lib/grab_common/pid/pid.cpp \
+    $$PWD/src/utils/cameraparamsjsonparser.cpp
 
 INCLUDEPATH += \
     $$PWD/inc \
@@ -134,9 +136,9 @@ DEPENDPATH += $$PWD/lib/grab_common/libnumeric
 unix:!macx: PRE_TARGETDEPS += $$PWD/lib/grab_common/libnumeric/lib/libnumeric.a
 
 # OpenCV
-INCLUDEPATH += /home/giuseppe/opencv-4.0.1/build/include \
+INCLUDEPATH += /usr/local/lib/opencv-4.0.1/build/include \
                /usr/local/include/opencv4
-LIBS += -L"/home/giuseppe/opencv-4.0.1/build/lib"
+LIBS += -L"/usr/local/lib/opencv-4.0.1/build/lib"
 LIBS += -lopencv_calib3d
 LIBS += -lopencv_core
 LIBS += -lopencv_features2d

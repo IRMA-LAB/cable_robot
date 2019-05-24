@@ -7,6 +7,7 @@
 
 #include "gui/homing/camera_calib_dialog.h"
 #include "ui_camera_calib_dialog.h"
+#include "utils/cameraparamsjsonparser.h"
 
 const QString CameraCalibDialog::kDefaultCalibFile_ =
   QString(SRCDIR) + "resources/default_calib_params.json";
@@ -84,13 +85,13 @@ void CameraCalibDialog::on_pushButton_load_clicked()
     QMessageBox::warning(this, "File Error", "File is not valid!");
     return;
   }
-  emit cameraParamsReady(calib_params_);
+  emit cameraParamsReady(camera_params_);
 }
 
 void CameraCalibDialog::on_pushButton_loadDefault_clicked()
 {
   parseCalibFile(kDefaultCalibFile_);
-  emit cameraParamsReady(calib_params_);
+  emit cameraParamsReady(camera_params_);
 }
 
 //--------- Private functions --------------------------------------------------------//
@@ -99,32 +100,17 @@ bool CameraCalibDialog::parseCalibFile(const QString& filepath)
 {
   // Open file
   CLOG(INFO, "event") << "Parsing file '" << filepath << "'...";
-  std::ifstream ifile(filepath.toStdString());
-  if (!ifile.is_open())
-  {
-    CLOG(ERROR, "event") << "Could not open calibration file";
-    QMessageBox::warning(this, "File Error", "Could not open file '" + filepath + "'");
-    return false;
-  }
 
-  // Parse JSON (generic) data
-  json calib_results;
-  ifile >> calib_results;
-  ifile.close();
-
-  // Fill home_data structure
-  QString field;
-  try
-  {
-    // TODO..
-  }
-  catch (json::type_error)
+  //to verify that works
+  CameraParams params;
+  CameraParamsJsonParser prs;
+  if (!prs.decodeJson(params,filepath.toStdString()))
   {
     CLOG(ERROR, "event") << "Missing, invalid or incomplete calibration parameter:"
-                         << field;
+                         << "camera_matrix";
     QMessageBox::warning(this, "File Error",
-                         "Missing, invalid or incomplete calibration parameter: " +
-                           field);
+                         "Missing, invalid or incomplete calibration parameter: "
+                           "dist_coeff");
     return false;
   }
   emit printToQConsole("Using calibration parameters from '" + filepath + "'");

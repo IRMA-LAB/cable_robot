@@ -164,21 +164,71 @@ struct ActuatorStatus: WinchStatus
  */
 struct CameraParams
 {
-  // TODO..
+  cv::Mat camera_matrix = cv::Mat::eye(3, 3, CV_64F);
+  cv::Mat dist_coeff    = cv::Mat::zeros(4, 1, CV_64F);
+
+  CameraParams() {}
+
+  CameraParams(const cv::Mat& cam_mat, const cv::Mat& dist)
+  {
+    for (int i = 0; i < 3; i++)
+    {
+      for (int j = 0; j < 3; j++)
+      {
+        camera_matrix.at<double>(i, j) = cam_mat.at<double>(i, j);
+      }
+    }
+
+    for (int i = 0; i < 4; i++)
+      dist_coeff.at<double>(i, 0) = dist.at<double>(i, 0);
+  }
 };
 
 struct CameraCalibSettings
 {
-  CameraCalibSettings() {}
-  CameraCalibSettings(const int frames_num, const bool tangential_dist)
-    : target_frames_num(frames_num), use_tangential_dist(tangential_dist)
-  {}
+  CameraCalibSettings() : num_frames(0)
+  {
+    grid_width = square_size * (board_size.width - 1);
+  }
+  CameraCalibSettings(const size_t number_frames) : num_frames(number_frames)
+  {
+    grid_width = square_size * (board_size.width - 1);
+    if (use_fisheye)
+    {
+      calib_flags = cv::fisheye::CALIB_FIX_SKEW | cv::fisheye::CALIB_RECOMPUTE_EXTRINSIC |
+                    cv::fisheye::CALIB_FIX_PRINCIPAL_POINT |
+                    cv::fisheye::CALIB_CHECK_COND;
+    }
+    else
+    {
+      calib_flags |=
+        cv::CALIB_FIX_PRINCIPAL_POINT | cv::CALIB_USE_LU; // USE_LU to fast camera calib
+      if (calib_zero_tan_dist)
+      {
+        calib_flags |= cv::CALIB_ZERO_TANGENT_DIST;
+      }
+    }
+  }
 
-  int target_frames_num    = 15;
-  bool use_tangential_dist = false;
+  size_t num_frames; // The number of frames to use from the input for calibration
 
-  int chessboard_flags     = cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_NORMALIZE_IMAGE;
-  cv::Size chessboard_size = cv::Size(18, 13);
+  cv::Size board_size   = cv::Size(9, 6);
+  float square_size     = 26.f;     // The size of a square in mm
+  int delay             = 500;     // In case of a video input
+  bool write_points     = true;     // Write detected feature points
+  bool write_extrinsics = true;     // Write extrinsic parameters
+  bool write_grid       = true;     // Write refined 3D target grid points
+  int calib_flags;                  // camera params flags
+  bool use_fisheye         = false; // use fisheye camera model for calibration
+  bool calib_zero_tan_dist = false; // set 0 tangential distortion coefficients
+  int chess_board_flags =
+    cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_NORMALIZE_IMAGE | cv::CALIB_CB_FAST_CHECK;
+  // forse da cancellare pattern to use
+  std::string pattern_to_use = "CHESSBOARD";
+  /*int calib_flags = cv::fisheye::CALIB_FIX_SKEW | cv::fisheye::CALIB_RECOMPUTE_EXTRINSIC
+     | cv::fisheye::CALIB_FIX_PRINCIPAL_POINT | cv::fisheye::CALIB_CHECK_COND;*/
+  std::string ofilepath = SRCDIR "/output_camera_calibration.json";
+  float grid_width;
 };
 
 #endif // CABLE_ROBOT_TYPES_H
