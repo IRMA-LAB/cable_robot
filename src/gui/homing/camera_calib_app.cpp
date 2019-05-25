@@ -167,7 +167,7 @@ bool WorkerThread::checkFrameAgainstPrev()
   return false;
 }
 
-bool WorkerThread::runCalibrationAndSave(CameraParams & params)
+bool WorkerThread::runCalibrationAndSave(CameraParams& params)
 {
   std::vector<cv::Mat> r_vecs, t_vecs;
   std::vector<float> reproj_errs;
@@ -176,8 +176,8 @@ bool WorkerThread::runCalibrationAndSave(CameraParams & params)
 
   if (runCalibration(r_vecs, t_vecs, reproj_errs, total_avg_err, new_obj_points))
   {
-    calib_mode_         = CALIBRATED;
-    params = camera_params_;
+    calib_mode_ = CALIBRATED;
+    params      = camera_params_;
     return true;
   }
   return false;
@@ -286,7 +286,7 @@ bool WorkerThread::storeValidFrame(const cv::Mat& view)
   if (!findChessboard(view))
     return false;
   if (catchCalibrationSample(view))
-   return true;
+    return true;
   return false;
 }
 //------------------------------------------------------------------------------------//
@@ -363,6 +363,5 @@ void CameraCalibApp::saveCameraParams(const CameraParams& params)
   QString file_name = QFileDialog::getSaveFileName(
     this, tr("Save Camera Parameters"), tr("../.."), tr("Camera Parameters (*.json)"));
   CameraParamsJsonParser jsonParser;
-
   jsonParser.writeJson(params, file_name.toStdString());
 }

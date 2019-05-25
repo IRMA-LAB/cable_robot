@@ -15,12 +15,18 @@ void CameraParamsJsonParser::setCameraParams(const CameraParams& params_2_set)
   params_ = params_2_set;
 }
 
-//TODO aggiungi controllo estensione
 void CameraParamsJsonParser::writeJson(
   const CameraParams& params_in,
   const std::string& o_filepath /*= SRCDIR "/output_calib.json*/)
 {
-  std::ofstream o_file(o_filepath);
+  std::string str = o_filepath;
+  size_t found = str.find_last_of(".");
+  if (found == std::string::npos)
+    str.append(".json");
+  else if (str.substr(found).compare(("json")) != 0)
+    str.replace(found, std::string::npos, ".json");
+
+  std::ofstream o_file(str);
   if (!o_file.is_open())
   {
     std::cerr << "\n\nERROR\tcould not create file\n\n";
@@ -64,11 +70,17 @@ void CameraParamsJsonParser::writeJson(
   o_file.close();
 }
 
-//TODO aggiungi controllo estensione
 void CameraParamsJsonParser::writeJson(
   const std::string& o_filepath /*= SRCDIR "/output_calib.json"*/)
 {
-  std::ofstream o_file(o_filepath);
+  std::string str = o_filepath;
+  size_t found = str.find_last_of(".");
+  if (found == std::string::npos)
+    str.append(".json");
+  else if (str.substr(found).compare(("json")) != 0)
+    str.replace(found, std::string::npos, ".json");
+
+  std::ofstream o_file(str);
 
   if (!o_file.is_open())
   {
@@ -226,7 +238,8 @@ bool CameraParamsJsonParser::decodeJson(
   std::vector<double> dist_coeff =
     parameters_2_read["dist_coeff"].get<std::vector<double>>();
 
-  memcpy(params_in.dist_coeff.data, dist_coeff.data(), dist_coeff.size() * sizeof(double));
+  memcpy(params_in.dist_coeff.data, dist_coeff.data(),
+         dist_coeff.size() * sizeof(double));
 
   return true;
 }
