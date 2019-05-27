@@ -291,12 +291,10 @@ STATE_DEFINE(JointsPVTApp, Transition, JointsPVTAppData)
 
 STATE_DEFINE(JointsPVTApp, TrajectoryFollow, JointsPVTAppData)
 {
-  static constexpr double kMaxWaitTimeSec = 100000;
-
   PrintStateTransition(prev_state_, ST_TRAJECTORY_FOLLOW);
   prev_state_ = ST_TRAJECTORY_FOLLOW;
 
-  if (robot_ptr_->WaitUntilPlatformSteady(kMaxWaitTimeSec) != RetVal::OK)
+  if (robot_ptr_->WaitUntilPlatformSteady(-1.) != RetVal::OK)
   {
     InternalEvent(ST_READY);
     return;

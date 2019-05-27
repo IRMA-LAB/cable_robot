@@ -1,7 +1,7 @@
 /**
  * @file cablerobot.cpp
  * @author Simone Comari, Edoardo Idà
- * @date 20 May 2019
+ * @date 27 May 2019
  * @brief File containing definitions of functions and class declared in cablerobot.h.
  */
 
@@ -318,7 +318,7 @@ RetVal CableRobot::WaitUntilTargetReached(const double max_wait_time_sec)
     }
     qmutex_.unlock();
     // Check if timeout expired (safety feature to prevent hanging in forever)
-    if (clock.ElapsedFromStart() > max_wait_time_sec)
+    if (max_wait_time_sec > 0 && clock.ElapsedFromStart() > max_wait_time_sec)
     {
       qmutex_.lock();
       is_waiting_ = false;
@@ -379,7 +379,7 @@ RetVal CableRobot::WaitUntilPlatformSteady(const double max_wait_time_sec)
         break;
     }
     // Check if timeout expired (safety feature to prevent hanging in forever)
-    if (clock.ElapsedFromStart() > max_wait_time_sec)
+    if (max_wait_time_sec > 0 && clock.ElapsedFromStart() > max_wait_time_sec)
     {
       qmutex_.lock();
       is_waiting_ = false;
