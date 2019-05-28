@@ -76,7 +76,7 @@ INCLUDEPATH += \
 
 QT += core gui widgets datavisualization charts
 
-CONFIG += c++11 console static
+CONFIG += c++11 console
 CONFIG -= app_bundle
 
 TEMPLATE = app
