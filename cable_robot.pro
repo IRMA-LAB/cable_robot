@@ -73,7 +73,6 @@ INCLUDEPATH += \
     $$PWD/lib/grab_common \
     $$PWD/lib/easyloggingpp/src
 
-
 QT += core gui widgets datavisualization charts
 
 CONFIG += c++11 console
@@ -90,6 +89,7 @@ DEFINES += ELPP_QT_LOGGING    \
           ELPP_FRESH_LOG_FILE
 
 DEFINES += SRCDIR=\\\"$$PWD/\\\"
+DEFINES += USE_QT=1
 
 # DEBUG
 #HEADERS += \

@@ -24,7 +24,7 @@
 #include "gui/homing/homing_dialog.h"
 #include "robot/cablerobot.h"
 
-#define DEBUG_GUI 1
+#define DEBUG_GUI 0
 
 using GSWDOpModes = grabec::GoldSoloWhistleOperationModes; /**< Shortcut for op modes. */
 
