@@ -1,7 +1,7 @@
 /**
  * @file cablerobot.cpp
  * @author Simone Comari, Edoardo Idà
- * @date 27 May 2019
+ * @date 30 May 2019
  * @brief File containing definitions of functions and class declared in cablerobot.h.
  */
 
@@ -645,7 +645,7 @@ void CableRobot::EcWorkFun()
   for (grabec::EthercatSlave* slave_ptr : slaves_ptrs_)
     slave_ptr->ReadInputs(); // read pdos
 
-  if (controller_ != NULL)
+  if (controller_ != nullptr)
     ControlStep();
 
   for (grabec::EthercatSlave* slave_ptr : slaves_ptrs_)

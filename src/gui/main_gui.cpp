@@ -1,7 +1,7 @@
 /**
  * @file main_gui.cpp
  * @author Simone Comari
- * @date 16 May 2019
+ * @date 30 May 2019
  * @brief This file includes definitions of classes present in main_gui.h.
  */
 
@@ -99,7 +99,7 @@ void MainGUI::on_pushButton_homing_clicked()
 
   robot_ptr_->enterHomingMode();
 
-  if (homing_dialog_ == NULL)
+  if (homing_dialog_ == nullptr)
   {
     homing_dialog_ = new HomingDialog(this, robot_ptr_);
     connect(homing_dialog_, SIGNAL(enableMainGUI(bool)), this,
@@ -674,7 +674,7 @@ void MainGUI::SetupDirectMotorCtrl(const bool enable)
   }
   else
   {
-    robot_ptr_->SetController(NULL);
+    robot_ptr_->SetController(nullptr);
     delete man_ctrl_ptr_;
 
     robot_ptr_->DisableMotor(motor_id_);
@@ -716,7 +716,7 @@ void MainGUI::StartRobot()
 
 void MainGUI::DeleteRobot()
 {
-  if (robot_ptr_ == NULL)
+  if (robot_ptr_ == nullptr)
     return;
 
   // We don't disconnect printToQConsole so we still have logs on shutdown
@@ -728,14 +728,14 @@ void MainGUI::DeleteRobot()
              SLOT(updateRtThreadStatusLED(bool)));
 
   delete robot_ptr_;
-  robot_ptr_ = NULL;
+  robot_ptr_ = nullptr;
   QCoreApplication::processEvents();
   CLOG(INFO, "event") << "Cable robot object deleted";
 }
 
 void MainGUI::CloseAllApps()
 {
-  if (calib_dialog_ != NULL)
+  if (calib_dialog_ != nullptr)
   {
     disconnect(calib_dialog_, SIGNAL(calibrationEnd()), robot_ptr_, SLOT(eventSuccess()));
     disconnect(calib_dialog_, SIGNAL(enableMainGUI(bool)), this,
@@ -744,7 +744,7 @@ void MainGUI::CloseAllApps()
     delete calib_dialog_;
   }
 
-  if (homing_dialog_ != NULL)
+  if (homing_dialog_ != nullptr)
   {
     disconnect(homing_dialog_, SIGNAL(homingSuccess()), robot_ptr_, SLOT(eventSuccess()));
     disconnect(homing_dialog_, SIGNAL(homingFailed()), robot_ptr_, SLOT(eventFailure()));

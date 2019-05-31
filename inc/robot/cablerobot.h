@@ -358,8 +358,8 @@ class CableRobot: public QObject,
   // Timers for status updates
   static constexpr int kMotorStatusIntervalMsec_    = 100;
   static constexpr int kActuatorStatusIntervalMsec_ = 10;
-  QTimer* motor_status_timer_                       = NULL;
-  QTimer* actuator_status_timer_                    = NULL;
+  QTimer* motor_status_timer_                       = nullptr;
+  QTimer* actuator_status_timer_                    = nullptr;
 
   void StopTimers();
 
