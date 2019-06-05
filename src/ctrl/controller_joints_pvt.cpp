@@ -220,7 +220,10 @@ bool ControllerJointsPVT::AreTrajectoriesValid(const vect<Trajectory<T>>& trajec
         break;
       }
     if (!id_found)
+    {
+      CLOG(WARNING, "event") << "Invalid trajectories!";
       return false;
+    }
   }
   return true;
 }

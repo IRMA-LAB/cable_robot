@@ -1,6 +1,8 @@
 #ifndef CABLE_ROBOT_CONTROLLER_JOINTS_PVT_H
 #define CABLE_ROBOT_CONTROLLER_JOINTS_PVT_H
 
+#include "easylogging++.h"
+
 #include "ctrl/controller_base.h"
 #include "ctrl/winch_torque_controller.h"
 
@@ -10,7 +12,7 @@ class ControllerJointsPVT: public QObject, public ControllerBase
 
  public:
   explicit ControllerJointsPVT(const vect<grabcdpr::ActuatorParams>& params,
-                               const uint32_t cycle_t_nsec, QObject* parent = NULL);
+                               const uint32_t cycle_t_nsec, QObject* parent = nullptr);
   ~ControllerJointsPVT() override {}
 
   bool SetCablesLenTrajectories(const vect<TrajectoryD>& trajectories);

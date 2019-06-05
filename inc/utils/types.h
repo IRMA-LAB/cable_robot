@@ -255,9 +255,14 @@ struct Trajectory
     // Find nearest neighbor
     vectD::const_iterator low =
       std::lower_bound(timestamps.begin(), timestamps.end(), time);
+    ulong lower_idx;
     if (low == timestamps.end())
-      low -= 1; // no bigger value than val in vector
-    const ulong lower_idx = low - timestamps.begin();
+      // no bigger value than val in vector --> this shouldn't happen
+      return WayPoint<T>(timestamps.back(), values.back());
+    else if (low == timestamps.begin())
+      lower_idx = 0;
+    else
+      lower_idx = low - timestamps.begin() - 1;
     const ulong upper_idx = lower_idx + 1;
     // Interpolate
     const double slope = (values[upper_idx] - values[lower_idx]) /

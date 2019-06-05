@@ -46,7 +46,7 @@ JointsPVTApp::~JointsPVTApp()
   disconnect(this, SIGNAL(printToQConsole(QString)), this, SLOT(logInfo(QString)));
   disconnect(this, SIGNAL(stopWaitingCmd()), robot_ptr_, SLOT(stopWaiting()));
 
-  robot_ptr_->SetController(NULL);
+  robot_ptr_->SetController(nullptr);
 }
 
 //--------- Public functions --------------------------------------------------------//
@@ -223,7 +223,7 @@ STATE_DEFINE(JointsPVTApp, Transition, JointsPVTAppData)
   PrintStateTransition(prev_state_, ST_TRANSITION);
   prev_state_ = ST_TRANSITION;
 
-  static constexpr double kMaxCableSpeed = 0.001; // [m/s]
+  static constexpr double kMaxCableSpeed = 0.002; // [m/s]
 
   if (traj_sets_[data->traj_idx].traj_type == CABLE_LENGTH)
   {
@@ -242,7 +242,7 @@ STATE_DEFINE(JointsPVTApp, Transition, JointsPVTAppData)
       double t = std::abs(target_cable_len - current_cable_len) / kMaxCableSpeed;
       t        = std::max(t, grabrt::NanoSec2Sec(robot_ptr_->GetRtCycleTimeNsec()));
       // Set a simple trajectory composed by two waypoints (begin, end).
-      transition_trajectories[i].timestamps = {0, t};
+      transition_trajectories[i].timestamps = {0.0, t};
       transition_trajectories[i].values     = {current_cable_len, target_cable_len};
       CLOG(INFO, "event") << QString(
                                "Cable #%1 transitioning from %2 m to %3 m in %4 sec")
