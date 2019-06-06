@@ -49,6 +49,8 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
     num_domain_elements_ += slave_ptr->GetDomainEntriesNum();
 
   // Setup data logging
+  rt_logging_enabled_ = false;
+  rt_logging_mod_ = 1;
   meas_.resize(active_actuators_id_.size());
   connect(this, SIGNAL(sendMsg(QByteArray)), &log_buffer_, SLOT(collectMsg(QByteArray)));
   log_buffer_.start();
@@ -209,14 +211,19 @@ void CableRobot::ClearFaults()
       actuator_ptr->faultReset();
 }
 
-void CableRobot::CollectMeas()
+void CableRobot::CollectMeasRt()
 {
-  pthread_mutex_lock(&mutex_);
   for (size_t i = 0; i < active_actuators_ptrs_.size(); i++)
   {
     meas_[i].body             = active_actuators_ptrs_[i]->GetStatus();
     meas_[i].header.timestamp = clock_.Elapsed();
   }
+}
+
+void CableRobot::CollectMeas()
+{
+  pthread_mutex_lock(&mutex_);
+  CollectMeasRt();
   pthread_mutex_unlock(&mutex_);
 }
 
@@ -224,6 +231,16 @@ void CableRobot::DumpMeas() const
 {
   for (const ActuatorStatusMsg& msg : meas_)
     emit sendMsg(msg.serialized());
+}
+
+void CableRobot::CollectAndDumpMeasRt()
+{
+  for (size_t i = 0; i < active_actuators_ptrs_.size(); i++)
+  {
+    meas_[i].body             = active_actuators_ptrs_[i]->GetStatus();
+    meas_[i].header.timestamp = clock_.Elapsed();
+    emit sendMsg(meas_[i].serialized());
+  }
 }
 
 void CableRobot::CollectAndDumpMeas()
@@ -244,6 +261,21 @@ void CableRobot::CollectAndDumpMeas(const id_t actuator_id)
     emit sendMsg(msg.serialized());
     break;
   }
+}
+
+void CableRobot::StartRtLogging(const uint rt_cycle_multiplier)
+{
+  pthread_mutex_lock(&mutex_);
+  rt_logging_enabled_ = true;
+  rt_logging_mod_ = rt_cycle_multiplier;
+  pthread_mutex_unlock(&mutex_);
+}
+
+void CableRobot::StopRtLogging()
+{
+  pthread_mutex_lock(&mutex_);
+  rt_logging_enabled_ = false;
+  pthread_mutex_unlock(&mutex_);
 }
 
 bool CableRobot::GoHome()
@@ -647,6 +679,13 @@ void CableRobot::EcWorkFun()
 
   if (controller_ != nullptr)
     ControlStep();
+
+  static uint log_counter = 0;
+  if (rt_logging_enabled_ && (++log_counter % rt_logging_mod_ == 0))
+  {
+    CollectAndDumpMeasRt();
+    log_counter = 0;
+  }
 
   for (grabec::EthercatSlave* slave_ptr : slaves_ptrs_)
     slave_ptr->WriteOutputs(); // write all the necessary pdos

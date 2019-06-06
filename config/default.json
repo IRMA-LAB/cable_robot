@@ -158,7 +158,7 @@
       }
     },
     {
-      "active": false,
+      "active": true,
       "pulley": {
         "encoder_res": 262144,
         "pos_OD_glob": [
@@ -236,7 +236,7 @@
       }
     },
     {
-      "active": false,
+      "active": true,
       "pulley": {
         "encoder_res": 262144,
         "pos_OD_glob": [

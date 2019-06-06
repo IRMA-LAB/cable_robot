@@ -206,7 +206,11 @@ class CableRobot: public QObject,
   void ClearFaults();
 
   /**
-   * @brief Collect current cable robot measurents.
+   * @brief Collect current cable robot measurents without locking the RT-thread mutex.
+   */
+  void CollectMeasRt();
+  /**
+   * @brief Collect current cable robot measurents locking the RT-thread mutex.
    */
   void CollectMeas();
   /**
@@ -214,7 +218,13 @@ class CableRobot: public QObject,
    */
   void DumpMeas() const;
   /**
-   * @brief Collect and dump current cable robot measurements onto data.log file.
+   * @brief Collect and dump current cable robot measurements onto data.log file without
+   * locking the RT-thread mutex.
+   */
+  void CollectAndDumpMeasRt();
+  /**
+   * @brief Collect and dump current cable robot measurements onto data.log file locking
+   * the RT-thread mutex.
    */
   void CollectAndDumpMeas();
   /**
@@ -223,6 +233,16 @@ class CableRobot: public QObject,
    * @param[in] actuator_id ID of inquired actuator.
    */
   void CollectAndDumpMeas(const id_t actuator_id);
+  /**
+   * @brief Start data logging inside real-time thread cycle.
+   * @param[in] rt_cycle_multiplier Factor definining the number of cycles between one log
+   * sample and the next one.
+   */
+  void StartRtLogging(const uint rt_cycle_multiplier);
+  /**
+   * @brief Stop data logging inside real-time thread cycle.
+   */
+  void StopRtLogging();
 
   /**
    * @brief Go to home position.
@@ -367,6 +387,8 @@ class CableRobot: public QObject,
   vect<ActuatorStatusMsg> meas_;
   LogBuffer log_buffer_;
   grabrt::Clock clock_;
+  bool rt_logging_enabled_;
+  uint rt_logging_mod_;
 
   // Ethercat related
 #if INCLUDE_EASYCAT
@@ -389,7 +411,7 @@ class CableRobot: public QObject,
   bool is_waiting_            = false;
 
   // Control related
-  ControllerBase* controller_ = NULL;
+  ControllerBase* controller_ = nullptr;
 
   void ControlStep();
 
