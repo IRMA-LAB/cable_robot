@@ -1,7 +1,7 @@
 /**
  * @file main_gui.cpp
  * @author Simone Comari
- * @date 30 May 2019
+ * @date 07 Jun 2019
  * @brief This file includes definitions of classes present in main_gui.h.
  */
 
@@ -138,7 +138,6 @@ void MainGUI::on_pushButton_startApp_clicked()
     man_ctrl_dialog_ = new ManualControlDialog(this, robot_ptr_);
     connect(man_ctrl_dialog_, SIGNAL(destroyed()), robot_ptr_, SLOT(eventSuccess()));
     connect(man_ctrl_dialog_, SIGNAL(destroyed()), this, SLOT(enableInterface()));
-    CLOG(INFO, "event") << "checkpoint 2";
     man_ctrl_dialog_->show();
     CLOG(INFO, "event") << "Prompt manual control dialog";
   }
@@ -152,11 +151,15 @@ void MainGUI::pushButton_debug_clicked()
     return;
 
   if (robot_ptr_->AnyMotorEnabled())
+  {
+    robot_ptr_->StopRtLogging();
     robot_ptr_->DisableMotors();
+  }
   else
   {
     robot_ptr_->EnableMotors();
     robot_ptr_->UpdateHomeConfig(0.0, 0.0);
+    robot_ptr_->StartRtLogging(10); // 10 x rt-cycle = 10 msec
   }
 
   //  pushButton_debug->setDisabled(true);
@@ -752,5 +755,19 @@ void MainGUI::CloseAllApps()
                SLOT(enableInterface(bool)));
     homing_dialog_->close();
     delete homing_dialog_;
+  }
+
+  if (joints_pvt_dialog_ != nullptr && joints_pvt_dialog_->isVisible())
+  {
+    disconnect(joints_pvt_dialog_, SIGNAL(destroyed()), robot_ptr_, SLOT(eventSuccess()));
+    disconnect(joints_pvt_dialog_, SIGNAL(destroyed()), this, SLOT(enableInterface()));
+    joints_pvt_dialog_->close();
+  }
+
+  if (man_ctrl_dialog_ != nullptr && man_ctrl_dialog_->isVisible())
+  {
+    disconnect(man_ctrl_dialog_, SIGNAL(destroyed()), robot_ptr_, SLOT(eventSuccess()));
+    disconnect(man_ctrl_dialog_, SIGNAL(destroyed()), this, SLOT(enableInterface()));
+    man_ctrl_dialog_->close();
   }
 }

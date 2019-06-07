@@ -1,7 +1,7 @@
 /**
  * @file cablerobot.cpp
  * @author Simone Comari, Edoardo Idà
- * @date 30 May 2019
+ * @date 07 Jun 2019
  * @brief File containing definitions of functions and class declared in cablerobot.h.
  */
 
@@ -538,6 +538,8 @@ STATE_DEFINE(CableRobot, Calibration, NoEventData)
 {
   PrintStateTransition(prev_state_, ST_CALIBRATION);
   prev_state_ = ST_CALIBRATION;
+
+  StopTimers();
 }
 
 STATE_DEFINE(CableRobot, Homing, NoEventData)
@@ -562,12 +564,16 @@ STATE_DEFINE(CableRobot, Operational, NoEventData)
 {
   PrintStateTransition(prev_state_, ST_OPERATIONAL);
   prev_state_ = ST_OPERATIONAL;
+
+  StopTimers();
 }
 
 STATE_DEFINE(CableRobot, Error, NoEventData)
 {
   PrintStateTransition(prev_state_, ST_ERROR);
   prev_state_ = ST_ERROR;
+
+  StopTimers();
 }
 
 //--------- Private slots -----------------------------------------------------------//

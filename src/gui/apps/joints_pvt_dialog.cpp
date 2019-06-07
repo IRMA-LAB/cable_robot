@@ -22,6 +22,8 @@ JointsPVTDialog::JointsPVTDialog(QWidget* parent, CableRobot* robot,
 
 JointsPVTDialog::~JointsPVTDialog()
 {
+  app_.stop(); // in case of external close call
+
   disconnect(&app_, SIGNAL(transitionComplete()), this,
              SLOT(handleTransitionCompleted()));
   disconnect(&app_, SIGNAL(trajectoryComplete()), this,
@@ -196,7 +198,7 @@ void JointsPVTDialog::updatePlots(const TrajectorySet& traj_set)
   else if (!traj_set.traj_motors_torque.empty())
     num_plots = traj_set.traj_motors_torque.size();
 
-  if (grid_layout_ == NULL)
+  if (grid_layout_ == nullptr)
   {
     auto vLine = new QFrame;
     vLine->setFrameShape(QFrame::VLine);
