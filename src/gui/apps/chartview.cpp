@@ -1,4 +1,5 @@
 #include "gui/apps/chartview.h"
+#include <QValueAxis>
 
 ChartView::ChartView(QChart* chart, QWidget* parent) : QChartView(chart, parent)
 {
@@ -10,6 +11,12 @@ ChartView::ChartView(QChart* chart, QWidget* parent) : QChartView(chart, parent)
 
   chart->setAnimationOptions(QChart::SeriesAnimations);
   chart->legend()->hide();
+
+  QPen pen = highlight_point_.pen();
+  pen.setWidth(1);
+  pen.setColor("red");
+  highlight_point_.setPen(pen);
+  highlight_point_.setColor("red");
 }
 
 void ChartView::setCableTrajectory(const TrajectoryD& traj)
@@ -66,6 +73,24 @@ void ChartView::setMotorTorqueTrajectory(const TrajectoryS& traj)
   chart()->addSeries(series);
 
   setTitles(traj.id, "motor torque", "nominal points");
+}
+
+void ChartView::highlightCurrentPoint(const QPointF& waypoint)
+{
+  removeHighlight();
+  highlight_point_ << waypoint;
+  chart()->addSeries(&highlight_point_);
+  chart()->setAxisX(axisX_, &highlight_point_);
+  chart()->setAxisY(axisY_, &highlight_point_);
+}
+
+void ChartView::removeHighlight()
+{
+  if (highlight_point_.count() > 0)
+  {
+    chart()->removeSeries(&highlight_point_);
+    highlight_point_.clear();
+  }
 }
 
 void ChartView::resizeEvent(QResizeEvent* event)
@@ -193,6 +218,9 @@ void ChartView::setTitles(const id_t& id, const QString& traj_type, const QStrin
   chart()->axisY()->setTitleText(tr("set-point [%1]").arg(unit));
   chart()->axisY()->setTitleFont(QFont(chart()->font().family(), 11, QFont::Medium));
   chart()->axisY()->setTitleVisible();
+
+  axisX_ = chart()->axisX();
+  axisY_ = chart()->axisY();
 }
 
 void ChartView::resetView()

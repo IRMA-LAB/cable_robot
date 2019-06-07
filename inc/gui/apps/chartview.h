@@ -3,6 +3,7 @@
 
 #include <QtCharts/QChartView>
 #include <QtWidgets/QRubberBand>
+#include <QScatterSeries>
 
 #include "gui/apps/joints_pvt_dialog.h"
 
@@ -18,7 +19,14 @@ class ChartView: public QChartView
   void setMotorVelTrajectory(const TrajectoryI& traj);
   void setMotorTorqueTrajectory(const TrajectoryS& traj);
 
+  void highlightCurrentPoint(const QPointF& waypoint);
+  void removeHighlight();
+
 private:
+  QScatterSeries highlight_point_;
+  QAbstractAxis* axisX_ = nullptr;
+  QAbstractAxis* axisY_ = nullptr;
+
   qreal tot_scroll_x_        = 0;
   qreal tot_scroll_y_        = 0;
   qreal tot_scroll_x_zoomed_ = 0;
