@@ -17,7 +17,8 @@ JointsPVTDialog::JointsPVTDialog(QWidget* parent, CableRobot* robot,
 
   connect(&app_, SIGNAL(transitionComplete()), this, SLOT(handleTransitionCompleted()));
   connect(&app_, SIGNAL(trajectoryComplete()), this, SLOT(handleTrajectoryCompleted()));
-  connect(&app_, SIGNAL(trajectoryProgress(int)), this, SLOT(progressUpdate(int)));
+  connect(&app_, SIGNAL(trajectoryProgress(int, double)), this,
+          SLOT(progressUpdateCallback(int, double)));
 }
 
 JointsPVTDialog::~JointsPVTDialog()
@@ -28,7 +29,8 @@ JointsPVTDialog::~JointsPVTDialog()
              SLOT(handleTransitionCompleted()));
   disconnect(&app_, SIGNAL(trajectoryComplete()), this,
              SLOT(handleTrajectoryCompleted()));
-  disconnect(&app_, SIGNAL(trajectoryProgress(int)), this, SLOT(progressUpdate(int)));
+  disconnect(&app_, SIGNAL(trajectoryProgress(int, double)), this,
+             SLOT(progressUpdateCallback(int, double)));
 
   while (!line_edits_.empty())
   {
@@ -45,15 +47,21 @@ JointsPVTDialog::~JointsPVTDialog()
 void JointsPVTDialog::handleTransitionCompleted()
 {
   CLOG(TRACE, "event");
+  disconnect(this, SIGNAL(progressUpdateTrigger(int, double)), this,
+          SLOT(progressUpdate(int, double)));
   ui->progressBar->setFormat(
     QString("Trajectory %1 in progress... %p%").arg(traj_counter_));
   ui->progressBar->setValue(0);
   app_.sendTrajectories(traj_counter_);
+  connect(this, SIGNAL(progressUpdateTrigger(int, double)), this,
+          SLOT(progressUpdate(int, double)), Qt::QueuedConnection);
 }
 
 void JointsPVTDialog::handleTrajectoryCompleted()
 {
   CLOG(TRACE, "event");
+  disconnect(this, SIGNAL(progressUpdateTrigger(int, double)), this,
+          SLOT(progressUpdate(int, double)));
   if (++traj_counter_ >= num_traj_)
   {
     if (!ui->checkBox_infLoop->isChecked())
@@ -71,12 +79,58 @@ void JointsPVTDialog::handleTrajectoryCompleted()
   ui->progressBar->setFormat(
     QString("Transition %1 in progress... %p%").arg(traj_counter_));
   ui->progressBar->setValue(0);
+  for (const auto& chart_view: chart_views_)
+    chart_view->removeHighlight();
   app_.runTransition(traj_counter_);
+  connect(this, SIGNAL(progressUpdateTrigger(int, double)), this,
+          SLOT(progressUpdate(int, double)), Qt::QueuedConnection);
 }
 
-void JointsPVTDialog::progressUpdate(const int progress_value)
+void JointsPVTDialog::progressUpdateCallback(const int progress_value, const double timestamp)
+{
+  emit progressUpdateTrigger(progress_value, timestamp);
+}
+
+void JointsPVTDialog::progressUpdate(const int progress_value, const double timestamp)
 {
   ui->progressBar->setValue(progress_value);
+  if (app_.GetCurrentState() == JointsPVTApp::ST_TRANSITION || progress_value >= 100)
+    return;
+
+  const TrajectorySet traj_set = app_.getTrajectorySet(traj_counter_);
+  switch (traj_set.traj_type)
+  {
+    case CABLE_LENGTH:
+      for (uint i = 0; i < traj_set.traj_cables_len.size(); i++)
+      {
+        WayPointD waypoint = traj_set.traj_cables_len[i].waypointFromAbsTime(timestamp, 0.01);
+        chart_views_[i]->highlightCurrentPoint(QPointF(waypoint.ts, waypoint.value));
+      }
+      break;
+    case MOTOR_POSITION:
+      for (uint i = 0; i < traj_set.traj_cables_len.size(); i++)
+      {
+        WayPointI waypoint = traj_set.traj_motors_pos[i].waypointFromAbsTime(timestamp, 0.01);
+        chart_views_[i]->highlightCurrentPoint(QPointF(waypoint.ts, waypoint.value));
+      }
+      break;
+    case MOTOR_SPEED:
+      for (uint i = 0; i < traj_set.traj_cables_len.size(); i++)
+      {
+        WayPointI waypoint = traj_set.traj_motors_vel[i].waypointFromAbsTime(timestamp, 0.01);
+        chart_views_[i]->highlightCurrentPoint(QPointF(waypoint.ts, waypoint.value));
+      }
+      break;
+    case MOTOR_TORQUE:
+      for (uint i = 0; i < traj_set.traj_cables_len.size(); i++)
+      {
+        WayPointS waypoint = traj_set.traj_motors_torque[i].waypointFromAbsTime(timestamp, 0.01);
+        chart_views_[i]->highlightCurrentPoint(QPointF(waypoint.ts, waypoint.value));
+      }
+      break;
+    case NONE:
+      break;
+  }
 }
 
 //--------- Private GUI slots -------------------------------------------------------//
@@ -158,6 +212,8 @@ void JointsPVTDialog::on_pushButton_start_clicked()
     QString("Transition %1 in progress... %p%").arg(traj_counter_));
   ui->progressBar->setValue(0);
   app_.runTransition(traj_counter_);
+  connect(this, SIGNAL(progressUpdateTrigger(int, double)), this,
+          SLOT(progressUpdate(int, double)), Qt::QueuedConnection);
 }
 
 void JointsPVTDialog::on_pushButton_pause_clicked()
@@ -208,6 +264,7 @@ void JointsPVTDialog::updatePlots(const TrajectorySet& traj_set)
   else
   {
     ui->horizontalLayout_plots->removeItem(grid_layout_);
+    chart_views_.clear();
     delete grid_layout_;
   }
 
@@ -215,28 +272,30 @@ void JointsPVTDialog::updatePlots(const TrajectorySet& traj_set)
   for (size_t i = 0; i < num_plots; i++)
   {
     QChart* chart        = new QChart();
-    ChartView* chartView = new ChartView(chart);
+    ChartView* chart_view = new ChartView(chart);
     switch (traj_set.traj_type)
     {
       case CABLE_LENGTH:
-        chartView->setCableTrajectory(traj_set.traj_cables_len[i]);
+        chart_view->setCableTrajectory(traj_set.traj_cables_len[i]);
         break;
       case MOTOR_POSITION:
-        chartView->setMotorPosTrajectory(traj_set.traj_motors_pos[i]);
+        chart_view->setMotorPosTrajectory(traj_set.traj_motors_pos[i]);
         break;
       case MOTOR_SPEED:
-        chartView->setMotorVelTrajectory(traj_set.traj_motors_vel[i]);
+        chart_view->setMotorVelTrajectory(traj_set.traj_motors_vel[i]);
         break;
       case MOTOR_TORQUE:
-        chartView->setMotorTorqueTrajectory(traj_set.traj_motors_torque[i]);
+        chart_view->setMotorTorqueTrajectory(traj_set.traj_motors_torque[i]);
         break;
       case NONE:
         break;
     }
-    chartView->setMinimumWidth(traj_display_.width() / 2);
+    chart_view->setMinimumWidth(traj_display_.width() / 2);
+    chart_views_.append(QSharedPointer<ChartView>(chart_view));
+
     int row = static_cast<int>(i) / 2;
     int col = i % 2;
-    grid_layout_->addWidget(chartView, row, col);
+    grid_layout_->addWidget(chart_view, row, col);
     grid_layout_->setColumnStretch(col, 1);
     grid_layout_->setRowStretch(row, 1);
   }
@@ -257,4 +316,6 @@ void JointsPVTDialog::stop()
   ui->groupBox_inputs->setEnabled(true);
   ui->progressBar->setFormat("%p%");
   ui->progressBar->setValue(0);
+  for (const auto& chart_view: chart_views_)
+    chart_view->removeHighlight();
 }

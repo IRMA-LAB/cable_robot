@@ -156,7 +156,7 @@ template <typename T>
 T ControllerJointsPVT::GetTrajectoryPointValue(const id_t id,
                                                const vect<Trajectory<T>>& trajectories)
 {
-  static const ulong kProgressTriggerCounts = 10 * motors_id_.size();
+  static const ulong kProgressTriggerCounts = 200 * motors_id_.size();
   static ulong progress_counter                = 0;
 
   if (new_trajectory_)
@@ -182,14 +182,14 @@ T ControllerJointsPVT::GetTrajectoryPointValue(const id_t id,
     break;
   }
 
-  if (progress > 0 && (progress_counter++ % kProgressTriggerCounts == 0) &&
-      !stop_request_)
-    emit trajectoryProgressStatus(qRound(progress * 100.), waypoint.ts);
   if (stop)
   {
     stop_ = true;
     emit trajectoryCompleted();
   }
+  if (progress > 0 && (progress_counter++ % kProgressTriggerCounts == 0) &&
+      !stop_request_)
+    emit trajectoryProgressStatus(qRound(progress * 100.), waypoint.ts);
   return waypoint.value;
 }
 

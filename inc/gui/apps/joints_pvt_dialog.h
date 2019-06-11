@@ -2,19 +2,13 @@
 #define CABLE_ROBOT_JOINTS_PVT_DIALOG_H
 
 #include <QDialog>
-#include <QFileDialog>
 #include <QGridLayout>
 #include <QLineSeries>
-#include <QMessageBox>
 #include <QtMath>
 
-#include "easylogging++.h"
-
-#include "ctrl/controller_joints_pvt.h"
 #include "gui/apps/chartview.h"
 #include "gui/apps/input_form.h"
 #include "gui/apps/my3dscatterwidget.h"
-#include "robot/cablerobot.h"
 #include "apps/joints_pvt_app.h"
 
 namespace Ui {
@@ -30,10 +24,14 @@ class JointsPVTDialog: public QDialog
                            const vect<grabcdpr::ActuatorParams>& params);
   ~JointsPVTDialog();
 
+ signals:
+  void progressUpdateTrigger(const int progress_value, const double timestamp);
+
  private slots:
   void handleTransitionCompleted();
   void handleTrajectoryCompleted();
-  void progressUpdate(const int progress_value);
+  void progressUpdateCallback(const int progress_value, const double timestamp);
+  void progressUpdate(const int progress_value, const double timestamp);
 
  private slots:
   void on_pushButton_addTraj_clicked();
@@ -53,7 +51,8 @@ class JointsPVTDialog: public QDialog
   static const quint8 kInputFormPosInit_ = 2;
   Ui::JointsPVTDialog* ui;
   My3DScatterWidget traj_display_;
-  QGridLayout* grid_layout_ = NULL;
+  QGridLayout* grid_layout_ = nullptr;
+  QList<QSharedPointer<ChartView>> chart_views_;
   QVector<InputForm*> line_edits_;
   quint8 input_form_pos_;
 

@@ -63,7 +63,7 @@ class JointsPVTApp: public QObject, public StateMachine
 
   void trajectoryComplete() const;
 
-  void trajectoryProgress(const int) const;
+  void trajectoryProgress(const int, const double) const;
   /**
    * @brief Stop waiting command.
    */
@@ -72,7 +72,7 @@ class JointsPVTApp: public QObject, public StateMachine
  private slots:
   // For signals emitted by controller
   void handleTrajectoryCompleted();
-  void progressUpdate(const int progress_value);
+  void progressUpdate(const int progress_value, const double timestamp);
 
   void logInfo(const QString&text) const;
 
@@ -91,7 +91,7 @@ class JointsPVTApp: public QObject, public StateMachine
   void setMotorTorqueTraj(const bool relative, const vect<id_t>& motors_id,
                           QTextStream& s, TrajectorySet& traj_set);
 
- private:
+ public:
   //--------- State machine ---------------------------------------------------------//
 
   enum States : BYTE
@@ -103,6 +103,7 @@ class JointsPVTApp: public QObject, public StateMachine
     ST_MAX_STATES
   };
 
+ private:
   // clang-format off
   static constexpr char* kStatesStr[] = {
     const_cast<char*>("IDLE"),

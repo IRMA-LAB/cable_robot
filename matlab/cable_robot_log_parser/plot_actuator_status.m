@@ -28,6 +28,14 @@ end
 
 %% Plot pulley encoder values
 figure('units','normalized','outerposition',[0 0 1 1])
+plot(diff(sorted_ts(1,:)))
+grid on
+title('Times between consecutive log samples of actuator 0')
+xlabel('log sample')
+ylabel('time [sec]')
+
+%% Plot pulley encoder values
+figure('units','normalized','outerposition',[0 0 1 1])
 for i = 1:num_actuators
     subplot(3,1,i)
     plot(sorted_ts(i,:), pulley_enc_mat(i,:))

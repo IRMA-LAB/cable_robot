@@ -152,14 +152,12 @@ void MainGUI::pushButton_debug_clicked()
 
   if (robot_ptr_->AnyMotorEnabled())
   {
-    robot_ptr_->StopRtLogging();
     robot_ptr_->DisableMotors();
   }
   else
   {
     robot_ptr_->EnableMotors();
     robot_ptr_->UpdateHomeConfig(0.0, 0.0);
-    robot_ptr_->StartRtLogging(10); // 10 x rt-cycle = 10 msec
   }
 
   //  pushButton_debug->setDisabled(true);

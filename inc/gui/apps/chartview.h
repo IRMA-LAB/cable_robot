@@ -4,8 +4,9 @@
 #include <QtCharts/QChartView>
 #include <QtWidgets/QRubberBand>
 #include <QScatterSeries>
+#include <QLineSeries>
 
-#include "gui/apps/joints_pvt_dialog.h"
+#include "utils/types.h"
 
 QT_CHARTS_USE_NAMESPACE
 

@@ -20,8 +20,8 @@ JointsPVTApp::JointsPVTApp(QObject* parent, CableRobot* robot,
   : QObject(parent), StateMachine(ST_MAX_STATES), robot_ptr_(robot),
     controller_(params, robot->GetRtCycleTimeNsec(), this)
 {
-  connect(&controller_, SIGNAL(trajectoryProgressStatus(int)), this,
-          SLOT(progressUpdate(int)), Qt::ConnectionType::QueuedConnection);
+  connect(&controller_, SIGNAL(trajectoryProgressStatus(int, double)), this,
+          SLOT(progressUpdate(int, double)), Qt::ConnectionType::QueuedConnection);
   connect(&controller_, SIGNAL(trajectoryCompleted()), this,
           SLOT(handleTrajectoryCompleted()), Qt::ConnectionType::QueuedConnection);
   connect(this, SIGNAL(printToQConsole(QString)), this, SLOT(logInfo(QString)),
@@ -39,8 +39,8 @@ JointsPVTApp::~JointsPVTApp()
 {
   clearAllTrajectories();
 
-  disconnect(&controller_, SIGNAL(trajectoryProgressStatus(int)), this,
-             SLOT(progressUpdate(int)));
+  disconnect(&controller_, SIGNAL(trajectoryProgressStatus(int, double)), this,
+             SLOT(progressUpdate(int, double)));
   disconnect(&controller_, SIGNAL(trajectoryCompleted()), this,
              SLOT(handleTrajectoryCompleted()));
   disconnect(this, SIGNAL(printToQConsole(QString)), this, SLOT(logInfo(QString)));
@@ -183,9 +183,9 @@ void JointsPVTApp::handleTrajectoryCompleted()
     emit trajectoryComplete();
 }
 
-void JointsPVTApp::progressUpdate(const int progress_value)
+void JointsPVTApp::progressUpdate(const int progress_value, const double timestamp)
 {
-  emit trajectoryProgress(progress_value);
+  emit trajectoryProgress(progress_value, timestamp);
 }
 
 void JointsPVTApp::logInfo(const QString& text) const

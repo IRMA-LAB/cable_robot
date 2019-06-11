@@ -59,7 +59,7 @@ class ControllerJointsPVT: public QObject, public ControllerBase
 
  signals:
   void trajectoryCompleted() const;
-  void trajectoryProgressStatus(const int) const;
+  void trajectoryProgressStatus(const int, const double) const;
 
  private:
   static constexpr double kArrestTime_ = 1.0; // sec
