@@ -1,7 +1,7 @@
 /**
  * @file utils/types.h
  * @author Simone Comari
- * @date 09 Apr 2019
+ * @date 11 Jun 2019
  * @brief File containing the implementation of a custom wrapper to log cable robot data
  * employing easylogging++ package.
  */
@@ -244,7 +244,7 @@ struct Trajectory
    * @param time
    * @return
    */
-  WayPoint<T> waypointFromAbsTime(const double time) const
+  WayPoint<T> waypointFromAbsTime(const double time, const double eps = 1e-6) const
   {
     assert(timestamps.front() >= 0.0);
 
@@ -259,16 +259,30 @@ struct Trajectory
     if (low == timestamps.end())
       // no bigger value than val in vector --> this shouldn't happen
       return WayPoint<T>(timestamps.back(), values.back());
-    else if (low == timestamps.begin())
+    if (low == timestamps.begin())
       lower_idx = 0;
     else
       lower_idx = low - timestamps.begin() - 1;
     const ulong upper_idx = lower_idx + 1;
-    // Interpolate
-    const double slope = (values[upper_idx] - values[lower_idx]) /
-                         (timestamps[upper_idx] - timestamps[lower_idx]);
-    const double offset = values[upper_idx] - slope * timestamps[upper_idx];
-    const double value  = slope * time + offset;
+
+    double dt_left  = time - timestamps[lower_idx];
+    double dt_right = timestamps[upper_idx] - time;
+    double value;
+    if (std::min(dt_left, dt_right) <= eps)
+    {
+      if (dt_left < dt_right)
+        value = values[lower_idx];
+      else
+        value = values[upper_idx];
+    }
+    else
+    {
+      // Interpolate
+      const double slope = (values[upper_idx] - values[lower_idx]) /
+                           (timestamps[upper_idx] - timestamps[lower_idx]);
+      const double offset = values[upper_idx] - slope * timestamps[upper_idx];
+      value  = slope * time + offset;
+    }
 
     return WayPoint<T>(time, static_cast<T>(value));
   }
@@ -278,11 +292,11 @@ struct Trajectory
    * @param time
    * @return
    */
-  WayPoint<T> waypointFromRelTime(const double time) const
+  WayPoint<T> waypointFromRelTime(const double time, const double eps = 1e-6) const
   {
     assert(timestamps.front() >= 0.0);
 
-    return waypointFromAbsTime(time + timestamps.front());
+    return waypointFromAbsTime(time + timestamps.front(), eps);
   }
 };
 
