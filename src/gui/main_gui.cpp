@@ -115,8 +115,8 @@ void MainGUI::on_pushButton_startApp_clicked()
 {
   CLOG(TRACE, "event") << ui->comboBox_apps->currentText();
   // debug
-  if (!(ec_network_valid_ && rt_thread_running_))
-    return;
+//  if (!(ec_network_valid_ && rt_thread_running_))
+//    return;
 
   ui->pushButton_homing->setDisabled(true);
   ui->pushButton_calib->setDisabled(true);
@@ -397,6 +397,9 @@ void MainGUI::enableInterface(const bool op_outcome /*= true*/)
   ui->groupBox_app->setEnabled(op_outcome);
   ui->frame_manualControl->setEnabled(true);
   ui->pushButton_exitReady->setEnabled(op_outcome);
+  // Reset app pointers as they just delete themselves.
+  joints_pvt_dialog_ = nullptr;
+  man_ctrl_dialog_ = nullptr;
   CVLOG(2, "event") << "Interface enabled with app selection "
                     << (op_outcome ? "enabled" : "disabled");
 }

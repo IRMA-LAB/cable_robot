@@ -126,7 +126,7 @@ ActuatorStatus HomingProprioceptive::GetActuatorStatus(const id_t id)
 
 void HomingProprioceptive::Start(HomingProprioceptiveStartData* data)
 {
-  if (data == NULL)
+  if (data == nullptr)
     CLOG(TRACE, "event") << "with NULL";
   else
     CLOG(TRACE, "event") << "with " << *data;
@@ -173,7 +173,7 @@ void HomingProprioceptive::Disable()
       TRANSITION_MAP_ENTRY (ST_IDLE)            // ST_OPTIMIZING
       TRANSITION_MAP_ENTRY (ST_IDLE)            // ST_HOME
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_FAULT
-  END_TRANSITION_MAP(NULL)
+  END_TRANSITION_MAP(nullptr)
   // clang-format on
 }
 
@@ -331,7 +331,7 @@ STATE_DEFINE(HomingProprioceptive, Idle, NoEventData)
 
 GUARD_DEFINE(HomingProprioceptive, GuardEnabled, NoEventData)
 {
-  robot_ptr_->SetController(NULL);
+  robot_ptr_->SetController(nullptr);
   robot_ptr_->EnableMotors();
 
   grabrt::ThreadClock clock(grabrt::Sec2NanoSec(CableRobot::kCycleWaitTimeSec));

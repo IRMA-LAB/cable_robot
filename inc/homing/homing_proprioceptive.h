@@ -128,7 +128,7 @@ class HomingProprioceptive: public QObject, public StateMachine
    * commands.
    */
   HomingProprioceptive(QObject* parent, CableRobot* robot);
-  ~HomingProprioceptive();
+  ~HomingProprioceptive() override;
 
   /**
    * @brief This class' states enum
@@ -256,7 +256,7 @@ class HomingProprioceptive: public QObject, public StateMachine
   void updateOptimizationProgress();
 
  private:
-  CableRobot* robot_ptr_ = NULL;
+  CableRobot* robot_ptr_ = nullptr;
   ControllerSingleDrive controller_;
 
   static constexpr size_t kNumMeasMin_     = 1;
@@ -318,11 +318,11 @@ class HomingProprioceptive: public QObject, public StateMachine
   // State map to define state object order
   BEGIN_STATE_MAP_EX
   // clang-format off
-    STATE_MAP_ENTRY_ALL_EX(&Idle, &GuardIdle, 0, 0)
-    STATE_MAP_ENTRY_ALL_EX(&Enabled, &GuardEnabled, 0, 0)
+    STATE_MAP_ENTRY_ALL_EX(&Idle, &GuardIdle, nullptr, nullptr)
+    STATE_MAP_ENTRY_ALL_EX(&Enabled, &GuardEnabled, nullptr, nullptr)
     STATE_MAP_ENTRY_EX(&StartUp)
-    STATE_MAP_ENTRY_ALL_EX(&SwitchCable, &GuardSwitch, 0, 0)
-    STATE_MAP_ENTRY_ALL_EX(&Coiling, 0, &EntryCoiling, 0)
+    STATE_MAP_ENTRY_ALL_EX(&SwitchCable, &GuardSwitch, nullptr, nullptr)
+    STATE_MAP_ENTRY_ALL_EX(&Coiling, nullptr, &EntryCoiling, nullptr)
     STATE_MAP_ENTRY_EX(&Uncoiling)
     STATE_MAP_ENTRY_EX(&Optimizing)
     STATE_MAP_ENTRY_EX(&Home)

@@ -1,7 +1,7 @@
 /**
  * @file homing_interface_proprioceptive.cpp
  * @author Simone Comari
- * @date 07 Mar 2019
+ * @date 12 Jun 2019
  * @brief This file includes definitions of classes present in
  * homing_interface_proprioceptive.h.
  */
@@ -78,7 +78,7 @@ void HomingInterfaceProprioceptive::on_pushButton_enable_clicked()
 
   if (!robot_enabled)
   {
-    app_.Start(NULL); // IDLE --> ENABLED
+    app_.Start(nullptr); // IDLE --> ENABLED
     return;
   }
 
@@ -404,16 +404,16 @@ void HomingInterfaceProprioceptive::handleStateChanged(const quint8& state)
     }
     case HomingProprioceptive::ST_START_UP:
       ui->pushButton_start->setText(tr("Stop"));
-      app_.Start(NULL);
+      app_.Start(nullptr);
       break;
     case HomingProprioceptive::ST_SWITCH_CABLE:
-      app_.Start(NULL);
+      app_.Start(nullptr);
       break;
     case HomingProprioceptive::ST_COILING:
-      app_.Start(NULL);
+      app_.Start(nullptr);
       break;
     case HomingProprioceptive::ST_UNCOILING:
-      app_.Start(NULL);
+      app_.Start(nullptr);
       break;
     case HomingProprioceptive::ST_FAULT:
       ui->pushButton_enable->setDisabled(true);

@@ -48,7 +48,7 @@ void JointsPVTDialog::handleTransitionCompleted()
 {
   CLOG(TRACE, "event");
   disconnect(this, SIGNAL(progressUpdateTrigger(int, double)), this,
-          SLOT(progressUpdate(int, double)));
+             SLOT(progressUpdate(int, double)));
   ui->progressBar->setFormat(
     QString("Trajectory %1 in progress... %p%").arg(traj_counter_));
   ui->progressBar->setValue(0);
@@ -61,7 +61,7 @@ void JointsPVTDialog::handleTrajectoryCompleted()
 {
   CLOG(TRACE, "event");
   disconnect(this, SIGNAL(progressUpdateTrigger(int, double)), this,
-          SLOT(progressUpdate(int, double)));
+             SLOT(progressUpdate(int, double)));
   if (++traj_counter_ >= num_traj_)
   {
     if (!ui->checkBox_infLoop->isChecked())
@@ -79,14 +79,15 @@ void JointsPVTDialog::handleTrajectoryCompleted()
   ui->progressBar->setFormat(
     QString("Transition %1 in progress... %p%").arg(traj_counter_));
   ui->progressBar->setValue(0);
-  for (const auto& chart_view: chart_views_)
+  for (const auto& chart_view : chart_views_)
     chart_view->removeHighlight();
   app_.runTransition(traj_counter_);
   connect(this, SIGNAL(progressUpdateTrigger(int, double)), this,
           SLOT(progressUpdate(int, double)), Qt::QueuedConnection);
 }
 
-void JointsPVTDialog::progressUpdateCallback(const int progress_value, const double timestamp)
+void JointsPVTDialog::progressUpdateCallback(const int progress_value,
+                                             const double timestamp)
 {
   emit progressUpdateTrigger(progress_value, timestamp);
 }
@@ -103,28 +104,32 @@ void JointsPVTDialog::progressUpdate(const int progress_value, const double time
     case CABLE_LENGTH:
       for (uint i = 0; i < traj_set.traj_cables_len.size(); i++)
       {
-        WayPointD waypoint = traj_set.traj_cables_len[i].waypointFromAbsTime(timestamp, 0.01);
+        WayPointD waypoint =
+          traj_set.traj_cables_len[i].waypointFromAbsTime(timestamp, 0.01);
         chart_views_[i]->highlightCurrentPoint(QPointF(waypoint.ts, waypoint.value));
       }
       break;
     case MOTOR_POSITION:
       for (uint i = 0; i < traj_set.traj_cables_len.size(); i++)
       {
-        WayPointI waypoint = traj_set.traj_motors_pos[i].waypointFromAbsTime(timestamp, 0.01);
+        WayPointI waypoint =
+          traj_set.traj_motors_pos[i].waypointFromAbsTime(timestamp, 0.01);
         chart_views_[i]->highlightCurrentPoint(QPointF(waypoint.ts, waypoint.value));
       }
       break;
     case MOTOR_SPEED:
       for (uint i = 0; i < traj_set.traj_cables_len.size(); i++)
       {
-        WayPointI waypoint = traj_set.traj_motors_vel[i].waypointFromAbsTime(timestamp, 0.01);
+        WayPointI waypoint =
+          traj_set.traj_motors_vel[i].waypointFromAbsTime(timestamp, 0.01);
         chart_views_[i]->highlightCurrentPoint(QPointF(waypoint.ts, waypoint.value));
       }
       break;
     case MOTOR_TORQUE:
       for (uint i = 0; i < traj_set.traj_cables_len.size(); i++)
       {
-        WayPointS waypoint = traj_set.traj_motors_torque[i].waypointFromAbsTime(timestamp, 0.01);
+        WayPointS waypoint =
+          traj_set.traj_motors_torque[i].waypointFromAbsTime(timestamp, 0.01);
         chart_views_[i]->highlightCurrentPoint(QPointF(waypoint.ts, waypoint.value));
       }
       break;
@@ -271,7 +276,7 @@ void JointsPVTDialog::updatePlots(const TrajectorySet& traj_set)
   grid_layout_ = new QGridLayout;
   for (size_t i = 0; i < num_plots; i++)
   {
-    QChart* chart        = new QChart();
+    QChart* chart         = new QChart();
     ChartView* chart_view = new ChartView(chart);
     switch (traj_set.traj_type)
     {
@@ -316,6 +321,6 @@ void JointsPVTDialog::stop()
   ui->groupBox_inputs->setEnabled(true);
   ui->progressBar->setFormat("%p%");
   ui->progressBar->setValue(0);
-  for (const auto& chart_view: chart_views_)
+  for (const auto& chart_view : chart_views_)
     chart_view->removeHighlight();
 }
