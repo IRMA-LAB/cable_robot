@@ -113,13 +113,15 @@ void ManualControlDialog::on_pushButton_logging_clicked()
     CLOG(TRACE, "event") << "STOP";
     robot_ptr_->StopRtLogging();
     logging_ = false;
-    ui->pushButton_enable->setText("Start logging");
+    ui->pushButton_logging->setText("Start logging");
+    appendText2Browser("Logging stopped");
   }
   else
   {
     CLOG(TRACE, "event") << "START";
-    robot_ptr_->StartRtLogging(kLoggingRate_);
+    robot_ptr_->StartRtLogging(kRtCycleMultiplier_);
     logging_ = true;
-    ui->pushButton_enable->setText("Stop logging");
+    ui->pushButton_logging->setText("Stop logging");
+    appendText2Browser("Start logging...");
   }
 }

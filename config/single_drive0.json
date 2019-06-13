@@ -1,0 +1,352 @@
+{
+  "rotation_patametrization": "TAYT_BRYAN",
+  "actuator": [
+    {
+      "active": true,
+      "pulley": {
+        "encoder_res": 262144,
+        "radius": 0.025,
+        "pos_OD_glob": [
+          [0.1597],
+          [-0.8359],
+          [-0.023]
+        ],
+        "vers_i": [
+          [0],
+          [1],
+          [0]
+        ],
+        "vers_j": [
+          [-1],
+          [0],
+          [0]
+        ],
+        "vers_k": [
+          [0],
+          [0],
+          [1]
+        ]
+      },
+      "winch": {
+        "drum_pitch": 0.007,
+        "drum_diameter": 0.1,
+        "gear_ratio": 5.0,
+        "motor_encoder_res": 1048576,
+        "l0": 1,
+        "pos_PA_loc": [
+          [0],
+          [-0.2668],
+          [0.27]
+        ]
+      }
+    },
+    {
+      "active": false,
+      "pulley": {
+        "encoder_res": 262144,
+        "pos_OD_glob": [
+          [0.2591],
+          [1.2883],
+          [-0.043]
+        ],
+        "vers_i": [
+          [0],
+          [-1],
+          [0]
+        ],
+        "vers_j": [
+          [1],
+          [0],
+          [0]
+        ],
+        "vers_k": [
+          [0],
+          [0],
+          [1]
+        ],
+        "radius": 0.025
+      },
+      "winch": {
+        "drum_pitch": 0.007,
+        "drum_diameter": 0.1,
+        "gear_ratio": 5.0,
+        "motor_encoder_res": 1048576,
+        "l0": 1,
+        "pos_PA_loc": [
+          [-0.2311],
+          [0.1334],
+          [0.27]
+        ]
+      }
+    },
+    {
+      "active": false,
+      "pulley": {
+        "encoder_res": 262144,
+        "pos_OD_glob": [
+          [2.1753],
+          [0.1817],
+          [-0.0351]
+        ],
+        "vers_i": [
+          [-1],
+          [0],
+          [0]
+        ],
+        "vers_j": [
+          [0],
+          [-1],
+          [0]
+        ],
+        "vers_k": [
+          [0],
+          [0],
+          [1]
+        ],
+        "radius": 0.025
+      }, 
+      "winch": {
+        "drum_pitch": 0.007,
+        "drum_diameter": 0.1,
+        "gear_ratio": 5.0,
+        "l0": 1,
+        "motor_encoder_res": 1048576,
+        "pos_PA_loc": [
+          [0.2311],
+          [0.1334],
+          [0.27]
+        ]
+      }
+    },
+    {
+      "active": false,
+      "pulley": {
+        "encoder_res": 262144,
+        "pos_OD_glob": [
+          [0.2591],
+          [1.2883],
+          [-0.043]
+        ],
+        "vers_i": [
+          [0],
+          [-1],
+          [0]
+        ],
+        "vers_j": [
+          [1],
+          [0],
+          [0]
+        ],
+        "vers_k": [
+          [0],
+          [0],
+          [1]
+        ],
+        "radius": 0.025
+      },
+      "winch": {
+        "drum_pitch": 0.007,
+        "drum_diameter": 0.1,
+        "gear_ratio": 5.0,
+        "motor_encoder_res": 1048576,
+        "l0": 1,
+        "pos_PA_loc": [
+          [-0.2311],
+          [0.1334],
+          [0.27]
+        ]
+      }
+    },
+    {
+      "active": false,
+      "pulley": {
+        "encoder_res": 262144,
+        "pos_OD_glob": [
+          [0.2591],
+          [1.2883],
+          [-0.043]
+        ],
+        "vers_i": [
+          [0],
+          [-1],
+          [0]
+        ],
+        "vers_j": [
+          [1],
+          [0],
+          [0]
+        ],
+        "vers_k": [
+          [0],
+          [0],
+          [1]
+        ],
+        "radius": 0.025
+      },
+      "winch": {
+        "drum_pitch": 0.007,
+        "drum_diameter": 0.1,
+        "gear_ratio": 5.0,
+        "motor_encoder_res": 1048576,
+        "l0": 1,
+        "pos_PA_loc": [
+          [-0.2311],
+          [0.1334],
+          [0.27]
+        ]
+      }
+    },
+    {
+      "active": false,
+      "pulley": {
+        "encoder_res": 262144,
+        "pos_OD_glob": [
+          [0.2591],
+          [1.2883],
+          [-0.043]
+        ],
+        "vers_i": [
+          [0],
+          [-1],
+          [0]
+        ],
+        "vers_j": [
+          [1],
+          [0],
+          [0]
+        ],
+        "vers_k": [
+          [0],
+          [0],
+          [1]
+        ],
+        "radius": 0.025
+      },
+      "winch": {
+        "drum_pitch": 0.007,
+        "drum_diameter": 0.1,
+        "gear_ratio": 5.0,
+        "motor_encoder_res": 1048576,
+        "l0": 1,
+        "pos_PA_loc": [
+          [-0.2311],
+          [0.1334],
+          [0.27]
+        ]
+      }
+    },
+    {
+      "active": false,
+      "pulley": {
+        "encoder_res": 262144,
+        "pos_OD_glob": [
+          [0.2591],
+          [1.2883],
+          [-0.043]
+        ],
+        "vers_i": [
+          [0],
+          [-1],
+          [0]
+        ],
+        "vers_j": [
+          [1],
+          [0],
+          [0]
+        ],
+        "vers_k": [
+          [0],
+          [0],
+          [1]
+        ],
+        "radius": 0.025
+      },
+      "winch": {
+        "drum_pitch": 0.007,
+        "drum_diameter": 0.1,
+        "gear_ratio": 5.0,
+        "motor_encoder_res": 1048576,
+        "l0": 1,
+        "pos_PA_loc": [
+          [-0.2311],
+          [0.1334],
+          [0.27]
+        ]
+      }
+    },
+    {
+      "active": false,
+      "pulley": {
+        "encoder_res": 262144,
+        "pos_OD_glob": [
+          [0.2591],
+          [1.2883],
+          [-0.043]
+        ],
+        "vers_i": [
+          [0],
+          [-1],
+          [0]
+        ],
+        "vers_j": [
+          [1],
+          [0],
+          [0]
+        ],
+        "vers_k": [
+          [0],
+          [0],
+          [1]
+        ],
+        "radius": 0.025
+      },
+      "winch": {
+        "drum_pitch": 0.007,
+        "drum_diameter": 0.1,
+        "gear_ratio": 5.0,
+        "motor_encoder_res": 1048576,
+        "l0": 1,
+        "pos_PA_loc": [
+          [-0.2311],
+          [0.1334],
+          [0.27]
+        ]
+      }
+    }
+  ],
+  "platform": {
+    "ext_torque_loc": [
+      [0.1],
+      [0.2],
+      [0.3]
+    ],
+    "mass": 8.0064014,
+    "inertia_mat_G_loc": [
+      [
+        0.13974096,
+        0,
+        0
+      ],
+      [
+        0,
+        0.13974096,
+        0
+      ],
+      [
+        0,
+        0,
+        0.21622689
+      ]
+    ],
+    "pos_PG_loc": [
+      [0.4],
+      [0.5],
+      [0.6]
+    ],
+    "ext_force_loc": [
+      [0.7],
+      [0.8],
+      [0.9]
+    ]
+  }
+}

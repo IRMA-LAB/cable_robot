@@ -166,7 +166,6 @@ STATE_DEFINE(ManualControlApp, PosControl, NoEventData)
       break;
   }
 
-  emit printToQConsole(QString("Robot is now in position control mode"));
   emit stateChanged(ST_POS_CONTROL);
 }
 
@@ -189,7 +188,6 @@ STATE_DEFINE(ManualControlApp, TorqueControl, MyData)
       break;
   }
 
-  emit printToQConsole(QString("Robot is now in torque control mode"));
   emit stateChanged(ST_TORQUE_CONTROL);
 }
 
