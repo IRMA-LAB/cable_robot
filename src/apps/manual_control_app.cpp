@@ -163,7 +163,12 @@ STATE_DEFINE(ManualControlApp, PosControl, NoEventData)
     // Wait until each motor reached user-given initial torque setpoint
     ret = robot_ptr_->WaitUntilTargetReached();
     if (ret != RetVal::OK)
+    {
+      emit printToQConsole(
+                    QString("WARNING: Could not switch motor %1 to position control mode")
+                    .arg(id));
       break;
+    }
   }
 
   emit stateChanged(ST_POS_CONTROL);
@@ -185,7 +190,12 @@ STATE_DEFINE(ManualControlApp, TorqueControl, MyData)
     // Wait until each motor reached user-given initial torque setpoint
     ret = robot_ptr_->WaitUntilTargetReached();
     if (ret != RetVal::OK)
+    {
+      emit printToQConsole(
+                    QString("WARNING: Could not switch motor %1 to torque control mode").
+                    arg(id));
       break;
+    }
   }
 
   emit stateChanged(ST_TORQUE_CONTROL);

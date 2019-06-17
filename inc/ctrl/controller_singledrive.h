@@ -1,7 +1,7 @@
 /**
  * @file controller_singledrive.h
  * @author Simone Comari
- * @date 13 Jun 2019
+ * @date 17 Jun 2019
  * @brief File containing a simple single drive controller class for cable robot.
  */
 
@@ -207,7 +207,7 @@ class ControllerSingleDrive: public ControllerBase
   static constexpr int32_t kDefaultPosSsErrTol_       = 5;         // [counts]
   static constexpr int32_t kAbsMaxSpeed_              = 4000000;   // [counts/s]
   static constexpr int16_t kAbsDeltaTorquePerSec_     = 20;        // [nominal points]
-  static constexpr int16_t kAbsMaxTorque_             = 600;       // [nominal points]
+  static constexpr int16_t kAbsMaxTorque_             = 800;       // [nominal points]
   static constexpr int16_t kDefaultTorqueSsErrTol_    = 5;         // [nominal points]
 
   enum BitPosition

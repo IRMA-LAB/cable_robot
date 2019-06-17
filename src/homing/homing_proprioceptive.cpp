@@ -1,7 +1,7 @@
 /**
  * @file homing_proprioceptive.cpp
  * @author Simone Comari
- * @date 20 May 2019
+ * @date 17 Jun 2019
  * @brief This file includes definitions of classes present in homing_proprioceptive.h.
  */
 
@@ -586,9 +586,16 @@ STATE_DEFINE(HomingProprioceptive, Home, HomingProprioceptiveHomeData)
   if (robot_ptr_->GoHome()) // (position control)
   {
     // ...which is done here.
-    for (id_t motor_id : robot_ptr_->GetActiveMotorsID())
-      robot_ptr_->UpdateHomeConfig(motor_id, data->init_lengths[motor_id],
-                                   data->init_angles[motor_id]);
+    for (uint i = 0 ; i < active_actuators_id_.size(); i++)
+    {
+      robot_ptr_->UpdateHomeConfig(active_actuators_id_[i], data->init_lengths[i],
+                                   data->init_angles[i]);
+      emit printToQConsole(QString("Homing results for drive #%1:\n\tcable length = %2 "
+                                   "[m]\n\tpulley angle = %3 [deg]")
+                           .arg(active_actuators_id_[i])
+                           .arg(data->init_lengths[i])
+                           .arg(data->init_angles[i]));
+    }
     emit homingComplete();
   }
   else

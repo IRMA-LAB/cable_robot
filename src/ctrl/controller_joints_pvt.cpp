@@ -157,7 +157,7 @@ T ControllerJointsPVT::GetTrajectoryPointValue(const id_t id,
                                                const vect<Trajectory<T>>& trajectories)
 {
   static const ulong kProgressTriggerCounts = 200 * motors_id_.size();
-  static ulong progress_counter                = 0;
+  static ulong progress_counter             = 0;
 
   if (new_trajectory_)
   {

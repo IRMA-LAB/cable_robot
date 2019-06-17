@@ -28,20 +28,13 @@ end
 
 %% Plot pulley encoder values
 figure('units','normalized','outerposition',[0 0 1 1])
-plot(diff(sorted_ts(1,:)))
-grid on
-title('Times between consecutive log samples of actuator 0')
-xlabel('log sample')
-ylabel('time [sec]')
-
-%% Plot pulley encoder values
-figure('units','normalized','outerposition',[0 0 1 1])
 for i = 1:num_actuators
     subplot(3,1,i)
-    plot(sorted_ts(i,:), pulley_enc_mat(i,:))
+    plot(sorted_ts(i,:), pulley_enc_mat(i,:) * 360 / 2^18)
     grid on
     title(sprintf('Actuator #%d pulleys encoder values', actuators_id(i)))
     xlabel('[sec]')
+    ylabel('[degrees]')
     xlim([sorted_ts(i,1), sorted_ts(i,end)])
 end
 
@@ -71,10 +64,11 @@ end
 figure('units','normalized','outerposition',[0 0 1 1])
 for i = 1:num_actuators
     subplot(3,1,i)
-    plot(sorted_ts(i,:), motor_pos_mat(i,:))
+    plot(sorted_ts(i,:), motor_pos_mat(i,:) * sqrt(0.008^2 + (pi*0.1)^2)/2^20)
     grid on
     title(sprintf('Actuator #%d motor position', actuators_id(i)))
     xlabel('[sec]')
+    ylabel('[m]')
     xlim([sorted_ts(i,1), sorted_ts(i,end)])
 end
 

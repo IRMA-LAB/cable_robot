@@ -229,27 +229,31 @@ STATE_DEFINE(JointsPVTApp, Transition, JointsPVTAppData)
   {
     vect<TrajectoryD> transition_trajectories =
       traj_sets_[data->traj_idx].traj_cables_len;
-    for (size_t i = 0; i < transition_trajectories.size(); i++)
+    double t_max = grabrt::NanoSec2Sec(robot_ptr_->GetRtCycleTimeNsec());
+    for (auto& transition_traj: transition_trajectories)
     {
       // First waypoint of next trajectory becomes end point of transition.
-      double target_cable_len = transition_trajectories[i].values.front();
-      transition_trajectories[i].timestamps.clear();
-      transition_trajectories[i].values.clear();
+      double target_cable_len = transition_traj.values.front();
+      transition_traj.timestamps.clear();
+      transition_traj.values.clear();
       // Current cable length becomes start point of transition.
       double current_cable_len =
-        robot_ptr_->GetActuatorStatus(transition_trajectories[i].id).cable_length;
+        robot_ptr_->GetActuatorStatus(transition_traj.id).cable_length;
       // Calculate necessary time to move from A to B with fixed constant velocity.
       double t = std::abs(target_cable_len - current_cable_len) / kMaxCableSpeed;
-      t        = std::max(t, grabrt::NanoSec2Sec(robot_ptr_->GetRtCycleTimeNsec()));
+      t_max    = std::max(t, t_max);
       // Set a simple trajectory composed by two waypoints (begin, end).
-      transition_trajectories[i].timestamps = {0.0, t};
-      transition_trajectories[i].values     = {current_cable_len, target_cable_len};
+      transition_traj.values = {current_cable_len, target_cable_len};
+    }
+    for (auto& transition_traj: transition_trajectories)
+    {
+      transition_traj.timestamps = {0.0, t_max};
       CLOG(INFO, "event") << QString(
                                "Cable #%1 transitioning from %2 m to %3 m in %4 sec")
-                               .arg(transition_trajectories[i].id)
-                               .arg(current_cable_len)
-                               .arg(target_cable_len)
-                               .arg(t);
+                               .arg(transition_traj.id)
+                               .arg(transition_traj.values.front())
+                               .arg(transition_traj.values.back())
+                               .arg(t_max);
     }
     // Send trajectories
     pthread_mutex_lock(&robot_ptr_->Mutex());
