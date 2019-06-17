@@ -437,7 +437,7 @@ STATE_DEFINE(HomingProprioceptive, SwitchCable, NoEventData)
   prev_state_ = ST_SWITCH_CABLE;
 
 #if HOMING_ACK
-  static constexpr double kDeltaLen = 0.01; // [m]
+  static constexpr double kDeltaLen = -0.1; // [m]
   qint32 delta_pos = robot_ptr_->GetActuator(active_actuators_id_[working_actuator_idx_])
                        ->GetWinch()
                        .LengthToCounts(kDeltaLen);
@@ -453,7 +453,7 @@ STATE_DEFINE(HomingProprioceptive, SwitchCable, NoEventData)
   pthread_mutex_unlock(&robot_ptr_->Mutex());
 
   emit printToQConsole(
-    QString("Switched to actuator #%1.\nInitial position setpoint = %2 ‰")
+    QString("Switched to actuator #%1.\nInitial position setpoint = %2")
       .arg(active_actuators_id_[working_actuator_idx_])
       .arg(positions_.front()));
 #else
@@ -515,7 +515,7 @@ STATE_DEFINE(HomingProprioceptive, Coiling, NoEventData)
   controller_.SetMotorPosTarget(positions_[meas_step_]);
   pthread_mutex_unlock(&robot_ptr_->Mutex());
   emit printToQConsole(
-    QString("Next position setpoint = %1 ‰").arg(positions_[meas_step_]));
+    QString("Next position setpoint = %1").arg(positions_[meas_step_]));
 #else
   pthread_mutex_lock(&robot_ptr_->Mutex());
   controller_.SetMotorTorqueTarget(torques_[meas_step_]);

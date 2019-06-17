@@ -223,7 +223,7 @@ STATE_DEFINE(JointsPVTApp, Transition, JointsPVTAppData)
   PrintStateTransition(prev_state_, ST_TRANSITION);
   prev_state_ = ST_TRANSITION;
 
-  static constexpr double kMaxCableSpeed = 0.002; // [m/s]
+  static constexpr double kMaxCableSpeed = 0.006; // [m/s]
 
   if (traj_sets_[data->traj_idx].traj_type == CABLE_LENGTH)
   {
