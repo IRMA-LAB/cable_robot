@@ -1,7 +1,7 @@
 /**
  * @file homing_interface_proprioceptive.cpp
  * @author Simone Comari
- * @date 12 Jun 2019
+ * @date 17 Jun 2019
  * @brief This file includes definitions of classes present in
  * homing_interface_proprioceptive.h.
  */
@@ -21,8 +21,15 @@ HomingInterfaceProprioceptive::HomingInterfaceProprioceptive(QWidget* parent,
   for (id_t motor_id : robot->GetActiveMotorsID())
   {
     init_torque_forms_.append(new InitTorqueForm(motor_id, this));
+#if HOMING_ACK
+    init_torque_forms_.last()->EnableMaxTorque(false);
+#endif
     ui->verticalLayout_2->insertWidget(pos++, init_torque_forms_.last());
   }
+
+#if HOMING_ACK
+  ui->checkBox_maxTorque->setDisabled(true);
+#endif
 
   connect(robot_ptr_, SIGNAL(printToQConsole(QString)), this,
           SLOT(appendText2Browser(QString)), Qt::ConnectionType::QueuedConnection);

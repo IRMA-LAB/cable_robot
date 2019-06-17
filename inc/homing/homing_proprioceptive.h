@@ -1,7 +1,7 @@
 /**
  * @file homing_proprioceptive.h
  * @author Simone Comari
- * @date 20 May 2019
+ * @date 17 Jun 2019
  * @brief This file includes classes necessary to implement the homing proprioceptive
  * algorithm.
  */
@@ -22,6 +22,7 @@
 #include "robot/cablerobot.h"
 #include "utils/types.h"
 
+#define HOMING_ACK true
 
 using json = nlohmann::json; /**< Alias for JSON library support. */
 
@@ -267,8 +268,12 @@ class HomingProprioceptive: public QObject, public StateMachine
   size_t meas_step_;
   vect<qint16> init_torques_;
   vect<qint16> max_torques_;
+#if HOMING_ACK
+  vectI positions_;
+#else
   vect<qint16> torques_;
   vect<qint32> reg_pos_;
+#endif
 
   bool disable_cmd_recv_;
   QMutex qmutex_;

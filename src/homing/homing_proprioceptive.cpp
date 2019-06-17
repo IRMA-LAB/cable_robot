@@ -374,8 +374,12 @@ STATE_DEFINE(HomingProprioceptive, StartUp, HomingProprioceptiveStartData)
   num_tot_meas_         = (2 * num_meas_ - 1) * active_actuators_id_.size();
   init_torques_.clear();
   max_torques_ = data->max_torques;
+#if HOMING_ACK
+  positions_.resize(num_meas_);
+#else
   torques_.resize(num_meas_);
   reg_pos_.resize(num_meas_);
+#endif
 
   RetVal ret = RetVal::OK;
   robot_ptr_->SetController(&controller_);
@@ -429,11 +433,30 @@ GUARD_DEFINE(HomingProprioceptive, GuardSwitch, NoEventData)
 
 STATE_DEFINE(HomingProprioceptive, SwitchCable, NoEventData)
 {
-  static vect<id_t> motors_id = robot_ptr_->GetActiveMotorsID();
-
   PrintStateTransition(prev_state_, ST_SWITCH_CABLE);
   prev_state_ = ST_SWITCH_CABLE;
 
+#if HOMING_ACK
+  static constexpr double kDeltaLen = 0.01; // [m]
+  qint32 delta_pos = robot_ptr_->GetActuator(active_actuators_id_[working_actuator_idx_])
+                       ->GetWinch()
+                       .LengthToCounts(kDeltaLen);
+  // Compute sequence of position setpoints for i-th actuator, given the fact that cable
+  for (quint8 i = 0; i < num_meas_; ++i)
+    positions_[i] = i * delta_pos;
+
+  // Setup first setpoint of the sequence
+  pthread_mutex_lock(&robot_ptr_->Mutex());
+  controller_.SetMotorID(active_actuators_id_[working_actuator_idx_]);
+  controller_.SetMode(ControlMode::MOTOR_POSITION);
+  controller_.SetMotorPosTarget(positions_.front());
+  pthread_mutex_unlock(&robot_ptr_->Mutex());
+
+  emit printToQConsole(
+    QString("Switched to actuator #%1.\nInitial position setpoint = %2 ‰")
+      .arg(active_actuators_id_[working_actuator_idx_])
+      .arg(positions_.front()));
+#else
   // Compute sequence of torque setpoints for i-th actuator
   qint16 delta_torque =
     (max_torques_[working_actuator_idx_] - init_torques_[working_actuator_idx_]) /
@@ -444,15 +467,16 @@ STATE_DEFINE(HomingProprioceptive, SwitchCable, NoEventData)
 
   // Setup first setpoint of the sequence
   pthread_mutex_lock(&robot_ptr_->Mutex());
-  controller_.SetMotorID(motors_id[working_actuator_idx_]);
+  controller_.SetMotorID(active_actuators_id_[working_actuator_idx_]);
   controller_.SetMode(ControlMode::MOTOR_TORQUE);
   controller_.SetMotorTorqueTarget(torques_.front());
   pthread_mutex_unlock(&robot_ptr_->Mutex());
 
   emit printToQConsole(
     QString("Switched to actuator #%1.\nInitial torque setpoint = %2 ‰")
-      .arg(motors_id[working_actuator_idx_])
+      .arg(active_actuators_id_[working_actuator_idx_])
       .arg(torques_.front()));
+#endif
   meas_step_ = 0; // reset
 
   if (robot_ptr_->WaitUntilTargetReached() == RetVal::OK &&
@@ -466,9 +490,11 @@ STATE_DEFINE(HomingProprioceptive, SwitchCable, NoEventData)
 
 ENTRY_DEFINE(HomingProprioceptive, EntryCoiling, NoEventData)
 {
+#if !HOMING_ACK
   // Record initial motor position for future uncoiling phase
   reg_pos_[0] = robot_ptr_->GetActuatorStatus(active_actuators_id_[working_actuator_idx_])
                   .motor_position;
+#endif
 
   DumpMeasAndMoveNext();
 }
@@ -484,20 +510,30 @@ STATE_DEFINE(HomingProprioceptive, Coiling, NoEventData)
     return;
   }
 
+#if HOMING_ACK
+  pthread_mutex_lock(&robot_ptr_->Mutex());
+  controller_.SetMotorPosTarget(positions_[meas_step_]);
+  pthread_mutex_unlock(&robot_ptr_->Mutex());
+  emit printToQConsole(
+    QString("Next position setpoint = %1 ‰").arg(positions_[meas_step_]));
+#else
   pthread_mutex_lock(&robot_ptr_->Mutex());
   controller_.SetMotorTorqueTarget(torques_[meas_step_]);
   pthread_mutex_unlock(&robot_ptr_->Mutex());
   emit printToQConsole(QString("Next torque setpoint = %1 ‰").arg(torques_[meas_step_]));
+#endif
 
   if (robot_ptr_->WaitUntilTargetReached() == RetVal::OK &&
       robot_ptr_->WaitUntilPlatformSteady() == RetVal::OK)
   {
+#if !HOMING_ACK
     // Record motor position for future uncoiling phase
     reg_pos_[meas_step_] =
       robot_ptr_->GetActuatorStatus(active_actuators_id_[working_actuator_idx_])
         .motor_position;
     emit printToQConsole(QString("Torque setpoint reached with motor position = %1")
                            .arg(reg_pos_[meas_step_]));
+#endif
 
     DumpMeasAndMoveNext();
     emit stateChanged(ST_COILING);
@@ -516,7 +552,11 @@ STATE_DEFINE(HomingProprioceptive, Uncoiling, NoEventData)
     // At the end of uncoiling phase, restore torque control before moving to next cable
     pthread_mutex_lock(&robot_ptr_->Mutex());
     controller_.SetMode(ControlMode::MOTOR_TORQUE);
+#if HOMING_ACK
+    controller_.SetMotorTorqueTarget(init_torques_[working_actuator_idx_]);
+#else
     controller_.SetMotorTorqueTarget(torques_.front());
+#endif
     pthread_mutex_unlock(&robot_ptr_->Mutex());
     if (robot_ptr_->WaitUntilTargetReached() == RetVal::OK &&
         robot_ptr_->WaitUntilPlatformSteady() == RetVal::OK)
@@ -534,14 +574,22 @@ STATE_DEFINE(HomingProprioceptive, Uncoiling, NoEventData)
   // this wouldn't happen due to friction.
   pthread_mutex_lock(&robot_ptr_->Mutex());
   controller_.SetMode(ControlMode::MOTOR_POSITION);
+#if HOMING_ACK
+  controller_.SetMotorPosTarget(positions_[kOffset - meas_step_], true, 3.0);
+  pthread_mutex_unlock(&robot_ptr_->Mutex());
+  emit printToQConsole(
+    QString("Next position setpoint = %1").arg(positions_[kOffset - meas_step_]));
+#else
   controller_.SetMotorPosTarget(reg_pos_[kOffset - meas_step_], true, 3.0);
   pthread_mutex_unlock(&robot_ptr_->Mutex());
   emit printToQConsole(
     QString("Next position setpoint = %1").arg(reg_pos_[kOffset - meas_step_]));
+#endif
 
   if (robot_ptr_->WaitUntilTargetReached() == RetVal::OK &&
       robot_ptr_->WaitUntilPlatformSteady() == RetVal::OK)
   {
+#if !HOMING_ACK
     int16_t actual_torque =
       robot_ptr_->GetActuatorStatus(active_actuators_id_[working_actuator_idx_])
         .motor_torque;
@@ -549,6 +597,7 @@ STATE_DEFINE(HomingProprioceptive, Uncoiling, NoEventData)
       QString("Position setpoint reached with torque = %1 ‰ (original was %2 ‰)")
         .arg(actual_torque)
         .arg(torques_[kOffset - meas_step_]));
+#endif
 
     DumpMeasAndMoveNext();
     emit stateChanged(ST_UNCOILING);
@@ -586,15 +635,15 @@ STATE_DEFINE(HomingProprioceptive, Home, HomingProprioceptiveHomeData)
   if (robot_ptr_->GoHome()) // (position control)
   {
     // ...which is done here.
-    for (uint i = 0 ; i < active_actuators_id_.size(); i++)
+    for (uint i = 0; i < active_actuators_id_.size(); i++)
     {
       robot_ptr_->UpdateHomeConfig(active_actuators_id_[i], data->init_lengths[i],
                                    data->init_angles[i]);
       emit printToQConsole(QString("Homing results for drive #%1:\n\tcable length = %2 "
                                    "[m]\n\tpulley angle = %3 [deg]")
-                           .arg(active_actuators_id_[i])
-                           .arg(data->init_lengths[i])
-                           .arg(data->init_angles[i]));
+                             .arg(active_actuators_id_[i])
+                             .arg(data->init_lengths[i])
+                             .arg(data->init_angles[i]));
     }
     emit homingComplete();
   }
