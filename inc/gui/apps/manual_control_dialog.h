@@ -34,9 +34,6 @@ class ManualControlDialog: public QDialog
 
   CableRobot* robot_ptr_ = nullptr;
   ManualControlApp app_;
-
-  static constexpr uint kRtCycleMultiplier_ = 10; // logging T = cycle_time * multiplier
-  bool logging_;
 };
 
 #endif // MANUAL_CONTROL_DIALOG_H
