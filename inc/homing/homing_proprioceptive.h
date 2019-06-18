@@ -262,6 +262,7 @@ class HomingProprioceptive: public QObject, public StateMachine
 
   static constexpr size_t kNumMeasMin_     = 1;
   static constexpr qint16 kTorqueSsErrTol_ = 5;
+  static constexpr double kPositionStepTransTime_ = 3.0;
   size_t num_meas_                         = kNumMeasMin_;
   size_t num_tot_meas_;
   size_t working_actuator_idx_;

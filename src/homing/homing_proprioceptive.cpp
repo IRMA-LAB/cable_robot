@@ -441,9 +441,11 @@ STATE_DEFINE(HomingProprioceptive, SwitchCable, NoEventData)
   qint32 delta_pos = robot_ptr_->GetActuator(active_actuators_id_[working_actuator_idx_])
                        ->GetWinch()
                        .LengthToCounts(kDeltaLen);
+  qint32 init_pos = robot_ptr_->GetActuatorStatus(
+              active_actuators_id_[working_actuator_idx_]).motor_position;
   // Compute sequence of position setpoints for i-th actuator, given the fact that cable
   for (quint8 i = 0; i < num_meas_; ++i)
-    positions_[i] = i * delta_pos;
+    positions_[i] = init_pos + i * delta_pos;
 
   // Setup first setpoint of the sequence
   pthread_mutex_lock(&robot_ptr_->Mutex());
@@ -512,7 +514,8 @@ STATE_DEFINE(HomingProprioceptive, Coiling, NoEventData)
 
 #if HOMING_ACK
   pthread_mutex_lock(&robot_ptr_->Mutex());
-  controller_.SetMotorPosTarget(positions_[meas_step_]);
+  controller_.SetMotorPosTarget(positions_[meas_step_], true,
+                                kPositionStepTransTime_);
   pthread_mutex_unlock(&robot_ptr_->Mutex());
   emit printToQConsole(
     QString("Next position setpoint = %1").arg(positions_[meas_step_]));
@@ -575,12 +578,14 @@ STATE_DEFINE(HomingProprioceptive, Uncoiling, NoEventData)
   pthread_mutex_lock(&robot_ptr_->Mutex());
   controller_.SetMode(ControlMode::MOTOR_POSITION);
 #if HOMING_ACK
-  controller_.SetMotorPosTarget(positions_[kOffset - meas_step_], true, 3.0);
+  controller_.SetMotorPosTarget(positions_[kOffset - meas_step_], true,
+          kPositionStepTransTime_);
   pthread_mutex_unlock(&robot_ptr_->Mutex());
   emit printToQConsole(
     QString("Next position setpoint = %1").arg(positions_[kOffset - meas_step_]));
 #else
-  controller_.SetMotorPosTarget(reg_pos_[kOffset - meas_step_], true, 3.0);
+  controller_.SetMotorPosTarget(reg_pos_[kOffset - meas_step_], true,
+          kPositionStepTransTime_);
   pthread_mutex_unlock(&robot_ptr_->Mutex());
   emit printToQConsole(
     QString("Next position setpoint = %1").arg(reg_pos_[kOffset - meas_step_]));
