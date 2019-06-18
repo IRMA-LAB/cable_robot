@@ -1,7 +1,7 @@
 /**
  * @file cablerobot.h
  * @author Simone Comari, Edoardo Idà
- * @date 20 May 2019
+ * @date 18 Jun 2019
  * @brief File containing the virtualization of the physical cable robot, in terms of
  * components, signalig and low level operations.
  */
@@ -243,6 +243,10 @@ class CableRobot: public QObject,
    * @brief Stop data logging inside real-time thread cycle.
    */
   void StopRtLogging();
+  /**
+   * @brief Flush data logs up to now.
+   */
+  void FlushDataLogs();
 
   /**
    * @brief Go to home position.

@@ -1,7 +1,7 @@
 /**
  * @file homing_proprioceptive.cpp
  * @author Simone Comari
- * @date 17 Jun 2019
+ * @date 18 Jun 2019
  * @brief This file includes definitions of classes present in homing_proprioceptive.h.
  */
 
@@ -407,6 +407,9 @@ STATE_DEFINE(HomingProprioceptive, StartUp, HomingProprioceptiveStartData)
   // At the beginning we don't know where we are, neither we care.
   // Just update encoder home position to be used as reference to compute deltas.
   robot_ptr_->UpdateHomeConfig(0.0, 0.0);
+
+  // Flush previous data logs if any.
+  robot_ptr_->FlushDataLogs();
 
   emit printToQConsole(msg);
   emit stateChanged(ST_START_UP);

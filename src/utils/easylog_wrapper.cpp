@@ -62,9 +62,14 @@ void LogActuatorStatusMsg(el::Logger* data_logger, const ActuatorStatusMsg& msg)
 //--------- LogBuffer class ----------------------------------------------------------//
 //------------------------------------------------------------------------------------//
 
-//--------- Public function/slot -----------------------------------------------------//
+//--------- Public functions ---------------------------------------------------------//
 
-void LogBuffer::Stop()
+void LogBuffer::flush()
+{
+  logger_->flush();
+}
+
+void LogBuffer::stop()
 {
   mutex_.lock();
   stop_requested_ = true;
@@ -72,6 +77,8 @@ void LogBuffer::Stop()
   mutex_.unlock();
   wait();
 }
+
+//--------- Public slot --------------------------------------------------------------//
 
 void LogBuffer::collectMsg(QByteArray msg)
 {
@@ -120,7 +127,7 @@ void LogBuffer::run()
 
     // Actual logging step
     quint16 index = static_cast<quint16>(linear_cnt % buffer_.size());
-    LogData(index);
+    logData(index);
     linear_cnt++;
 
     // Update circular counter and notify buffer is no longer full
@@ -133,7 +140,7 @@ void LogBuffer::run()
   }
 }
 
-void LogBuffer::LogData(const quint16 index)
+void LogBuffer::logData(const quint16 index)
 {
   QDataStream stream(buffer_[index]);
   stream.setVersion(QDataStream::Qt_4_5);

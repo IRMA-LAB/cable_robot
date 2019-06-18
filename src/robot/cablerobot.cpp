@@ -66,7 +66,7 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
 CableRobot::~CableRobot()
 {
   // Close data logging
-  log_buffer_.Stop();
+  log_buffer_.stop();
   disconnect(this, SIGNAL(sendMsg(QByteArray)), &log_buffer_,
              SLOT(collectMsg(QByteArray)));
 
@@ -276,6 +276,12 @@ void CableRobot::StopRtLogging()
   pthread_mutex_lock(&mutex_);
   rt_logging_enabled_ = false;
   pthread_mutex_unlock(&mutex_);
+}
+
+void CableRobot::FlushDataLogs()
+{
+  log_buffer_.flush();
+  CLOG(INFO, "event") << "Data logs flushed";
 }
 
 bool CableRobot::GoHome()
