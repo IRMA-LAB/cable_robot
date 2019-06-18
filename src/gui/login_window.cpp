@@ -1,7 +1,7 @@
 /**
  * @file login_window.cpp
  * @author Simone Comari
- * @date 13 Mar 2019
+ * @date 18 Jun 2019
  * @brief This file includes definitions of window class present in login_window.h.
  */
 
@@ -91,7 +91,8 @@ void LoginWindow::on_pushButton_inputFile_clicked()
 {
   CLOG(TRACE, "event");
   QString config_filename =
-    QFileDialog::getOpenFileName(this, tr("Load Configuration File"), tr("../../config"),
+    QFileDialog::getOpenFileName(this, tr("Load Configuration File"),
+                                 tr(SRCDIR "/config"),
                                  tr("Configuration File (*.json)"));
   if (config_filename.isEmpty())
   {
