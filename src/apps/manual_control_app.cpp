@@ -130,7 +130,8 @@ void ManualControlApp::disable()
   qmutex_.lock();
   disable_cmd_recv_ = true;
   qmutex_.unlock();
-  emit stopWaitingCmd();
+  if (robot_ptr_->isWaiting())
+    emit stopWaitingCmd();
 
   // clang-format off
   BEGIN_TRANSITION_MAP                      // - Current State -

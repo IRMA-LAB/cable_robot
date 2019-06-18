@@ -14,7 +14,8 @@ constexpr double CableRobot::kCutoffFreq_;
 
 CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
   : QObject(parent), StateMachine(ST_MAX_STATES), platform_(grabcdpr::TILT_TORSION),
-    log_buffer_(el::Loggers::getLogger("data")), prev_state_(ST_MAX_STATES)
+    log_buffer_(el::Loggers::getLogger("data")), stop_waiting_cmd_recv_(false),
+    is_waiting_(false), prev_state_(ST_MAX_STATES)
 {
   PrintStateTransition(prev_state_, ST_IDLE);
   prev_state_ = ST_IDLE;
@@ -229,8 +230,8 @@ void CableRobot::CollectMeas()
 
 void CableRobot::DumpMeas() const
 {
-  for (const ActuatorStatusMsg& msg : meas_)
-    emit sendMsg(msg.serialized());
+  for (size_t i = 0; i < active_actuators_ptrs_.size(); i++)
+    emit sendMsg(meas_[i].serialized());
 }
 
 void CableRobot::CollectAndDumpMeasRt()
