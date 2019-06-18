@@ -2,9 +2,11 @@
 #define MANUAL_CONTROL_APP_H
 
 #include <QObject>
+#include <QTextStream>
 
 #include "StateMachine.h"
 
+#include "ctrl/controller_joints_pvt.h"
 #include "robot/cablerobot.h"
 
 class MyData: public EventData
@@ -33,12 +35,14 @@ class ManualControlApp: public QObject, public StateMachine
     ST_ENABLED,
     ST_POS_CONTROL,
     ST_TORQUE_CONTROL,
+    ST_LOGGING,
     ST_MAX_STATES
   };
 
   void enable(MyData* data = nullptr);
   void changeControlMode();
   void changeControlMode(MyData* data);
+  void exciteAndLog();
   void disable();
 
  signals:
@@ -55,16 +59,26 @@ class ManualControlApp: public QObject, public StateMachine
    */
   void stopWaitingCmd() const;
 
+ private slots:
+  void stopLogging();
+
  private:
   static constexpr qint16 kTorqueSsErrTol_ = 5;
 
   CableRobot* robot_ptr_ = nullptr;
-  ControllerSingleDrive controller_;
+  ControllerSingleDrive controller_single_drive_;
+  ControllerJointsPVT* controller_joints_ptv_ = nullptr;
 
   bool disable_cmd_recv_ = false;
   QMutex qmutex_;
 
   vect<id_t> active_actuators_id_;
+
+  static constexpr uint kRtCycleMultiplier_ = 10; // logging T = cycle_time * multiplier
+  static const QString kExcitationTrajFilepath_;
+  vect<TrajectoryD> traj_cables_len_;
+  bool readTrajectories(const QString& ifilepath);
+  void setCablesLenTraj(const bool relative, const vect<id_t>& motors_id, QTextStream& s);
 
  private:
   //--------- State machine ---------------------------------------------------------//
@@ -74,7 +88,8 @@ class ManualControlApp: public QObject, public StateMachine
     const_cast<char*>("IDLE"),
     const_cast<char*>("ENABLED"),
     const_cast<char*>("POS_CONTROL"),
-    const_cast<char*>("TORQUE_CONTROL")};
+    const_cast<char*>("TORQUE_CONTROL"),
+    const_cast<char*>("LOGGING")};
   // clang-format on
 
   States prev_state_;
@@ -84,6 +99,8 @@ class ManualControlApp: public QObject, public StateMachine
   STATE_DECLARE(ManualControlApp, Enabled, NoEventData)
   STATE_DECLARE(ManualControlApp, PosControl, NoEventData)
   STATE_DECLARE(ManualControlApp, TorqueControl, MyData)
+  STATE_DECLARE(ManualControlApp, Logging, NoEventData)
+  EXIT_DECLARE(ManualControlApp, ExitLogging)
 
   // State map to define state object order
   BEGIN_STATE_MAP_EX
@@ -92,6 +109,7 @@ class ManualControlApp: public QObject, public StateMachine
     STATE_MAP_ENTRY_ALL_EX(&Enabled, &GuardEnabled, nullptr, nullptr)
     STATE_MAP_ENTRY_EX(&PosControl)
     STATE_MAP_ENTRY_EX(&TorqueControl)
+    STATE_MAP_ENTRY_ALL_EX(&Logging, nullptr, nullptr, &ExitLogging)
   // clang-format on
   END_STATE_MAP_EX
 

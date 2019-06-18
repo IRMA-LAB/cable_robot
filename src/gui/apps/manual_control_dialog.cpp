@@ -2,8 +2,7 @@
 #include "ui_manual_control_dialog.h"
 
 ManualControlDialog::ManualControlDialog(QWidget* parent, CableRobot* robot)
-  : QDialog(parent), ui(new Ui::ManualControlDialog), robot_ptr_(robot),
-    app_(this, robot), logging_(false)
+  : QDialog(parent), ui(new Ui::ManualControlDialog), robot_ptr_(robot), app_(this, robot)
 {
   ui->setupUi(this);
   setAttribute(Qt::WA_DeleteOnClose);
@@ -64,7 +63,18 @@ void ManualControlDialog::handleStateChanged(const quint8& state)
       else
         on_radioButton_position_clicked();
       break;
-    default:
+    case ManualControlApp::ST_POS_CONTROL:
+      ui->pushButton_logging->setEnabled(true);
+      ui->pushButton_enable->setEnabled(true);
+      ui->pushButton_return->setEnabled(true);
+      break;
+    case ManualControlApp::ST_LOGGING:
+      ui->pushButton_enable->setDisabled(true);
+      ui->pushButton_return->setDisabled(true);
+      ui->pushButton_logging->setDisabled(true);
+      break;
+    case ManualControlApp::ST_TORQUE_CONTROL:
+      ui->pushButton_logging->setDisabled(true);
       break;
   }
 }
@@ -106,22 +116,4 @@ void ManualControlDialog::on_pushButton_return_clicked()
   close();
 }
 
-void ManualControlDialog::on_pushButton_logging_clicked()
-{
-  if (logging_)
-  {
-    CLOG(TRACE, "event") << "STOP";
-    robot_ptr_->StopRtLogging();
-    logging_ = false;
-    ui->pushButton_logging->setText("Start logging");
-    appendText2Browser("Logging stopped");
-  }
-  else
-  {
-    CLOG(TRACE, "event") << "START";
-    robot_ptr_->StartRtLogging(kRtCycleMultiplier_);
-    logging_ = true;
-    ui->pushButton_logging->setText("Stop logging");
-    appendText2Browser("Start logging...");
-  }
-}
+void ManualControlDialog::on_pushButton_logging_clicked() { app_.exciteAndLog(); }
