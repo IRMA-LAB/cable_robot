@@ -1,7 +1,7 @@
 /**
  * @file cablerobot.cpp
  * @author Simone Comari, Edoardo Idà
- * @date 07 Jun 2019
+ * @date 18 Jun 2019
  * @brief File containing definitions of functions and class declared in cablerobot.h.
  */
 
@@ -352,6 +352,7 @@ RetVal CableRobot::WaitUntilTargetReached(const double max_wait_time_sec)
       is_waiting_            = false;
       stop_waiting_cmd_recv_ = false;
       qmutex_.unlock();
+      CLOG(INFO, "event") << "Stop waiting command received while target not yet reached";
       return RetVal::EINT;
     }
     qmutex_.unlock();
@@ -401,6 +402,8 @@ RetVal CableRobot::WaitUntilPlatformSteady(const double max_wait_time_sec)
         is_waiting_            = false;
         stop_waiting_cmd_recv_ = false;
         qmutex_.unlock();
+        CLOG(INFO, "event") << "Stop waiting command received while platform not yet"
+                               " steady";
         return RetVal::EINT;
       }
       qmutex_.unlock();

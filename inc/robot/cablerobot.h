@@ -99,7 +99,7 @@ class CableRobot: public QObject,
 
   // Tuning params for waiting functions
   static constexpr double kCycleWaitTimeSec = 0.02; /**< [sec] Cycle time when waiting. */
-  static constexpr double kMaxWaitTimeSec   = 25.0; /**< [sec] Maximum waiting time. */
+  static constexpr double kMaxWaitTimeSec   = 5.0; /**< [sec] Maximum waiting time. */
 
   /**
    * @brief Get a pointer to inquired actuator.

@@ -150,7 +150,8 @@ void HomingProprioceptive::Stop()
 {
   CLOG(TRACE, "event");
 
-  emit stopWaitingCmd();
+  if (robot_ptr_->isWaiting())
+      emit stopWaitingCmd();
 }
 
 void HomingProprioceptive::Disable()
@@ -160,7 +161,8 @@ void HomingProprioceptive::Disable()
   qmutex_.lock();
   disable_cmd_recv_ = true;
   qmutex_.unlock();
-  emit stopWaitingCmd();
+  if (robot_ptr_->isWaiting())
+      emit stopWaitingCmd();
 
   // clang-format off
   BEGIN_TRANSITION_MAP                          // - Current State -
@@ -398,7 +400,7 @@ STATE_DEFINE(HomingProprioceptive, StartUp, HomingProprioceptiveStartData)
       break;
     msg.append(QString("\n\t%1±%2 ‰").arg(init_torques_.back()).arg(kTorqueSsErrTol_));
   }
-  if (ret != RetVal::OK || robot_ptr_->WaitUntilPlatformSteady() != RetVal::OK)
+  if (ret != RetVal::OK || robot_ptr_->WaitUntilPlatformSteady(-1.) != RetVal::OK)
   {
     emit printToQConsole("WARNING: Start up phase failed");
     InternalEvent(ST_ENABLED);
@@ -485,7 +487,7 @@ STATE_DEFINE(HomingProprioceptive, SwitchCable, NoEventData)
   meas_step_ = 0; // reset
 
   if (robot_ptr_->WaitUntilTargetReached() == RetVal::OK &&
-      robot_ptr_->WaitUntilPlatformSteady() == RetVal::OK)
+      robot_ptr_->WaitUntilPlatformSteady(-1.) == RetVal::OK)
   {
     emit stateChanged(ST_SWITCH_CABLE);
     return;
@@ -530,7 +532,7 @@ STATE_DEFINE(HomingProprioceptive, Coiling, NoEventData)
 #endif
 
   if (robot_ptr_->WaitUntilTargetReached() == RetVal::OK &&
-      robot_ptr_->WaitUntilPlatformSteady() == RetVal::OK)
+      robot_ptr_->WaitUntilPlatformSteady(-1.) == RetVal::OK)
   {
 #if !HOMING_ACK
     // Record motor position for future uncoiling phase
@@ -565,7 +567,7 @@ STATE_DEFINE(HomingProprioceptive, Uncoiling, NoEventData)
 #endif
     pthread_mutex_unlock(&robot_ptr_->Mutex());
     if (robot_ptr_->WaitUntilTargetReached() == RetVal::OK &&
-        robot_ptr_->WaitUntilPlatformSteady() == RetVal::OK)
+        robot_ptr_->WaitUntilPlatformSteady(-1.) == RetVal::OK)
     {
       working_actuator_idx_++;
       InternalEvent(ST_SWITCH_CABLE);
@@ -595,7 +597,7 @@ STATE_DEFINE(HomingProprioceptive, Uncoiling, NoEventData)
 #endif
 
   if (robot_ptr_->WaitUntilTargetReached() == RetVal::OK &&
-      robot_ptr_->WaitUntilPlatformSteady() == RetVal::OK)
+      robot_ptr_->WaitUntilPlatformSteady(-1.) == RetVal::OK)
   {
 #if !HOMING_ACK
     int16_t actual_torque =
