@@ -28,17 +28,12 @@ ManualControlApp::ManualControlApp(QObject* parent, CableRobot* robot)
   connect(this, SIGNAL(stopWaitingCmd()), robot_ptr_, SLOT(stopWaiting()));
 
   traj_cables_len_.clear();
-  if (readTrajectories(kExcitationTrajFilepath_))
-  {
-    vect<grabcdpr::ActuatorParams> dummy_params;
-    controller_joints_ptv_ =
-      new ControllerJointsPVT(dummy_params, robot->GetRtCycleTimeNsec(), this);
-    controller_joints_ptv_->SetMotorsID(active_actuators_id_);
-    connect(controller_joints_ptv_, SIGNAL(trajectoryCompleted()), this,
-            SLOT(stopLogging()), Qt::ConnectionType::QueuedConnection);
-  }
-  else
-    printToQConsole("WARNING: Could not read trjectories file");
+  vect<grabcdpr::ActuatorParams> dummy_params;
+  controller_joints_ptv_ =
+  new ControllerJointsPVT(dummy_params, robot->GetRtCycleTimeNsec(), this);
+  controller_joints_ptv_->SetMotorsID(active_actuators_id_);
+  connect(controller_joints_ptv_, SIGNAL(trajectoryCompleted()), this,
+          SLOT(stopLogging()), Qt::ConnectionType::QueuedConnection);
 }
 
 ManualControlApp::~ManualControlApp()
@@ -254,9 +249,12 @@ STATE_DEFINE(ManualControlApp, Logging, NoEventData)
 {
   PrintStateTransition(prev_state_, ST_LOGGING);
   prev_state_ = ST_LOGGING;
+  emit stateChanged(ST_LOGGING);
 
-  if (robot_ptr_->WaitUntilPlatformSteady(-1.) != RetVal::OK)
+  traj_cables_len_.clear();
+  if (!readTrajectories(kExcitationTrajFilepath_))
   {
+    printToQConsole("WARNING: Could not read trjectories file");
     InternalEvent(ST_POS_CONTROL);
     return;
   }

@@ -67,11 +67,15 @@ void ManualControlDialog::handleStateChanged(const quint8& state)
       ui->pushButton_logging->setEnabled(true);
       ui->pushButton_enable->setEnabled(true);
       ui->pushButton_return->setEnabled(true);
+      ui->radioButton_torque->setEnabled(true);
+      ui->radioButton_position->setEnabled(true);
       break;
     case ManualControlApp::ST_LOGGING:
       ui->pushButton_enable->setDisabled(true);
       ui->pushButton_return->setDisabled(true);
       ui->pushButton_logging->setDisabled(true);
+      ui->radioButton_torque->setDisabled(true);
+      ui->radioButton_position->setDisabled(true);
       break;
     case ManualControlApp::ST_TORQUE_CONTROL:
       ui->pushButton_logging->setDisabled(true);
