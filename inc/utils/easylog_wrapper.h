@@ -1,7 +1,7 @@
 /**
  * @file easylog_wrapper.h
  * @author Simone Comari
- * @date 18 Jun 2019
+ * @date 19 Jun 2019
  * @brief File containing the implementation of a custom wrapper to log cable robot data
  * employing easylogging++ package.
  */
@@ -69,7 +69,8 @@ class LogBuffer: public QThread
    */
   LogBuffer(el::Logger* data_logger, const size_t buffer_size = 2000)
     : logger_(data_logger), stop_requested_(false),
-      buffer_(buffer_size, QByteArray(static_cast<int>(kMaxMsgSize), 0))
+      buffer_(buffer_size, QByteArray(static_cast<int>(kMaxMsgSize), 0)),
+      circular_cnt_(0)
   {}
 
   /**

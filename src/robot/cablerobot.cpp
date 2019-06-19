@@ -1,7 +1,7 @@
 /**
  * @file cablerobot.cpp
  * @author Simone Comari, Edoardo Idà
- * @date 18 Jun 2019
+ * @date 19 Jun 2019
  * @brief File containing definitions of functions and class declared in cablerobot.h.
  */
 
@@ -53,7 +53,8 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
   rt_logging_enabled_ = false;
   rt_logging_mod_ = 1;
   meas_.resize(active_actuators_id_.size());
-  connect(this, SIGNAL(sendMsg(QByteArray)), &log_buffer_, SLOT(collectMsg(QByteArray)));
+  connect(this, SIGNAL(sendMsg(QByteArray)), &log_buffer_, SLOT(collectMsg(QByteArray)),
+          Qt::QueuedConnection);
   log_buffer_.start();
 
   // Setup timers for components' status update

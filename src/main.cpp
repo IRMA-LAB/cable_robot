@@ -7,9 +7,6 @@
 
 INITIALIZE_EASYLOGGINGPP
 
-// static el::Logger *logger = el::Loggers::getLogger("default");
-// static LogBuffer buffer(logger);
-
 int main(int argc, char* argv[])
 {
   START_EASYLOGGINGPP(argc, argv);
