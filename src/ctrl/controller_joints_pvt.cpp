@@ -1,9 +1,12 @@
 #include "ctrl/controller_joints_pvt.h"
 
+constexpr double ControllerJointsPVT::kMinArrestTime_;
+
 ControllerJointsPVT::ControllerJointsPVT(const vect<grabcdpr::ActuatorParams>& params,
                                          const uint32_t cycle_t_nsec, QObject* parent)
   : QObject(parent), ControllerBase(), winches_controller_(params)
 {
+  motors_vel_.resize(params.size());
   cycle_time_ = grabrt::NanoSec2Sec(cycle_t_nsec);
   Reset();
 }
@@ -58,6 +61,13 @@ void ControllerJointsPVT::stopTrajectoryFollowing()
   stop_request_      = true;
   stop_request_time_ = true_traj_time_;
   traj_time_         = true_traj_time_;
+
+  int max_abs_motor_speed = 0;
+  for (const int vel: motors_vel_)
+    if (abs(vel) > max_abs_motor_speed)
+      max_abs_motor_speed = abs(vel);
+  arrest_time_ = std::max(kMinArrestTime_, max_abs_motor_speed/kVel2ArrestTimeRatio_);
+  slowing_exp_ = -5. / arrest_time_;
 }
 
 void ControllerJointsPVT::pauseTrajectoryFollowing() { stopTrajectoryFollowing(); }
@@ -75,7 +85,11 @@ vect<ControlAction>
 ControllerJointsPVT::CalcCtrlActions(const grabcdpr::Vars&,
                                      const vect<ActuatorStatus>& actuators_status)
 {
-  true_traj_time_ = clock_.Elapsed() - paused_time_;
+  // Possibly apply smooth resume/stop
+  processTrajTime();
+  // Collect motors speed for possible arrest/resume time computation
+  for (ulong i = 0; i < actuators_status.size(); i++)
+    motors_vel_[i] = actuators_status[i].motor_speed;
   vect<ControlAction> actions(modes_.size());
   for (size_t i = 0; i < actions.size(); i++)
   {
@@ -122,13 +136,13 @@ ControllerJointsPVT::CalcCtrlActions(const grabcdpr::Vars&,
 
 void ControllerJointsPVT::processTrajTime()
 {
-  static constexpr double kSlowingExp = -3.0 / kArrestTime_;
+  true_traj_time_ = clock_.Elapsed() - paused_time_;
 
   if (stop_request_)
   {
     double time_since_stop_request = true_traj_time_ - stop_request_time_;
-    if (time_since_stop_request <= kArrestTime_)
-      traj_time_ += cycle_time_ * exp(kSlowingExp * time_since_stop_request);
+    if (time_since_stop_request <= arrest_time_)
+      traj_time_ += cycle_time_ * exp(slowing_exp_ * time_since_stop_request);
     else
     {
       stop_         = true;
@@ -139,9 +153,9 @@ void ControllerJointsPVT::processTrajTime()
   else if (resume_request_)
   {
     double time_since_resume_request = true_traj_time_ - resume_request_time_;
-    if (time_since_resume_request <= kArrestTime_)
+    if (time_since_resume_request <= arrest_time_)
       traj_time_ +=
-        cycle_time_ * exp(kSlowingExp * (kArrestTime_ - time_since_resume_request));
+        cycle_time_ * exp(slowing_exp_ * (arrest_time_ - time_since_resume_request));
     else
     {
       resume_request_ = false;
@@ -175,7 +189,6 @@ T ControllerJointsPVT::GetTrajectoryPointValue(const id_t id,
   {
     if (traj.id != id)
       continue;
-    processTrajTime(); // possibly apply smooth resume/stop
     if (resume_request_ || stop_request_)
       waypoint = traj.waypointFromRelTime(traj_time_);
     else

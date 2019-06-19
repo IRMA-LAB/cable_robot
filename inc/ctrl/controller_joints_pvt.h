@@ -62,7 +62,8 @@ class ControllerJointsPVT: public QObject, public ControllerBase
   void trajectoryProgressStatus(const int, const double) const;
 
  private:
-  static constexpr double kArrestTime_ = 4.0; // sec
+  static constexpr double kMinArrestTime_ = 1.0; // [sec]
+  static constexpr double kVel2ArrestTimeRatio_ = 1500000; // [counts/sec^2]
 
   enum BitPosition
   {
@@ -87,7 +88,9 @@ class ControllerJointsPVT: public QObject, public ControllerBase
   double paused_time_;
   double resume_request_time_;
   bool resume_request_;
-
+  vectI motors_vel_;
+  double slowing_exp_;
+  double arrest_time_;
 
   WinchesTorqueControl winches_controller_;
 
