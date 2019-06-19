@@ -1,7 +1,7 @@
 /**
  * @file homing_interface_proprioceptive.cpp
  * @author Simone Comari
- * @date 17 Jun 2019
+ * @date 19 Jun 2019
  * @brief This file includes definitions of classes present in
  * homing_interface_proprioceptive.h.
  */
@@ -181,7 +181,6 @@ void HomingInterfaceProprioceptive::on_pushButton_start_clicked()
                             "you will have to start over the procedure before starting a "
                             "new application.\nAre you sure you want to continue?",
                             QMessageBox::Yes | QMessageBox::No);
-    QCoreApplication::processEvents(); // debug
     CLOG(TRACE, "event") << "(STOP?) --> " << (reply == QMessageBox::Yes);
     if (reply == QMessageBox::Yes)
     {
@@ -256,6 +255,9 @@ void HomingInterfaceProprioceptive::on_pushButton_ok_clicked()
   // "Internal" optimization (ext call to Matlab)
   if (ui->radioButton_internal->isChecked())
   {
+    if (QFile::exists(app_.kMatlabOptimizationResultsLoc))
+      if (QFile::remove(app_.kMatlabOptimizationResultsLoc))
+        CLOG(INFO, "event") << "Removed old matlab homing optimization results";
     ui->groupBox_dataCollection->setEnabled(false);
     app_.Optimize();
     return;
