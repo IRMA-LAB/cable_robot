@@ -62,7 +62,7 @@ class ControllerJointsPVT: public QObject, public ControllerBase
   void trajectoryProgressStatus(const int, const double) const;
 
  private:
-  static constexpr double kArrestTime_ = 1.0; // sec
+  static constexpr double kArrestTime_ = 4.0; // sec
 
   enum BitPosition
   {

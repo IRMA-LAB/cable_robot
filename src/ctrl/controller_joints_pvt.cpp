@@ -122,7 +122,7 @@ ControllerJointsPVT::CalcCtrlActions(const grabcdpr::Vars&,
 
 void ControllerJointsPVT::processTrajTime()
 {
-  static constexpr double kSlowingExp = -4.0;
+  static constexpr double kSlowingExp = -3.0 / kArrestTime_;
 
   if (stop_request_)
   {
@@ -176,7 +176,10 @@ T ControllerJointsPVT::GetTrajectoryPointValue(const id_t id,
     if (traj.id != id)
       continue;
     processTrajTime(); // possibly apply smooth resume/stop
-    waypoint = traj.waypointFromRelTime(traj_time_, cycle_time_);
+    if (resume_request_ || stop_request_)
+      waypoint = traj.waypointFromRelTime(traj_time_);
+    else
+      waypoint = traj.waypointFromRelTime(traj_time_, cycle_time_);
     progress = waypoint.ts / traj.timestamps.back();
     stop &= progress >= 1.0;
     break;

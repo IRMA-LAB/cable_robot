@@ -53,6 +53,12 @@ JointsPVTApp::~JointsPVTApp()
 
 void JointsPVTApp::pause()
 {
+  vect<id_t> motors_id = robot_ptr_->GetActiveMotorsID();
+  vectI velocities(motors_id.size());
+  for (ulong i = 0; motors_id.size(); i++)
+    velocities[i] = robot_ptr_->GetActuatorStatus(motors_id[i]).motor_speed;
+  int max_speed = *std::max_element(velocities.begin(), velocities.end());
+  emit printToQConsole(QString("max motor vel = %1").arg(max_speed));
   pthread_mutex_lock(&robot_ptr_->Mutex());
   if (!controller_.requestPending())
   {
