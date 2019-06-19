@@ -66,7 +66,7 @@ for i = 1:meas_stage
         cdpr_v_ideal.platform.rot_mat, cdpr_v_ideal.platform.H_mat, ...
         cdpr_v_ideal.platform.pos_PG_glob, eye(3));
     cdpr_v_ideal.tension_vector = CalcCablesTension(cdpr_v_ideal);
-    record.SetFrame(cdpr_v_ideal,cdpr_parameters);
+    %record.SetFrame(cdpr_v_ideal,cdpr_parameters);
     
 end
 
