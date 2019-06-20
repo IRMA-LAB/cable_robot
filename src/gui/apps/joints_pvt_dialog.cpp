@@ -207,7 +207,9 @@ void JointsPVTDialog::on_pushButton_start_clicked()
   CLOG(TRACE, "event");
 
   ui->pushButton_start->setDisabled(true);
+#if DEBUG_GUI
   ui->pushButton_pause->setEnabled(true);
+#endif
   ui->pushButton_stop->setEnabled(true);
   ui->pushButton_return->setDisabled(true);
   ui->groupBox_inputs->setDisabled(true);

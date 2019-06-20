@@ -35,9 +35,8 @@ MainGUI::MainGUI(QWidget* parent, const grabcdpr::Params& config)
     new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::MinimumExpanding);
   ui->verticalLayout_main->insertItem(10, verticalSpacer_5);
   connect(pushButton_debug, SIGNAL(clicked()), this, SLOT(pushButton_debug_clicked()));
-#endif
-  // debug
   ui->groupBox_app->setEnabled(true);
+#endif
 }
 
 MainGUI::~MainGUI()
@@ -115,8 +114,8 @@ void MainGUI::on_pushButton_startApp_clicked()
 {
   CLOG(TRACE, "event") << ui->comboBox_apps->currentText();
   // debug
-//  if (!(ec_network_valid_ && rt_thread_running_))
-//    return;
+  if (!(ec_network_valid_ && rt_thread_running_))
+    return;
 
   ui->pushButton_homing->setDisabled(true);
   ui->pushButton_calib->setDisabled(true);
@@ -205,6 +204,7 @@ void MainGUI::on_pushButton_exitReady_clicked()
   robot_ptr_->DisableMotors();
   robot_ptr_->stop();
   ui->pushButton_exitReady->setDisabled(true);
+  enableInterface(false);
 }
 
 void MainGUI::on_radioButton_posMode_clicked()
@@ -393,7 +393,7 @@ void MainGUI::on_pushButton_torqueMinus_released()
 void MainGUI::enableInterface(const bool op_outcome /*= true*/)
 {
   ui->pushButton_homing->setEnabled(true);
-  ui->pushButton_calib->setEnabled(true);
+//  ui->pushButton_calib->setEnabled(true);
   ui->groupBox_app->setEnabled(op_outcome);
   ui->frame_manualControl->setEnabled(true);
   ui->pushButton_exitReady->setEnabled(op_outcome);
@@ -598,8 +598,8 @@ void MainGUI::UpdateDriveCtrlPanel(const Actuator::States state)
     manual_ctrl_enabled_); // prevent switching drive during manual control
 
   ui->pushButton_homing->setDisabled(manual_ctrl_enabled_);
-  ui->pushButton_calib->setDisabled(manual_ctrl_enabled_);
-  //  ui->groupBox_app->setDisabled(true); // after we move we need to do the homing again
+//  ui->pushButton_calib->setDisabled(manual_ctrl_enabled_);
+//  ui->groupBox_app->setDisabled(true); // after we move we need to do the homing again
 
   if (!manual_ctrl_enabled_)
   {
