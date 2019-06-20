@@ -24,7 +24,7 @@ MainGUI::MainGUI(QWidget* parent, const grabcdpr::Params& config)
 
   StartRobot(); // instantiate cable robot object
 
-#if DEBUG_GUI
+#if DEBUG_GUI == 1
   pushButton_debug = new QPushButton("Debug", this);
   pushButton_debug->setMinimumSize(ui->pushButton_calib->size());
   pushButton_debug->setFont(ui->pushButton_calib->font());
@@ -43,7 +43,7 @@ MainGUI::~MainGUI()
 {
   CloseAllApps();
   DeleteRobot();
-#if DEBUG_GUI
+#if DEBUG_GUI == 1
   disconnect(pushButton_debug, SIGNAL(clicked()), this, SLOT(pushButton_debug_clicked()));
 //  disconnect(temp_app, SIGNAL(debugCompleted()), this, SLOT(handleDebugCompleted()));
 //  delete temp_app;
@@ -142,7 +142,7 @@ void MainGUI::on_pushButton_startApp_clicked()
   }
 }
 
-#if DEBUG_GUI
+#if DEBUG_GUI == 1
 void MainGUI::pushButton_debug_clicked()
 {
   CLOG(TRACE, "event");

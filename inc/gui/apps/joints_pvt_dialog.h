@@ -48,7 +48,7 @@ class JointsPVTDialog: public QDialog
   void on_pushButton_return_clicked();
 
  private:
-  static const quint8 kInputFormPosInit_ = 2;
+  static const quint8 kInputFormPosInit_ = 1;
   Ui::JointsPVTDialog* ui;
   My3DScatterWidget traj_display_;
   QGridLayout* grid_layout_ = nullptr;

@@ -125,7 +125,7 @@ class MainGUI: public QDialog
   bool ExitReadyStateRequest();
   void CloseAllApps();
 
-#if DEBUG_GUI
+#if DEBUG_GUI == 1
   QPushButton* pushButton_debug;
   QSpacerItem* verticalSpacer_5;
   // Insert your debug object here..
