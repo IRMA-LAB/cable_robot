@@ -81,7 +81,6 @@ void ControllerJointsPVT::resumeTrajectoryFollowing()
   stop_           = false;
   resume_request_ = true;
   true_traj_time_ = 0.0;
-  clock_.Reset();
 }
 
 vect<ControlAction>
@@ -146,11 +145,10 @@ void ControllerJointsPVT::processTrajTime()
   {
     new_trajectory_ = false;
     ResetTime();
-    clock_.Reset();
     return;
   }
 
-  true_traj_time_ += clock_.Elapsed();
+  true_traj_time_ += cycle_time_;
 
   if (stop_request_)
   {
@@ -175,8 +173,6 @@ void ControllerJointsPVT::processTrajTime()
   }
   else
     traj_time_ = true_traj_time_;
-
-  clock_.Reset();
 }
 
 template <typename T>

@@ -75,7 +75,6 @@ class ControllerJointsPVT: public QObject, public ControllerBase
 
   std::bitset<4> target_flags_;
 
-  grabrt::Clock clock_;
   double cycle_time_;     // [sec]
   double traj_time_;      // [sec]
   double true_traj_time_; // [sec]

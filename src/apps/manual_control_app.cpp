@@ -14,7 +14,7 @@ std::ostream& operator<<(std::ostream& stream, const MyData& data)
 // For static constexpr passed by reference we need a dummy definition no matter what
 constexpr char* ManualControlApp::kStatesStr[];
 const QString ManualControlApp::kExcitationTrajFilepath_ =
-  SRCDIR "/resources/trajectories/excitation_traj.txt";
+  SRCDIR "resources/trajectories/excitation_traj.txt";
 
 ManualControlApp::ManualControlApp(QObject* parent, CableRobot* robot)
   : QObject(parent), StateMachine(ST_MAX_STATES), robot_ptr_(robot),
