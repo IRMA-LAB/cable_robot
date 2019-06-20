@@ -9,6 +9,10 @@ ControllerJointsPVT::ControllerJointsPVT(const vect<grabcdpr::ActuatorParams>& p
   motors_vel_.resize(params.size());
   cycle_time_ = grabrt::NanoSec2Sec(cycle_t_nsec);
   Reset();
+
+  traj_time_         = 0.0;
+  true_traj_time_    = 0.0;
+  stop_request_time_ = 0.0;
 }
 
 bool ControllerJointsPVT::SetCablesLenTrajectories(const vect<TrajectoryD>& trajectories)
@@ -63,10 +67,10 @@ void ControllerJointsPVT::stopTrajectoryFollowing()
   traj_time_         = true_traj_time_;
 
   int max_abs_motor_speed = 0;
-  for (const int vel: motors_vel_)
+  for (const int vel : motors_vel_)
     if (abs(vel) > max_abs_motor_speed)
       max_abs_motor_speed = abs(vel);
-  arrest_time_ = std::max(kMinArrestTime_, max_abs_motor_speed/kVel2ArrestTimeRatio_);
+  arrest_time_ = std::max(kMinArrestTime_, max_abs_motor_speed / kVel2ArrestTimeRatio_);
   slowing_exp_ = -5. / arrest_time_;
 }
 
@@ -74,11 +78,10 @@ void ControllerJointsPVT::pauseTrajectoryFollowing() { stopTrajectoryFollowing()
 
 void ControllerJointsPVT::resumeTrajectoryFollowing()
 {
-  paused_time_ += true_traj_time_ - stop_time_;
-  stop_                = false;
-  resume_request_      = true;
-  resume_request_time_ = true_traj_time_ - paused_time_;
-  traj_time_           = resume_request_time_;
+  stop_           = false;
+  resume_request_ = true;
+  true_traj_time_ = 0.0;
+  clock_.Reset();
 }
 
 vect<ControlAction>
@@ -136,7 +139,18 @@ ControllerJointsPVT::CalcCtrlActions(const grabcdpr::Vars&,
 
 void ControllerJointsPVT::processTrajTime()
 {
-  true_traj_time_ = clock_.Elapsed() - paused_time_;
+  if (stop_)
+    return;
+
+  if (new_trajectory_)
+  {
+    new_trajectory_ = false;
+    ResetTime();
+    clock_.Reset();
+    return;
+  }
+
+  true_traj_time_ += clock_.Elapsed();
 
   if (stop_request_)
   {
@@ -146,24 +160,23 @@ void ControllerJointsPVT::processTrajTime()
     else
     {
       stop_         = true;
-      stop_time_    = traj_time_;
       stop_request_ = false;
     }
   }
   else if (resume_request_)
   {
-    double time_since_resume_request = true_traj_time_ - resume_request_time_;
-    if (time_since_resume_request <= arrest_time_)
-      traj_time_ +=
-        cycle_time_ * exp(slowing_exp_ * (arrest_time_ - time_since_resume_request));
+    if (true_traj_time_ <= arrest_time_)
+      traj_time_ += cycle_time_ * exp(slowing_exp_ * (arrest_time_ - true_traj_time_));
     else
     {
       resume_request_ = false;
-      paused_time_ += true_traj_time_ - traj_time_;
+      true_traj_time_ = traj_time_;
     }
   }
   else
     traj_time_ = true_traj_time_;
+
+  clock_.Reset();
 }
 
 template <typename T>
@@ -171,16 +184,6 @@ T ControllerJointsPVT::GetTrajectoryPointValue(const id_t id,
                                                const vect<Trajectory<T>>& trajectories)
 {
   static const ulong kProgressTriggerCounts = 200 * motors_id_.size();
-  static ulong progress_counter             = 0;
-
-  if (new_trajectory_)
-  {
-    new_trajectory_ = false;
-    clock_.Reset();
-    traj_time_       = 0.0;
-    true_traj_time_  = 0.0;
-    progress_counter = 0;
-  }
 
   WayPoint<T> waypoint;
   double progress = -1;
@@ -203,7 +206,7 @@ T ControllerJointsPVT::GetTrajectoryPointValue(const id_t id,
     stop_ = true;
     emit trajectoryCompleted();
   }
-  if (progress > 0 && (progress_counter++ % kProgressTriggerCounts == 0) &&
+  if (progress > 0 && (progress_counter_++ % kProgressTriggerCounts == 0) &&
       !stop_request_)
     emit trajectoryProgressStatus(qRound(progress * 100.), waypoint.ts);
   return waypoint.value;
@@ -212,13 +215,18 @@ T ControllerJointsPVT::GetTrajectoryPointValue(const id_t id,
 void ControllerJointsPVT::Reset()
 {
   target_flags_.reset();
-  stop_              = false;
-  stop_request_      = false;
-  resume_request_    = false;
-  new_trajectory_    = true;
-  paused_time_       = 0.0;
+  stop_             = false;
+  stop_request_     = false;
+  resume_request_   = false;
+  new_trajectory_   = true;
+  progress_counter_ = 0;
+}
+
+void ControllerJointsPVT::ResetTime()
+{
+  traj_time_         = 0.0;
+  true_traj_time_    = 0.0;
   stop_request_time_ = 0.0;
-  stop_time_         = 0.0;
 }
 
 template <typename T>

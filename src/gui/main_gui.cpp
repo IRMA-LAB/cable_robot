@@ -113,9 +113,10 @@ void MainGUI::on_pushButton_homing_clicked()
 void MainGUI::on_pushButton_startApp_clicked()
 {
   CLOG(TRACE, "event") << ui->comboBox_apps->currentText();
-  // debug
+#if DEBUG_GUI == 0
   if (!(ec_network_valid_ && rt_thread_running_))
     return;
+#endif
 
   ui->pushButton_homing->setDisabled(true);
   ui->pushButton_calib->setDisabled(true);

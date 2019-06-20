@@ -248,7 +248,7 @@ void JointsPVTDialog::on_pushButton_return_clicked()
 void JointsPVTDialog::updatePlots(const TrajectorySet& traj_set)
 {
   // Set 3D platform trajectory (fill scatter plot)
-//  traj_display_.setTrajectory(traj_set.traj_platform);
+  traj_display_.setTrajectory(traj_set.traj_platform);
 
   // Add a 2D line plot for each active actuator.
   size_t num_plots = 0;

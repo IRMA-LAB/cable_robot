@@ -62,7 +62,7 @@ class ControllerJointsPVT: public QObject, public ControllerBase
   void trajectoryProgressStatus(const int, const double) const;
 
  private:
-  static constexpr double kMinArrestTime_ = 1.0; // [sec]
+  static constexpr double kMinArrestTime_       = 1.0;     // [sec]
   static constexpr double kVel2ArrestTimeRatio_ = 1500000; // [counts/sec^2]
 
   enum BitPosition
@@ -76,21 +76,20 @@ class ControllerJointsPVT: public QObject, public ControllerBase
   std::bitset<4> target_flags_;
 
   grabrt::Clock clock_;
-  double cycle_time_;
-  double traj_time_;
-  double true_traj_time_;
-  bool stop_;
-  double stop_time_;
-  bool stop_request_;
-  double stop_request_time_;
+  double cycle_time_;     // [sec]
+  double traj_time_;      // [sec]
+  double true_traj_time_; // [sec]
+  ulong progress_counter_;
   bool new_trajectory_;
 
-  double paused_time_;
-  double resume_request_time_;
+  double stop_request_time_; // [sec]
+  bool stop_;
+  bool stop_request_;
   bool resume_request_;
+
   vectI motors_vel_;
   double slowing_exp_;
-  double arrest_time_;
+  double arrest_time_; // [sec]
 
   WinchesTorqueControl winches_controller_;
 
@@ -105,6 +104,7 @@ class ControllerJointsPVT: public QObject, public ControllerBase
   T GetTrajectoryPointValue(const id_t id, const vect<Trajectory<T>>& trajectories);
 
   void Reset();
+  void ResetTime();
 
   template <typename T>
   bool AreTrajectoriesValid(const vect<Trajectory<T>>& trajectories);
