@@ -106,9 +106,9 @@ bool WorkerThread::findChessboard(const cv::Mat& image)
 
 bool WorkerThread::catchCalibrationSample(const cv::Mat& image)
 {
-  static const clock_t kClocksPerInterval = settings_.delay * 1e-3 * CLOCKS_PER_SEC;
+  static const clock_t kClocksPerInterval = settings_.delay * 1e-3 * CLOCKS_PER_SEC ;
 
-  image_size_ = image.size();
+  image_size_          = image.size();
   clock_t elapsed_time = clock() - prev_timestamp_;
   if (calib_mode_ == DETECTION && elapsed_time > kClocksPerInterval)
     calib_mode_ = CAPTURING;
@@ -118,8 +118,8 @@ bool WorkerThread::catchCalibrationSample(const cv::Mat& image)
     cv::Mat view_gray;
     cvtColor(image, view_gray, cv::COLOR_BGR2GRAY);
     cornerSubPix(
-      view_gray, point_buf_, cv::Size(11, 11), cv::Size(-1, -1),
-      cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::COUNT, 30, 0.0001));
+      view_gray, point_buf_, cv::Size(settings_.cor_sp_size, settings_.cor_sp_size), cv::Size(settings_.zero_zone, settings_.zero_zone),
+      cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::COUNT, settings_.max_counter, settings_.cor_sp_size));
     if (!image_points_.empty())
       if (!checkFrameAgainstPrev()) // Compare against previous image(s)
         return false;
@@ -227,14 +227,6 @@ bool WorkerThread::runCalibration(std::vector<cv::Mat>& rvecs,
                             rvecs, tvecs, new_obj_points, settings_.calib_flags);
   }
 
-  std::cout << "New board corners: " << std::endl;
-  std::cout << new_obj_points[0] << std::endl;
-  std::cout << new_obj_points[settings_.board_size.width - 1] << std::endl;
-  std::cout
-    << new_obj_points[settings_.board_size.width * (settings_.board_size.height - 1)]
-    << std::endl;
-  std::cout << new_obj_points.back() << std::endl;
-
   std::cout << "Re-projection error reported by calibrateCamera: " << rms << std::endl;
 
   bool ok =
@@ -320,7 +312,7 @@ void CameraCalibApp::start(const CameraCalibSettings& settings)
 
 void CameraCalibApp::setNewFrame(const cv::Mat& frame)
 {
-  if (worker_thread_ != NULL && worker_thread_->isRunning())
+  if (worker_thread_ != nullptr && worker_thread_->isRunning())
     worker_thread_->setNewFrame(frame);
 }
 
@@ -352,7 +344,7 @@ void CameraCalibApp::setProgressLabel(const QString& text) { ui->label->setText(
 void CameraCalibApp::workFinished()
 {
   delete worker_thread_;
-  worker_thread_ = NULL;
+  worker_thread_ = nullptr;
   close();
 }
 

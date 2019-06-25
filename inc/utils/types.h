@@ -202,7 +202,7 @@ struct CameraCalibSettings
     else
     {
       calib_flags |=
-        cv::CALIB_FIX_PRINCIPAL_POINT | cv::CALIB_USE_LU; // USE_LU to fast camera calib
+        cv::CALIB_FIX_PRINCIPAL_POINT | cv::CALIB_USE_LU;
       if (calib_zero_tan_dist)
       {
         calib_flags |= cv::CALIB_ZERO_TANGENT_DIST;
@@ -214,7 +214,7 @@ struct CameraCalibSettings
 
   cv::Size board_size   = cv::Size(9, 6);
   float square_size     = 26.f;     // The size of a square in mm
-  int delay             = 500;     // In case of a video input
+  int delay             = 500;      // In case of a video input
   bool write_points     = true;     // Write detected feature points
   bool write_extrinsics = true;     // Write extrinsic parameters
   bool write_grid       = true;     // Write refined 3D target grid points
@@ -223,12 +223,14 @@ struct CameraCalibSettings
   bool calib_zero_tan_dist = false; // set 0 tangential distortion coefficients
   int chess_board_flags =
     cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_NORMALIZE_IMAGE | cv::CALIB_CB_FAST_CHECK;
-  // forse da cancellare pattern to use
-  std::string pattern_to_use = "CHESSBOARD";
-  /*int calib_flags = cv::fisheye::CALIB_FIX_SKEW | cv::fisheye::CALIB_RECOMPUTE_EXTRINSIC
-     | cv::fisheye::CALIB_FIX_PRINCIPAL_POINT | cv::fisheye::CALIB_CHECK_COND;*/
   std::string ofilepath = SRCDIR "/output_camera_calibration.json";
   float grid_width;
+  int cor_sp_size = 11; /*<< ... windows dimension for sub pixel accurate location  */
+  int zero_zone   = -1; /*<< ... half diemsnion of zero-zone */
+  int max_counter = 50; /*<< ... number of max iteration*/
+  /**
+   * @brief number of max precision. thet value have to be less than value in camera calibration
+   */
+  double max_precision = 0.00001;
 };
-
 #endif // CABLE_ROBOT_TYPES_H

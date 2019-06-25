@@ -52,11 +52,10 @@ class HomingInterfaceVision: public HomingInterface
 
  private slots:
   void appendText2Browser(const QString& text);
-  void setCameraParams(const CameraParams& params) { app_.setCameraParams(params); }
 
  private:
   Ui::HomingInterfaceVision* ui;
-  CameraWidget* camera_widget_ = NULL;
+  CameraWidget* camera_widget_ = nullptr;
 
   HomingVisionApp app_;
   bool ext_close_cmd_;

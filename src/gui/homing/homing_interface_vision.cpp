@@ -23,6 +23,8 @@ HomingInterfaceVision::HomingInterfaceVision(QWidget* parent, CableRobot* robot)
           SLOT(appendText2Browser(QString)));
   connect(camera_widget_, SIGNAL(newFrameGrabbed(cv::Mat)), &app_,
           SLOT(getNewVideoFrame(cv::Mat)));
+  connect(camera_widget_, SIGNAL(calibParamsReady(CameraParams)), &app_,
+          SLOT(setCameraParams(CameraParams)));
   connect(&app_, SIGNAL(printToQConsole(QString)), this,
           SLOT(appendText2Browser(QString)));
 }
@@ -36,6 +38,8 @@ HomingInterfaceVision::~HomingInterfaceVision()
              SLOT(appendText2Browser(QString)));
   disconnect(camera_widget_, SIGNAL(newFrameGrabbed(cv::Mat)), &app_,
              SLOT(getNewVideoFrame(cv::Mat)));
+  disconnect(camera_widget_, SIGNAL(calibParamsReady(CameraParams)), &app_,
+             SLOT(setCameraParams(CameraParams)));
   camera_widget_->stopVideoStream();
   delete camera_widget_;
 

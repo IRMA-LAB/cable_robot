@@ -13,6 +13,7 @@
 
 #include "utils/types.h"
 
+
 class WorkerThread: public QThread
 {
   Q_OBJECT
@@ -52,13 +53,13 @@ class WorkerThread: public QThread
   CameraParams camera_params_;
   cv::Size image_size_;
 
-  // Mettere qua probabilmente mode = CAPTURING
   CalibMode calib_mode_ = CAPTURING;
 
   clock_t prev_timestamp_ = 0;
 
-  double error_x_ = 180;
-  double error_y_ = 30;
+  /* parameter to set correlation of corner in 2 different image*/
+  double error_x_ = 180; /*sum min difference of x coordinate of 2 frame considering only first row*/
+  double error_y_ = 30; /*sum min difference of y coordinate of 2 frame considering only first col*/
   uint counter_x_ = 0;
   uint counter_y_ = 0;
   uint delta_x_   = 0;
