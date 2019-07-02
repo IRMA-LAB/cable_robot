@@ -79,7 +79,7 @@ void MainGUI::on_pushButton_calib_clicked()
   robot_ptr_->enterCalibrationMode();
 
   calib_dialog_ = new CalibrationDialog(this, robot_ptr_);
-  connect(calib_dialog_, SIGNAL(enableMainGUI()), this, SLOT(enableInterface()));
+  connect(calib_dialog_, SIGNAL(enableMainGUI(bool)), this, SLOT(enableInterface(bool)));
   connect(calib_dialog_, SIGNAL(calibrationEnd()), robot_ptr_, SLOT(eventSuccess()));
   calib_dialog_->show();
   CLOG(INFO, "event") << "Prompt calibration dialog";
@@ -394,7 +394,7 @@ void MainGUI::on_pushButton_torqueMinus_released()
 void MainGUI::enableInterface(const bool op_outcome /*= true*/)
 {
   ui->pushButton_homing->setEnabled(true);
-//  ui->pushButton_calib->setEnabled(true);
+  ui->pushButton_calib->setEnabled(true);
   ui->groupBox_app->setEnabled(op_outcome);
   ui->frame_manualControl->setEnabled(true);
   ui->pushButton_exitReady->setEnabled(op_outcome);
@@ -599,8 +599,8 @@ void MainGUI::UpdateDriveCtrlPanel(const Actuator::States state)
     manual_ctrl_enabled_); // prevent switching drive during manual control
 
   ui->pushButton_homing->setDisabled(manual_ctrl_enabled_);
-//  ui->pushButton_calib->setDisabled(manual_ctrl_enabled_);
-//  ui->groupBox_app->setDisabled(true); // after we move we need to do the homing again
+  ui->pushButton_calib->setDisabled(manual_ctrl_enabled_);
+  ui->groupBox_app->setDisabled(true); // after we move we need to do the homing again
 
   if (!manual_ctrl_enabled_)
   {

@@ -1,7 +1,7 @@
 /**
  * @file calibration_dialog.h
  * @author Simone Comari
- * @date 03 Apr 2019
+ * @date 02 Jul 2019
  * @brief This file include the calibration dialog class.
  */
 
@@ -13,6 +13,7 @@
 #include "easylogging++.h"
 #include "libcdpr/inc/types.h"
 
+#include "gui/calib/calib_interface_excitation.h"
 #include "robot/cablerobot.h"
 
 namespace Ui {
@@ -49,13 +50,16 @@ class CalibrationDialog: public QDialog
 
  private slots:
   void on_buttonBox_accepted();
-
   void on_buttonBox_rejected();
+
+ private slots:
+  void fwdCalibFinished();
 
  private:
   Ui::CalibrationDialog* ui;
 
-  CableRobot* robot_;
+  CalibInterfaceExcitation* interface_ = nullptr;
+  CableRobot* robot_ptr_               = nullptr;
 };
 
 #endif // CALIBRATION_DIALOG_H

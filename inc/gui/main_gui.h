@@ -65,7 +65,7 @@ class MainGUI: public QDialog
 
   void on_pushButton_startApp_clicked();
 
-#if DEBUG_GUI
+#if DEBUG_GUI == 1
   void pushButton_debug_clicked();
   void handleDebugCompleted();
 #endif

@@ -1,7 +1,7 @@
 /**
  * @file calibration_dialog.cpp
  * @author Simone Comari
- * @date 03 Apr 2019
+ * @date 02 Jul 2019
  * @brief This file includes definitions of class present in calibration_dialog.h.
  */
 
@@ -10,13 +10,15 @@
 
 
 CalibrationDialog::CalibrationDialog(QWidget* parent, CableRobot* robot)
-  : QDialog(parent), ui(new Ui::CalibrationDialog), robot_(robot)
+  : QDialog(parent), ui(new Ui::CalibrationDialog), robot_ptr_(robot)
 {
   ui->setupUi(this);
 }
 
 CalibrationDialog::~CalibrationDialog()
 {
+  if (interface_ != nullptr)
+    interface_->close();
   delete ui;
   CLOG(INFO, "event") << "Calibration dialog closed";
 }
@@ -25,14 +27,25 @@ CalibrationDialog::~CalibrationDialog()
 
 void CalibrationDialog::on_buttonBox_accepted()
 {
-  emit calibrationEnd();
-  emit enableMainGUI(true);
-  close();
+  interface_ = new CalibInterfaceExcitation(parentWidget(), robot_ptr_);
+  connect(interface_, SIGNAL(destroyed()), this, SLOT(fwdCalibFinished()));
+  interface_->show();
+  CLOG(INFO, "event") << "Prompt " << ui->comboBox_calibMethod->currentText()
+                      << " calibration interface";
+  hide();
+  CLOG(INFO, "event") << "Hide calibration dialog";
 }
 
-void CalibrationDialog::on_buttonBox_rejected()
+void CalibrationDialog::on_buttonBox_rejected() { fwdCalibFinished(); }
+
+//--------- Private slots -----------------------------------------------------------//
+
+void CalibrationDialog::fwdCalibFinished()
 {
+  CLOG(INFO, "event") << ui->comboBox_calibMethod->currentText()
+                      << " calibration finished";
   emit calibrationEnd();
   emit enableMainGUI(false);
+  interface_ = nullptr;
   close();
 }
