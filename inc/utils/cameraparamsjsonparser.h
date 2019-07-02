@@ -1,44 +1,85 @@
+/**
+ * @file cameraparamsjsonparser.h
+ * @author
+ * @date 01 Jul 2019
+ * @brief ...
+ */
+
 #ifndef CAMERAPARAMSJSONPARSER_H
 #define CAMERAPARAMSJSONPARSER_H
 
-#include "json.hpp"
-#include "types.h"
 #include <QString>
 #include <fstream>
 #include <iostream>
-#include <opencv2/calib3d.hpp>
-#include <opencv2/core.hpp>
-#include <opencv2/core/utility.hpp>
-#include <opencv2/highgui.hpp>
-#include <opencv2/imgcodecs.hpp>
-#include <opencv2/imgproc.hpp>
-#include <opencv2/videoio.hpp>
-#include <stdio.h>
 
-using json = nlohmann::json;
+#include "json.hpp"
+#include "types.h"
 
+using json = nlohmann::json; /**< ... */
+
+/**
+ * @brief The CameraParamsJsonParser class
+ */
 class CameraParamsJsonParser
 {
  public:
+  /**
+   * @brief CameraParamsJsonParser
+   */
   CameraParamsJsonParser();
-
+  /**
+   * @brief CameraParamsJsonParser
+   * @param[] io_filepath
+   */
   CameraParamsJsonParser(const std::string& io_filepath);
 
+  /**
+   * @brief getCameraParams
+   * @return
+   */
   CameraParams getCameraParams() const;
 
+
+  /**
+   * @brief setCameraParams
+   * @param params_2_set
+   */
   void setCameraParams(const CameraParams& params_2_set);
 
+  /**
+   * @brief writeJson
+   * @param params_in
+   * @param o_filepath
+   */
   void writeJson(const CameraParams& params_in,
                  const std::string& o_filepath = SRCDIR "/output_calib.json");
-
+  /**
+   * @brief writeJson
+   * @param o_filepath
+   */
   void writeJson(const std::string& o_filepath = SRCDIR "/output_calib.json");
 
+  /**
+   * @brief decodeJson
+   * @param i_filepath
+   * @return
+   */
   CameraParams decodeJson(const std::string& i_filepath = SRCDIR "/output_calib.json");
-
+  /**
+   * @brief ...
+   * @param[out] params_in ...
+   * @param[in] i_filepath ...
+   * @return ...
+   */
   bool decodeJson(CameraParams& params_in,
                   const std::string& i_filepath = SRCDIR "/output_calib.json");
 
-  bool is_empty(std::ifstream& p_file);
+  /**
+   * @brief isEmpty
+   * @param p_file
+   * @return
+   */
+  bool isEmpty(std::ifstream& p_file);
 
  private:
   CameraParams params_;

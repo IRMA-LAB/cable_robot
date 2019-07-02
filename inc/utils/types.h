@@ -18,7 +18,6 @@
 
 #include "libgrabec/inc/slaves/goldsolowhistledrive.h"
 
-
 /**
  * @brief StringBuf typedef.
  */
@@ -164,73 +163,92 @@ struct ActuatorStatus: WinchStatus
  */
 struct CameraParams
 {
-  cv::Mat camera_matrix = cv::Mat::eye(3, 3, CV_64F);
-  cv::Mat dist_coeff    = cv::Mat::zeros(4, 1, CV_64F);
+  cv::Mat camera_matrix = cv::Mat::eye(3, 3, CV_64F);   /**< ... */
+  cv::Mat dist_coeff    = cv::Mat::zeros(4, 1, CV_64F); /**< ... */
 
+  /**
+   * @brief CameraParams default constructor
+   */
   CameraParams() {}
-
+  /**
+   * @brief CameraParams constructor
+   * @param[in] cam_mat
+   * @param[in] dist
+   */
   CameraParams(const cv::Mat& cam_mat, const cv::Mat& dist)
   {
     for (int i = 0; i < 3; i++)
-    {
       for (int j = 0; j < 3; j++)
-      {
         camera_matrix.at<double>(i, j) = cam_mat.at<double>(i, j);
-      }
-    }
 
     for (int i = 0; i < 4; i++)
       dist_coeff.at<double>(i, 0) = dist.at<double>(i, 0);
   }
 };
 
+/**
+ * @brief The CameraCalibSettings struct including camera calib params
+ */
 struct CameraCalibSettings
 {
-  CameraCalibSettings() : num_frames(0)
-  {
-    grid_width = square_size * (board_size.width - 1);
-  }
-  CameraCalibSettings(const size_t number_frames) : num_frames(number_frames)
-  {
-    grid_width = square_size * (board_size.width - 1);
-    if (use_fisheye)
-    {
-      calib_flags = cv::fisheye::CALIB_FIX_SKEW | cv::fisheye::CALIB_RECOMPUTE_EXTRINSIC |
-                    cv::fisheye::CALIB_FIX_PRINCIPAL_POINT |
-                    cv::fisheye::CALIB_CHECK_COND;
-    }
-    else
-    {
-      calib_flags |=
-        cv::CALIB_FIX_PRINCIPAL_POINT | cv::CALIB_USE_LU;
-      if (calib_zero_tan_dist)
-      {
-        calib_flags |= cv::CALIB_ZERO_TANGENT_DIST;
-      }
-    }
-  }
+  // Basic settings
+  size_t num_frames =
+    0; /*<< The number of frames to use from the input for calibration */
+  bool use_fisheye = false; /*<< use fisheye camera model for calibration */
 
-  size_t num_frames; // The number of frames to use from the input for calibration
-
-  cv::Size board_size   = cv::Size(9, 6);
-  float square_size     = 26.f;     // The size of a square in mm
-  int delay             = 500;      // In case of a video input
-  bool write_points     = true;     // Write detected feature points
-  bool write_extrinsics = true;     // Write extrinsic parameters
-  bool write_grid       = true;     // Write refined 3D target grid points
-  int calib_flags;                  // camera params flags
-  bool use_fisheye         = false; // use fisheye camera model for calibration
-  bool calib_zero_tan_dist = false; // set 0 tangential distortion coefficients
-  int chess_board_flags =
-    cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_NORMALIZE_IMAGE | cv::CALIB_CB_FAST_CHECK;
-  std::string ofilepath = SRCDIR "/output_camera_calibration.json";
-  float grid_width;
-  int cor_sp_size = 11; /*<< ... windows dimension for sub pixel accurate location  */
-  int zero_zone   = -1; /*<< ... half diemsnion of zero-zone */
-  int max_counter = 50; /*<< ... number of max iteration*/
+  // Advanced settings
+  cv::Size board_size = cv::Size(9, 6); /*<< chessboard corner size */
+  float square_size   = 26.f;           /*<< The size of a square in mm */
+  double delay        = 0.5;            /*<< [s] In case of a video input */
   /**
-   * @brief number of max precision. thet value have to be less than value in camera calibration
+   * @brief number of max precision. that value have to be less than value in camera
    */
   double max_precision = 0.00001;
+  int chess_board_flags =
+    cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_NORMALIZE_IMAGE |
+    cv::CALIB_CB_FAST_CHECK; /*<< seet chessboard flag to findChessboard */
+  std::string ofilepath = SRCDIR "/output_camera_calibration.json";
+  int cor_sp_size       = 11;   /**< windows dimension for sub pixel accurate location  */
+  int zero_zone         = -1;   /**< half dimension of zero-zone */
+  int max_counter       = 50;   /**< number of max iteration*/
+  bool write_points     = true; /*<< Write detected feature points */
+  bool write_extrinsics = true; /*<< Write extrinsic parameters */
+  bool write_grid       = true; /*<< Write refined 3D target grid points */
+  bool calib_zero_tan_dist = false; /*<< set 0 tangential distortion coefficients */
+
+  /**
+   * @brief CameraCalibSettings default constructor
+   */
+  CameraCalibSettings() {}
+  /**
+   * @brief CameraCalibSettings constructor
+   * @param[in] number_frames set number of frame to compute camera calibration
+   */
+  CameraCalibSettings(const size_t number_frames, const bool _use_fisheye = false)
+    : num_frames(number_frames), use_fisheye(_use_fisheye)
+  {}
+
+  /**
+   * @brief set calib_flags according camera distorsion model
+   * @return calib_flags setted
+   */
+  int calibFlags() const
+  {
+    if (use_fisheye)
+      return cv::fisheye::CALIB_FIX_SKEW | cv::fisheye::CALIB_RECOMPUTE_EXTRINSIC |
+             cv::fisheye::CALIB_FIX_PRINCIPAL_POINT | cv::fisheye::CALIB_CHECK_COND;
+    // Else
+    int calib_flags = cv::CALIB_FIX_PRINCIPAL_POINT | cv::CALIB_USE_LU;
+    if (calib_zero_tan_dist)
+      calib_flags |= cv::CALIB_ZERO_TANGENT_DIST;
+    return calib_flags;
+  }
+
+  /**
+   * @brief compute grid_width
+   * @return
+   */
+  inline float gridWidth() const { return square_size * (board_size.width - 1); }
 };
+
 #endif // CABLE_ROBOT_TYPES_H

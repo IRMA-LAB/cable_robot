@@ -1,4 +1,12 @@
-﻿#ifndef CABLE_ROBOT_HOMING_CAMERA_CALIB_APP_H
+﻿/**
+ * @file camera_calib_app.h
+ * @author Marco Caselli
+ * @date 02 Jul 2019
+ * @brief File containing camera calibration class to found intrinsic parameter and
+ * distorsion coefficients of camera
+ */
+
+#ifndef CABLE_ROBOT_HOMING_CAMERA_CALIB_APP_H
 #define CABLE_ROBOT_HOMING_CAMERA_CALIB_APP_H
 
 #include <QDialog>
@@ -9,15 +17,23 @@
 #include <QWaitCondition>
 #include <QWidget>
 
+#include "clocks.h"
 #include "opencv2/opencv.hpp"
 
+#include "utils/cameraparamsjsonparser.h"
 #include "utils/types.h"
 
-
+/**
+ * @brief compute camera intrinsic matrix and distorsion coefficients
+ */
 class WorkerThread: public QThread
 {
   Q_OBJECT
  public:
+  /**
+   * @brief WorkerThread constructor
+   * @param settings
+   */
   WorkerThread(const CameraCalibSettings& settings);
 
   void setNewFrame(const cv::Mat& frame);
@@ -30,70 +46,50 @@ class WorkerThread: public QThread
   void processFrameError() const;
 
  private:
-  CameraCalibSettings settings_;
-  cv::Mat latest_frame_;
-  bool new_frame_pending_;
-  bool stop_;
-
-  QMutex mutex_;
-  QWaitCondition new_frame_available_;
-
-  void run();
-  bool processFrame(const cv::Mat& frame);
-
-
   enum CalibMode
   {
     DETECTION  = 0,
     CAPTURING  = 1,
     CALIBRATED = 2
   };
+
+  static constexpr uint kErrorX_ =
+    180U; // sum min difference of x coordinate of 2 frames considering only first row
+  static constexpr uint kErrorY_ =
+    30U; // sum min difference of y coordinate of 2 frames considering only first col
+
+  CameraCalibSettings settings_;
+  cv::Mat latest_frame_;
+
+  QMutex mutex_;
+  QWaitCondition new_frame_available_;
+
   std::vector<cv::Point2f> point_buf_;
   std::vector<std::vector<cv::Point2f>> image_points_;
   CameraParams camera_params_;
   cv::Size image_size_;
+  CalibMode calib_mode_;
+  bool stop_;
+  bool new_frame_pending_;
 
-  CalibMode calib_mode_ = CAPTURING;
+  void run();
+  bool processFrame(const cv::Mat& frame);
 
-  clock_t prev_timestamp_ = 0;
+  bool storeValidFrame(const cv::Mat& view);
+  bool findChessboard(const cv::Mat& image);
+  bool catchCalibrationSample(const cv::Mat& image);
+  bool compareFrameAgainstPrev();
 
-  /* parameter to set correlation of corner in 2 different image*/
-  double error_x_ = 180; /*sum min difference of x coordinate of 2 frame considering only first row*/
-  double error_y_ = 30; /*sum min difference of y coordinate of 2 frame considering only first col*/
-  uint counter_x_ = 0;
-  uint counter_y_ = 0;
-  uint delta_x_   = 0;
-  uint delta_y_   = 0;
-  uint counter_   = 0;
-
-  bool checkFrameAgainstPrev();
-
-  bool runCalibrationAndSave(CameraParams & params);
-
-  bool runCalibration(std::vector<cv::Mat>& rvecs, std::vector<cv::Mat>& tvecs,
-                      std::vector<float>& reproj_errs, double& total_avg_err,
-                      std::vector<cv::Point3f>& new_obj_points);
-
+  bool runCalibration();
+  bool computeCameraParams();
   double
   computeCalibReprojectionErr(const std::vector<std::vector<cv::Point3f>>& object_points,
                               const std::vector<cv::Mat>& rvecs,
                               const std::vector<cv::Mat>& tvecs,
                               std::vector<float>& per_view_errors) const;
 
-  bool isCalibrated() const { return calib_mode_ == CalibMode::CALIBRATED; }
-
-  cv::Mat getUndistortedImage(const cv::Mat &image);
-
-  bool findChessboard(const cv::Mat &image);
-
-  bool catchCalibrationSample(const cv::Mat &image);
-
-  int getCurrentSamplesNum() const {
-    return static_cast<int>(image_points_.size());
-  }
-
-  bool storeValidFrame(const cv::Mat & view);
-
+  // TODO: move somewhere else
+  cv::Mat getUndistortedImage(const cv::Mat& image);
 };
 
 
@@ -129,7 +125,6 @@ class CameraCalibApp: public QDialog
  private:
   Ui::CameraCalibApp* ui;
   WorkerThread* worker_thread_ = nullptr;
-
 
   void saveCameraParams(const CameraParams& params);
 };

@@ -4,20 +4,8 @@ HomingVisionApp::HomingVisionApp(QObject* parent, CableRobot* robot)
   : QObject(parent), robot_ptr_(robot), new_frame_available_(false)
 {}
 
-//--------- Public slots  ------------------------------------------------------------//
+//--------- Public functions ---------------------------------------------------------//
 
-void HomingVisionApp::getNewVideoFrame(const cv::Mat& frame)
-{
-  if (frame.empty())
-    return;
-
-  mutex_.lock();
-  frame_               = frame;
-  new_frame_available_ = true;
-  mutex_.unlock();
-}
-
-// aggiungo
 void HomingVisionApp::elaborate()
 {
   mutex_.lock();
@@ -36,55 +24,21 @@ void HomingVisionApp::elaborate()
     emit poseReady(R_, tvec_);
   }
 }
-// chiudere la connessione con la telecamera... probabilmente è gia implementata
-// void HomingVisionApp::stopShow() { video_capture_.release(); }
 
-void HomingVisionApp::calcChessboardCorners(std::vector<cv::Point3f>& corners)
+//--------- Public slots  ------------------------------------------------------------//
+
+void HomingVisionApp::getNewVideoFrame(const cv::Mat& frame)
 {
-  for (int i = 0; i < settings_.pattern_size.height; i++)
-    for (int j = 0; j < settings_.pattern_size.width; j++)
-      corners.push_back(
-        cv::Point3f(j * settings_.square_size, i * settings_.square_size, 0));
+  if (frame.empty())
+    return;
+
+  mutex_.lock();
+  frame_               = frame;
+  new_frame_available_ = true;
+  mutex_.unlock();
 }
 
-bool HomingVisionApp::calcImageCorner()
-{
-  std::vector<cv::Point2f> corners;
-  object_points_.clear();
-  object_points_planar_.clear();
-  image_points_.clear();
-
-  bool found = cv::findChessboardCorners(processed_frame_, settings_.pattern_size,
-                                         corners, settings_.chess_board_flags);
-  if (!found)
-  {
-    emit printToQConsole("WARNING: Could not find chessboard");
-    return false;
-  }
-
-  cv::Mat view_gray;
-  cv::cvtColor(processed_frame_, view_gray, cv::COLOR_BGR2GRAY);
-  cornerSubPix(view_gray, corners, cv::Size(settings_.cor_sp_size, settings_.cor_sp_size),
-               cv::Size(settings_.zero_zone, settings_.zero_zone),
-               cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::COUNT,
-                                settings_.max_counter, settings_.max_precision));
-
-  calcChessboardCorners(object_points_);
-
-  for (size_t i = 0; i < object_points_.size(); i++)
-  {
-    object_points_planar_.push_back(
-      cv::Point2f(object_points_[i].x, object_points_[i].y));
-  }
-
-  if (static_cast<uint>(camera_params_.dist_coeff.rows) == 4)
-    cv::fisheye::undistortPoints(corners, image_points_, camera_params_.camera_matrix,
-                                 camera_params_.dist_coeff);
-  else
-    cv::undistortPoints(corners, image_points_, camera_params_.camera_matrix,
-                        camera_params_.dist_coeff);
-  return true;
-}
+//--------- Private functions --------------------------------------------------------//
 
 bool HomingVisionApp::poseEstimationFromCoplanarPoints()
 {
@@ -92,7 +46,6 @@ bool HomingVisionApp::poseEstimationFromCoplanarPoints()
     return false;
 
   cv::Mat H = cv::findHomography(object_points_planar_, image_points_);
-
   // Normalization to ensure that ||c1|| = 1
   double norm = sqrt(H.at<double>(0, 0) * H.at<double>(0, 0) +
                      H.at<double>(1, 0) * H.at<double>(1, 0) +
@@ -132,6 +85,52 @@ bool HomingVisionApp::poseEstimationFromCoplanarPoints()
   return true;
 }
 
+bool HomingVisionApp::calcImageCorner()
+{
+  std::vector<cv::Point2f> corners;
+  object_points_.clear();
+  object_points_planar_.clear();
+  image_points_.clear();
+
+  bool found = cv::findChessboardCorners(processed_frame_, settings_.pattern_size,
+                                         corners, settings_.chess_board_flags);
+  if (!found)
+  {
+    emit printToQConsole("WARNING: Could not find chessboard");
+    return false;
+  }
+
+  cv::Mat view_gray;
+  cv::cvtColor(processed_frame_, view_gray, cv::COLOR_BGR2GRAY);
+  cv::cornerSubPix(view_gray, corners,
+                   cv::Size(settings_.cor_sp_size, settings_.cor_sp_size),
+                   cv::Size(settings_.zero_zone, settings_.zero_zone),
+                   cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::COUNT,
+                                    settings_.max_counter, settings_.max_precision));
+
+  calcChessboardCorners(object_points_);
+
+  for (size_t i = 0; i < object_points_.size(); i++)
+    object_points_planar_.push_back(
+      cv::Point2f(object_points_[i].x, object_points_[i].y));
+
+  if (static_cast<uint>(camera_params_.dist_coeff.rows) == 4)
+    cv::fisheye::undistortPoints(corners, image_points_, camera_params_.camera_matrix,
+                                 camera_params_.dist_coeff);
+  else
+    cv::undistortPoints(corners, image_points_, camera_params_.camera_matrix,
+                        camera_params_.dist_coeff);
+  return true;
+}
+
+void HomingVisionApp::calcChessboardCorners(std::vector<cv::Point3f>& corners)
+{
+  for (int i = 0; i < settings_.pattern_size.height; i++)
+    for (int j = 0; j < settings_.pattern_size.width; j++)
+      corners.push_back(
+        cv::Point3f(j * settings_.square_size, i * settings_.square_size, 0));
+}
+
 void HomingVisionApp::showAugmentedFrame()
 {
   cv::Mat rvec;
@@ -139,9 +138,4 @@ void HomingVisionApp::showAugmentedFrame()
   cv::drawFrameAxes(processed_frame_, camera_params_.camera_matrix,
                     camera_params_.dist_coeff, rvec, tvec_, 2 * settings_.square_size);
   emit frameReadyToShow(processed_frame_);
-}
-
-void HomingVisionApp::setCameraParams(const CameraParams& params)
-{
-  camera_params_ = params;
 }
