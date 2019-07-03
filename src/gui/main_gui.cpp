@@ -1,7 +1,7 @@
 /**
  * @file main_gui.cpp
  * @author Simone Comari
- * @date 07 Jun 2019
+ * @date 03 Jul 2019
  * @brief This file includes definitions of classes present in main_gui.h.
  */
 
@@ -187,6 +187,76 @@ void MainGUI::on_pushButton_enable_clicked()
   SetupDirectMotorCtrl(manual_ctrl_enabled);
   waiting_for_response_.set(manual_ctrl_enabled ? Actuator::ST_ENABLED
                                                 : Actuator::ST_IDLE);
+}
+
+void MainGUI::on_pushButton_freedrive_pressed()
+{
+  CLOG(TRACE, "event");
+  if (!(ec_network_valid_ && rt_thread_running_))
+    return;
+
+  if (ui->pushButton_freedrive->isChecked())
+  {
+    robot_ptr_->SetController(nullptr);
+    delete man_ctrl_ptr_;
+    if (robot_ptr_->GetCurrentState() != CableRobot::ST_READY)
+    {
+      robot_ptr_->DisableMotors();
+      enableInterface(false);
+    }
+    ui->pushButton_freedrive->setChecked(false);
+    enableInterface(true);
+    return;
+  }
+
+  ui->pushButton_freedrive->setChecked(true);
+  if (robot_ptr_->GetCurrentState() != CableRobot::ST_READY)
+  {
+    // Attempt to enable all motors
+    robot_ptr_->EnableMotors();
+    grabrt::ThreadClock clock(grabrt::Sec2NanoSec(CableRobot::kCycleWaitTimeSec));
+    while (1)
+    {
+      if (robot_ptr_->MotorsEnabled())
+        break;
+      if (clock.ElapsedFromStart() > CableRobot::kMaxWaitTimeSec)
+      {
+        ui->pushButton_freedrive->setChecked(false);
+        appendText2Browser("WARNING: Taking too long to enable freedrive mode");
+        return;
+      }
+      clock.WaitUntilNext();
+    }
+  }
+
+  // Set all motors in torque control mode
+  man_ctrl_ptr_ = new ControllerSingleDrive(motor_id_, robot_ptr_->GetRtCycleTimeNsec());
+  man_ctrl_ptr_->SetMotorTorqueSsErrTol(kTorqueSsErrTol_);
+  robot_ptr_->SetController(man_ctrl_ptr_);
+  for (const id_t id : robot_ptr_->GetActiveMotorsID())
+  {
+    pthread_mutex_lock(&robot_ptr_->Mutex());
+    man_ctrl_ptr_->SetMotorID(id);
+    man_ctrl_ptr_->SetMode(ControlMode::MOTOR_TORQUE);
+    man_ctrl_ptr_->SetMotorTorqueTarget(kFreedriveTorque_);
+    pthread_mutex_unlock(&robot_ptr_->Mutex());
+    // Wait until each motor reached user-given initial torque setpoint
+    if (robot_ptr_->WaitUntilTargetReached() != RetVal::OK)
+    {
+      ui->pushButton_freedrive->setChecked(false);
+      appendText2Browser(
+        QString("WARNING: Could not switch motor %1 to torque control mode").arg(id));
+      break;
+    }
+  }
+  appendText2Browser("Freedrive mode activated. You can now manually move the platform");
+
+  ui->frame_manualControl->setDisabled(true);
+  ui->pushButton_freedrive->setEnabled(true);
+  ui->pushButton_freedrive->setChecked(true);
+  ui->pushButton_homing->setDisabled(true);
+  ui->pushButton_calib->setDisabled(true);
+  ui->groupBox_app->setDisabled(true);
 }
 
 void MainGUI::on_pushButton_faultReset_clicked()
@@ -400,7 +470,7 @@ void MainGUI::enableInterface(const bool op_outcome /*= true*/)
   ui->pushButton_exitReady->setEnabled(op_outcome);
   // Reset app pointers as they just delete themselves.
   joints_pvt_dialog_ = nullptr;
-  man_ctrl_dialog_ = nullptr;
+  man_ctrl_dialog_   = nullptr;
   CVLOG(2, "event") << "Interface enabled with app selection "
                     << (op_outcome ? "enabled" : "disabled");
 }
@@ -594,6 +664,7 @@ void MainGUI::UpdateDriveCtrlPanel(const Actuator::States state)
   ui->pushButton_enable->setEnabled(!robot_ready);
   ui->pushButton_enable->setText(
     tr(state == Actuator::ST_ENABLED ? "Disable" : "Enable"));
+  ui->pushButton_freedrive->setDisabled(manual_ctrl_enabled_);
   ui->pushButton_faultReset->setDisabled(true);
   ui->comboBox_motorAxis->setDisabled(
     manual_ctrl_enabled_); // prevent switching drive during manual control

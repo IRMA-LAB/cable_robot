@@ -1,7 +1,7 @@
 /**
  * @file main_gui.h
  * @author Simone Comari
- * @date 16 May 2019
+ * @date 03 Jul 2019
  * @brief This file takes care of the functionalities of the main GUI of cable robot app.
  *
  * The functionalities of the main GUI include buttons management, signaling with children
@@ -74,6 +74,7 @@ class MainGUI: public QDialog
   //--------- Direct drive control panel buttons -------------------------------------//
 
   void on_pushButton_enable_clicked();
+  void on_pushButton_freedrive_pressed();
   void on_pushButton_faultReset_clicked();
   void on_pushButton_exitReady_clicked();
 
@@ -136,6 +137,7 @@ class MainGUI: public QDialog
   //--------- Direct drive control stuff ---------------------------------------------//
 
   static constexpr int16_t kTorqueSsErrTol_ = 5;
+  static constexpr int16_t kFreedriveTorque_ = -300;
 
   bool manual_ctrl_enabled_ = false;
   std::bitset<3> waiting_for_response_;
