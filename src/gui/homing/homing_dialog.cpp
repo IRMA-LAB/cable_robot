@@ -1,7 +1,7 @@
 /**
  * @file homing_dialog.cpp
  * @author Simone Comari
- * @date 12 Jun 2019
+ * @date 03 Jul 2019
  * @brief This file includes definitions of class present in homing_dialog.h.
  */
 
@@ -26,7 +26,8 @@ HomingDialog::~HomingDialog()
 
 void HomingDialog::on_buttonBox_accepted()
 {
-  if (homing_method_ != ui->comboBox_homingMethod->currentIndex())
+  if (homing_method_ != ui->comboBox_homingMethod->currentIndex() ||
+      interface_ == nullptr)
   {
     DeleteInterface();
     homing_method_ = ui->comboBox_homingMethod->currentIndex();
