@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>InputForm</class>
- <widget class="QWidget" name="InputForm">
+ <class>FileSelectionForm</class>
+ <widget class="QWidget" name="FileSelectionForm">
   <property name="geometry">
    <rect>
     <x>0</x>

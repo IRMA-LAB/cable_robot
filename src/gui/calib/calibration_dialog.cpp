@@ -9,7 +9,8 @@
 #include "ui_calibration_dialog.h"
 
 
-CalibrationDialog::CalibrationDialog(QWidget* parent, CableRobot* robot, grabcdpr::Params &params)
+CalibrationDialog::CalibrationDialog(QWidget* parent, CableRobot* robot,
+                                     const grabcdpr::Params& params)
   : QDialog(parent), ui(new Ui::CalibrationDialog), robot_ptr_(robot), params_(params)
 {
   ui->setupUi(this);
@@ -27,7 +28,8 @@ CalibrationDialog::~CalibrationDialog()
 
 void CalibrationDialog::on_buttonBox_accepted()
 {
-  interface_ = new CalibInterfaceExcitation(parentWidget(), robot_ptr_, params_.actuators);
+  interface_ =
+    new CalibInterfaceExcitation(parentWidget(), robot_ptr_, params_.actuators);
   connect(interface_, SIGNAL(destroyed()), this, SLOT(fwdCalibFinished()));
   interface_->show();
   CLOG(INFO, "event") << "Prompt " << ui->comboBox_calibMethod->currentText()

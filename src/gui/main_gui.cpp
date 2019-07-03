@@ -150,24 +150,15 @@ void MainGUI::pushButton_debug_clicked()
   if (!(ec_network_valid_ && rt_thread_running_))
     return;
 
-  if (robot_ptr_->AnyMotorEnabled())
-  {
-    robot_ptr_->DisableMotors();
-  }
-  else
-  {
-    robot_ptr_->EnableMotors();
-    robot_ptr_->UpdateHomeConfig(0.0, 0.0);
-  }
+  pushButton_debug->setDisabled(true);
 
-  //  pushButton_debug->setDisabled(true);
-
-  //  // Insert debug operations/app here..
-  //  if (temp_app == NULL)
-  //  {
-  //    temp_app = new MyDebugClass(...);
-  //    connect(temp_app, SIGNAL(debugCompleted()), this, SLOT(handleDebugCompleted()));
-  //  }
+  // Insert debug operations/app here..
+  if (debug_app_ == nullptr)
+  {
+    debug_app_ = new DebugClass(this, robot_ptr_);
+    connect(debug_app_, SIGNAL(debugCompleted()), this, SLOT(handleDebugCompleted()));
+    debug_app_->start();
+  }
 }
 
 void MainGUI::handleDebugCompleted() { pushButton_debug->setEnabled(true); }

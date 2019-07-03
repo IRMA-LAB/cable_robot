@@ -1,3 +1,10 @@
+/**
+ * @file calib_interface_excitation.h
+ * @author Simone Comari
+ * @date 02 Jul 2019
+ * @brief This file include the interface of CalibExcitation app.
+ */
+
 #ifndef CABLE_ROBOT_CALIB_INTERFACE_EXCITATION_H
 #define CABLE_ROBOT_CALIB_INTERFACE_EXCITATION_H
 
@@ -9,12 +16,31 @@ namespace Ui {
 class CalibInterfaceExcitation;
 }
 
+/**
+ * @brief The implementation of the interface of the calibration support app in case of
+ * external tracking system.
+ *
+ * This interface allows the user to:
+ * - Enable/disable all motors at once;
+ * - Switch between position and torque control, being the former used to fix the cables
+ * length and the latter to manually move the platform (freedrive mode);
+ * - Once in position control, start the logging phase, while a trajectory is excecuted to
+ * excite most platform dynamics.
+ */
 class CalibInterfaceExcitation: public QDialog
 {
   Q_OBJECT
 
  public:
-  explicit CalibInterfaceExcitation(QWidget* parent, CableRobot* robot, const vect<grabcdpr::ActuatorParams>& params);
+  /**
+   * @brief Full constructor.
+   * @param parent The parent Qt object, in our case the main GUI.
+   * @param robot Pointer to the cable robot instance.
+   * @param[in] params params A vector of actuator parameters, with as many elements as
+   * the active motors.
+   */
+  explicit CalibInterfaceExcitation(QWidget* parent, CableRobot* robot,
+                                    const vect<grabcdpr::ActuatorParams>& params);
   ~CalibInterfaceExcitation();
 
  private slots:

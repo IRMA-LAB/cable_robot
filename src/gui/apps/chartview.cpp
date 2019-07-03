@@ -1,5 +1,11 @@
+/**
+ * @file chartview.cpp
+ * @author Simone Comari
+ * @date 03 Jul 2019
+ * @brief This file includes definitions of class present in chartview.h.
+ */
+
 #include "gui/apps/chartview.h"
-#include <QValueAxis>
 
 ChartView::ChartView(QChart* chart, QWidget* parent) : QChartView(chart, parent)
 {
@@ -18,6 +24,8 @@ ChartView::ChartView(QChart* chart, QWidget* parent) : QChartView(chart, parent)
   highlight_point_.setPen(pen);
   highlight_point_.setColor("red");
 }
+
+//--------- Public functions --------------------------------------------------------//
 
 void ChartView::setCableTrajectory(const TrajectoryD& traj)
 {
@@ -92,6 +100,38 @@ void ChartView::removeHighlight()
     highlight_point_.clear();
   }
 }
+
+//--------- Private functions --------------------------------------------------------//
+
+void ChartView::setTitles(const id_t& id, const QString& traj_type, const QString& unit)
+{
+  chart()->setTitle(tr("Actuator #%1 %2 trajectory").arg(id).arg(traj_type));
+  chart()->setTitleFont(QFont(chart()->font().family(), 12, QFont::Bold));
+
+  chart()->createDefaultAxes();
+
+  chart()->axisX()->setTitleText("time from start [sec]");
+  chart()->axisX()->setTitleFont(QFont(chart()->font().family(), 11, QFont::Medium));
+  chart()->axisX()->setTitleVisible();
+
+  chart()->axisY()->setTitleText(tr("set-point [%1]").arg(unit));
+  chart()->axisY()->setTitleFont(QFont(chart()->font().family(), 11, QFont::Medium));
+  chart()->axisY()->setTitleVisible();
+
+  axisX_ = chart()->axisX();
+  axisY_ = chart()->axisY();
+}
+
+void ChartView::resetView()
+{
+  chart()->scroll(-tot_scroll_x_zoomed_, -tot_scroll_y_zoomed_);
+  chart()->zoomReset();
+  chart()->scroll(-tot_scroll_x_, -tot_scroll_y_);
+  tot_scroll_x_ = 0;
+  tot_scroll_y_ = 0;
+}
+
+//--------- Private GUI events ------------------------------------------------------//
 
 void ChartView::resizeEvent(QResizeEvent* event)
 {
@@ -202,32 +242,4 @@ void ChartView::wheelEvent(QWheelEvent* event)
     chart()->zoomIn();
   else if (event->delta() < 0)
     chart()->zoomOut();
-}
-
-void ChartView::setTitles(const id_t& id, const QString& traj_type, const QString& unit)
-{
-  chart()->setTitle(tr("Actuator #%1 %2 trajectory").arg(id).arg(traj_type));
-  chart()->setTitleFont(QFont(chart()->font().family(), 12, QFont::Bold));
-
-  chart()->createDefaultAxes();
-
-  chart()->axisX()->setTitleText("time from start [sec]");
-  chart()->axisX()->setTitleFont(QFont(chart()->font().family(), 11, QFont::Medium));
-  chart()->axisX()->setTitleVisible();
-
-  chart()->axisY()->setTitleText(tr("set-point [%1]").arg(unit));
-  chart()->axisY()->setTitleFont(QFont(chart()->font().family(), 11, QFont::Medium));
-  chart()->axisY()->setTitleVisible();
-
-  axisX_ = chart()->axisX();
-  axisY_ = chart()->axisY();
-}
-
-void ChartView::resetView()
-{
-  chart()->scroll(-tot_scroll_x_zoomed_, -tot_scroll_y_zoomed_);
-  chart()->zoomReset();
-  chart()->scroll(-tot_scroll_x_, -tot_scroll_y_);
-  tot_scroll_x_ = 0;
-  tot_scroll_y_ = 0;
 }

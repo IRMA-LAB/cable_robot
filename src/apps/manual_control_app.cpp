@@ -1,3 +1,10 @@
+/**
+ * @file manual_control_app.cpp
+ * @author Simone Comari
+ * @date 03 Jul 2019
+ * @brief This file includes definitions of class present in manual_control_app.h.
+ */
+
 #include "apps/manual_control_app.h"
 
 ManualControlApp::ManualControlApp(QObject* parent, CableRobot* robot)

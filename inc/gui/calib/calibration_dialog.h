@@ -5,8 +5,8 @@
  * @brief This file include the calibration dialog class.
  */
 
-#ifndef CALIBRATION_DIALOG_H
-#define CALIBRATION_DIALOG_H
+#ifndef CABLE_ROBOT_CALIBRATION_DIALOG_H
+#define CABLE_ROBOT_CALIBRATION_DIALOG_H
 
 #include <QDialog>
 
@@ -34,8 +34,9 @@ class CalibrationDialog: public QDialog
    * @param parent The parent Qt object, in our case the main GUI.
    * @param robot Pointer to the cable robot instance, to be passed to the selected
    * calibration procedure interface.
+   * @param[in] params Robot parameters.
    */
-  CalibrationDialog(QWidget* parent, CableRobot* robot, grabcdpr::Params& params);
+  CalibrationDialog(QWidget* parent, CableRobot* robot, const grabcdpr::Params& params);
   ~CalibrationDialog();
 
  signals:
@@ -63,4 +64,4 @@ class CalibrationDialog: public QDialog
   grabcdpr::Params params_;
 };
 
-#endif // CALIBRATION_DIALOG_H
+#endif // CABLE_ROBOT_CALIBRATION_DIALOG_H

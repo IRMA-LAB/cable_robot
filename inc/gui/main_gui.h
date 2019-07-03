@@ -23,6 +23,9 @@
 #include "gui/calib/calibration_dialog.h"
 #include "gui/homing/homing_dialog.h"
 #include "robot/cablerobot.h"
+#if DEBUG_GUI == 1
+#include "debug/debug_routine.h"
+#endif
 
 using GSWDOpModes = grabec::GoldSoloWhistleOperationModes; /**< Shortcut for op modes. */
 
@@ -130,7 +133,7 @@ class MainGUI: public QDialog
   QPushButton* pushButton_debug;
   QSpacerItem* verticalSpacer_5;
   // Insert your debug object here..
-//  MyDebugClass* temp_app = NULL;
+  DebugClass* debug_app_ = nullptr;
 #endif
 
  private:

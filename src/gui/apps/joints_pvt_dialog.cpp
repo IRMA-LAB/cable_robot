@@ -1,3 +1,10 @@
+/**
+ * @file joints_pvt_dialog.cpp
+ * @author Simone Comari
+ * @date 03 Jul 2019
+ * @brief This file includes definitions of classes present in joints_pvt_dialog.h.
+ */
+
 #include "gui/apps/joints_pvt_dialog.h"
 #include "ui_joints_pvt_dialog.h"
 
@@ -11,7 +18,7 @@ JointsPVTDialog::JointsPVTDialog(QWidget* parent, CableRobot* robot,
   ui->horizontalLayout_display->addWidget(&traj_display_, 1);
   setAttribute(Qt::WA_DeleteOnClose);
 
-  line_edits_.append(new InputForm(this));
+  line_edits_.append(new FileSelectionForm(this));
   ui->verticalLayout_inputSource->insertWidget(kInputFormPosInit_ - 1,
                                                line_edits_.last());
 
@@ -143,7 +150,7 @@ void JointsPVTDialog::progressUpdate(const int progress_value, const double time
 void JointsPVTDialog::on_pushButton_addTraj_clicked()
 {
   CLOG(TRACE, "event");
-  line_edits_.append(new InputForm(this));
+  line_edits_.append(new FileSelectionForm(this));
   ui->verticalLayout_inputSource->insertWidget(input_form_pos_++, line_edits_.last());
   ui->pushButton_removeTraj->setEnabled(true);
 }
@@ -163,7 +170,7 @@ void JointsPVTDialog::on_pushButton_read_clicked()
   CLOG(TRACE, "event");
   // Collect all given filepaths.
   QVector<QString> input_filenames;
-  for (InputForm* form : line_edits_)
+  for (FileSelectionForm* form : line_edits_)
     input_filenames.append(form->getFilepath());
   // Check if at least one file was provided.
   if (input_filenames.isEmpty())

@@ -1,7 +1,7 @@
 /**
  * @file utils/types.h
  * @author Simone Comari
- * @date 11 Jun 2019
+ * @date 03 Jul 2019
  * @brief File containing the implementation of a custom wrapper to log cable robot data
  * employing easylogging++ package.
  */
@@ -165,7 +165,7 @@ struct ActuatorStatus: WinchStatus
 
 template <typename T>
 /**
- * @brief The WayPoint struct
+ * @brief A convenient structure to describe a waypoint, that is a value with a timestamp.
  */
 struct WayPoint
 {
@@ -173,54 +173,63 @@ struct WayPoint
   T value;          /**< .. */
 
   /**
-   * @brief WayPoint
+   * @brief Default constructor.
    */
   WayPoint() {}
   /**
-   * @brief WayPoint
-   * @param time
-   * @param _value
+   * @brief Full constructor
+   * @param[in] time Waypoint timestamps in seconds.
+   * @param[in] _value Waypoint value.
    */
   WayPoint(const double time, const T& _value) : ts(time), value(_value) {}
 };
 
-using WayPointD = WayPoint<double>; /**< .. */
-using WayPointI = WayPoint<int>;    /**< .. */
-using WayPointS = WayPoint<short>;  /**< .. */
+using WayPointD = WayPoint<double>; /**< alias for a waypoint with a double value */
+using WayPointI = WayPoint<int>;    /**< alias for a waypoint with an int value */
+using WayPointS = WayPoint<short>;  /**< alias for a waypoint with a short value */
 
 template <typename T>
 /**
- * @brief The Trajectory struct
+ * @brief A convenient structure to describe a trajectory, that is an array of scalar with
+ * an array of timestamps of equal length.
  */
 struct Trajectory
 {
-  id_t id = 0;      /**< .. */
-  vectD timestamps; /**< .. */
-  vect<T> values;   /**< .. */
+  id_t id = 0;      /**< The ID of the trajectory, for example of the relative motor. */
+  vectD timestamps; /**< An array of timestamps in seconds. */
+  vect<T> values;   /**< An array of generic scalar values. */
 
   /**
-   * @brief Trajectory
+   * @brief Default constructor.
+   *
+   * By default, ID is 0 and trajectory is empty.
    */
   Trajectory() {}
   /**
-   * @brief Trajectory
-   * @param _id
+   * @brief Partial constructor.
+   *
+   * This constructor assign an ID, but leaves the trajectory empty.
+   * @param[in] _id Trajectory ID.
    */
   Trajectory(const id_t _id) : id(_id) {}
   /**
-   * @brief Trajectory
-   * @param _id
-   * @param _values
+   * @brief Partial constructor.
+   *
+   * This constructor assign an ID, fills the trajectory values and set all timestamps to
+   * -1.
+   * @param[in] _id Trajectory ID.
+   * @param[in] _values An array of scalar values.
    */
   Trajectory(const id_t _id, const vect<T>& _values) : id(_id), values(_values)
   {
     timestamps = vectD(values.size(), -1.0);
   }
   /**
-   * @brief Trajectory
-   * @param _id
-   * @param _values
-   * @param times
+   * @brief Full constructor
+   * @param[in] _id Trajectory ID.
+   * @param[in] _values An array of scalar values.
+   * @param[in] times An array of timestamps in seconds.
+   * @warning times and _values must have the same length. Error raised otherwise.
    */
   Trajectory(const id_t _id, const vect<T>& _values, const vectD& times)
     : id(_id), values(_values), timestamps(times)
@@ -229,9 +238,11 @@ struct Trajectory
   }
 
   /**
-   * @brief waypointFromIndex
-   * @param index
-   * @return
+   * @brief Get a waypoint from given index.
+   * @param[in] index The index of the desired waypoint.
+   * @return The desired waypoint.
+   * @warning The index must be less than trajectory size, otherwise an error is raised.
+   * @see waypointFromAbsTime waypointFromRelTime
    */
   WayPoint<T> waypointFromIndex(const size_t index) const
   {
@@ -240,9 +251,11 @@ struct Trajectory
   }
 
   /**
-   * @brief waypointFromAbsTime
-   * @param time
-   * @return
+   * @brief Get a waypoint from given absolute time.
+   * @param[in] time An absolute time in seconds.
+   * @param[in] eps The tolerance used to avoid numerical issues.
+   * @return The closes waypoint to given time.
+   * @see waypointFromRelTime waypointFromIndex
    */
   WayPoint<T> waypointFromAbsTime(const double time, const double eps = 1e-6) const
   {
@@ -281,16 +294,18 @@ struct Trajectory
       const double slope = (values[upper_idx] - values[lower_idx]) /
                            (timestamps[upper_idx] - timestamps[lower_idx]);
       const double offset = values[upper_idx] - slope * timestamps[upper_idx];
-      value  = slope * time + offset;
+      value               = slope * time + offset;
     }
 
     return WayPoint<T>(time, static_cast<T>(value));
   }
 
   /**
-   * @brief waypointFromRelTime
-   * @param time
-   * @return
+   * @brief Get a waypoint from given relative time.
+   * @param[in] time A relative time in seconds.
+   * @param[in] eps The tolerance used to avoid numerical issues.
+   * @return The closes waypoint to given time.
+   * @see waypointFromAbsTime waypointFromIndex
    */
   WayPoint<T> waypointFromRelTime(const double time, const double eps = 1e-6) const
   {
@@ -300,8 +315,8 @@ struct Trajectory
   }
 };
 
-using TrajectoryD = Trajectory<double>; /**< .. */
-using TrajectoryI = Trajectory<int>;    /**< .. */
-using TrajectoryS = Trajectory<short>;  /**< .. */
+using TrajectoryD = Trajectory<double>; /**< alias for trajectory of double values */
+using TrajectoryI = Trajectory<int>;    /**< alias for trajectory of int values */
+using TrajectoryS = Trajectory<short>;  /**< alias for trajectory of short values */
 
 #endif // CABLE_ROBOT_TYPES_H

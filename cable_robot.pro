@@ -13,9 +13,9 @@ HEADERS = \
     $$PWD/inc/gui/homing/init_torque_form.h \
     $$PWD/inc/gui/apps/joints_pvt_dialog.h \
     $$PWD/inc/gui/apps/manual_control_dialog.h \
-    $$PWD/inc/gui/apps/my3dscatterwidget.h \
+    $$PWD/inc/gui/apps/scatter3d_widget.h \
     $$PWD/inc/gui/apps/chartview.h \
-    $$PWD/inc/gui/apps/input_form.h \
+    $$PWD/inc/gui/apps/file_selection_form.h \
     $$PWD/inc/calib/calib_excitation.h \
     $$PWD/inc/homing/homing_proprioceptive.h \
     $$PWD/inc/homing/matlab_thread.h \
@@ -25,12 +25,12 @@ HEADERS = \
     $$PWD/inc/ctrl/controller_singledrive.h \
     $$PWD/inc/ctrl/controller_joints_pvt.h \
     $$PWD/inc/ctrl/winch_torque_controller.h \
-    $$PWD/inc/state_estimation/ext_kalman_filter.h \
+#    $$PWD/inc/state_estimation/ext_kalman_filter.h \
     $$PWD/inc/utils/types.h \
     $$PWD/inc/utils/macros.h \
     $$PWD/inc/utils/msgs.h \
     $$PWD/inc/utils/easylog_wrapper.h \
-    $$PWD/inc/debug/single_drive_sysid.h \
+    $$PWD/inc/debug/debug_routine.h \
     $$PWD/lib/easyloggingpp/src/easylogging++.h \
     $$PWD/lib/grab_common/grabcommon.h \
     $$PWD/lib/grab_common/pid/pid.h \
@@ -51,9 +51,9 @@ SOURCES = \
     $$PWD/src/gui/homing/init_torque_form.cpp \
     $$PWD/src/gui/apps/joints_pvt_dialog.cpp \
     $$PWD/src/gui/apps/manual_control_dialog.cpp \
-    $$PWD/src/gui/apps/my3dscatterwidget.cpp \
+    $$PWD/src/gui/apps/scatter3d_widget.cpp \
     $$PWD/src/gui/apps/chartview.cpp \
-    $$PWD/src/gui/apps/input_form.cpp \
+    $$PWD/src/gui/apps/file_selection_form.cpp \
     $$PWD/src/calib/calib_excitation.cpp \
     $$PWD/src/homing/homing_proprioceptive.cpp \
     $$PWD/src/homing/matlab_thread.cpp \
@@ -63,10 +63,10 @@ SOURCES = \
     $$PWD/src/ctrl/controller_singledrive.cpp \
     $$PWD/src/ctrl/controller_joints_pvt.cpp \
     $$PWD/src/ctrl/winch_torque_controller.cpp \
-    $$PWD/src/state_estimation/ext_kalman_filter.cpp \
+#    $$PWD/src/state_estimation/ext_kalman_filter.cpp \
     $$PWD/src/utils/msgs.cpp \
     $$PWD/src/utils/easylog_wrapper.cpp \
-    $$PWD/src/debug/single_drive_sysid.cpp \
+    $$PWD/src/debug/debug_routine.cpp \
     $$PWD/lib/easyloggingpp/src/easylogging++.cc \
     $$PWD/lib/grab_common/grabcommon.cpp \
     $$PWD/lib/grab_common/pid/pid.cpp \
@@ -81,8 +81,8 @@ FORMS += \
     $$PWD/widgets/homing/init_torque_form.ui \
     $$PWD/widgets/apps/joints_pvt_dialog.ui \
     $$PWD/widgets/apps/manual_control_dialog.ui \
-    $$PWD/widgets/apps/my3dscatterwidget.ui \
-    $$PWD/widgets/apps/input_form.ui \
+    $$PWD/widgets/apps/scatter3d_widget.ui \
+    $$PWD/widgets/apps/file_selection_form.ui \
 
 RESOURCES += \
     resources/resources.qrc

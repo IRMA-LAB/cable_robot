@@ -1,3 +1,10 @@
+/**
+ * @file joints_pvt_app.cpp
+ * @author Simone Comari
+ * @date 03 Jul 2019
+ * @brief This file includes definitions of classes present in joints_pvt_app.h.
+ */
+
 #include "apps/joints_pvt_app.h"
 
 //------------------------------------------------------------------------------------//
@@ -56,7 +63,7 @@ void JointsPVTApp::pause()
   pthread_mutex_lock(&robot_ptr_->Mutex());
   if (!controller_.requestPending())
   {
-    if (controller_.IsPaused())
+    if (controller_.isPaused())
       controller_.resumeTrajectoryFollowing();
     else
       controller_.pauseTrajectoryFollowing();
@@ -202,7 +209,7 @@ void JointsPVTApp::logInfo(const QString& text) const
 
 STATE_DEFINE(JointsPVTApp, Idle, NoEventData)
 {
-  PrintStateTransition(prev_state_, ST_IDLE);
+  printStateTransition(prev_state_, ST_IDLE);
   prev_state_ = ST_IDLE;
 
   traj_sets_.clear();
@@ -210,7 +217,7 @@ STATE_DEFINE(JointsPVTApp, Idle, NoEventData)
 
 STATE_DEFINE(JointsPVTApp, Ready, NoEventData)
 {
-  PrintStateTransition(prev_state_, ST_READY);
+  printStateTransition(prev_state_, ST_READY);
   prev_state_ = ST_READY;
 
   pthread_mutex_lock(&robot_ptr_->Mutex());
@@ -220,7 +227,7 @@ STATE_DEFINE(JointsPVTApp, Ready, NoEventData)
 
 STATE_DEFINE(JointsPVTApp, Transition, JointsPVTAppData)
 {
-  PrintStateTransition(prev_state_, ST_TRANSITION);
+  printStateTransition(prev_state_, ST_TRANSITION);
   prev_state_ = ST_TRANSITION;
 
   static constexpr double kMaxCableSpeed = 0.006; // [m/s]
@@ -230,7 +237,7 @@ STATE_DEFINE(JointsPVTApp, Transition, JointsPVTAppData)
     vect<TrajectoryD> transition_trajectories =
       traj_sets_[data->traj_idx].traj_cables_len;
     double t_max = grabrt::NanoSec2Sec(robot_ptr_->GetRtCycleTimeNsec());
-    for (auto& transition_traj: transition_trajectories)
+    for (auto& transition_traj : transition_trajectories)
     {
       // First waypoint of next trajectory becomes end point of transition.
       double target_cable_len = transition_traj.values.front();
@@ -245,7 +252,7 @@ STATE_DEFINE(JointsPVTApp, Transition, JointsPVTAppData)
       // Set a simple trajectory composed by two waypoints (begin, end).
       transition_traj.values = {current_cable_len, target_cable_len};
     }
-    for (auto& transition_traj: transition_trajectories)
+    for (auto& transition_traj : transition_trajectories)
     {
       transition_traj.timestamps = {0.0, t_max};
       CLOG(INFO, "event") << QString(
@@ -257,7 +264,7 @@ STATE_DEFINE(JointsPVTApp, Transition, JointsPVTAppData)
     }
     // Send trajectories
     pthread_mutex_lock(&robot_ptr_->Mutex());
-    controller_.SetCablesLenTrajectories(transition_trajectories);
+    controller_.setCablesLenTrajectories(transition_trajectories);
     pthread_mutex_unlock(&robot_ptr_->Mutex());
   }
   else if (traj_sets_[data->traj_idx].traj_type == MOTOR_POSITION)
@@ -288,14 +295,14 @@ STATE_DEFINE(JointsPVTApp, Transition, JointsPVTAppData)
     }
     // Send trajectories
     pthread_mutex_lock(&robot_ptr_->Mutex());
-    controller_.SetMotorsPosTrajectories(transition_trajectories);
+    controller_.setMotorsPosTrajectories(transition_trajectories);
     pthread_mutex_unlock(&robot_ptr_->Mutex());
   }
 }
 
 STATE_DEFINE(JointsPVTApp, TrajectoryFollow, JointsPVTAppData)
 {
-  PrintStateTransition(prev_state_, ST_TRAJECTORY_FOLLOW);
+  printStateTransition(prev_state_, ST_TRAJECTORY_FOLLOW);
   prev_state_ = ST_TRAJECTORY_FOLLOW;
 
   if (robot_ptr_->WaitUntilPlatformSteady(-1.) != RetVal::OK)
@@ -308,22 +315,22 @@ STATE_DEFINE(JointsPVTApp, TrajectoryFollow, JointsPVTAppData)
   {
     case CABLE_LENGTH:
       pthread_mutex_lock(&robot_ptr_->Mutex());
-      controller_.SetCablesLenTrajectories(traj_sets_[data->traj_idx].traj_cables_len);
+      controller_.setCablesLenTrajectories(traj_sets_[data->traj_idx].traj_cables_len);
       pthread_mutex_unlock(&robot_ptr_->Mutex());
       break;
     case MOTOR_POSITION:
       pthread_mutex_lock(&robot_ptr_->Mutex());
-      controller_.SetMotorsPosTrajectories(traj_sets_[data->traj_idx].traj_motors_pos);
+      controller_.setMotorsPosTrajectories(traj_sets_[data->traj_idx].traj_motors_pos);
       pthread_mutex_unlock(&robot_ptr_->Mutex());
       break;
     case MOTOR_SPEED:
       pthread_mutex_lock(&robot_ptr_->Mutex());
-      controller_.SetMotorsVelTrajectories(traj_sets_[data->traj_idx].traj_motors_vel);
+      controller_.setMotorsVelTrajectories(traj_sets_[data->traj_idx].traj_motors_vel);
       pthread_mutex_unlock(&robot_ptr_->Mutex());
       break;
     case MOTOR_TORQUE:
       pthread_mutex_lock(&robot_ptr_->Mutex());
-      controller_.SetMotorsTorqueTrajectories(
+      controller_.setMotorsTorqueTrajectories(
         traj_sets_[data->traj_idx].traj_motors_torque);
       pthread_mutex_unlock(&robot_ptr_->Mutex());
       break;
@@ -436,7 +443,7 @@ void JointsPVTApp::setMotorTorqueTraj(const bool relative, const vect<id_t>& mot
   }
 }
 
-void JointsPVTApp::PrintStateTransition(const States current_state,
+void JointsPVTApp::printStateTransition(const States current_state,
                                         const States new_state) const
 {
   if (current_state == new_state)

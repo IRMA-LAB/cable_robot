@@ -1,4 +1,15 @@
+/**
+ * @file calib_excitation.cpp
+ * @author Simone Comari
+ * @date 03 Jul 2019
+ * @brief This file includes definitions of classes present in calib_excitation.h.
+ */
+
 #include "calib/calib_excitation.h"
+
+//------------------------------------------------------------------------------------//
+//--------- CalibExcitationData class ------------------------------------------------//
+//------------------------------------------------------------------------------------//
 
 CalibExcitationData::CalibExcitationData() {}
 
@@ -10,6 +21,9 @@ std::ostream& operator<<(std::ostream& stream, const CalibExcitationData& data)
   return stream;
 }
 
+//------------------------------------------------------------------------------------//
+//--------- CalibExcitation class ----------------------------------------------------//
+//------------------------------------------------------------------------------------//
 
 // For static constexpr passed by reference we need a dummy definition no matter what
 constexpr char* CalibExcitation::kStatesStr[];
@@ -259,7 +273,7 @@ STATE_DEFINE(CalibExcitation, Logging, NoEventData)
     return;
   }
 
-  controller_joints_ptv_->SetCablesLenTrajectories(traj_cables_len_);
+  controller_joints_ptv_->setCablesLenTrajectories(traj_cables_len_);
   robot_ptr_->StartRtLogging(kRtCycleMultiplier_);
   robot_ptr_->SetController(controller_joints_ptv_);
   emit printToQConsole("Start logging...");

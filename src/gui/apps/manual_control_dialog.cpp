@@ -1,4 +1,11 @@
-﻿#include "gui/apps/manual_control_dialog.h"
+﻿/**
+ * @file manual_control_dialog.cpp
+ * @author Simone Comari
+ * @date 03 Jul 2019
+ * @brief This file includes definitions of class present in manual_control_dialog.h.
+ */
+
+#include "gui/apps/manual_control_dialog.h"
 #include "ui_manual_control_dialog.h"
 
 ManualControlDialog::ManualControlDialog(QWidget* parent, CableRobot* robot)

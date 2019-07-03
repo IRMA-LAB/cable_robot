@@ -1,3 +1,10 @@
+/**
+ * @file controller_joints_pvt.h
+ * @author Simone Comari
+ * @date 03 Jul 2019
+ * @brief This file includes the implementation of the controller for the joints pvt app.
+ */
+
 #ifndef CABLE_ROBOT_CONTROLLER_JOINTS_PVT_H
 #define CABLE_ROBOT_CONTROLLER_JOINTS_PVT_H
 
@@ -6,26 +13,89 @@
 #include "ctrl/controller_base.h"
 #include "ctrl/winch_torque_controller.h"
 
+/**
+ * @brief The controller for joints pvt app.
+ *
+ * This controller can take four different types of trajectories as input:
+ * 0. Cable lenghts [m]
+ * 1. Motor positions [counts]
+ * 2. Motor velocities [counts/s]
+ * 3. Motor torques [nominal points]
+ * Disregarding the type, each given set must include one trajectory per active motor.
+ * If trajectories are valid, upon each call of CalcCtrlActions() the point next in line
+ * in the trajectory is read and used as next setpoint for the motor.
+ *
+ * The trajectory following can be pause, resumed and stopped at any time. When stopping
+ * or resuming time is warped to smooth out the arrest/start up phase and avoid abrubt
+ * accelerations at motors level.
+ *
+ * While executing a trajectory, the progress status is emitted at a constant rate (5Hz).
+ * Once trajectory is completed a trajectoryCompleted() signal is emitted.
+ */
 class ControllerJointsPVT: public QObject, public ControllerBase
 {
   Q_OBJECT
 
  public:
+  /**
+   * @brief Full constructor.
+   * @param[in] params A vector of actuator parameters, with as many elements as the
+   * active motors.
+   * @param cycle_t_nsec Real-time thread cycle time in nanoseconds.
+   * @param parent The optional parent QObject.
+   */
   explicit ControllerJointsPVT(const vect<grabcdpr::ActuatorParams>& params,
                                const uint32_t cycle_t_nsec, QObject* parent = nullptr);
   ~ControllerJointsPVT() override {}
 
-  bool SetCablesLenTrajectories(const vect<TrajectoryD>& trajectories);
-  bool SetMotorsPosTrajectories(const vect<TrajectoryI>& trajectories);
-  bool SetMotorsVelTrajectories(const vect<TrajectoryI>& trajectories);
-  bool SetMotorsTorqueTrajectories(const vect<TrajectoryS>& trajectories);
+  /**
+   * @brief Set trajectories of cable length type.
+   * @param trajectories Trajectories of cable length type [m].
+   * @return _True_ if trajectories are valid, _False_ otherwise.
+   */
+  bool setCablesLenTrajectories(const vect<TrajectoryD>& trajectories);
+  /**
+   * @brief Set trajectories of motor position type.
+   * @param trajectories Trajectories of motor position type [counts].
+   * @return _True_ if trajectories are valid, _False_ otherwise.
+   */
+  bool setMotorsPosTrajectories(const vect<TrajectoryI>& trajectories);
+  /**
+   * @brief Set trajectories of motor velocity type.
+   * @param trajectories Trajectories of motor velocity type [counts/s].
+   * @return _True_ if trajectories are valid, _False_ otherwise.
+   */
+  bool setMotorsVelTrajectories(const vect<TrajectoryI>& trajectories);
+  /**
+   * @brief Set trajectories of motor torque type.
+   * @param trajectories Trajectories of motor torque type [nominal points].
+   * @return _True_ if trajectories are valid, _False_ otherwise.
+   */
+  bool setMotorsTorqueTrajectories(const vect<TrajectoryS>& trajectories);
 
+  /**
+   * @brief Pause trajectory following with a smooth arrest.
+   */
   void pauseTrajectoryFollowing();
+  /**
+   * @brief Resume trajectory following with a smooth start up.
+   */
   void resumeTrajectoryFollowing();
+  /**
+   * @brief Stop trajectory following with a smooth arrest.
+   */
   void stopTrajectoryFollowing();
 
+  /**
+   * @brief Check if a stop or resume request is pending.
+   * @return _True_ if a request is pending, _False_ otherwise.
+   */
   bool requestPending() const { return stop_request_ || resume_request_; }
-  bool IsPaused() const { return (stop_ || stop_request_) && !resume_request_; }
+  /**
+   * @brief Check if trajectory following is paused.
+   * @return _True_ if trajectory following, _False_ otherwise.
+   */
+  bool isPaused() const { return (stop_ || stop_request_) && !resume_request_; }
   /**
    * @brief Check if active target is reached, independently from the control mode.
    * @return _True_ if target is reached, _false_ otherwise.
@@ -58,7 +128,13 @@ class ControllerJointsPVT: public QObject, public ControllerBase
                   const vect<ActuatorStatus>& actuators_status) override final;
 
  signals:
+  /**
+   * @brief Signal to notice that the trajectory has benn completed.
+   */
   void trajectoryCompleted() const;
+  /**
+   * @brief Signal carrying trajectory progress status.
+   */
   void trajectoryProgressStatus(const int, const double) const;
 
  private:
@@ -100,13 +176,13 @@ class ControllerJointsPVT: public QObject, public ControllerBase
   void processTrajTime();
 
   template <typename T>
-  T GetTrajectoryPointValue(const id_t id, const vect<Trajectory<T>>& trajectories);
+  T getTrajectoryPointValue(const id_t id, const vect<Trajectory<T>>& trajectories);
 
-  void Reset();
-  void ResetTime();
+  void reset();
+  void resetTime();
 
   template <typename T>
-  bool AreTrajectoriesValid(const vect<Trajectory<T>>& trajectories);
+  bool areTrajectoriesValid(const vect<Trajectory<T>>& trajectories);
 };
 
 #endif // CABLE_ROBOT_CONTROLLER_JOINTS_PVT_H

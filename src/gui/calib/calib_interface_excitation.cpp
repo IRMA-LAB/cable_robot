@@ -1,8 +1,15 @@
-﻿#include "gui/calib/calib_interface_excitation.h"
+﻿/**
+ * @file calib_interface_excitation.cpp
+ * @author Simone Comari
+ * @date 02 Jul 2019
+ * @brief This file includes definitions of class present in calib_interface_excitation.h.
+ */
+
+#include "gui/calib/calib_interface_excitation.h"
 #include "ui_calib_interface_excitation.h"
 
-CalibInterfaceExcitation::CalibInterfaceExcitation(QWidget* parent, CableRobot* robot,
-                                         const vect<grabcdpr::ActuatorParams> &params)
+CalibInterfaceExcitation::CalibInterfaceExcitation(
+  QWidget* parent, CableRobot* robot, const vect<grabcdpr::ActuatorParams>& params)
   : QDialog(parent), ui(new Ui::CalibInterfaceExcitation), robot_ptr_(robot),
     app_(this, robot, params)
 {
@@ -104,7 +111,8 @@ void CalibInterfaceExcitation::on_radioButton_torque_clicked()
   CLOG(TRACE, "event");
   ui->radioButton_torque->setChecked(true);
   ui->radioButton_position->setChecked(false);
-  CalibExcitationData* data = new CalibExcitationData(static_cast<short>(ui->spinBox_torque->value()));
+  CalibExcitationData* data =
+    new CalibExcitationData(static_cast<short>(ui->spinBox_torque->value()));
   app_.changeControlMode(data);
 }
 

@@ -1,11 +1,18 @@
+/**
+ * @file winch_torque_controller.cpp
+ * @author Simone Comari
+ * @date 03 Jul 2019
+ * @brief This file includes definitions of classes present in winch_torque_controller.h.
+ */
+
 #include "ctrl/winch_torque_controller.h"
 
 WinchTorqueControl::WinchTorqueControl(const id_t id,
-                                       const grabcdpr::ActuatorParams& params)
+                                       const grabcdpr::ActuatorParams& /*params*/)
   : id_(id)
 {}
 
-short WinchTorqueControl::calcServoTorqueSetpoint(const ActuatorStatus& status,
+short WinchTorqueControl::calcServoTorqueSetpoint(const ActuatorStatus& /*status*/,
                                                   const short target)
 {
   return target; // dummy

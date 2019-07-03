@@ -1,3 +1,10 @@
+/**
+ * @file controller_joints_pvt.cpp
+ * @author Simone Comari
+ * @date 03 Jul 2019
+ * @brief This file includes definitions of class present in controller_joints_pvt.h.
+ */
+
 #include "ctrl/controller_joints_pvt.h"
 
 constexpr double ControllerJointsPVT::kMinArrestTime_;
@@ -8,52 +15,54 @@ ControllerJointsPVT::ControllerJointsPVT(const vect<grabcdpr::ActuatorParams>& p
 {
   motors_vel_.resize(params.size());
   cycle_time_ = grabrt::NanoSec2Sec(cycle_t_nsec);
-  Reset();
+  reset();
 
   traj_time_         = 0.0;
   true_traj_time_    = 0.0;
   stop_request_time_ = 0.0;
 }
 
-bool ControllerJointsPVT::SetCablesLenTrajectories(const vect<TrajectoryD>& trajectories)
+//--------- Public functions ---------------------------------------------------------//
+
+bool ControllerJointsPVT::setCablesLenTrajectories(const vect<TrajectoryD>& trajectories)
 {
-  if (!AreTrajectoriesValid(trajectories))
+  if (!areTrajectoriesValid(trajectories))
     return false;
-  Reset();
+  reset();
   traj_cables_len_ = trajectories;
   SetMode(ControlMode::CABLE_LENGTH);
   target_flags_.set(LENGTH);
   return true;
 }
 
-bool ControllerJointsPVT::SetMotorsPosTrajectories(const vect<TrajectoryI>& trajectories)
+bool ControllerJointsPVT::setMotorsPosTrajectories(const vect<TrajectoryI>& trajectories)
 {
-  if (!AreTrajectoriesValid(trajectories))
+  if (!areTrajectoriesValid(trajectories))
     return false;
-  Reset();
+  reset();
   traj_motors_pos_ = trajectories;
   SetMode(ControlMode::MOTOR_POSITION);
   target_flags_.set(POSITION);
   return true;
 }
 
-bool ControllerJointsPVT::SetMotorsVelTrajectories(const vect<TrajectoryI>& trajectories)
+bool ControllerJointsPVT::setMotorsVelTrajectories(const vect<TrajectoryI>& trajectories)
 {
-  if (!AreTrajectoriesValid(trajectories))
+  if (!areTrajectoriesValid(trajectories))
     return false;
-  Reset();
+  reset();
   traj_motors_vel_ = trajectories;
   SetMode(ControlMode::MOTOR_SPEED);
   target_flags_.set(SPEED);
   return true;
 }
 
-bool ControllerJointsPVT::SetMotorsTorqueTrajectories(
+bool ControllerJointsPVT::setMotorsTorqueTrajectories(
   const vect<TrajectoryS>& trajectories)
 {
-  if (!AreTrajectoriesValid(trajectories))
+  if (!areTrajectoriesValid(trajectories))
     return false;
-  Reset();
+  reset();
   traj_motors_torque_ = trajectories;
   SetMode(ControlMode::MOTOR_TORQUE);
   target_flags_.set(TORQUE);
@@ -102,21 +111,21 @@ ControllerJointsPVT::CalcCtrlActions(const grabcdpr::Vars&,
       case CABLE_LENGTH:
         if (target_flags_.test(LENGTH))
           actions[i].cable_length =
-            GetTrajectoryPointValue(actions[i].motor_id, traj_cables_len_);
+            getTrajectoryPointValue(actions[i].motor_id, traj_cables_len_);
         else
           actions[i].ctrl_mode = NONE;
         break;
       case MOTOR_POSITION:
         if (target_flags_.test(POSITION))
           actions[i].motor_position =
-            GetTrajectoryPointValue(actions[i].motor_id, traj_motors_pos_);
+            getTrajectoryPointValue(actions[i].motor_id, traj_motors_pos_);
         else
           actions[i].ctrl_mode = NONE;
         break;
       case MOTOR_SPEED:
         if (target_flags_.test(SPEED))
           actions[i].motor_speed =
-            GetTrajectoryPointValue(actions[i].motor_id, traj_motors_vel_);
+            getTrajectoryPointValue(actions[i].motor_id, traj_motors_vel_);
         else
           actions[i].ctrl_mode = NONE;
         break;
@@ -125,7 +134,7 @@ ControllerJointsPVT::CalcCtrlActions(const grabcdpr::Vars&,
           actions[i].motor_torque =
             winches_controller_[actions[i].motor_id].calcServoTorqueSetpoint(
               actuators_status[i],
-              GetTrajectoryPointValue(actions[i].motor_id, traj_motors_torque_));
+              getTrajectoryPointValue(actions[i].motor_id, traj_motors_torque_));
         else
           actions[i].ctrl_mode = NONE;
         break;
@@ -136,6 +145,8 @@ ControllerJointsPVT::CalcCtrlActions(const grabcdpr::Vars&,
   return actions;
 }
 
+//--------- Private functions --------------------------------------------------------//
+
 void ControllerJointsPVT::processTrajTime()
 {
   if (stop_)
@@ -144,7 +155,7 @@ void ControllerJointsPVT::processTrajTime()
   if (new_trajectory_)
   {
     new_trajectory_ = false;
-    ResetTime();
+    resetTime();
     return;
   }
 
@@ -176,7 +187,7 @@ void ControllerJointsPVT::processTrajTime()
 }
 
 template <typename T>
-T ControllerJointsPVT::GetTrajectoryPointValue(const id_t id,
+T ControllerJointsPVT::getTrajectoryPointValue(const id_t id,
                                                const vect<Trajectory<T>>& trajectories)
 {
   static const ulong kProgressTriggerCounts = 200 * motors_id_.size();
@@ -208,7 +219,7 @@ T ControllerJointsPVT::GetTrajectoryPointValue(const id_t id,
   return waypoint.value;
 }
 
-void ControllerJointsPVT::Reset()
+void ControllerJointsPVT::reset()
 {
   target_flags_.reset();
   stop_             = false;
@@ -218,7 +229,7 @@ void ControllerJointsPVT::Reset()
   progress_counter_ = 0;
 }
 
-void ControllerJointsPVT::ResetTime()
+void ControllerJointsPVT::resetTime()
 {
   traj_time_         = 0.0;
   true_traj_time_    = 0.0;
@@ -226,7 +237,7 @@ void ControllerJointsPVT::ResetTime()
 }
 
 template <typename T>
-bool ControllerJointsPVT::AreTrajectoriesValid(const vect<Trajectory<T>>& trajectories)
+bool ControllerJointsPVT::areTrajectoriesValid(const vect<Trajectory<T>>& trajectories)
 {
   // Safety check: all motors must have a trajectory
   for (const id_t& id : motors_id_)

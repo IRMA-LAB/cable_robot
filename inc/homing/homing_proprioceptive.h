@@ -22,7 +22,7 @@
 #include "robot/cablerobot.h"
 #include "utils/types.h"
 
-#define HOMING_ACK true
+#define HOMING_ACK true /**< Control motors in position mode even in should be torque */
 
 using json = nlohmann::json; /**< Alias for JSON library support. */
 
