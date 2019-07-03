@@ -16,7 +16,7 @@ constexpr char* CalibExcitation::kStatesStr[];
 const QString CalibExcitation::kExcitationTrajFilepath_ =
   SRCDIR "resources/trajectories/excitation_traj.txt";
 
-CalibExcitation::CalibExcitation(QObject* parent, CableRobot* robot)
+CalibExcitation::CalibExcitation(QObject* parent, CableRobot* robot, const vect<grabcdpr::ActuatorParams>& params)
   : QObject(parent), StateMachine(ST_MAX_STATES), robot_ptr_(robot),
     controller_single_drive_(robot->GetRtCycleTimeNsec())
 {
@@ -28,9 +28,8 @@ CalibExcitation::CalibExcitation(QObject* parent, CableRobot* robot)
   connect(this, SIGNAL(stopWaitingCmd()), robot_ptr_, SLOT(stopWaiting()));
 
   traj_cables_len_.clear();
-  vect<grabcdpr::ActuatorParams> dummy_params;
   controller_joints_ptv_ =
-    new ControllerJointsPVT(dummy_params, robot->GetRtCycleTimeNsec(), this);
+    new ControllerJointsPVT(params, robot->GetRtCycleTimeNsec(), this);
   controller_joints_ptv_->SetMotorsID(active_actuators_id_);
   connect(controller_joints_ptv_, SIGNAL(trajectoryCompleted()), this,
           SLOT(stopLogging()), Qt::ConnectionType::QueuedConnection);

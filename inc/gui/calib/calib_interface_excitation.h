@@ -14,7 +14,7 @@ class CalibInterfaceExcitation: public QDialog
   Q_OBJECT
 
  public:
-  explicit CalibInterfaceExcitation(QWidget* parent, CableRobot* robot);
+  explicit CalibInterfaceExcitation(QWidget* parent, CableRobot* robot, const vect<grabcdpr::ActuatorParams>& params);
   ~CalibInterfaceExcitation();
 
  private slots:

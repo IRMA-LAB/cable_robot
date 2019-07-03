@@ -78,7 +78,7 @@ void MainGUI::on_pushButton_calib_clicked()
 
   robot_ptr_->enterCalibrationMode();
 
-  calib_dialog_ = new CalibrationDialog(this, robot_ptr_);
+  calib_dialog_ = new CalibrationDialog(this, robot_ptr_, config_params_);
   connect(calib_dialog_, SIGNAL(enableMainGUI(bool)), this, SLOT(enableInterface(bool)));
   connect(calib_dialog_, SIGNAL(calibrationEnd()), robot_ptr_, SLOT(eventSuccess()));
   calib_dialog_->show();
@@ -195,17 +195,13 @@ void MainGUI::on_pushButton_freedrive_pressed()
   if (!(ec_network_valid_ && rt_thread_running_))
     return;
 
-  if (ui->pushButton_freedrive->isChecked())
+  if (freedrive_)
   {
     robot_ptr_->SetController(nullptr);
     delete man_ctrl_ptr_;
     if (robot_ptr_->GetCurrentState() != CableRobot::ST_READY)
-    {
       robot_ptr_->DisableMotors();
-      enableInterface(false);
-    }
-    ui->pushButton_freedrive->setChecked(false);
-    enableInterface(true);
+    freedrive_ = false;
     return;
   }
 
@@ -221,7 +217,6 @@ void MainGUI::on_pushButton_freedrive_pressed()
         break;
       if (clock.ElapsedFromStart() > CableRobot::kMaxWaitTimeSec)
       {
-        ui->pushButton_freedrive->setChecked(false);
         appendText2Browser("WARNING: Taking too long to enable freedrive mode");
         return;
       }
@@ -243,20 +238,13 @@ void MainGUI::on_pushButton_freedrive_pressed()
     // Wait until each motor reached user-given initial torque setpoint
     if (robot_ptr_->WaitUntilTargetReached() != RetVal::OK)
     {
-      ui->pushButton_freedrive->setChecked(false);
       appendText2Browser(
         QString("WARNING: Could not switch motor %1 to torque control mode").arg(id));
       break;
     }
   }
-  appendText2Browser("Freedrive mode activated. You can now manually move the platform");
-
-  ui->frame_manualControl->setDisabled(true);
-  ui->pushButton_freedrive->setEnabled(true);
-  ui->pushButton_freedrive->setChecked(true);
-  ui->pushButton_homing->setDisabled(true);
-  ui->pushButton_calib->setDisabled(true);
-  ui->groupBox_app->setDisabled(true);
+  appendText2Browser("Freedrive mode ACTIVATED\nYou can now manually move the platform");
+  freedrive_ = true;
 }
 
 void MainGUI::on_pushButton_faultReset_clicked()
@@ -659,18 +647,19 @@ void MainGUI::UpdateDriveCtrlPanel(const Actuator::States state)
     return;
 
   bool robot_ready     = robot_ptr_->GetCurrentState() == CableRobot::ST_READY;
-  manual_ctrl_enabled_ = (state == Actuator::ST_ENABLED) && !robot_ready;
+  manual_ctrl_enabled_ = (state == Actuator::ST_ENABLED) && !(robot_ready || freedrive_);
 
-  ui->pushButton_enable->setEnabled(!robot_ready);
+  ui->pushButton_enable->setEnabled(!(robot_ready || freedrive_));
   ui->pushButton_enable->setText(
     tr(state == Actuator::ST_ENABLED ? "Disable" : "Enable"));
   ui->pushButton_freedrive->setDisabled(manual_ctrl_enabled_);
+  ui->pushButton_freedrive->setText(freedrive_ ? "Exit Freedrive" : "Freedrive");
   ui->pushButton_faultReset->setDisabled(true);
   ui->comboBox_motorAxis->setDisabled(
     manual_ctrl_enabled_); // prevent switching drive during manual control
 
-  ui->pushButton_homing->setDisabled(manual_ctrl_enabled_);
-  ui->pushButton_calib->setDisabled(manual_ctrl_enabled_);
+  ui->pushButton_homing->setDisabled(manual_ctrl_enabled_ || freedrive_);
+  ui->pushButton_calib->setDisabled(manual_ctrl_enabled_ || freedrive_);
   ui->groupBox_app->setDisabled(true); // after we move we need to do the homing again
 
   if (!manual_ctrl_enabled_)

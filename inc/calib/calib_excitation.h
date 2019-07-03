@@ -26,7 +26,8 @@ class CalibExcitation: public QObject, public StateMachine
   Q_OBJECT
 
  public:
-  explicit CalibExcitation(QObject* parent, CableRobot* robot = nullptr);
+  explicit CalibExcitation(QObject* parent, CableRobot* robot,
+                           const vect<grabcdpr::ActuatorParams> &params);
   ~CalibExcitation() override;
 
   enum States : BYTE

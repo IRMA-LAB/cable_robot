@@ -1,8 +1,10 @@
 ﻿#include "gui/calib/calib_interface_excitation.h"
 #include "ui_calib_interface_excitation.h"
 
-CalibInterfaceExcitation::CalibInterfaceExcitation(QWidget* parent, CableRobot* robot)
-  : QDialog(parent), ui(new Ui::CalibInterfaceExcitation), robot_ptr_(robot), app_(this, robot)
+CalibInterfaceExcitation::CalibInterfaceExcitation(QWidget* parent, CableRobot* robot,
+                                         const vect<grabcdpr::ActuatorParams> &params)
+  : QDialog(parent), ui(new Ui::CalibInterfaceExcitation), robot_ptr_(robot),
+    app_(this, robot, params)
 {
   ui->setupUi(this);
   setAttribute(Qt::WA_DeleteOnClose);

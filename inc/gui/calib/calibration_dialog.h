@@ -35,7 +35,7 @@ class CalibrationDialog: public QDialog
    * @param robot Pointer to the cable robot instance, to be passed to the selected
    * calibration procedure interface.
    */
-  CalibrationDialog(QWidget* parent, CableRobot* robot);
+  CalibrationDialog(QWidget* parent, CableRobot* robot, grabcdpr::Params& params);
   ~CalibrationDialog();
 
  signals:
@@ -60,6 +60,7 @@ class CalibrationDialog: public QDialog
 
   CalibInterfaceExcitation* interface_ = nullptr;
   CableRobot* robot_ptr_               = nullptr;
+  grabcdpr::Params params_;
 };
 
 #endif // CALIBRATION_DIALOG_H

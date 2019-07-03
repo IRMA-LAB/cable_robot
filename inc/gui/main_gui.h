@@ -140,6 +140,7 @@ class MainGUI: public QDialog
   static constexpr int16_t kFreedriveTorque_ = -300;
 
   bool manual_ctrl_enabled_ = false;
+  bool freedrive_ = false;
   std::bitset<3> waiting_for_response_;
   std::bitset<5> desired_ctrl_mode_;
   id_t motor_id_;
