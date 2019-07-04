@@ -159,12 +159,16 @@ struct ActuatorStatus: WinchStatus
 };
 
 /**
- * @brief The CalibParams struct
+ * @brief A structure including camera calibrations output parameters.
+ *
+ * The camera parameters consist of a intrinsic parameter matrix, which
+ * incorporates perspective projection and pixelization, and a vector made of
+ * the coefficients used to model camera lens distortion
  */
 struct CameraParams
 {
-  cv::Mat camera_matrix = cv::Mat::eye(3, 3, CV_64F);   /**< ... */
-  cv::Mat dist_coeff    = cv::Mat::zeros(4, 1, CV_64F); /**< ... */
+  cv::Mat camera_matrix = cv::Mat::eye(3, 3, CV_64F);
+  cv::Mat dist_coeff    = cv::Mat::zeros(4, 1, CV_64F);
 
   /**
    * @brief CameraParams default constructor

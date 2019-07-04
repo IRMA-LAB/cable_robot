@@ -2,7 +2,7 @@
  * @file cameraparamsjsonparser.cpp
  * @author ...
  * @date 01 Jul 2019
- * @brief Implementation of class decalred in cameraparamsjsonparser.h
+ * @brief Implementation of class declared in cameraparamsjsonparser.h
  */
 
 #include "utils/cameraparamsjsonparser.h"
