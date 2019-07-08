@@ -1,7 +1,7 @@
 /**
  * @file main_gui.cpp
  * @author Simone Comari
- * @date 03 Jul 2019
+ * @date 08 Jul 2019
  * @brief This file includes definitions of classes present in main_gui.h.
  */
 
@@ -45,8 +45,8 @@ MainGUI::~MainGUI()
   DeleteRobot();
 #if DEBUG_GUI == 1
   disconnect(pushButton_debug, SIGNAL(clicked()), this, SLOT(pushButton_debug_clicked()));
-//  disconnect(temp_app, SIGNAL(debugCompleted()), this, SLOT(handleDebugCompleted()));
-//  delete temp_app;
+  disconnect(temp_app, SIGNAL(debugCompleted()), this, SLOT(handleDebugCompleted()));
+  delete temp_app;
 #endif
   delete ui;
   CLOG(INFO, "event") << "Main window closed";
