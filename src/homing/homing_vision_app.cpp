@@ -1,3 +1,10 @@
+/**
+ * @file homing_vision_app.cpp
+ * @author Marco Caselli, Simone Comari
+ * @date 08 Jul 2019
+ * @brief This file includes definitions of classes present in homing_vision_app.h.
+ */
+
 #include "homing/homing_vision_app.h"
 
 HomingVisionApp::HomingVisionApp(QObject* parent, CableRobot* robot)

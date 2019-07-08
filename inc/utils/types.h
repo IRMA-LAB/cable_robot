@@ -161,23 +161,24 @@ struct ActuatorStatus: WinchStatus
 /**
  * @brief A structure including camera calibrations output parameters.
  *
- * The camera parameters consist of a intrinsic parameter matrix, which
- * incorporates perspective projection and pixelization, and a vector made of
- * the coefficients used to model camera lens distortion
+ * The camera parameters consist of a intrinsic parameter matrix, which incorporates
+ * perspective projection and pixelization, and a vector made of the coefficients used to
+ * model camera lens distortion.
  */
 struct CameraParams
 {
-  cv::Mat camera_matrix = cv::Mat::eye(3, 3, CV_64F);
-  cv::Mat dist_coeff    = cv::Mat::zeros(4, 1, CV_64F);
+  cv::Mat camera_matrix = cv::Mat::eye(3, 3, CV_64F); /**< The camera matrix. */
+  cv::Mat dist_coeff =
+    cv::Mat::zeros(4, 1, CV_64F); /**< The distortion coefficients vector. */
 
   /**
-   * @brief CameraParams default constructor
+   * @brief CameraParams default constructor.
    */
   CameraParams() {}
   /**
-   * @brief CameraParams constructor
-   * @param[in] cam_mat
-   * @param[in] dist
+   * @brief CameraParams full constructor.
+   * @param[in] cam_mat Camera matrix.
+   * @param[in] dist Distortion coefficients vector.
    */
   CameraParams(const cv::Mat& cam_mat, const cv::Mat& dist)
   {
@@ -191,50 +192,53 @@ struct CameraParams
 };
 
 /**
- * @brief The CameraCalibSettings struct including camera calib params
+ * @brief A structure including all necessary camera calibration settings.
  */
 struct CameraCalibSettings
 {
   // Basic settings
   size_t num_frames =
-    0; /*<< The number of frames to use from the input for calibration */
-  bool use_fisheye = false; /*<< use fisheye camera model for calibration */
+    0; /*<< The number of frames to use from the input for calibration. */
+  bool use_fisheye = false; /*<< use fisheye camera model for calibration. */
 
   // Advanced settings
-  cv::Size board_size = cv::Size(9, 6); /*<< chessboard corner size */
-  float square_size   = 26.f;           /*<< The size of a square in mm */
-  double delay        = 0.5;            /*<< [s] In case of a video input */
-  /**
-   * @brief number of max precision. that value have to be less than value in camera
-   */
-  double max_precision = 0.00001;
+  cv::Size board_size = cv::Size(9, 6); /**< Chessboard corners size. */
+  float square_size   = 26.f;           /**< The size of a chessboard square in mm. */
+  double delay        = 0.5;            /**< [s] In case of a video input. */
+  double max_precision =
+    0.00001; /**< Number of max precision. It must be less than value in camera. */
   int chess_board_flags =
     cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_NORMALIZE_IMAGE |
-    cv::CALIB_CB_FAST_CHECK; /*<< seet chessboard flag to findChessboard */
+    cv::CALIB_CB_FAST_CHECK; /**< Set chessboard flag to findChessboard. */
   std::string ofilepath = SRCDIR "/output_camera_calibration.json";
-  int cor_sp_size       = 11;   /**< windows dimension for sub pixel accurate location  */
-  int zero_zone         = -1;   /**< half dimension of zero-zone */
-  int max_counter       = 50;   /**< number of max iteration*/
-  bool write_points     = true; /*<< Write detected feature points */
-  bool write_extrinsics = true; /*<< Write extrinsic parameters */
-  bool write_grid       = true; /*<< Write refined 3D target grid points */
-  bool calib_zero_tan_dist = false; /*<< set 0 tangential distortion coefficients */
+  int cor_sp_size       = 11;   /**< Windows dimension for sub-pixel accurate location. */
+  int zero_zone         = -1;   /**< Half dimension of zero-zone. */
+  int max_counter       = 50;   /**< Number of max iteration. */
+  bool write_points     = true; /**< Write detected feature points. */
+  bool write_extrinsics = true; /**< Write extrinsic parameters. */
+  bool write_grid       = true; /**< Write refined 3D target grid points. */
+  bool calib_zero_tan_dist = false; /**< Set 0 tangential distortion coefficients. */
 
   /**
-   * @brief CameraCalibSettings default constructor
+   * @brief Default constructor.
+   *
+   * By default the number of frames to be collected is set to zero and the distortion
+   * model does not use fisheye.
    */
   CameraCalibSettings() {}
   /**
-   * @brief CameraCalibSettings constructor
-   * @param[in] number_frames set number of frame to compute camera calibration
+   * @brief Full constructor.
+   * @param[in] number_frames set number of frame to compute camera calibration.
+   * @param[in] _use_fisheye Flag to indicate whether to use fisheye model or not.
    */
   CameraCalibSettings(const size_t number_frames, const bool _use_fisheye = false)
     : num_frames(number_frames), use_fisheye(_use_fisheye)
   {}
 
   /**
-   * @brief set calib_flags according camera distorsion model
-   * @return calib_flags setted
+   * @brief Returns calibration flags according to current selected camera distorsion
+   * model.
+   * @return Calibration flags for current selected camera distorsion model.
    */
   int calibFlags() const
   {
@@ -249,8 +253,8 @@ struct CameraCalibSettings
   }
 
   /**
-   * @brief compute grid_width
-   * @return
+   * @brief Returns chessboard grid width in mm.
+   * @return Chessboard grid width in mm.
    */
   inline float gridWidth() const { return square_size * (board_size.width - 1); }
 };

@@ -1,11 +1,9 @@
 /**
  * @file cameraparamsjsonparser.h
- * @author Giovanni Melandri
+ * @author Giovanni Melandri, Simone Comari
  * @date 01 Jul 2019
- * @brief Definition of a class aimed to parsing data to and from a text file
- * of "json" format. It mainly contains the costructors, one getter function,
- * one setter function, and two principal functions which have the purpose to
- * write to and read from a file.
+ * @brief This file include a JSON parser for decoding/encoding camera parameters
+ * according to a custom standard format.
  */
 
 #ifndef CAMERAPARAMSJSONPARSER_H
@@ -18,77 +16,73 @@
 #include "json.hpp"
 #include "types.h"
 
-using json = nlohmann::json; /**< class contained in json.hpp library */
+using json = nlohmann::json; /**< Alias for custom json namespace. */
 
 /**
- * @brief The CameraParamsJsonParser class
+ * @brief This class can both read and write a JSON file including camera parameters.
+ *
+ * Despite the name, this object not only can parse a JSON file to extract camera
+ * parameters from a file and store the in a compliant stucture, but can also perform the
+ * opposite operation, that is writing a given structure onto a file.
+ * @todo redefine write/read functions to avoid duplicate code..
  */
 class CameraParamsJsonParser
 {
  public:
   /**
-   * @brief CameraParamsJsonParser default constructor
+   * @brief Default constructor.
    */
   CameraParamsJsonParser();
   /**
-   * @brief CameraParamsJsonParser constructor
-   * @param[in] io_filepath file from which data will be parsed
+   * @brief Full constructor
+   * @param[in] io_filepath Location of file from which data will be parsed.
    */
   CameraParamsJsonParser(const std::string& io_filepath);
 
   /**
-   * @brief getter function to obtain the private parsed camera params
-   * @return params_ camera params from parser object attribute
+   * @brief Return latest camera parameters parsed/loaded.
+   * @return Latest camera parameters parsed.
    */
   CameraParams getCameraParams() const;
 
-
   /**
-   * @brief setter function to insert external params to parse
-   * @param[in] params_2_set camera parameters set as attribute
+   * @brief Set camera parameters to be encoded and dumped onto a file.
+   * @param[in] params_2_set Camera parameters.
    */
   void setCameraParams(const CameraParams& params_2_set);
 
   /**
-   * @brief "write to file" function, first version
-   * @param[in] params_in external camera parameters to be parsed to file
-   * @param[in] o_filepath output .json file directory
+   * @brief Write given camera parameters onto a JSON file.
+   * @param[in] params_in External camera parameters to be dumped onto the file.
+   * @param[in] o_filepath Output file directory.
    */
   void writeJson(const CameraParams& params_in,
                  const std::string& o_filepath = SRCDIR "/output_calib.json");
   /**
-   * @brief "write to file" function, second version: it parses to file the data
-   * included in the params_ attribute of the parser object
+   * @brief Write current camera parameters onto a JSON file, if any.
    * @param[in] o_filepath output .json file directory
    */
   void writeJson(const std::string& o_filepath = SRCDIR "/output_calib.json");
 
   /**
-   * @brief "read from file" function, first version
-   * @param[in] i_filepath file from which parse the data
-   * @return params_ camera params parser object attribute
+   * @brief Read camera parameters from a file.
+   * @param[in] i_filepath File from which to parse the data.
+   * @return A structure containing parsed camera parameters.
    */
   CameraParams decodeJson(const std::string& i_filepath = SRCDIR "/output_calib.json");
   /**
-   * @brief "read from file" function, second version: boolean function, the
-   * read params are set as a non cost parameter
-   * @param[out] params_in camera parameters read. not set as
-   * class attribute
-   * @param[in] i_filepath file from which parse the data
-   * @return true/false
+   * @brief Read camera parameters from a file.
+   * @param[out] params_in An empty structure to be filled with parsed camera parameters.
+   * @param[in] i_filepath File from which to parse the data.
+   * @return _True_ if parsing was successful, _False_ otherwise.
    */
   bool decodeJson(CameraParams& params_in,
                   const std::string& i_filepath = SRCDIR "/output_calib.json");
 
-  /**
-   * @brief auxiliar boolean function to control if a file is empty
-   * @param p_file
-   * @return true if the text file is empty, false otherwise
-   */
-  bool isEmpty(std::ifstream& p_file);
-
  private:
   CameraParams params_;
+
+  bool isEmpty(std::ifstream& p_file);
 };
 
 #endif // CAMERAPARAMSJSONPARSER_H

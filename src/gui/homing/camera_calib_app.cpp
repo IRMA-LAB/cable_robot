@@ -1,3 +1,10 @@
+/**
+ * @file camera_calib_app.cpp
+ * @author Simone Comari, Marco Caselli
+ * @date 08 Jul 2019
+ * @brief Implementation of classes declared in camera_calib_app.h
+ */
+
 #include "gui/homing/camera_calib_app.h"
 #include "ui_camera_calib_app.h"
 
@@ -6,7 +13,7 @@
 //------------------------------------------------------------------------------------//
 
 WorkerThread::WorkerThread(const CameraCalibSettings& settings)
-  : settings_(settings), new_frame_pending_(false), stop_(false), calib_mode_(CAPTURING)
+  : settings_(settings), calib_mode_(CAPTURING), stop_(false), new_frame_pending_(false)
 {}
 
 //--------- Public functions ---------------------------------------------------------//
@@ -178,7 +185,7 @@ bool WorkerThread::computeCameraParams()
       object_points[0].push_back(
         cv::Point3f(j * settings_.square_size, i * settings_.square_size, 0));
 
-  object_points[0][settings_.board_size.width - 1].x =
+  object_points[0][static_cast<size_t>(settings_.board_size.width - 1)].x =
     object_points[0][0].x + settings_.gridWidth();
   new_obj_points = object_points[0];
 
@@ -193,8 +200,8 @@ bool WorkerThread::computeCameraParams()
                                  camera_params_.camera_matrix, camera_params_.dist_coeff,
                                  _rvecs, _tvecs, settings_.calibFlags());
 
-    rvecs.reserve(_rvecs.rows);
-    tvecs.reserve(_tvecs.rows);
+    rvecs.reserve(static_cast<size_t>(_rvecs.rows));
+    tvecs.reserve(static_cast<size_t>(_tvecs.rows));
     for (int i = 0; i < int(object_points.size()); i++)
     {
       rvecs.push_back(_rvecs.row(i));
@@ -209,17 +216,18 @@ bool WorkerThread::computeCameraParams()
                                 camera_params_.camera_matrix, camera_params_.dist_coeff,
                                 rvecs, tvecs, new_obj_points, settings_.calibFlags());
   }
-// rms is the overall RMS re-projection error
+  // rms is the overall RMS re-projection error
   //  std::cout << "Re-projection error reported by calibrateCamera: " << rms <<
   //  std::endl;
 
   bool ok =
     checkRange(camera_params_.camera_matrix) && checkRange(camera_params_.dist_coeff);
 
-  object_points.clear();
-  object_points.resize(image_points_.size(), new_obj_points);
-  // different way to compute reprojection error see comment in that function
-  double total_avg_err = computeCalibReprojectionErr(object_points, rvecs, tvecs, reproj_errs);
+//  object_points.clear();
+//  object_points.resize(image_points_.size(), new_obj_points);
+//  // Different way to compute reprojection error see comment in that function
+//  double total_avg_err =
+//    computeCalibReprojectionErr(object_points, rvecs, tvecs, reproj_errs);
 
   return ok;
 }
@@ -243,19 +251,21 @@ double WorkerThread::computeCalibReprojectionErr(
     }
     else
     {
-      cv::projectPoints(object_points[i], r_vecs[i], t_vecs[i], camera_params_.camera_matrix,
-                    camera_params_.dist_coeff, image_points2);
+      cv::projectPoints(object_points[i], r_vecs[i], t_vecs[i],
+                        camera_params_.camera_matrix, camera_params_.dist_coeff,
+                        image_points2);
     }
 
     err = cv::norm(image_points_[i], image_points2, cv::NORM_L2);
 
-    size_t n           = object_points[i].size();
-    // compute and store error for each view and store in a vector, every elements contain reprojection error for that view
+    size_t n = object_points[i].size();
+    // compute and store error for each view and store in a vector, every elements contain
+    // reprojection error for that view
     per_view_errors[i] = float(std::sqrt(err * err / n));
     total_err += err * err;
     total_points += n;
   }
-// sum of norm of difference from real point and computed points
+  // sum of norm of difference from real point and computed points
   return std::sqrt(total_err / total_points);
 }
 
