@@ -2,7 +2,7 @@
 #include <QtDebug>
 
 #include "gui/login_window.h"
-#include "lib/easyloggingpp/src/easylogging++.h"
+#include "libs/easyloggingpp/src/easylogging++.h"
 #include "utils/easylog_wrapper.h"
 
 INITIALIZE_EASYLOGGINGPP

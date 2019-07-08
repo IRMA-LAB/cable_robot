@@ -31,9 +31,9 @@ HEADERS = \
     $$PWD/inc/utils/msgs.h \
     $$PWD/inc/utils/easylog_wrapper.h \
     $$PWD/inc/debug/debug_routine.h \
-    $$PWD/lib/easyloggingpp/src/easylogging++.h \
-    $$PWD/lib/grab_common/grabcommon.h \
-    $$PWD/lib/grab_common/pid/pid.h \
+    $$PWD/libs/easyloggingpp/src/easylogging++.h \
+    $$PWD/libs/grab_common/grabcommon.h \
+    $$PWD/libs/grab_common/pid/pid.h \
 
 SOURCES = \
     $$PWD/src/main.cpp \
@@ -67,9 +67,9 @@ SOURCES = \
     $$PWD/src/utils/msgs.cpp \
     $$PWD/src/utils/easylog_wrapper.cpp \
     $$PWD/src/debug/debug_routine.cpp \
-    $$PWD/lib/easyloggingpp/src/easylogging++.cc \
-    $$PWD/lib/grab_common/grabcommon.cpp \
-    $$PWD/lib/grab_common/pid/pid.cpp \
+    $$PWD/libs/easyloggingpp/src/easylogging++.cc \
+    $$PWD/libs/grab_common/grabcommon.cpp \
+    $$PWD/libs/grab_common/pid/pid.cpp \
 
 FORMS += \
     $$PWD/widgets/main_gui.ui \
@@ -89,8 +89,8 @@ RESOURCES += \
 
 INCLUDEPATH += \
     $$PWD/inc \
-    $$PWD/lib/grab_common \
-    $$PWD/lib/easyloggingpp/src
+    $$PWD/libs/grab_common \
+    $$PWD/libs/easyloggingpp/src
 
 QT += core gui widgets datavisualization charts
 
@@ -112,18 +112,18 @@ DEFINES += USE_QT=1
 DEFINES += DEBUG_GUI=0
 
 # GRAB Ethercat lib
-unix:!macx: LIBS += -L$$PWD/lib/grab_common/libgrabec/lib/ -lgrabec
-INCLUDEPATH += $$PWD/lib/grab_common/libgrabec \
-    lib/grab_common/libgrabec/inc
-DEPENDPATH += $$PWD/lib/grab_common/libgrabec
-unix:!macx: PRE_TARGETDEPS += $$PWD/lib/grab_common/libgrabec/lib/libgrabec.a
+unix:!macx: LIBS += -L$$PWD/libs/grab_common/libgrabec/lib/ -lgrabec
+INCLUDEPATH += $$PWD/libs/grab_common/libgrabec \
+    libs/grab_common/libgrabec/inc
+DEPENDPATH += $$PWD/libs/grab_common/libgrabec
+unix:!macx: PRE_TARGETDEPS += $$PWD/libs/grab_common/libgrabec/lib/libgrabec.a
 
 # GRAB Real-time lib
-unix:!macx: LIBS += -L$$PWD/lib/grab_common/libgrabrt/lib/ -lgrabrt
-INCLUDEPATH += $$PWD/lib/grab_common/libgrabrt \
-    lib/grab_common/libgrabrt/inc
-DEPENDPATH += $$PWD/lib/grab_common/libgrabrt
-unix:!macx: PRE_TARGETDEPS += $$PWD/lib/grab_common/libgrabrt/lib/libgrabrt.a
+unix:!macx: LIBS += -L$$PWD/libs/grab_common/libgrabrt/lib/ -lgrabrt
+INCLUDEPATH += $$PWD/libs/grab_common/libgrabrt \
+    libs/grab_common/libgrabrt/inc
+DEPENDPATH += $$PWD/libs/grab_common/libgrabrt
+unix:!macx: PRE_TARGETDEPS += $$PWD/libs/grab_common/libgrabrt/lib/libgrabrt.a
 
 # EtherCAT lib
 INCLUDEPATH += /opt/etherlab/include
@@ -131,28 +131,28 @@ DEPENDPATH  += /opt/etherlab/lib/
 LIBS        += /opt/etherlab/lib/libethercat.a
 
 # State machine lib
-unix:!macx: LIBS += -L$$PWD/lib/state_machine/lib/ -lstate_machine
-INCLUDEPATH += $$PWD/lib/state_machine $$PWD/lib/state_machine/inc
-DEPENDPATH += $$PWD/lib/state_machine
-unix:!macx: PRE_TARGETDEPS += $$PWD/lib/state_machine/lib/libstate_machine.a
+unix:!macx: LIBS += -L$$PWD/libs/state_machine/lib/ -lstate_machine
+INCLUDEPATH += $$PWD/libs/state_machine $$PWD/libs/state_machine/inc
+DEPENDPATH += $$PWD/libs/state_machine
+unix:!macx: PRE_TARGETDEPS += $$PWD/libs/state_machine/lib/libstate_machine.a
 
 # GRAB CDPR lib
-unix:!macx: LIBS += -L$$PWD/lib/grab_common/libcdpr/lib/ -lcdpr
-INCLUDEPATH += $$PWD/lib/grab_common/libcdpr \
-    $$PWD/lib/grab_common/libcdpr/inc \
-    $$PWD/lib/grab_common/libcdpr/tools
-DEPENDPATH += $$PWD/lib/grab_common/libcdpr
-unix:!macx: PRE_TARGETDEPS += $$PWD/lib/grab_common/libcdpr/lib/libcdpr.a
+unix:!macx: LIBS += -L$$PWD/libs/grab_common/libcdpr/lib/ -lcdpr
+INCLUDEPATH += $$PWD/libs/grab_common/libcdpr \
+    $$PWD/libs/grab_common/libcdpr/inc \
+    $$PWD/libs/grab_common/libcdpr/tools
+DEPENDPATH += $$PWD/libs/grab_common/libcdpr
+unix:!macx: PRE_TARGETDEPS += $$PWD/libs/grab_common/libcdpr/lib/libcdpr.a
 
 # Geometric lib
-unix:!macx: LIBS += -L$$PWD/lib/grab_common/libgeom/lib/ -lgeom
-INCLUDEPATH += $$PWD/lib/grab_common/libgeom $$PWD/lib/grab_common/libgeom/inc/
-DEPENDPATH += $$PWD/lib/grab_common/libgeom
-unix:!macx: PRE_TARGETDEPS += $$PWD/lib/grab_common/libgeom/lib/libgeom.a
+unix:!macx: LIBS += -L$$PWD/libs/grab_common/libgeom/lib/ -lgeom
+INCLUDEPATH += $$PWD/libs/grab_common/libgeom $$PWD/libs/grab_common/libgeom/inc/
+DEPENDPATH += $$PWD/libs/grab_common/libgeom
+unix:!macx: PRE_TARGETDEPS += $$PWD/libs/grab_common/libgeom/lib/libgeom.a
 
 # Numeric lib
-unix:!macx: LIBS += -L$$PWD/lib/grab_common/libnumeric/lib/ -lnumeric
-INCLUDEPATH += $$PWD/lib/grab_common/libnumeric \
-    $$PWD/lib/grab_common/libnumeric/inc/
-DEPENDPATH += $$PWD/lib/grab_common/libnumeric
-unix:!macx: PRE_TARGETDEPS += $$PWD/lib/grab_common/libnumeric/lib/libnumeric.a
+unix:!macx: LIBS += -L$$PWD/libs/grab_common/libnumeric/lib/ -lnumeric
+INCLUDEPATH += $$PWD/libs/grab_common/libnumeric \
+    $$PWD/libs/grab_common/libnumeric/inc/
+DEPENDPATH += $$PWD/libs/grab_common/libnumeric
+unix:!macx: PRE_TARGETDEPS += $$PWD/libs/grab_common/libnumeric/lib/libnumeric.a

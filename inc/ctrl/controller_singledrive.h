@@ -1,7 +1,7 @@
 /**
  * @file controller_singledrive.h
  * @author Simone Comari
- * @date 17 Jun 2019
+ * @date 08 Jul 2019
  * @brief File containing a simple single drive controller class for cable robot.
  */
 
@@ -10,7 +10,7 @@
 
 #include <bitset>
 
-#include "lib/grab_common/pid/pid.h"
+#include "libs/grab_common/pid/pid.h"
 
 #include "ctrl/controller_base.h"
 

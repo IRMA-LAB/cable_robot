@@ -23,7 +23,7 @@ if [ "$(version "$REQUIRED_VERSION")" -gt "$(version "$default_qt_version")" ]
 fi
 
 # Move to cable_robot libs directory
-cd "$(dirname "$0")/lib"
+cd "$(dirname "$0")/libs"
 
 ## Build state_machine library
 cd state_machine

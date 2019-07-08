@@ -1,12 +1,12 @@
 /**
  * @file file_selection_form.cpp
  * @author Simone Comari
- * @date 03 Jul 2019
+ * @date 08 Jul 2019
  * @brief This file includes definitions of class present in file_selection_form.h.
  */
 
 #include "gui/apps/file_selection_form.h"
-#include "ui_input_form.h"
+#include "ui_file_selection_form.h"
 
 FileSelectionForm::FileSelectionForm(QWidget* parent)
   : QWidget(parent), ui(new Ui::FileSelectionForm)

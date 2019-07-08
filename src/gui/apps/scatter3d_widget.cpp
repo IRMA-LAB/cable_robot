@@ -1,12 +1,12 @@
 /**
  * @file scatter3d_widget.cpp
  * @author Simone Comari
- * @date 03 Jul 2019
+ * @date 08 Jul 2019
  * @brief This file includes definitions of classes present in scatter3d_widget.h.
  */
 
 #include "gui/apps/scatter3d_widget.h"
-#include "ui_my3dscatterwidget.h"
+#include "ui_scatter3d_widget.h"
 
 //------------------------------------------------------------------------------------//
 //--------- CustomInputHandler class -------------------------------------------------//

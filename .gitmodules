@@ -1,0 +1,9 @@
+[submodule "libs/grab_common"]
+	path = libs/grab_common
+	url = git@github.com:UNIBO-GRABLab/grab_common.git
+[submodule "libs/state_machine"]
+	path = libs/state_machine
+	url = git@github.com:UNIBO-GRABLab/state_machine.git
+[submodule "libs/easyloggingpp"]
+	path = libs/easyloggingpp
+	url = https://github.com/zuhd-org/easyloggingpp.git
