@@ -9,13 +9,10 @@
 #include <QtDebug>
 
 #include "gui/login_window.h"
-#include "lib/easyloggingpp/src/easylogging++.h"
+#include "libs/easyloggingpp/src/easylogging++.h"
 #include "utils/easylog_wrapper.h"
 
 INITIALIZE_EASYLOGGINGPP
-
-// static el::Logger *logger = el::Loggers::getLogger("default");
-// static LogBuffer buffer(logger);
 
 int main(int argc, char* argv[])
 {
@@ -25,10 +22,10 @@ int main(int argc, char* argv[])
 
   QApplication a(argc, argv);
   qRegisterMetaType<grabec::GSWDriveInPdos>("grabec::GSWDriveInPdos");
-  qRegisterMetaType<Bitfield8>("Bitfield8");
   qRegisterMetaType<id_t>("id_t");
   qRegisterMetaType<cv::Mat>("cv::Mat");
   qRegisterMetaType<CameraParams>("CameraParams");
+  qRegisterMetaType<std::bitset<3>>("std::bitset<3>");
   CLOG(INFO, "event") << "App START";
 
   LoginWindow w;

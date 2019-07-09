@@ -1,18 +1,19 @@
 /**
  * @file calibration_dialog.h
  * @author Simone Comari
- * @date 11 Mar 2019
+ * @date 02 Jul 2019
  * @brief This file include the calibration dialog class.
  */
 
-#ifndef CALIBRATION_DIALOG_H
-#define CALIBRATION_DIALOG_H
+#ifndef CABLE_ROBOT_CALIBRATION_DIALOG_H
+#define CABLE_ROBOT_CALIBRATION_DIALOG_H
 
 #include <QDialog>
 
 #include "easylogging++.h"
 #include "libcdpr/inc/types.h"
 
+#include "gui/calib/calib_interface_excitation.h"
 #include "robot/cablerobot.h"
 
 namespace Ui {
@@ -33,15 +34,16 @@ class CalibrationDialog: public QDialog
    * @param parent The parent Qt object, in our case the main GUI.
    * @param robot Pointer to the cable robot instance, to be passed to the selected
    * calibration procedure interface.
+   * @param[in] params Robot parameters.
    */
-  CalibrationDialog(QWidget* parent, CableRobot* robot);
+  CalibrationDialog(QWidget* parent, CableRobot* robot, const grabcdpr::Params& params);
   ~CalibrationDialog();
 
  signals:
   /**
    * @brief Enable main GUI command.
    */
-  void enableMainGUI();
+  void enableMainGUI(const bool);
   /**
    * @brief Calibration end notice.
    */
@@ -49,13 +51,17 @@ class CalibrationDialog: public QDialog
 
  private slots:
   void on_buttonBox_accepted();
-
   void on_buttonBox_rejected();
+
+ private slots:
+  void fwdCalibFinished();
 
  private:
   Ui::CalibrationDialog* ui;
 
-  CableRobot* robot_;
+  CalibInterfaceExcitation* interface_ = nullptr;
+  CableRobot* robot_ptr_               = nullptr;
+  grabcdpr::Params params_;
 };
 
-#endif // CALIBRATION_DIALOG_H
+#endif // CABLE_ROBOT_CALIBRATION_DIALOG_H

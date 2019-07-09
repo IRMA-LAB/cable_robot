@@ -1,7 +1,7 @@
 /**
  * @file calibration_dialog.cpp
  * @author Simone Comari
- * @date 11 Mar 2019
+ * @date 02 Jul 2019
  * @brief This file includes definitions of class present in calibration_dialog.h.
  */
 
@@ -9,14 +9,17 @@
 #include "ui_calibration_dialog.h"
 
 
-CalibrationDialog::CalibrationDialog(QWidget* parent, CableRobot* robot)
-  : QDialog(parent), ui(new Ui::CalibrationDialog), robot_(robot)
+CalibrationDialog::CalibrationDialog(QWidget* parent, CableRobot* robot,
+                                     const grabcdpr::Params& params)
+  : QDialog(parent), ui(new Ui::CalibrationDialog), robot_ptr_(robot), params_(params)
 {
   ui->setupUi(this);
 }
 
 CalibrationDialog::~CalibrationDialog()
 {
+  if (interface_ != nullptr)
+    interface_->close();
   delete ui;
   CLOG(INFO, "event") << "Calibration dialog closed";
 }
@@ -25,14 +28,26 @@ CalibrationDialog::~CalibrationDialog()
 
 void CalibrationDialog::on_buttonBox_accepted()
 {
-  emit calibrationEnd();
-  emit enableMainGUI();
-  close();
+  interface_ =
+    new CalibInterfaceExcitation(parentWidget(), robot_ptr_, params_.actuators);
+  connect(interface_, SIGNAL(destroyed()), this, SLOT(fwdCalibFinished()));
+  interface_->show();
+  CLOG(INFO, "event") << "Prompt " << ui->comboBox_calibMethod->currentText()
+                      << " calibration interface";
+  hide();
+  CLOG(INFO, "event") << "Hide calibration dialog";
 }
 
-void CalibrationDialog::on_buttonBox_rejected()
+void CalibrationDialog::on_buttonBox_rejected() { fwdCalibFinished(); }
+
+//--------- Private slots -----------------------------------------------------------//
+
+void CalibrationDialog::fwdCalibFinished()
 {
+  CLOG(INFO, "event") << ui->comboBox_calibMethod->currentText()
+                      << " calibration finished";
   emit calibrationEnd();
-  emit enableMainGUI();
+  emit enableMainGUI(false);
+  interface_ = nullptr;
   close();
 }

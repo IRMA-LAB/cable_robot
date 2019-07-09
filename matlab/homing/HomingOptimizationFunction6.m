@@ -18,18 +18,18 @@ for j = 1:dim
   cdpr_v.tension_vector = linsolve(Ja',Wa);
   [J_sl,J_q] = CalcOptimizationJacobians(cdpr_v,Ja,Ju,cdpr_p.platform.mass.*cdpr_p.platform.gravity_acceleration);
    for i=1:cdpr_p.n_cables
-    vector(equationsXstage*(j-1)+i,1) = 10.*(cdpr_v.cable(i).swivel_ang-(v(i)+ds((j-1)*cdpr_p.n_cables+i))); 
-    vector(equationsXstage*(j-1)+cdpr_p.n_cables+i,1) = 100.*(cdpr_v.cable(i).length-(v(cdpr_p.n_cables+i)+dl((j-1)*cdpr_p.n_cables+i)));
+    vector(equationsXstage*(j-1)+i,1) = (cdpr_v.cable(i).swivel_ang-(v(i)+ds((j-1)*cdpr_p.n_cables+i))); 
+    vector(equationsXstage*(j-1)+cdpr_p.n_cables+i,1) = (cdpr_v.cable(i).length-(v(cdpr_p.n_cables+i)+dl((j-1)*cdpr_p.n_cables+i)));
   end
   vector(equationsXstage*(j-1)+2*cdpr_p.n_cables+1:equationsXstage*j,1) = (Ju'*cdpr_v.tension_vector -Wu);
-  matrix(equationsXstage*(j-1)+1:equationsXstage*(j-1)+cdpr_p.n_cables,1:cdpr_p.n_cables) = -10.*eye(cdpr_p.n_cables);
-  matrix(equationsXstage*(j-1)+1+cdpr_p.n_cables:equationsXstage*(j-1)+2*cdpr_p.n_cables,1+cdpr_p.n_cables:2*cdpr_p.n_cables) = -100.*eye(cdpr_p.n_cables);
+  matrix(equationsXstage*(j-1)+1:equationsXstage*(j-1)+cdpr_p.n_cables,1:cdpr_p.n_cables) = -eye(cdpr_p.n_cables);
+  matrix(equationsXstage*(j-1)+1+cdpr_p.n_cables:equationsXstage*(j-1)+2*cdpr_p.n_cables,1+cdpr_p.n_cables:2*cdpr_p.n_cables) = -eye(cdpr_p.n_cables);
   matrix(equationsXstage*(j-1)+1:equationsXstage*(j-1)+2*cdpr_p.n_cables,2*cdpr_p.n_cables+cdpr_p.pose_dim*(j-1)+1:2*cdpr_p.n_cables+j*cdpr_p.pose_dim) = J_sl;
-  matrix(equationsXstage*(j-1)+1:equationsXstage*(j-1)+cdpr_p.n_cables,2*cdpr_p.n_cables+cdpr_p.pose_dim*(j-1)+1:2*cdpr_p.n_cables+j*cdpr_p.pose_dim) = 10.*matrix(equationsXstage*(j-1)+1:equationsXstage*(j-1)+cdpr_p.n_cables,2*cdpr_p.n_cables+cdpr_p.pose_dim*(j-1)+1:2*cdpr_p.n_cables+j*cdpr_p.pose_dim);
-  matrix(equationsXstage*(j-1)+1+cdpr_p.n_cables:equationsXstage*(j-1)+2.*cdpr_p.n_cables,2*cdpr_p.n_cables+cdpr_p.pose_dim*(j-1)+1:2*cdpr_p.n_cables+j*cdpr_p.pose_dim) = 100.*matrix(equationsXstage*(j-1)+1+cdpr_p.n_cables:equationsXstage*(j-1)+2.*cdpr_p.n_cables,2*cdpr_p.n_cables+cdpr_p.pose_dim*(j-1)+1:2*cdpr_p.n_cables+j*cdpr_p.pose_dim);
+  matrix(equationsXstage*(j-1)+1:equationsXstage*(j-1)+cdpr_p.n_cables,2*cdpr_p.n_cables+cdpr_p.pose_dim*(j-1)+1:2*cdpr_p.n_cables+j*cdpr_p.pose_dim) = matrix(equationsXstage*(j-1)+1:equationsXstage*(j-1)+cdpr_p.n_cables,2*cdpr_p.n_cables+cdpr_p.pose_dim*(j-1)+1:2*cdpr_p.n_cables+j*cdpr_p.pose_dim);
+  matrix(equationsXstage*(j-1)+1+cdpr_p.n_cables:equationsXstage*(j-1)+2*cdpr_p.n_cables,2*cdpr_p.n_cables+cdpr_p.pose_dim*(j-1)+1:2*cdpr_p.n_cables+j*cdpr_p.pose_dim) = matrix(equationsXstage*(j-1)+1+cdpr_p.n_cables:equationsXstage*(j-1)+2.*cdpr_p.n_cables,2*cdpr_p.n_cables+cdpr_p.pose_dim*(j-1)+1:2*cdpr_p.n_cables+j*cdpr_p.pose_dim);
   matrix(equationsXstage*(j-1)+2*cdpr_p.n_cables+1:equationsXstage*j,2*cdpr_p.n_cables+cdpr_p.pose_dim*(j-1)+1:2*cdpr_p.n_cables+j*cdpr_p.pose_dim) = J_q;
   if (j==1)
-    record.SetFrame(cdpr_v,cdpr_p);
+    %record.SetFrame(cdpr_v,cdpr_p);
     %vector(1:equationsXstage,1) = 100.*vector(1:equationsXstage,1);
     %matrix(1:equationsXstage,:) = 100.*matrix(1:equationsXstage,:);
   end

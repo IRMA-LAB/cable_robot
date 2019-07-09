@@ -1,7 +1,7 @@
 /**
  * @file winch.h
  * @author Simone Comari, Edoardo Idà
- * @date 11 Mar 2019
+ * @date 13 May 2019
  * @brief File containing the virtualization of a winch system of the cable robot.
  */
 
@@ -161,15 +161,25 @@ class Winch
    */
   void UpdateConfig(const int32_t servo_pos);
 
+  /**
+   * @brief Convert motor counts to cable length.
+   * @param counts Motor (encoder) counts.
+   * @return Corresponding cable length in meters.
+   */
+  double CountsToLength(const int counts) const;
+  /**
+   * @brief Convert cable length to motor counts.
+   * @param length Cable length in meters.
+   * @return Corresponding motor (encoder) counts.
+   */
+  int LengthToCounts(const double length) const;
+
  private:
   grabcdpr::WinchParams params_;
   Cable cable_;
   grabec::GoldSoloWhistleDrive servo_;
   int32_t servo_home_pos_ = 0;
   id_t id_;
-
-  inline double CountsToLength(const int counts);
-  inline int LengthToCounts(const double length);
 };
 
 #endif // CABLE_ROBOT_WINCH_H

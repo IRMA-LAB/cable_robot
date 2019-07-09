@@ -1,7 +1,7 @@
 /**
  * @file cablerobot.h
  * @author Simone Comari, Edoardo Idà
- * @date 11 Mar 2019
+ * @date 18 Jun 2019
  * @brief File containing the virtualization of the physical cable robot, in terms of
  * components, signalig and low level operations.
  */
@@ -16,6 +16,7 @@
 
 #include "StateMachine.h"
 #include "easylogging++.h"
+#include "inc/filters.h"
 #include "libcdpr/inc/types.h"
 #include "libgrabec/inc/ethercatmaster.h"
 #if INCLUDE_EASYCAT
@@ -98,7 +99,14 @@ class CableRobot: public QObject,
 
   // Tuning params for waiting functions
   static constexpr double kCycleWaitTimeSec = 0.02; /**< [sec] Cycle time when waiting. */
-  static constexpr double kMaxWaitTimeSec   = 25.0; /**< [sec] Maximum waiting time. */
+  static constexpr double kMaxWaitTimeSec   = 5.0; /**< [sec] Maximum waiting time. */
+
+  /**
+   * @brief Get a pointer to inquired actuator.
+   * @param[in] motor_id The ID of the inquired actuator.
+   * @return A pointer to inquired actuator.
+   */
+  const Actuator* GetActuator(const id_t motor_id);
 
   /**
    * @brief Get inquired actuator status.
@@ -106,6 +114,7 @@ class CableRobot: public QObject,
    * @return The status of the inquired actuator.
    */
   const ActuatorStatus GetActuatorStatus(const id_t motor_id);
+
   /**
    * @brief Update home configuration of all actuators at once.
    *
@@ -197,13 +206,47 @@ class CableRobot: public QObject,
   void ClearFaults();
 
   /**
-   * @brief Collect current cable robot measurents.
+   * @brief Collect current cable robot measurents without locking the RT-thread mutex.
+   */
+  void CollectMeasRt();
+  /**
+   * @brief Collect current cable robot measurents locking the RT-thread mutex.
    */
   void CollectMeas();
   /**
    * @brief Dump latest collected cable robot measurements onto data.log file.
    */
   void DumpMeas() const;
+  /**
+   * @brief Collect and dump current cable robot measurements onto data.log file without
+   * locking the RT-thread mutex.
+   */
+  void CollectAndDumpMeasRt();
+  /**
+   * @brief Collect and dump current cable robot measurements onto data.log file locking
+   * the RT-thread mutex.
+   */
+  void CollectAndDumpMeas();
+  /**
+   * @brief Collect and dump current cable robot measurements of a single actuator onto
+   * data.log file.
+   * @param[in] actuator_id ID of inquired actuator.
+   */
+  void CollectAndDumpMeas(const id_t actuator_id);
+  /**
+   * @brief Start data logging inside real-time thread cycle.
+   * @param[in] rt_cycle_multiplier Factor definining the number of cycles between one log
+   * sample and the next one.
+   */
+  void StartRtLogging(const uint rt_cycle_multiplier);
+  /**
+   * @brief Stop data logging inside real-time thread cycle.
+   */
+  void StopRtLogging();
+  /**
+   * @brief Flush data logs up to now.
+   */
+  void FlushDataLogs();
 
   /**
    * @brief Go to home position.
@@ -226,7 +269,19 @@ class CableRobot: public QObject,
    * @return 0 if target was reached, a positive number otherwise, yielding the error
    * type.
    */
-  RetVal WaitUntilTargetReached();
+  RetVal WaitUntilTargetReached(const double max_wait_time_sec = kMaxWaitTimeSec);
+
+  /**
+   * @brief WaitUntilPlatformSteady
+   * @return
+   */
+  RetVal WaitUntilPlatformSteady(const double max_wait_time_sec = kMaxWaitTimeSec);
+
+  /**
+   * @brief isWaiting
+   * @return
+   */
+  bool isWaiting() const { return is_waiting_; }
 
  public slots:
   /**
@@ -302,7 +357,7 @@ class CableRobot: public QObject,
   /**
    * @brief Signal including the changed state of the EtherCAT network.
    */
-  void ecStateChanged(const Bitfield8&) const;
+  void ecStateChanged(const std::bitset<3>&) const;
   /**
    * @brief Signal including the changed state of the real-time thread.
    */
@@ -316,7 +371,7 @@ class CableRobot: public QObject,
  private:
   //-------- Pseudo-signals from EthercatMaster base class (live in RT thread) --------//
 
-  void EcStateChangedCb(const Bitfield8& new_state) override final;
+  void EcStateChangedCb(const std::bitset<3>& new_state) override final;
   void EcPrintCb(const std::string& msg, const char color = 'w') const override final;
   void EcRtThreadStatusChanged(const bool active) override final;
 
@@ -327,8 +382,8 @@ class CableRobot: public QObject,
   // Timers for status updates
   static constexpr int kMotorStatusIntervalMsec_    = 100;
   static constexpr int kActuatorStatusIntervalMsec_ = 10;
-  QTimer* motor_status_timer_                       = NULL;
-  QTimer* actuator_status_timer_                    = NULL;
+  QTimer* motor_status_timer_                       = nullptr;
+  QTimer* actuator_status_timer_                    = nullptr;
 
   void StopTimers();
 
@@ -336,6 +391,8 @@ class CableRobot: public QObject,
   vect<ActuatorStatusMsg> meas_;
   LogBuffer log_buffer_;
   grabrt::Clock clock_;
+  bool rt_logging_enabled_;
+  uint rt_logging_mod_;
 
   // Ethercat related
 #if INCLUDE_EASYCAT
@@ -352,18 +409,26 @@ class CableRobot: public QObject,
   void EcWorkFun() override final;      // lives in the RT thread
   void EcEmergencyFun() override final; // lives in the RT thread
 
-  // Control related
-  ControllerBase* controller_ = NULL;
+  // Waiting functions
   QMutex qmutex_;
   bool stop_waiting_cmd_recv_ = false;
+  bool is_waiting_            = false;
+
+  // Control related
+  ControllerBase* controller_ = nullptr;
 
   void ControlStep();
+
+  // Tuning params for detecting platform steadyness
+  static constexpr double kBufferingTimeSec_  = 3.0;     // [sec]
+  static constexpr double kCutoffFreq_        = 20.0;    // [Hz]
+  static constexpr double kMaxAngleDeviation_ = 0.00005; // [rad]
 
  private:
   //--------- State machine --------------------------------------------------//
 
   // clang-format off
-  static constexpr char* kStatesStr[] = {
+  static constexpr char* kStatesStr_[] = {
     const_cast<char*>("IDLE"),
     const_cast<char*>("ENABLED"),
     const_cast<char*>("CALIBRATION"),

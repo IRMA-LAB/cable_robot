@@ -1,7 +1,7 @@
 clc; clear; close all;
 
 [cdpr_parameters, cdpr_variables, ~, record,utilities] = ...
-    LoadConfigAndInit("my_config_copt.json", "homing");
+    LoadConfigAndInit("my_config_calib_mod.json", "homing");
 
 reference_position = cdpr_parameters.workspace_center-[0; 0; 1.5];
 geometric_static_mask = [1; 1; 1; 0; 0; 0];
@@ -66,7 +66,7 @@ for i = 1:meas_stage
         cdpr_v_ideal.platform.rot_mat, cdpr_v_ideal.platform.H_mat, ...
         cdpr_v_ideal.platform.pos_PG_glob, eye(3));
     cdpr_v_ideal.tension_vector = CalcCablesTension(cdpr_v_ideal);
-    record.SetFrame(cdpr_v_ideal,cdpr_parameters);
+    %record.SetFrame(cdpr_v_ideal,cdpr_parameters);
     
 end
 

@@ -20,7 +20,7 @@
    <string>Calibration Window</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../resources/resources.qrc">
+   <iconset resource="../../resources/resources.qrc">
     <normaloff>:/img/img/grab.jpg</normaloff>:/img/img/grab.jpg</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -73,12 +73,7 @@
        </property>
        <item>
         <property name="text">
-         <string>First Time Calibration</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Adjustment</string>
+         <string>External Vicon System</string>
         </property>
        </item>
       </widget>
@@ -98,7 +93,7 @@
   </layout>
  </widget>
  <resources>
-  <include location="../resources/resources.qrc"/>
+  <include location="../../resources/resources.qrc"/>
  </resources>
  <connections>
   <connection>

@@ -46,7 +46,7 @@ class Actuator: public QObject, public StateMachine
    * @param[in,out] parent The parent QObject, in this case the cable robot.
    */
   Actuator(const id_t id, const uint8_t slave_position,
-           const grabcdpr::ActuatorParams& params, QObject* parent = NULL);
+           const grabcdpr::ActuatorParams& params, QObject* parent = nullptr);
 
   ~Actuator();
 

@@ -1,7 +1,7 @@
 /**
  * @file homing_dialog.h
  * @author Simone Comari
- * @date 22 Mar 2019
+ * @date 02 Jul 2019
  * @brief This file include the homing dialog class.
  */
 
@@ -73,8 +73,8 @@ class HomingDialog: public QDialog
   };
 
   const grabcdpr::Params* config_ptr_;
-  HomingInterface* interface_ = NULL;
-  CableRobot* robot_ptr_      = NULL;
+  HomingInterface* interface_ = nullptr;
+  CableRobot* robot_ptr_      = nullptr;
   int homing_method_;
 
   void DeleteInterface();

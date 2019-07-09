@@ -42,6 +42,6 @@ end
 cdpr_v.tension_vector = linsolve(Ja',Wa);
 vector = Ju'*cdpr_v.tension_vector -Wu;
 
-record.SetFrame(cdpr_v,cdpr_p);
+%record.SetFrame(cdpr_v,cdpr_p);
 
 end

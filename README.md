@@ -28,7 +28,7 @@ We provide here a Qt project file and instructions for compiling this package us
 If not yet present on your machine, please install _QtCreator_ together with _Qt_. To do so, open a terminal a type the following commands:
 
 ```bash
-sudo apt-get install build-essential
+sudo apt-get install build-essential libgl-dev libicu-dev
 sudo apt-get install qtcreator
 sudo apt-get install qt5-default
 ```

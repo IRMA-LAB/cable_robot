@@ -1,17 +1,18 @@
 /**
  * @file controller_singledrive.h
  * @author Simone Comari
- * @date 11 Mar 2019
+ * @date 08 Jul 2019
  * @brief File containing a simple single drive controller class for cable robot.
  */
 
 #ifndef CABLE_ROBOT_CONTROLLER_SINGLEDRIVE_H
 #define CABLE_ROBOT_CONTROLLER_SINGLEDRIVE_H
 
-#include "lib/grab_common/pid/pid.h"
+#include <bitset>
+
+#include "libs/grab_common/pid/pid.h"
 
 #include "ctrl/controller_base.h"
-#include "grabcommon.h"
 
 /**
  * @brief A numerical sign enum
@@ -123,6 +124,12 @@ class ControllerSingleDrive: public ControllerBase
   int16_t GetMotorTorqueTarget() const { return torque_target_true_; }
 
   /**
+   * @brief Set cable length trajectory.
+   * @param trajectory A trajectory vector where each waypoint is equally spaced at 1ms
+   * from the next one.
+   */
+  void SetCableLenTrajectory(const std::vector<double>& trajectory);
+  /**
    * @brief Change cable length increment.
    *
    * Cable length increment is used in direct drive manual control from the main GUI of
@@ -190,7 +197,7 @@ class ControllerSingleDrive: public ControllerBase
    */
   vect<ControlAction>
   CalcCtrlActions(const grabcdpr::Vars& robot_status,
-                  const vect<ActuatorStatus>& actuators_status) override;
+                  const vect<ActuatorStatus>& actuators_status) override final;
 
  private:
   static constexpr double kAbsDeltaLengthMicroPerSec_ = 0.005;     // [m/s]
@@ -198,9 +205,9 @@ class ControllerSingleDrive: public ControllerBase
   static constexpr int32_t kMaxPos_                   = 12000000;  // [counts]
   static constexpr int32_t kMinPos_                   = -16500000; // [counts]
   static constexpr int32_t kDefaultPosSsErrTol_       = 5;         // [counts]
-  static constexpr int32_t kAbsMaxSpeed_              = 800000;    // [counts/s]
+  static constexpr int32_t kAbsMaxSpeed_              = 4000000;   // [counts/s]
   static constexpr int16_t kAbsDeltaTorquePerSec_     = 20;        // [nominal points]
-  static constexpr int16_t kAbsMaxTorque_             = 600;       // [nominal points]
+  static constexpr int16_t kAbsMaxTorque_             = 800;       // [nominal points]
   static constexpr int16_t kDefaultTorqueSsErrTol_    = 5;         // [nominal points]
 
   enum BitPosition
@@ -212,7 +219,7 @@ class ControllerSingleDrive: public ControllerBase
   };
 
   double period_sec_;
-  Bitfield8 target_flags_;
+  std::bitset<4> target_flags_;
   bool on_target_;
 
   double length_target_;
@@ -245,10 +252,14 @@ class ControllerSingleDrive: public ControllerBase
   bool new_trajectory_ = false;
   bool apply_trajectory_;
 
+  vect<double> cable_len_traj_;
+
   int32_t CalcMotorPos(const vect<ActuatorStatus>& actuators_status);
   int16_t CalcMotorTorque(const vect<ActuatorStatus>& actuators_status);
 
   int32_t CalcPoly5Waypoint(const int32_t q, const int32_t q_final, const int32_t max_dq);
+
+  double GetTrajectoryPoint();
 
   void Clear();
 };

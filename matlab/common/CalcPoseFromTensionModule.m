@@ -7,6 +7,6 @@ cdpr_v.ext_load = CalcExternalLoads(cdpr_p.platform,cdpr_v.platform.rot_mat,...
   cdpr_v.platform.H_mat,cdpr_v.platform.pos_PG_glob,eye(3));
 cdpr_v.tension_vector = parameters.*ones(cdpr_p.n_cables,1);    
 vect = cdpr_v.analitic_jacobian'*cdpr_v.tension_vector-cdpr_v.ext_load;
-record.SetFrame(cdpr_v,cdpr_p);
+%record.SetFrame(cdpr_v,cdpr_p);
 
 end

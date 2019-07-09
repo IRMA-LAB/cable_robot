@@ -1,7 +1,7 @@
 /**
  * @file main_gui.h
  * @author Simone Comari
- * @date 11 Mar 2019
+ * @date 03 Jul 2019
  * @brief This file takes care of the functionalities of the main GUI of cable robot app.
  *
  * The functionalities of the main GUI include buttons management, signaling with children
@@ -12,14 +12,20 @@
 #define MAIN_GUI_H
 
 #include <QDialog>
+#include <QSpacerItem>
 
 #include "easylogging++.h"
 #include "libcdpr/inc/types.h"
 
 #include "ctrl/controller_singledrive.h"
+#include "gui/apps/joints_pvt_dialog.h"
+#include "gui/apps/manual_control_dialog.h"
 #include "gui/calib/calibration_dialog.h"
 #include "gui/homing/homing_dialog.h"
 #include "robot/cablerobot.h"
+#if DEBUG_GUI == 1
+#include "debug/debug_routine.h"
+#endif
 
 using GSWDOpModes = grabec::GoldSoloWhistleOperationModes; /**< Shortcut for op modes. */
 
@@ -62,10 +68,16 @@ class MainGUI: public QDialog
 
   void on_pushButton_startApp_clicked();
 
+#if DEBUG_GUI == 1
+  void pushButton_debug_clicked();
+  void handleDebugCompleted();
+#endif
+
  private slots:
   //--------- Direct drive control panel buttons -------------------------------------//
 
   void on_pushButton_enable_clicked();
+  void on_pushButton_freedrive_pressed();
   void on_pushButton_faultReset_clicked();
   void on_pushButton_exitReady_clicked();
 
@@ -92,9 +104,9 @@ class MainGUI: public QDialog
   void on_pushButton_torquePlus_released();
 
  private slots:
-  void enableInterface(const bool op_outcome = false);
+  void enableInterface(const bool op_outcome = true);
   void appendText2Browser(const QString& text);
-  void updateEcStatusLED(const Bitfield8& ec_status_flags);
+  void updateEcStatusLED(const std::bitset<3>& ec_status_flags);
   void updateRtThreadStatusLED(const bool active);
   void handleMotorStatusUpdate(const id_t&, const grabec::GSWDriveInPdos& motor_status);
 
@@ -102,26 +114,38 @@ class MainGUI: public QDialog
   bool ec_network_valid_  = false;
   bool rt_thread_running_ = false;
 
-  Ui::MainGUI* ui                  = NULL;
-  CalibrationDialog* calib_dialog_ = NULL;
-  HomingDialog* homing_dialog_     = NULL;
+  Ui::MainGUI* ui                  = nullptr;
+  CalibrationDialog* calib_dialog_ = nullptr;
+  HomingDialog* homing_dialog_     = nullptr;
+
+  JointsPVTDialog* joints_pvt_dialog_ = nullptr;
+  ManualControlDialog* man_ctrl_dialog_ = nullptr;
 
   grabcdpr::Params config_params_;
-  CableRobot* robot_ptr_ = NULL;
+  CableRobot* robot_ptr_ = nullptr;
 
   void StartRobot();
   void DeleteRobot();
   bool ExitReadyStateRequest();
   void CloseAllApps();
 
+#if DEBUG_GUI == 1
+  QPushButton* pushButton_debug;
+  QSpacerItem* verticalSpacer_5;
+  // Insert your debug object here..
+  DebugClass* debug_app_ = nullptr;
+#endif
+
  private:
   //--------- Direct drive control stuff ---------------------------------------------//
 
   static constexpr int16_t kTorqueSsErrTol_ = 5;
+  static constexpr int16_t kFreedriveTorque_ = -300;
 
   bool manual_ctrl_enabled_ = false;
-  Bitfield8 waiting_for_response_;
-  Bitfield8 desired_ctrl_mode_;
+  bool freedrive_ = false;
+  std::bitset<3> waiting_for_response_;
+  std::bitset<5> desired_ctrl_mode_;
   id_t motor_id_;
   ControllerSingleDrive* man_ctrl_ptr_;
 

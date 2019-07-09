@@ -1,7 +1,7 @@
 /**
  * @file winch.cpp
  * @author Simone Comari, Edoardo Idà
- * @date 11 Mar 2019
+ * @date 13 May 2019
  * @brief This file includes definitions of class declared in winch.h.
  */
 
@@ -75,14 +75,12 @@ void Winch::UpdateConfig(const int32_t servo_pos)
   cable_.UpdateCableLen(CountsToLength(servo_pos - servo_home_pos_));
 }
 
-//--------- Private functions --------------------------------------------------------//
-
-double Winch::CountsToLength(const int counts)
+double Winch::CountsToLength(const int counts) const
 {
   return counts * params_.CountsToLengthFactor();
 }
 
-int Winch::LengthToCounts(const double length)
+int Winch::LengthToCounts(const double length) const
 {
   return static_cast<int>(length / params_.CountsToLengthFactor());
 }
