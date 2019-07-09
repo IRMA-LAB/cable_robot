@@ -1,7 +1,7 @@
 /**
  * @file camera_widget.h
  * @author Simone Comari
- * @date 02 Apr 2019
+ * @date 09 Jul 2019
  * @brief This file includes a widget to stream a USB camera.
  */
 
@@ -26,7 +26,7 @@
 
 #include "easylogging++.h"
 
-#include "gui/homing/camera_calib_dialog.h"
+#include "gui/camera/camera_calib_dialog.h"
 
 namespace Ui {
 class CameraWidget;

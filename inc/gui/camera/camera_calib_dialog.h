@@ -1,7 +1,7 @@
 /**
  * @file camera_calib_dialog.h
  * @author Simone Comari
- * @date 02 Apr 2019
+ * @date 09 Jul 2019
  * @brief This file includes the camera calibration dialog.
  */
 
@@ -20,8 +20,8 @@
 
 #include "utils/types.h"
 
-#include "gui/homing/camera_calib_app.h"
-#include "gui/homing/camera_calib_settings_dialog.h"
+#include "gui/camera/camera_calib_app.h"
+#include "gui/camera/camera_calib_settings_dialog.h"
 
 using json = nlohmann::json; /**< Alias for JSON library support. */
 
@@ -41,7 +41,7 @@ class CameraCalibDialog: public QDialog
    * @brief CameraCalibDialog
    * @param parent
    */
-  explicit CameraCalibDialog(QWidget* parent = 0);
+  explicit CameraCalibDialog(QWidget* parent = nullptr);
   ~CameraCalibDialog();
 
  signals:

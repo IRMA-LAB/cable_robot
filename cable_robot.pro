@@ -12,15 +12,15 @@ HEADERS = \
     $$PWD/inc/gui/homing/homing_interface_vision.h \
     $$PWD/inc/gui/homing/homing_interface_proprioceptive.h \
     $$PWD/inc/gui/homing/init_torque_form.h \
-    $$PWD/inc/gui/homing/camera_widget.h \
-    $$PWD/inc/gui/homing/camera_calib_dialog.h \
-    $$PWD/inc/gui/homing/camera_calib_settings_dialog.h \
-    $$PWD/inc/gui/homing/camera_calib_app.h \
     $$PWD/inc/gui/apps/joints_pvt_dialog.h \
     $$PWD/inc/gui/apps/manual_control_dialog.h \
-    $$PWD/inc/gui/apps/scatter3d_widget.h \
-    $$PWD/inc/gui/apps/chartview.h \
-    $$PWD/inc/gui/apps/file_selection_form.h \
+    $$PWD/inc/gui/camera/camera_widget.h \
+    $$PWD/inc/gui/camera/camera_calib_dialog.h \
+    $$PWD/inc/gui/camera/camera_calib_settings_dialog.h \
+    $$PWD/inc/gui/camera/camera_calib_app.h \
+    $$PWD/inc/gui/misc/scatter3d_widget.h \
+    $$PWD/inc/gui/misc/chartview.h \
+    $$PWD/inc/gui/misc/file_selection_form.h \
     $$PWD/inc/calib/calib_excitation.h \
     $$PWD/inc/homing/homing_proprioceptive.h \
     $$PWD/inc/homing/homing_vision_app.h \
@@ -57,15 +57,15 @@ SOURCES = \
     $$PWD/src/gui/homing/homing_interface_vision.cpp \
     $$PWD/src/gui/homing/homing_interface_proprioceptive.cpp \
     $$PWD/src/gui/homing/init_torque_form.cpp \
-    $$PWD/src/gui/homing/camera_widget.cpp \
-    $$PWD/src/gui/homing/camera_calib_dialog.cpp \
-    $$PWD/src/gui/homing/camera_calib_settings_dialog.cpp \
-    $$PWD/src/gui/homing/camera_calib_app.cpp \
     $$PWD/src/gui/apps/joints_pvt_dialog.cpp \
     $$PWD/src/gui/apps/manual_control_dialog.cpp \
-    $$PWD/src/gui/apps/scatter3d_widget.cpp \
-    $$PWD/src/gui/apps/chartview.cpp \
-    $$PWD/src/gui/apps/file_selection_form.cpp \
+    $$PWD/src/gui/camera/camera_widget.cpp \
+    $$PWD/src/gui/camera/camera_calib_dialog.cpp \
+    $$PWD/src/gui/camera/camera_calib_settings_dialog.cpp \
+    $$PWD/src/gui/camera/camera_calib_app.cpp \
+    $$PWD/src/gui/misc/scatter3d_widget.cpp \
+    $$PWD/src/gui/misc/chartview.cpp \
+    $$PWD/src/gui/misc/file_selection_form.cpp \
     $$PWD/src/calib/calib_excitation.cpp \
     $$PWD/src/homing/homing_proprioceptive.cpp \
     $$PWD/src/homing/homing_vision_app.cpp \
@@ -93,15 +93,15 @@ FORMS += \
     $$PWD/widgets/homing/homing_dialog.ui \
     $$PWD/widgets/homing/homing_interface_proprioceptive.ui\
     $$PWD/widgets/homing/homing_interface_vision.ui \
-    $$PWD/widgets/homing/camera_widget.ui \
-    $$PWD/widgets/homing/camera_calib_dialog.ui \
-    $$PWD/widgets/homing/camera_calib_app.ui \
-    $$PWD/widgets/homing/camera_calib_settings_dialog.ui \
     $$PWD/widgets/homing/init_torque_form.ui \
+    $$PWD/widgets/camera/camera_widget.ui \
+    $$PWD/widgets/camera/camera_calib_dialog.ui \
+    $$PWD/widgets/camera/camera_calib_app.ui \
+    $$PWD/widgets/camera/camera_calib_settings_dialog.ui \
     $$PWD/widgets/apps/joints_pvt_dialog.ui \
     $$PWD/widgets/apps/manual_control_dialog.ui \
-    $$PWD/widgets/apps/scatter3d_widget.ui \
-    $$PWD/widgets/apps/file_selection_form.ui \
+    $$PWD/widgets/misc/scatter3d_widget.ui \
+    $$PWD/widgets/misc/file_selection_form.ui \
 
 RESOURCES += \
     resources/resources.qrc

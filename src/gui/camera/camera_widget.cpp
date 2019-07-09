@@ -1,11 +1,11 @@
 /**
  * @file camera_widget.cpp
  * @author Simone Comari
- * @date 02 Apr 2019
+ * @date 09 Jul 2019
  * @brief This file includes definitions of classes present in camera_widget.h.
  */
 
-#include "gui/homing/camera_widget.h"
+#include "gui/camera/camera_widget.h"
 #include "ui_camera_widget.h"
 
 //------------------------------------------------------------------------------------//

@@ -1,7 +1,7 @@
 /**
  * @file joints_pvt_dialog.h
  * @author Simone Comari
- * @date 03 Jul 2019
+ * @date 09 Jul 2019
  * @brief This file include the interface of joints pvt control app.
  */
 
@@ -14,9 +14,9 @@
 #include <QtMath>
 
 #include "apps/joints_pvt_app.h"
-#include "gui/apps/chartview.h"
-#include "gui/apps/file_selection_form.h"
-#include "gui/apps/scatter3d_widget.h"
+#include "gui/misc/chartview.h"
+#include "gui/misc/file_selection_form.h"
+#include "gui/misc/scatter3d_widget.h"
 
 namespace Ui {
 class JointsPVTDialog;

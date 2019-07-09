@@ -1,11 +1,11 @@
 /**
  * @file chartview.cpp
  * @author Simone Comari
- * @date 03 Jul 2019
+ * @date 09 Jul 2019
  * @brief This file includes definitions of class present in chartview.h.
  */
 
-#include "gui/apps/chartview.h"
+#include "gui/misc/chartview.h"
 
 ChartView::ChartView(QChart* chart, QWidget* parent) : QChartView(chart, parent)
 {

@@ -1,7 +1,7 @@
 /**
  * @file manual_control_dialog.h
  * @author Simone Comari
- * @date 03 Jul 2019
+ * @date 09 Jul 2019
  * @brief This file include the interface of axes manual control app.
  */
 
@@ -12,7 +12,7 @@
 #include <QTimer>
 
 #include "apps/manual_control_app.h"
-#include "gui/apps/scatter3d_widget.h"
+#include "gui/misc/scatter3d_widget.h"
 
 namespace Ui {
 class ManualControlDialog;

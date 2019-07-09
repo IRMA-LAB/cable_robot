@@ -1,7 +1,7 @@
 /**
  * @file homing_interface_vision.h
  * @author Simone Comari
- * @date 02 Apr 2019
+ * @date 09 Jul 2019
  * @brief This file takes care of the functionalities of the vision-based homing
  * interface of cable robot app.
  *
@@ -16,7 +16,7 @@
 #include <QMessageBox>
 #include <QWidget>
 
-#include "gui/homing/camera_widget.h"
+#include "gui/camera/camera_widget.h"
 #include "gui/homing/homing_interface.h"
 #include "homing/homing_vision_app.h"
 

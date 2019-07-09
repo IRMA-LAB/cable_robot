@@ -5,7 +5,7 @@
  * @brief Implementation of classes declared in camera_calib_app.h
  */
 
-#include "gui/homing/camera_calib_app.h"
+#include "gui/camera/camera_calib_app.h"
 #include "ui_camera_calib_app.h"
 
 //------------------------------------------------------------------------------------//

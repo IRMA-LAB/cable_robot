@@ -3,7 +3,7 @@
 #include "lib/easyloggingpp/src/easylogging++.h"
 #include "utils/easylog_wrapper.h"
 
-#include "gui/homing/camera_widget.h"
+#include "gui/camera/camera_widget.h"
 
 INITIALIZE_EASYLOGGINGPP
 

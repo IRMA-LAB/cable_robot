@@ -5,7 +5,7 @@
  * @brief This file includes definitions of class present in file_selection_form.h.
  */
 
-#include "gui/apps/file_selection_form.h"
+#include "gui/misc/file_selection_form.h"
 #include "ui_file_selection_form.h"
 
 FileSelectionForm::FileSelectionForm(QWidget* parent)

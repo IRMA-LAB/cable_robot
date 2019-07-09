@@ -5,9 +5,8 @@
  * @brief This file includes definitions of class present in camera_calib_dialog.h.
  */
 
-#include "gui/homing/camera_calib_dialog.h"
+#include "gui/camera/camera_calib_dialog.h"
 #include "ui_camera_calib_dialog.h"
-#include "utils/cameraparamsjsonparser.h"
 
 const QString CameraCalibDialog::kDefaultCalibFile_ =
   QString(SRCDIR) + "resources/default_calib_params.json";
@@ -101,16 +100,16 @@ bool CameraCalibDialog::parseCalibFile(const QString& filepath)
   // Open file
   CLOG(INFO, "event") << "Parsing file '" << filepath << "'...";
 
-  //to verify that works
+  // to verify that works
   CameraParams params;
   CameraParamsJsonParser prs;
-  if (!prs.decodeJson(params,filepath.toStdString()))
+  if (!prs.decodeJson(params, filepath.toStdString()))
   {
     CLOG(ERROR, "event") << "Missing, invalid or incomplete calibration parameter:"
                          << "camera_matrix";
     QMessageBox::warning(this, "File Error",
                          "Missing, invalid or incomplete calibration parameter: "
-                           "dist_coeff");
+                         "dist_coeff");
     return false;
   }
   emit printToQConsole("Using calibration parameters from '" + filepath + "'");
