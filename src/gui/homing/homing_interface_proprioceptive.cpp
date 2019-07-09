@@ -1,7 +1,7 @@
 /**
  * @file homing_interface_proprioceptive.cpp
  * @author Simone Comari
- * @date 19 Jun 2019
+ * @date 09 Jul 2019
  * @brief This file includes definitions of classes present in
  * homing_interface_proprioceptive.h.
  */
@@ -278,11 +278,11 @@ void HomingInterfaceProprioceptive::on_pushButton_ok_clicked()
 void HomingInterfaceProprioceptive::on_pushButton_cancel_clicked()
 {
   CLOG(TRACE, "event");
-  switch (static_cast<HomingProprioceptive::States>(app_.GetCurrentState()))
+  switch (static_cast<HomingProprioceptiveApp::States>(app_.GetCurrentState()))
   {
-    case HomingProprioceptive::ST_IDLE:
+    case HomingProprioceptiveApp::ST_IDLE:
       break;
-    case HomingProprioceptive::ST_OPTIMIZING:
+    case HomingProprioceptiveApp::ST_OPTIMIZING:
     {
       QMessageBox::StandardButton reply =
         QMessageBox::question(this, "Optimization in progress",
@@ -295,7 +295,7 @@ void HomingInterfaceProprioceptive::on_pushButton_cancel_clicked()
       CLOG(INFO, "event") << "Homing interrupted by user during optimizazion";
       break;
     }
-    case HomingProprioceptive::ST_HOME:
+    case HomingProprioceptiveApp::ST_HOME:
     {
       QMessageBox::StandardButton reply =
         QMessageBox::question(this, "Homing in progress",
@@ -308,7 +308,7 @@ void HomingInterfaceProprioceptive::on_pushButton_cancel_clicked()
       CLOG(INFO, "event") << "Homing interrupted by user while moving to home position";
       break;
     }
-    case HomingProprioceptive::ST_FAULT:
+    case HomingProprioceptiveApp::ST_FAULT:
     {
       QMessageBox::information(this, "Fault present",
                                "Please clear faults before quitting the application.");
@@ -395,13 +395,13 @@ void HomingInterfaceProprioceptive::handleStateChanged(const quint8& state)
 {
   switch (state)
   {
-    case HomingProprioceptive::ST_IDLE:
+    case HomingProprioceptiveApp::ST_IDLE:
       ui->pushButton_enable->setText(tr("Enable"));
       ui->pushButton_start->setDisabled(true);
       ui->pushButton_start->setText(tr("Start"));
       ui->pushButton_clearFaults->setDisabled(true);
       break;
-    case HomingProprioceptive::ST_ENABLED:
+    case HomingProprioceptiveApp::ST_ENABLED:
     {
       ui->pushButton_enable->setText(tr("Disable"));
       ui->pushButton_start->setEnabled(true);
@@ -411,26 +411,26 @@ void HomingInterfaceProprioceptive::handleStateChanged(const quint8& state)
       UpdateTorquesLimits();
       break;
     }
-    case HomingProprioceptive::ST_START_UP:
+    case HomingProprioceptiveApp::ST_START_UP:
       ui->pushButton_start->setText(tr("Stop"));
       app_.Start(nullptr);
       break;
-    case HomingProprioceptive::ST_SWITCH_CABLE:
+    case HomingProprioceptiveApp::ST_SWITCH_CABLE:
       app_.Start(nullptr);
       break;
-    case HomingProprioceptive::ST_COILING:
+    case HomingProprioceptiveApp::ST_COILING:
       app_.Start(nullptr);
       break;
-    case HomingProprioceptive::ST_UNCOILING:
+    case HomingProprioceptiveApp::ST_UNCOILING:
       app_.Start(nullptr);
       break;
-    case HomingProprioceptive::ST_FAULT:
+    case HomingProprioceptiveApp::ST_FAULT:
       ui->pushButton_enable->setDisabled(true);
       ui->pushButton_enable->setText(tr("Enable"));
       ui->pushButton_start->setDisabled(true);
       ui->pushButton_clearFaults->setEnabled(true);
       break;
-    case HomingProprioceptive::ST_HOME:
+    case HomingProprioceptiveApp::ST_HOME:
       disconnect(&app_, SIGNAL(progressValue(int)), this,
                  SLOT(updateOptimizationProgress(int)));
       break;
@@ -443,7 +443,7 @@ void HomingInterfaceProprioceptive::handleStateChanged(const quint8& state)
 
 void HomingInterfaceProprioceptive::UpdateTorquesLimits()
 {
-  if (app_.GetCurrentState() == HomingProprioceptive::ST_ENABLED &&
+  if (app_.GetCurrentState() == HomingProprioceptiveApp::ST_ENABLED &&
       ui->checkBox_useCurrentTorque->isChecked())
   {
     std::vector<id_t> motors_id = app_.GetActuatorsID();

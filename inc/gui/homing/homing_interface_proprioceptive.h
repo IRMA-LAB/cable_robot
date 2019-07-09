@@ -1,7 +1,7 @@
 /**
  * @file homing_interface_proprioceptive.h
  * @author Simone Comari
- * @date 07 Mar 2019
+ * @date 09 Jul 2019
  * @brief This file takes care of the functionalities of the proprioceptive homing
  * interface of cable robot app.
  *
@@ -19,7 +19,7 @@
 
 #include "gui/homing/homing_interface.h"
 #include "gui/homing/init_torque_form.h"
-#include "homing/homing_proprioceptive.h"
+#include "homing/homing_proprioceptive_app.h"
 
 
 namespace Ui {
@@ -77,7 +77,7 @@ class HomingInterfaceProprioceptive: public HomingInterface
   Ui::HomingInterfaceProprioceptive* ui;
   QVector<InitTorqueForm*> init_torque_forms_;
 
-  HomingProprioceptive app_;
+  HomingProprioceptiveApp app_;
   bool acquisition_complete_;
   bool ext_close_cmd_;
 

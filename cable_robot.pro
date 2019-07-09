@@ -22,7 +22,7 @@ HEADERS = \
     $$PWD/inc/gui/misc/chartview.h \
     $$PWD/inc/gui/misc/file_selection_form.h \
     $$PWD/inc/calib/calib_excitation.h \
-    $$PWD/inc/homing/homing_proprioceptive.h \
+    $$PWD/inc/homing/homing_proprioceptive_app.h \
     $$PWD/inc/homing/homing_vision_app.h \
     $$PWD/inc/homing/matlab_thread.h \
     $$PWD/inc/apps/joints_pvt_app.h \
@@ -67,7 +67,7 @@ SOURCES = \
     $$PWD/src/gui/misc/chartview.cpp \
     $$PWD/src/gui/misc/file_selection_form.cpp \
     $$PWD/src/calib/calib_excitation.cpp \
-    $$PWD/src/homing/homing_proprioceptive.cpp \
+    $$PWD/src/homing/homing_proprioceptive_app.cpp \
     $$PWD/src/homing/homing_vision_app.cpp \
     $$PWD/src/homing/matlab_thread.cpp \
     $$PWD/src/apps/joints_pvt_app.cpp \

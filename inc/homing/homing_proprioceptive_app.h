@@ -1,7 +1,7 @@
 /**
  * @file homing_proprioceptive.h
  * @author Simone Comari
- * @date 19 Jun 2019
+ * @date 09 Jul 2019
  * @brief This file includes classes necessary to implement the homing proprioceptive
  * algorithm.
  */
@@ -117,7 +117,7 @@ std::ostream& operator<<(std::ostream& stream, const HomingProprioceptiveHomeDat
  * More details about the states and transition events and policy can be found in the
  * relative documentation in a more friendly and schematic format.
  */
-class HomingProprioceptive: public QObject, public StateMachine
+class HomingProprioceptiveApp: public QObject, public StateMachine
 {
   Q_OBJECT
 
@@ -128,8 +128,8 @@ class HomingProprioceptive: public QObject, public StateMachine
    * @param[in] robot Pointer to cable robot instance, to access robot features and
    * commands.
    */
-  HomingProprioceptive(QObject* parent, CableRobot* robot);
-  ~HomingProprioceptive() override;
+  HomingProprioceptiveApp(QObject* parent, CableRobot* robot);
+  ~HomingProprioceptiveApp() override;
 
   /**
    * @brief This class' states enum
@@ -265,10 +265,10 @@ class HomingProprioceptive: public QObject, public StateMachine
   CableRobot* robot_ptr_ = nullptr;
   ControllerSingleDrive controller_;
 
-  static constexpr size_t kNumMeasMin_     = 1;
-  static constexpr qint16 kTorqueSsErrTol_ = 5;
+  static constexpr size_t kNumMeasMin_            = 1;
+  static constexpr qint16 kTorqueSsErrTol_        = 5;
   static constexpr double kPositionStepTransTime_ = 3.0;
-  size_t num_meas_                         = kNumMeasMin_;
+  size_t num_meas_                                = kNumMeasMin_;
   size_t num_tot_meas_;
   size_t working_actuator_idx_;
   size_t meas_step_;
@@ -297,7 +297,7 @@ class HomingProprioceptive: public QObject, public StateMachine
   //--------- State machine ---------------------------------------------------------//
 
   // clang-format off
-  static constexpr char* kStatesStr[] = {
+  static constexpr char* kStatesStr[9] = {
     const_cast<char*>("IDLE"),
     const_cast<char*>("ENABLED"),
     const_cast<char*>("START_UP"),
@@ -312,19 +312,19 @@ class HomingProprioceptive: public QObject, public StateMachine
   States prev_state_;
 
   // Define the state machine state functions with event data type
-  GUARD_DECLARE(HomingProprioceptive, GuardIdle, NoEventData)
-  STATE_DECLARE(HomingProprioceptive, Idle, NoEventData)
-  GUARD_DECLARE(HomingProprioceptive, GuardEnabled, NoEventData)
-  STATE_DECLARE(HomingProprioceptive, Enabled, NoEventData)
-  STATE_DECLARE(HomingProprioceptive, StartUp, HomingProprioceptiveStartData)
-  GUARD_DECLARE(HomingProprioceptive, GuardSwitch, NoEventData)
-  STATE_DECLARE(HomingProprioceptive, SwitchCable, NoEventData)
-  ENTRY_DECLARE(HomingProprioceptive, EntryCoiling, NoEventData)
-  STATE_DECLARE(HomingProprioceptive, Coiling, NoEventData)
-  STATE_DECLARE(HomingProprioceptive, Uncoiling, NoEventData)
-  STATE_DECLARE(HomingProprioceptive, Optimizing, NoEventData)
-  STATE_DECLARE(HomingProprioceptive, Home, HomingProprioceptiveHomeData)
-  STATE_DECLARE(HomingProprioceptive, Fault, NoEventData)
+  GUARD_DECLARE(HomingProprioceptiveApp, GuardIdle, NoEventData)
+  STATE_DECLARE(HomingProprioceptiveApp, Idle, NoEventData)
+  GUARD_DECLARE(HomingProprioceptiveApp, GuardEnabled, NoEventData)
+  STATE_DECLARE(HomingProprioceptiveApp, Enabled, NoEventData)
+  STATE_DECLARE(HomingProprioceptiveApp, StartUp, HomingProprioceptiveStartData)
+  GUARD_DECLARE(HomingProprioceptiveApp, GuardSwitch, NoEventData)
+  STATE_DECLARE(HomingProprioceptiveApp, SwitchCable, NoEventData)
+  ENTRY_DECLARE(HomingProprioceptiveApp, EntryCoiling, NoEventData)
+  STATE_DECLARE(HomingProprioceptiveApp, Coiling, NoEventData)
+  STATE_DECLARE(HomingProprioceptiveApp, Uncoiling, NoEventData)
+  STATE_DECLARE(HomingProprioceptiveApp, Optimizing, NoEventData)
+  STATE_DECLARE(HomingProprioceptiveApp, Home, HomingProprioceptiveHomeData)
+  STATE_DECLARE(HomingProprioceptiveApp, Fault, NoEventData)
 
   // State map to define state object order
   BEGIN_STATE_MAP_EX
