@@ -44,6 +44,9 @@ class HomingInterfaceProprioceptive: public HomingInterface
   explicit HomingInterfaceProprioceptive(QWidget* parent, CableRobot* robot);
   ~HomingInterfaceProprioceptive() override final;
 
+ signals:
+  void homingCompleted() const;
+
  private slots:
   void closeEvent(QCloseEvent* event) override final;
 

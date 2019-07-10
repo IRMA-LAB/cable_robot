@@ -18,6 +18,7 @@
 
 #include "gui/camera/camera_widget.h"
 #include "gui/homing/homing_interface.h"
+#include "gui/homing/homing_interface_proprioceptive.h"
 #include "homing/homing_vision_app.h"
 
 namespace Ui {
@@ -43,18 +44,20 @@ class HomingInterfaceVision: public HomingInterface
   ~HomingInterfaceVision() override final;
 
  private slots:
-  void on_pushButton_enable_clicked();
-  void on_pushButton_clearFaults_clicked();
-  void on_pushButton_start_clicked();
+  void on_pushButton_move_clicked();
+  void on_pushButton_find_clicked();
+  void on_pushButton_apply_clicked();
 
   void on_pushButton_cancel_clicked();
   void on_pushButton_done_clicked();
 
  private slots:
   void appendText2Browser(const QString& text);
+  void enableVisionTab();
 
  private:
   Ui::HomingInterfaceVision* ui;
+  HomingInterfaceProprioceptive* proprioceptive_widget_;
   CameraWidget* camera_widget_ = nullptr;
 
   HomingVisionApp app_;

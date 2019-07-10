@@ -1,7 +1,7 @@
 /**
  * @file camera_calib_app.cpp
  * @author Simone Comari, Marco Caselli
- * @date 08 Jul 2019
+ * @date 09 Jul 2019
  * @brief Implementation of classes declared in camera_calib_app.h
  */
 
@@ -20,6 +20,9 @@ WorkerThread::WorkerThread(const CameraCalibSettings& settings)
 
 void WorkerThread::setNewFrame(const cv::Mat& frame)
 {
+  if (frame.empty())
+    return;
+
   mutex_.lock();
   latest_frame_      = frame;
   new_frame_pending_ = true;

@@ -1,7 +1,7 @@
 /**
  * @file homing_vision_app.h
  * @author Marco Caselli, Simone Comari
- * @date 08 Jul 2019
+ * @date 10 JuL 2019
  * @brief File containing homing vision structure and class to find rotation matrix and
  * traslation vector between camera and chessboard reference systems.
  */
@@ -43,7 +43,7 @@ struct HomingVisionParams
  * relative documentation in a more friendly and schematic format.
  * @todo finish this class
  */
-class HomingVisionApp: public QObject
+class HomingVisionApp: public QThread
 {
   Q_OBJECT
 
@@ -56,22 +56,24 @@ class HomingVisionApp: public QObject
   explicit HomingVisionApp(QObject* parent, CableRobot* robot);
 
   /**
-   * @brief Get rotation matrix between camera and chessboard reference systems.
-   * @return Latest rotation matrix between camera frame and chessboard frame.
+   * @brief User stop command, to interrupt the calibration process before completion.
    */
-  cv::Mat getRotationMatrix() const { return R_; }
+  void stop();
   /**
-   * @brief Get translation vector between camera and chessboard reference systems.
-   * @return Latest translation vector between camera and chessboard reference systems.
+   * @brief applyPoseEstimate
    */
-  cv::Mat getTranslationVector() const { return tvec_; }
+  void applyPoseEstimate();
 
   /**
-   * @brief Compute rotation matrix and translation vector between camera and chessboard
-   * reference systems from a captured image framing a chessboard of known size and
-   * format.
+   * @brief isCameraCalibrated
+   * @return
    */
-  void elaborate();
+  bool isCameraCalibrated() const { return !camera_params_.isEmpty(); }
+  /**
+   * @brief isPoseReady
+   * @return
+   */
+  bool isPoseReady();
 
  signals:
   /**
@@ -85,21 +87,13 @@ class HomingVisionApp: public QObject
    * origin.
    */
   void frameReadyToShow(const cv::Mat& augm_frame);
-  /**
-   * @brief Signal carrying a rotation matrix and a translation vector between camera and
-   * chessboard reference systems.
-   * @param rot_mat The rotation matrix between camera and chessboard reference systems.
-   * @param transl_vect The translation vector between camera and chessboard reference
-   * systems.
-   */
-  void poseReady(const cv::Mat& rot_mat, const cv::Mat& transl_vect);
 
  public slots:
   /**
    * @brief getNewVideoFrame
    * @param frame The latest frame captured by the camera.
    */
-  void getNewVideoFrame(const cv::Mat& frame);
+  void setNewFrame(const cv::Mat& frame);
   /**
    * @brief Set camera parameters.
    * @param params Camera parameters.
@@ -112,20 +106,27 @@ class HomingVisionApp: public QObject
   const HomingVisionParams settings_;
 
   QMutex mutex_;
+  QWaitCondition new_frame_available_;
+  cv::Mat latest_frame_;
   cv::Mat frame_;
-  cv::Mat processed_frame_;
-  bool new_frame_available_;
+  bool new_frame_pending_;
+  bool stop_;
+  bool pose_ready_;
 
-  cv::Mat R_;
-  cv::Mat tvec_;
+  cv::Mat R_b2c;
+  cv::Mat t_b2c;
   std::vector<cv::Point3f> object_points_;
   std::vector<cv::Point2f> object_points_planar_;
   std::vector<cv::Point2f> image_points_;
 
+  void run();
   bool poseEstimationFromCoplanarPoints();
   void calcChessboardCorners(std::vector<cv::Point3f>& corners);
   bool calcImageCorner();
   void showAugmentedFrame();
+
+  void calcPlatformGlobalPose(grabnum::Vector3d& position,
+                              grabnum::Vector3d& orientation);
 };
 
 #endif // CABLE_ROBOT_HOMING_VISION_APP_H

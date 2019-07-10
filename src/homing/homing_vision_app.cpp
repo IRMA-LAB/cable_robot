@@ -1,51 +1,95 @@
 /**
  * @file homing_vision_app.cpp
  * @author Marco Caselli, Simone Comari
- * @date 08 Jul 2019
+ * @date 10 JuL 2019
  * @brief This file includes definitions of classes present in homing_vision_app.h.
  */
 
 #include "homing/homing_vision_app.h"
+#include "kinematics.h"
 
 HomingVisionApp::HomingVisionApp(QObject* parent, CableRobot* robot)
-  : QObject(parent), robot_ptr_(robot), new_frame_available_(false)
+  : QThread(parent), robot_ptr_(robot), new_frame_pending_(false), stop_(false)
 {}
 
 //--------- Public functions ---------------------------------------------------------//
 
-void HomingVisionApp::elaborate()
+void HomingVisionApp::stop()
 {
   mutex_.lock();
-  if (!new_frame_available_)
-  {
-    mutex_.unlock();
-    return;
-  }
-  processed_frame_     = frame_;
-  new_frame_available_ = false;
+  stop_ = true;
   mutex_.unlock();
+}
 
-  if (poseEstimationFromCoplanarPoints())
-  {
-    showAugmentedFrame();
-    emit poseReady(R_, tvec_);
-  }
+void HomingVisionApp::applyPoseEstimate()
+{
+  // Calculate platform global pose from camera relative pose wrt to chessboard.
+  grabnum::Vector3d position;
+  grabnum::Vector3d orientation;
+  calcPlatformGlobalPose(position, orientation);
+  // Calculate inverse kinematics to get cables lenght and swivel angles from given pose.
+  grabcdpr::Params params = robot_ptr_->GetActiveComponentsParams();
+  grabcdpr::Vars cdpr_vars; // empty container
+  cdpr_vars.cables.resize(params.actuators.size());
+  grabcdpr::UpdateIK0<grabnum::Vector3d, grabcdpr::Vars>(position, orientation, &params,
+                                                         &cdpr_vars);
+  // Update homing configuration for each cable/pulley.
+  vect<id_t> actuators_id = robot_ptr_->GetActiveMotorsID();
+  for (uint i = 0; i < actuators_id.size(); i++)
+    robot_ptr_->UpdateHomeConfig(actuators_id[i], cdpr_vars.cables[i].length,
+                                 cdpr_vars.cables[i].swivel_ang);
+}
+
+bool HomingVisionApp::isPoseReady()
+{
+  mutex_.lock();
+  bool pose_ready = pose_ready_;
+  mutex_.unlock();
+  return pose_ready;
 }
 
 //--------- Public slots  ------------------------------------------------------------//
 
-void HomingVisionApp::getNewVideoFrame(const cv::Mat& frame)
+void HomingVisionApp::setNewFrame(const cv::Mat& frame)
 {
   if (frame.empty())
     return;
 
   mutex_.lock();
-  frame_               = frame;
-  new_frame_available_ = true;
+  latest_frame_      = frame;
+  new_frame_pending_ = true;
+  new_frame_available_.wakeAll();
   mutex_.unlock();
 }
 
 //--------- Private functions --------------------------------------------------------//
+
+void HomingVisionApp::run()
+{
+  pose_ready_ = false;
+  while (1)
+  {
+    mutex_.lock();
+    // Check if stop command was sent
+    if (stop_)
+    {
+      mutex_.unlock();
+      break;
+    }
+
+    // Grab new frame
+    if (!new_frame_pending_)
+      new_frame_available_.wait(&mutex_);
+    latest_frame_.copyTo(frame_);
+    new_frame_pending_ = false;
+    mutex_.unlock();
+
+    // Try to estimate platform pose from chessboard
+    pose_ready_ |= poseEstimationFromCoplanarPoints();
+    if (pose_ready_)
+      showAugmentedFrame();
+  }
+}
 
 bool HomingVisionApp::poseEstimationFromCoplanarPoints()
 {
@@ -61,34 +105,19 @@ bool HomingVisionApp::poseEstimationFromCoplanarPoints()
   cv::Mat c1 = H.col(0);
   cv::Mat c2 = H.col(1);
   cv::Mat c3 = c1.cross(c2);
-  R_         = cv::Mat(3, 3, CV_64F);
-  tvec_      = H.col(2);
+  R_b2c      = cv::Mat(3, 3, CV_64F);
+  t_b2c      = H.col(2);
 
   for (int i = 0; i < 3; i++)
   {
-    R_.at<double>(i, 0) = c1.at<double>(i, 0);
-    R_.at<double>(i, 1) = c2.at<double>(i, 0);
-    R_.at<double>(i, 2) = c3.at<double>(i, 0);
+    R_b2c.at<double>(i, 0) = c1.at<double>(i, 0);
+    R_b2c.at<double>(i, 1) = c2.at<double>(i, 0);
+    R_b2c.at<double>(i, 2) = c3.at<double>(i, 0);
   }
 
   cv::Mat W, U, Vt;
-  cv::SVDecomp(R_, W, U, Vt);
-  R_              = U * Vt;
-  QString message = QString("Homing vision done \n matrix rotation: %1  %2  %3 \n %4  %5 "
-                            " %6 \n %7  %8  %9 \n translation vector: %10  %11  %12")
-                      .arg(R_.at<double>(0, 0))
-                      .arg(R_.at<double>(0, 1))
-                      .arg(R_.at<double>(0, 2))
-                      .arg(R_.at<double>(1, 0))
-                      .arg(R_.at<double>(1, 1))
-                      .arg(R_.at<double>(1, 2))
-                      .arg(R_.at<double>(2, 0))
-                      .arg(R_.at<double>(2, 1))
-                      .arg(R_.at<double>(2, 2))
-                      .arg(tvec_.at<double>(0, 0))
-                      .arg(tvec_.at<double>(1, 0))
-                      .arg(tvec_.at<double>(2, 0));
-  emit printToQConsole(message);
+  cv::SVDecomp(R_b2c, W, U, Vt);
+  R_b2c = U * Vt;
   return true;
 }
 
@@ -99,8 +128,8 @@ bool HomingVisionApp::calcImageCorner()
   object_points_planar_.clear();
   image_points_.clear();
 
-  bool found = cv::findChessboardCorners(processed_frame_, settings_.pattern_size,
-                                         corners, settings_.chess_board_flags);
+  bool found = cv::findChessboardCorners(frame_, settings_.pattern_size, corners,
+                                         settings_.chess_board_flags);
   if (!found)
   {
     emit printToQConsole("WARNING: Could not find chessboard");
@@ -108,7 +137,7 @@ bool HomingVisionApp::calcImageCorner()
   }
 
   cv::Mat view_gray;
-  cv::cvtColor(processed_frame_, view_gray, cv::COLOR_BGR2GRAY);
+  cv::cvtColor(frame_, view_gray, cv::COLOR_BGR2GRAY);
   cv::cornerSubPix(view_gray, corners,
                    cv::Size(settings_.cor_sp_size, settings_.cor_sp_size),
                    cv::Size(settings_.zero_zone, settings_.zero_zone),
@@ -141,8 +170,36 @@ void HomingVisionApp::calcChessboardCorners(std::vector<cv::Point3f>& corners)
 void HomingVisionApp::showAugmentedFrame()
 {
   cv::Mat rvec;
-  cv::Rodrigues(R_, rvec);
-  cv::drawFrameAxes(processed_frame_, camera_params_.camera_matrix,
-                    camera_params_.dist_coeff, rvec, tvec_, 2 * settings_.square_size);
-  emit frameReadyToShow(processed_frame_);
+  cv::Rodrigues(R_b2c, rvec);
+  cv::drawFrameAxes(frame_, camera_params_.camera_matrix, camera_params_.dist_coeff, rvec,
+                    t_b2c, 2 * settings_.square_size);
+  emit frameReadyToShow(frame_);
+}
+
+void HomingVisionApp::calcPlatformGlobalPose(grabnum::Vector3d& position,
+                                             grabnum::Vector3d& orientation)
+{
+  QString message =
+    QString("Estimated camera-to-chessboard transformation:\n"
+            "rotation matrix:\n [ %1  %2  %3 ]\n [ %4  %5 %6 ]\n [ %7  %8  %9 ]\n"
+            "translation vector:\n [ %10  %11  %12 ]^T")
+      .arg(R_b2c.at<double>(0, 0))
+      .arg(R_b2c.at<double>(0, 1))
+      .arg(R_b2c.at<double>(0, 2))
+      .arg(R_b2c.at<double>(1, 0))
+      .arg(R_b2c.at<double>(1, 1))
+      .arg(R_b2c.at<double>(1, 2))
+      .arg(R_b2c.at<double>(2, 0))
+      .arg(R_b2c.at<double>(2, 1))
+      .arg(R_b2c.at<double>(2, 2))
+      .arg(t_b2c.at<double>(0, 0))
+      .arg(t_b2c.at<double>(1, 0))
+      .arg(t_b2c.at<double>(2, 0));
+  emit printToQConsole(message);
+
+  // Frame subscripts: b = chessboard, c = camera, p = platform, w = world
+  // TODO:
+  // 1. Build H_b2c from R_b2c and t_b2c
+  // 2. Calculate H_p2w = H_p2b * H_b2c * H_c2w
+  // 3. Extract platform pose from H_p2w
 }

@@ -389,6 +389,7 @@ void HomingInterfaceProprioceptive::handleHomingComplete()
   CLOG(INFO, "event") << "Homing complete";
   ui->groupBox_dataCollection->setEnabled(true);
   ui->pushButton_done->setEnabled(true);
+  emit homingCompleted();
 }
 
 void HomingInterfaceProprioceptive::handleStateChanged(const quint8& state)
