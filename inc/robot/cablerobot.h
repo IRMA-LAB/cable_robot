@@ -1,7 +1,7 @@
 /**
  * @file cablerobot.h
  * @author Simone Comari, Edoardo Idà
- * @date 18 Jun 2019
+ * @date 10 JuL 2019
  * @brief File containing the virtualization of the physical cable robot, in terms of
  * components, signalig and low level operations.
  */
@@ -17,7 +17,7 @@
 #include "StateMachine.h"
 #include "easylogging++.h"
 #include "inc/filters.h"
-#include "libcdpr/inc/types.h"
+#include "libcdpr/inc/cdpr_types.h"
 #include "libgrabec/inc/ethercatmaster.h"
 #if INCLUDE_EASYCAT
 #include "slaves/easycat/TestEasyCAT1_slave.h"
@@ -99,8 +99,21 @@ class CableRobot: public QObject,
 
   // Tuning params for waiting functions
   static constexpr double kCycleWaitTimeSec = 0.02; /**< [sec] Cycle time when waiting. */
-  static constexpr double kMaxWaitTimeSec   = 5.0; /**< [sec] Maximum waiting time. */
+  static constexpr double kMaxWaitTimeSec   = 5.0;  /**< [sec] Maximum waiting time. */
 
+  /**
+   * @brief Get all robot parameters.
+   * @return All robot parameters.
+   */
+  const grabcdpr::Params& GetParams() const { return params_; }
+  /**
+   * @brief Get the parameters of active robot components.
+   *
+   * This is a subset of all robot parameters. It includes robot platform parameters and
+   * the parameters of each active actuator.
+   * @return The parameters of active robot components
+   */
+  grabcdpr::Params GetActiveComponentsParams() const;
   /**
    * @brief Get a pointer to inquired actuator.
    * @param[in] motor_id The ID of the inquired actuator.
@@ -378,6 +391,7 @@ class CableRobot: public QObject,
  private:
   grabcdpr::PlatformVars platform_;
   grabcdpr::Vars cdpr_status_;
+  grabcdpr::Params params_;
 
   // Timers for status updates
   static constexpr int kMotorStatusIntervalMsec_    = 100;

@@ -1,7 +1,7 @@
 /**
  * @file cablerobot.cpp
  * @author Simone Comari, Edoardo Idà
- * @date 19 Jun 2019
+ * @date 10 JuL 2019
  * @brief File containing definitions of functions and class declared in cablerobot.h.
  */
 
@@ -14,8 +14,8 @@ constexpr double CableRobot::kCutoffFreq_;
 
 CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
   : QObject(parent), StateMachine(ST_MAX_STATES), platform_(grabcdpr::TILT_TORSION),
-    log_buffer_(el::Loggers::getLogger("data")), stop_waiting_cmd_recv_(false),
-    is_waiting_(false), prev_state_(ST_MAX_STATES)
+    params_(config), log_buffer_(el::Loggers::getLogger("data")),
+    stop_waiting_cmd_recv_(false), is_waiting_(false), prev_state_(ST_MAX_STATES)
 {
   PrintStateTransition(prev_state_, ST_IDLE);
   prev_state_ = ST_IDLE;
@@ -33,12 +33,12 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
 #endif
   for (uint i = 0; i < config.actuators.size(); i++)
   {
-    grabcdpr::CableVars cable;
-    cdpr_status_.cables.push_back(cable);
     actuators_ptrs_.push_back(new Actuator(i, slave_pos++, config.actuators[i], this));
     slaves_ptrs_.push_back(actuators_ptrs_[i]->GetWinch().GetServo());
     if (config.actuators[i].active)
     {
+      grabcdpr::CableVars cable;
+      cdpr_status_.cables.push_back(cable);
       active_actuators_id_.push_back(i);
       active_actuators_ptrs_.push_back(actuators_ptrs_[i]);
       connect(actuators_ptrs_[i], SIGNAL(printToQConsole(QString)), this,
@@ -51,7 +51,7 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
 
   // Setup data logging
   rt_logging_enabled_ = false;
-  rt_logging_mod_ = 1;
+  rt_logging_mod_     = 1;
   meas_.resize(active_actuators_id_.size());
   connect(this, SIGNAL(sendMsg(QByteArray)), &log_buffer_, SLOT(collectMsg(QByteArray)),
           Qt::QueuedConnection);
@@ -90,15 +90,23 @@ CableRobot::~CableRobot()
   for (Actuator* actuator_ptr : actuators_ptrs_)
   {
     if (actuator_ptr->IsActive())
-    {
       disconnect(actuator_ptr, SIGNAL(printToQConsole(QString)), this,
                  SLOT(forwardPrintToQConsole(QString)));
-    }
     delete actuator_ptr;
   }
 }
 
 //--------- Public Functions --------------------------------------------------------//
+
+grabcdpr::Params CableRobot::GetActiveComponentsParams() const
+{
+  grabcdpr::Params params;
+  params.platform = params_.platform;
+  for (const auto& actuator_params : params_.actuators)
+    if (actuator_params.active)
+      params.actuators.push_back(actuator_params);
+  return params;
+}
 
 const Actuator* CableRobot::GetActuator(const id_t motor_id)
 {
@@ -269,7 +277,7 @@ void CableRobot::StartRtLogging(const uint rt_cycle_multiplier)
 {
   pthread_mutex_lock(&mutex_);
   rt_logging_enabled_ = true;
-  rt_logging_mod_ = rt_cycle_multiplier;
+  rt_logging_mod_     = rt_cycle_multiplier;
   pthread_mutex_unlock(&mutex_);
 }
 

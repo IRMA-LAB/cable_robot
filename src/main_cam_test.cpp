@@ -1,6 +1,6 @@
 #include <QApplication>
 
-#include "lib/easyloggingpp/src/easylogging++.h"
+#include "libs/easyloggingpp/src/easylogging++.h"
 #include "utils/easylog_wrapper.h"
 
 #include "gui/camera/camera_widget.h"

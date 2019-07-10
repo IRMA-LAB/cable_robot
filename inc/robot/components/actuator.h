@@ -12,7 +12,7 @@
 
 #include "StateMachine.h"
 #include "easylogging++.h"
-#include "libcdpr/inc/types.h"
+#include "libcdpr/inc/cdpr_types.h"
 #include "libgrabrt/inc/clocks.h"
 
 #include "pulleys_system.h"

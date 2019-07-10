@@ -11,7 +11,7 @@
 
 #include <stdlib.h>
 
-#include "libcdpr/inc/types.h"
+#include "libcdpr/inc/cdpr_types.h"
 
 #include "utils/types.h"
 

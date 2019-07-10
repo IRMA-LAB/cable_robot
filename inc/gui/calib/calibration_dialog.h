@@ -11,7 +11,7 @@
 #include <QDialog>
 
 #include "easylogging++.h"
-#include "libcdpr/inc/types.h"
+#include "libcdpr/inc/cdpr_types.h"
 
 #include "gui/calib/calib_interface_excitation.h"
 #include "robot/cablerobot.h"

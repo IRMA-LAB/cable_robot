@@ -17,7 +17,8 @@
 #include "opencv2/calib3d.hpp"
 #include "opencv2/core.hpp"
 
-#include "libgrabec/inc/slaves/goldsolowhistledrive.h"
+#include "common.h"
+#include "slaves/goldsolowhistledrive.h"
 
 /**
  * @brief StringBuf typedef.
@@ -195,6 +196,12 @@ struct CameraParams
     for (int i = 0; i < 4; i++)
       dist_coeff.at<double>(i, 0) = dist.at<double>(i, 0);
   }
+
+  bool isEmpty() const
+  {
+    return grabnum::IsClose(cv::norm(dist_coeff), 0.0) ||
+           grabnum::IsClose(cv::determinant(camera_matrix), 1.0);
+  }
 };
 
 /**
@@ -300,7 +307,7 @@ struct Trajectory
   id_t id = 0;      /**< The ID of the trajectory, for example of the relative motor. */
   vectD timestamps; /**< An array of timestamps in seconds. */
   vect<T> values;   /**< An array of generic scalar values. */
-  
+
   /**
    * By default, ID is 0 and trajectory is empty.
    */

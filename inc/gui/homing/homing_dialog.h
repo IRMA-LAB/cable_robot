@@ -11,7 +11,7 @@
 #include <QDialog>
 
 #include "easylogging++.h"
-#include "libcdpr/inc/types.h"
+#include "libcdpr/inc/cdpr_types.h"
 
 #include "gui/homing/homing_interface_proprioceptive.h"
 #include "gui/homing/homing_interface_vision.h"

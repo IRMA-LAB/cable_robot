@@ -15,7 +15,7 @@
 #include <QSpacerItem>
 
 #include "easylogging++.h"
-#include "libcdpr/inc/types.h"
+#include "libcdpr/inc/cdpr_types.h"
 
 #include "ctrl/controller_singledrive.h"
 #include "gui/apps/joints_pvt_dialog.h"

@@ -1,7 +1,7 @@
 /**
  * @file login_window.h
  * @author Simone Comari
- * @date 13 Mar 2019
+ * @date 09 Jul 2019
  * @brief This file takes care of the implementation of the login window of cable robot
  * app.
  */
@@ -19,7 +19,7 @@
 #include <iostream>
 
 #include "json.hpp"
-#include "libcdpr/inc/types.h"
+#include "libcdpr/inc/cdpr_types.h"
 #include "main_gui.h"
 #include "robotconfigjsonparser.h"
 
@@ -46,7 +46,7 @@ class LoginWindow: public QMainWindow
    * @param[in] parent The parent QWidget, in this case the QApplication of cable robot
    * app.
    */
-  explicit LoginWindow(QWidget* parent = 0);
+  explicit LoginWindow(QWidget* parent = nullptr);
   ~LoginWindow();
 
  private slots:

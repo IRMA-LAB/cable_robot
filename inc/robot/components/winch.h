@@ -8,7 +8,7 @@
 #ifndef CABLE_ROBOT_WINCH_H
 #define CABLE_ROBOT_WINCH_H
 
-#include "libcdpr/inc/types.h"
+#include "libcdpr/inc/cdpr_types.h"
 #include "libgrabec/inc/slaves/goldsolowhistledrive.h"
 
 #include "utils/types.h"
