@@ -223,11 +223,11 @@ bool WorkerThread::computeCameraParams()
   bool ok =
     checkRange(camera_params_.camera_matrix) && checkRange(camera_params_.dist_coeff);
 
-//  object_points.clear();
-//  object_points.resize(image_points_.size(), new_obj_points);
-//  // Different way to compute reprojection error see comment in that function
-//  double total_avg_err =
-//    computeCalibReprojectionErr(object_points, rvecs, tvecs, reproj_errs);
+  //  object_points.clear();
+  //  object_points.resize(image_points_.size(), new_obj_points);
+  //  // Different way to compute reprojection error see comment in that function
+  //  double total_avg_err =
+  //    computeCalibReprojectionErr(object_points, rvecs, tvecs, reproj_errs);
 
   return ok;
 }
@@ -244,6 +244,7 @@ double WorkerThread::computeCalibReprojectionErr(
 
   for (size_t i = 0; i < object_points.size(); ++i)
   {
+    // undistorted points coordinates
     if (settings_.use_fisheye)
     {
       cv::fisheye::projectPoints(object_points[i], image_points2, r_vecs[i], t_vecs[i],
@@ -255,17 +256,18 @@ double WorkerThread::computeCalibReprojectionErr(
                         camera_params_.camera_matrix, camera_params_.dist_coeff,
                         image_points2);
     }
-
+    // compute relative difference norm between the observed feature points imagePoints
+    // and the projected using camera_params_.camera_matrix and camera_params_.dist_coeff
     err = cv::norm(image_points_[i], image_points2, cv::NORM_L2);
 
     size_t n = object_points[i].size();
     // compute and store error for each view and store in a vector, every elements contain
-    // reprojection error for that view
+    // reprojection error for image
     per_view_errors[i] = float(std::sqrt(err * err / n));
     total_err += err * err;
     total_points += n;
   }
-  // sum of norm of difference from real point and computed points
+  // root mean square error same as return of calibrateCameraRO
   return std::sqrt(total_err / total_points);
 }
 

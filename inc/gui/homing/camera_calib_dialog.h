@@ -41,7 +41,7 @@ class CameraCalibDialog: public QDialog
    * @brief CameraCalibDialog
    * @param parent
    */
-  explicit CameraCalibDialog(QWidget* parent = 0);
+  explicit CameraCalibDialog(QWidget* parent = nullptr);
   ~CameraCalibDialog();
 
  signals:

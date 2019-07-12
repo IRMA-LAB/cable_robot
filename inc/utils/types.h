@@ -203,17 +203,25 @@ struct CameraCalibSettings
 
   // Advanced settings
   cv::Size board_size = cv::Size(9, 6); /**< Chessboard corners size. */
-  float square_size   = 26.f;           /**< The size of a chessboard square in mm. */
-  double delay        = 0.5;            /**< [s] In case of a video input. */
-  double max_precision =
-    0.00001; /**< Number of max precision. It must be less than value in camera. */
+  float square_size   = 26.f;           /**< The size of a chessboard square in [mm] */
+  double delay        = 0.5; /**< [s] minimun delay value between 2 frame processing */
+  /**
+   * @brief Max precision of corner position
+   * Max precision of corner position in sub pixel detection;
+   * when the corner position moves by less than max_precision
+   */
+  double max_precision = 0.00001;
   int chess_board_flags =
     cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_NORMALIZE_IMAGE |
     cv::CALIB_CB_FAST_CHECK; /**< Set chessboard flag to findChessboard. */
   std::string ofilepath = SRCDIR "/output_camera_calibration.json";
   int cor_sp_size       = 11;   /**< Windows dimension for sub-pixel accurate location. */
   int zero_zone         = -1;   /**< Half dimension of zero-zone. */
-  int max_counter       = 50;   /**< Number of max iteration. */
+  /**
+   * @brief Number of max iteration
+   * Number of max iteration to computer corner position in sub pixel detection
+   */
+  int max_counter       = 50;
   bool write_points     = true; /**< Write detected feature points. */
   bool write_extrinsics = true; /**< Write extrinsic parameters. */
   bool write_grid       = true; /**< Write refined 3D target grid points. */
