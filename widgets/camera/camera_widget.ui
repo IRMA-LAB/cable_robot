@@ -270,6 +270,11 @@
            <string>Grayscale</string>
           </property>
          </item>
+         <item>
+          <property name="text">
+           <string>Augmented</string>
+          </property>
+         </item>
         </widget>
        </item>
        <item>

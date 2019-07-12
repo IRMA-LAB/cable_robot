@@ -1,7 +1,7 @@
 /**
  * @file utils/types.h
  * @author Simone Comari
- * @date 03 Jul 2019
+ * @date 12 Jul 2019
  * @brief File containing the implementation of a custom wrapper to log cable robot data
  * employing easylogging++ package.
  */
@@ -174,9 +174,8 @@ struct ActuatorStatus: WinchStatus
  */
 struct CameraParams
 {
-  cv::Mat camera_matrix = cv::Mat::eye(3, 3, CV_64F); /**< The camera matrix. */
-  cv::Mat dist_coeff =
-    cv::Mat::zeros(4, 1, CV_64F); /**< The distortion coefficients vector. */
+  cv::Mat camera_matrix;
+  cv::Mat dist_coeff;
 
   /**
    * @brief CameraParams default constructor.
@@ -189,18 +188,27 @@ struct CameraParams
    */
   CameraParams(const cv::Mat& cam_mat, const cv::Mat& dist)
   {
-    for (int i = 0; i < 3; i++)
-      for (int j = 0; j < 3; j++)
-        camera_matrix.at<double>(i, j) = cam_mat.at<double>(i, j);
-
-    for (int i = 0; i < 4; i++)
-      dist_coeff.at<double>(i, 0) = dist.at<double>(i, 0);
+    camera_matrix = cam_mat.clone();
+    dist_coeff    = dist.clone();
   }
 
   bool isEmpty() const
   {
-    return grabnum::IsClose(cv::norm(dist_coeff), 0.0) ||
-           grabnum::IsClose(cv::determinant(camera_matrix), 1.0);
+    return camera_matrix.empty() || dist_coeff.empty();
+  }
+
+  void clear()
+  {
+    camera_matrix.release();
+    dist_coeff.release();
+  }
+
+  void fill(const vectD& cam_mat, const vectD& dist_c)
+  {
+    camera_matrix = cv::Mat::eye(3, 3, CV_64F);
+    dist_coeff    = cv::Mat::zeros(static_cast<int>(dist_c.size()), 1, CV_64F);
+    memcpy(camera_matrix.data, cam_mat.data(), cam_mat.size() * sizeof(double));
+    memcpy(dist_coeff.data, dist_c.data(), dist_c.size() * sizeof(double));
   }
 };
 
@@ -216,8 +224,8 @@ struct CameraCalibSettings
 
   // Advanced settings
   cv::Size board_size = cv::Size(9, 6); /**< Chessboard corners size. */
-  float square_size   = 26.f;           /**< The size of a chessboard square in mm. */
-  double delay        = 0.5;            /**< [s] In case of a video input. */
+  float square_size   = 25.5f;             /**< The size of a chessboard square in mm. */
+  double delay        = 0.5;              /**< [s] In case of a video input. */
   double max_precision =
     0.00001; /**< Number of max precision. It must be less than value in camera. */
   int chess_board_flags =

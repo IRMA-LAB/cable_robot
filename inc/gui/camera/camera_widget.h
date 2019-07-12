@@ -1,7 +1,7 @@
 /**
  * @file camera_widget.h
  * @author Simone Comari
- * @date 09 Jul 2019
+ * @date 12 Jul 2019
  * @brief This file includes a widget to stream a USB camera.
  */
 
@@ -38,7 +38,9 @@ class CameraWidget;
 enum VideoStreamType
 {
   ORIGINAL,
-  GRAYSCALE
+  GRAYSCALE,
+  AUGMENTED,
+  UNDISTORTED
 };
 
 /**
@@ -88,9 +90,15 @@ class CameraWidget: public QWidget
   CameraWidget();
   ~CameraWidget();
 
-  const cv::Mat& getLatestFrame() const { return frame_; }
+  Ui::CameraWidget* ui;
+  const cv::Mat& getLatestFrame() const { return processed_frame_; }
+
+  void changeStreamType(const VideoStreamType new_type);
+  void enableStreamType(const bool value = true);
 
   void stopVideoStream();
+
+  bool isStreaming() const { return video_.isOpened(); }
 
  signals:
   /**
@@ -105,6 +113,13 @@ class CameraWidget: public QWidget
    * @brief calibParamsReady
    */
   void calibParamsReady(const CameraParams&) const;
+  /**
+   * @brief videoStreamStopped
+   */
+  void videoStreamStopped() const;
+
+ public slots:
+  void setAugmentedFrame(const cv::Mat& augm_frame);
 
  private slots:
   void on_comboBox_channel_currentIndexChanged(const QString& arg1);
@@ -123,15 +138,19 @@ class CameraWidget: public QWidget
 private slots:
   void storeCameraParams(const CameraParams& params);
   void frwPrintToQConsole(const QString& msg) { emit printToQConsole(msg); }
+  void handleCalibrationStatusChanged(const CalibrationStatus status);
 
 private:
-  Ui::CameraWidget* ui;
-  CameraCalibDialog* calib_dialog_ = NULL;
+  CameraCalibDialog* calib_dialog_ = nullptr;
+
+  QMutex mutex_;
 
   QGraphicsVideoStreamerItem video_streamer_;
   cv::VideoCapture video_;
   cv::VideoWriter video_rec_;
-  cv::Mat frame_;
+  cv::Mat processed_frame_;
+  cv::Mat augmented_frame_;
+  cv::Mat display_frame_;
   QImage qimg_;
   VideoStreamType stream_type_;
 
@@ -140,6 +159,8 @@ private:
   void stream();
 
   void processFrame(const cv::Mat& raw_frame);
+  cv::Mat getUndistortedImage(const cv::Mat& raw_frame);
+  void displayFrame();
   void mapToQImage();
 
   void displayStream();

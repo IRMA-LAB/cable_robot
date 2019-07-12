@@ -1,7 +1,7 @@
 /**
  * @file homing_vision_app.cpp
  * @author Marco Caselli, Simone Comari
- * @date 10 JuL 2019
+ * @date 12 Jul 2019
  * @brief This file includes definitions of classes present in homing_vision_app.h.
  */
 
@@ -31,6 +31,8 @@ void HomingVisionApp::applyPoseEstimate()
   grabcdpr::Params params = robot_ptr_->GetActiveComponentsParams();
   grabcdpr::Vars cdpr_vars; // empty container
   cdpr_vars.cables.resize(params.actuators.size());
+  //debug
+  return;
   grabcdpr::UpdateIK0<grabnum::Vector3d, grabcdpr::Vars>(position, orientation, &params,
                                                          &cdpr_vars);
   // Update homing configuration for each cable/pulley.
@@ -73,6 +75,7 @@ void HomingVisionApp::run()
     // Check if stop command was sent
     if (stop_)
     {
+      stop_ = false; // reset
       mutex_.unlock();
       break;
     }
@@ -85,9 +88,8 @@ void HomingVisionApp::run()
     mutex_.unlock();
 
     // Try to estimate platform pose from chessboard
-    pose_ready_ |= poseEstimationFromCoplanarPoints();
-    if (pose_ready_)
-      showAugmentedFrame();
+    pose_ready_ = poseEstimationFromCoplanarPoints();
+    showAugmentedFrame();
   }
 }
 
@@ -123,6 +125,10 @@ bool HomingVisionApp::poseEstimationFromCoplanarPoints()
 
 bool HomingVisionApp::calcImageCorner()
 {
+  static constexpr int kFisheyeDistCoeffNum = 4;
+  static constexpr double kWarningMsgPeriod = 1.0; // [sec]
+  static grabrt::Clock clock;
+
   std::vector<cv::Point2f> corners;
   object_points_.clear();
   object_points_planar_.clear();
@@ -132,7 +138,11 @@ bool HomingVisionApp::calcImageCorner()
                                          settings_.chess_board_flags);
   if (!found)
   {
-    emit printToQConsole("WARNING: Could not find chessboard");
+    if (clock.Elapsed() > kWarningMsgPeriod)
+    {
+      emit printToQConsole("WARNING: Chessboard not found");
+      clock.Reset();
+    }
     return false;
   }
 
@@ -150,7 +160,7 @@ bool HomingVisionApp::calcImageCorner()
     object_points_planar_.push_back(
       cv::Point2f(object_points_[i].x, object_points_[i].y));
 
-  if (static_cast<uint>(camera_params_.dist_coeff.rows) == 4)
+  if (camera_params_.dist_coeff.rows == kFisheyeDistCoeffNum)
     cv::fisheye::undistortPoints(corners, image_points_, camera_params_.camera_matrix,
                                  camera_params_.dist_coeff);
   else
@@ -169,11 +179,15 @@ void HomingVisionApp::calcChessboardCorners(std::vector<cv::Point3f>& corners)
 
 void HomingVisionApp::showAugmentedFrame()
 {
-  cv::Mat rvec;
-  cv::Rodrigues(R_b2c, rvec);
-  cv::drawFrameAxes(frame_, camera_params_.camera_matrix, camera_params_.dist_coeff, rvec,
-                    t_b2c, 2 * settings_.square_size);
-  emit frameReadyToShow(frame_);
+  cv::Mat augm_frame = frame_.clone();
+  if (pose_ready_)
+  {
+    cv::Mat rvec;
+    cv::Rodrigues(R_b2c, rvec);
+    cv::drawFrameAxes(augm_frame, camera_params_.camera_matrix, camera_params_.dist_coeff,
+                      rvec, t_b2c, 2 * settings_.square_size);
+  }
+  emit frameReadyToShow(augm_frame);
 }
 
 void HomingVisionApp::calcPlatformGlobalPose(grabnum::Vector3d& position,
@@ -181,8 +195,8 @@ void HomingVisionApp::calcPlatformGlobalPose(grabnum::Vector3d& position,
 {
   QString message =
     QString("Estimated camera-to-chessboard transformation:\n"
-            "rotation matrix:\n [ %1  %2  %3 ]\n [ %4  %5 %6 ]\n [ %7  %8  %9 ]\n"
-            "translation vector:\n [ %10  %11  %12 ]^T")
+            "Rotation matrix:\n [ %1  %2  %3 ]\n [ %4  %5 %6 ]\n [ %7  %8  %9 ]\n"
+            "Translation vector:\n [ %10  %11  %12 ]^T")
       .arg(R_b2c.at<double>(0, 0))
       .arg(R_b2c.at<double>(0, 1))
       .arg(R_b2c.at<double>(0, 2))

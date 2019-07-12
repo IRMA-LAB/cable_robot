@@ -1,7 +1,7 @@
 /**
  * @file camera_calib_app.cpp
  * @author Simone Comari, Marco Caselli
- * @date 09 Jul 2019
+ * @date 12 Jul 2019
  * @brief Implementation of classes declared in camera_calib_app.h
  */
 
@@ -48,8 +48,8 @@ void WorkerThread::run()
     if (stop_)
     {
       mutex_.unlock();
-      emit processFrameError();
-      break;
+      emit calibrationFailed();
+      return;
     }
 
     // Grab new frame
@@ -60,12 +60,17 @@ void WorkerThread::run()
     mutex_.unlock();
 
     // Process frame
-    if (processFrame(frame))
+    if (calibrationSamplesCollected(frame))
       break;
   }
+
+  if (runCalibration())
+    emit resultReady(camera_params_);
+  else
+    emit calibrationFailed();
 }
 
-bool WorkerThread::processFrame(const cv::Mat& frame)
+bool WorkerThread::calibrationSamplesCollected(const cv::Mat& frame)
 {
   static ulong counter = 0;
   if (storeValidFrame(frame))
@@ -75,8 +80,6 @@ bool WorkerThread::processFrame(const cv::Mat& frame)
     return false;
 
   counter = 0;
-  runCalibration();
-  emit resultReady(camera_params_);
   return true;
 }
 
@@ -93,8 +96,13 @@ bool WorkerThread::findChessboard(const cv::Mat& image)
 {
   bool found = cv::findChessboardCorners(image, settings_.board_size, point_buf_,
                                          settings_.chess_board_flags);
+
   // Draw the corners.
-  cv::drawChessboardCorners(image, settings_.board_size, cv::Mat(point_buf_), found);
+  cv::Mat augmented_image = image.clone();
+  cv::drawChessboardCorners(augmented_image, settings_.board_size, cv::Mat(point_buf_),
+                            found);
+  emit augmentedFrameAvailable(augmented_image);
+
   return found;
 }
 
@@ -199,9 +207,16 @@ bool WorkerThread::computeCameraParams()
   if (settings_.use_fisheye)
   {
     cv::Mat _rvecs, _tvecs;
-    rms = cv::fisheye::calibrate(object_points, image_points_, image_size_,
-                                 camera_params_.camera_matrix, camera_params_.dist_coeff,
-                                 _rvecs, _tvecs, settings_.calibFlags());
+    try
+    {
+      rms = cv::fisheye::calibrate(
+        object_points, image_points_, image_size_, camera_params_.camera_matrix,
+        camera_params_.dist_coeff, _rvecs, _tvecs, settings_.calibFlags());
+    }
+    catch (cv::Exception)
+    {
+      return false;
+    }
 
     rvecs.reserve(static_cast<size_t>(_rvecs.rows));
     tvecs.reserve(static_cast<size_t>(_tvecs.rows));
@@ -220,17 +235,10 @@ bool WorkerThread::computeCameraParams()
                                 rvecs, tvecs, new_obj_points, settings_.calibFlags());
   }
   // rms is the overall RMS re-projection error
-  //  std::cout << "Re-projection error reported by calibrateCamera: " << rms <<
-  //  std::endl;
+  emit printToQConsole(QString("Re-projection error RMS: %1").arg(rms));
 
   bool ok =
     checkRange(camera_params_.camera_matrix) && checkRange(camera_params_.dist_coeff);
-
-//  object_points.clear();
-//  object_points.resize(image_points_.size(), new_obj_points);
-//  // Different way to compute reprojection error see comment in that function
-//  double total_avg_err =
-//    computeCalibReprojectionErr(object_points, rvecs, tvecs, reproj_errs);
 
   return ok;
 }
@@ -272,25 +280,6 @@ double WorkerThread::computeCalibReprojectionErr(
   return std::sqrt(total_err / total_points);
 }
 
-cv::Mat WorkerThread::getUndistortedImage(const cv::Mat& image)
-{
-  cv::Mat undistorted;
-  if (settings_.use_fisheye)
-    cv::fisheye::undistortImage(image, undistorted, camera_params_.camera_matrix,
-                                camera_params_.dist_coeff, camera_params_.camera_matrix);
-  else
-    cv::undistort(image, undistorted, camera_params_.camera_matrix,
-                  camera_params_.dist_coeff, camera_params_.camera_matrix);
-  // Add text
-  int base_line      = 0;
-  std::string msg    = "Undistorted";
-  cv::Size text_size = cv::getTextSize(msg, 5, 1, 1, &base_line);
-  cv::Point text_origin(undistorted.cols - 2 * text_size.width - 10,
-                        undistorted.rows - 2 * base_line - 10);
-  cv::putText(undistorted, msg, text_origin, 1, 1.6, cv::Scalar(0, 255, 0), 2);
-  return undistorted;
-}
-
 //------------------------------------------------------------------------------------//
 //--------- CameraCalibApp class -----------------------------------------------------//
 //------------------------------------------------------------------------------------//
@@ -314,9 +303,13 @@ void CameraCalibApp::start(const CameraCalibSettings& settings)
           &CameraCalibApp::updateProgressBar);
   connect(worker_thread_, &WorkerThread::resultReady, this,
           &CameraCalibApp::handleResults);
-  connect(worker_thread_, &WorkerThread::processFrameError, this,
+  connect(worker_thread_, &WorkerThread::calibrationFailed, this,
           &CameraCalibApp::handleErrors);
   connect(worker_thread_, &WorkerThread::finished, this, &CameraCalibApp::workFinished);
+  connect(worker_thread_, &WorkerThread::augmentedFrameAvailable, this,
+          &CameraCalibApp::frwAugmentedFrame);
+  connect(worker_thread_, &WorkerThread::printToQConsole, this,
+          &CameraCalibApp::frwPrintToQConsole);
   worker_thread_->start();
 }
 
@@ -356,6 +349,16 @@ void CameraCalibApp::workFinished()
   delete worker_thread_;
   worker_thread_ = nullptr;
   close();
+}
+
+void CameraCalibApp::frwAugmentedFrame(const cv::Mat& augmented_frame) const
+{
+  emit augmentedFrameAvailable(augmented_frame);
+}
+
+void CameraCalibApp::frwPrintToQConsole(const QString& msg) const
+{
+  emit printToQConsole(msg);
 }
 
 //--------- Private functions --------------------------------------------------------//

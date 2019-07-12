@@ -1,7 +1,7 @@
 /**
  * @file camera_widget.cpp
  * @author Simone Comari
- * @date 09 Jul 2019
+ * @date 11 Jul 2019
  * @brief This file includes definitions of classes present in camera_widget.h.
  */
 
@@ -80,6 +80,16 @@ CameraWidget::~CameraWidget()
 
 //--------- Public functions --------------------------------------------------------//
 
+void CameraWidget::changeStreamType(const VideoStreamType new_type)
+{
+  ui->comboBox_channel->setCurrentIndex(new_type);
+}
+
+void CameraWidget::enableStreamType(const bool value /*= true*/)
+{
+  ui->comboBox_channel->setEnabled(value);
+}
+
 void CameraWidget::stopVideoStream()
 {
   if (!video_.isOpened())
@@ -88,9 +98,12 @@ void CameraWidget::stopVideoStream()
   if (video_rec_.isOpened())
     ui->pushButton_stopRec->click();
   video_.release();
+  emit videoStreamStopped();
   CLOG(INFO, "event") << "Video stream stopped";
 
   ui->comboBox_source->setEnabled(true);
+  ui->comboBox_channel->setCurrentIndex(VideoStreamType::ORIGINAL);
+  ui->comboBox_channel->removeItem(VideoStreamType::UNDISTORTED);
   ui->pushButton_start->setEnabled(true);
   ui->pushButton_stop->setDisabled(true);
   ui->pushButton_calib->setDisabled(true);
@@ -101,6 +114,21 @@ void CameraWidget::stopVideoStream()
   pixmap.fill(Qt::white);
   video_streamer_.setPixmap(pixmap);
   ui->graphicsView_video->fitInView(&video_streamer_, Qt::KeepAspectRatio);
+  processed_frame_.release();
+  augmented_frame_.release();
+  display_frame_.release();
+  camera_params_.clear();
+}
+
+//--------- Public slots ------------------------------------------------------------//
+
+void CameraWidget::setAugmentedFrame(const cv::Mat& augm_frame)
+{
+  if (augm_frame.empty())
+    return;
+  mutex_.lock();
+  augm_frame.copyTo(augmented_frame_);
+  mutex_.unlock();
 }
 
 //--------- Private GUI slots -------------------------------------------------------//
@@ -108,10 +136,14 @@ void CameraWidget::stopVideoStream()
 void CameraWidget::on_comboBox_channel_currentIndexChanged(const QString& arg1)
 {
   CLOG(TRACE, "event") << arg1;
-  if (arg1 == "Grayscale")
-    stream_type_ = VideoStreamType::GRAYSCALE;
-  else
+  if (arg1 == "Original")
     stream_type_ = VideoStreamType::ORIGINAL;
+  else if (arg1 == "Grayscale")
+    stream_type_ = VideoStreamType::GRAYSCALE;
+  else if (arg1 == "Augmented")
+    stream_type_ = VideoStreamType::AUGMENTED;
+  else
+    stream_type_ = VideoStreamType::UNDISTORTED;
 }
 
 void CameraWidget::on_pushButton_start_clicked()
@@ -148,11 +180,15 @@ void CameraWidget::on_pushButton_calib_clicked()
   deleteCalibDialog();
   calib_dialog_ = new CameraCalibDialog(this);
   connect(this, SIGNAL(newFrameGrabbed(cv::Mat)), calib_dialog_,
-          SLOT(getNewVideoFrame(cv::Mat)));
+          SLOT(setNewVideoFrame(cv::Mat)));
   connect(calib_dialog_, SIGNAL(cameraParamsReady(CameraParams)), this,
           SLOT(storeCameraParams(CameraParams)));
   connect(calib_dialog_, SIGNAL(printToQConsole(QString)), this,
           SLOT(frwPrintToQConsole(QString)));
+  connect(calib_dialog_, SIGNAL(augmentedFrameAvailable(cv::Mat)), this,
+          SLOT(setAugmentedFrame(cv::Mat)));
+  connect(calib_dialog_, SIGNAL(calibrationStatusChanged(CalibrationStatus)), this,
+          SLOT(handleCalibrationStatusChanged(CalibrationStatus)));
   calib_dialog_->show();
 }
 
@@ -189,7 +225,7 @@ void CameraWidget::on_pushButton_takeImage_clicked()
   bool result = false;
   try
   {
-    result = imwrite(filepath, frame_);
+    result = imwrite(filepath, processed_frame_);
   }
   catch (const cv::Exception& ex)
   {
@@ -241,7 +277,8 @@ void CameraWidget::on_pushButton_record_clicked()
       .filePath(tr("video_rec_%1.avi")
                   .arg(QDateTime::currentDateTime().toString("yyyyMMdd-hhmmss")))
       .toStdString(); // name of the output video file
-  video_rec_.open(filepath, codec, fps, frame_.size(), (frame_.type() == CV_8UC3));
+  video_rec_.open(filepath, codec, fps, processed_frame_.size(),
+                  (processed_frame_.type() == CV_8UC3));
   // Check if we succeeded
   if (!video_rec_.isOpened())
   {
@@ -277,6 +314,16 @@ void CameraWidget::storeCameraParams(const CameraParams& params)
   camera_params_ = params;
   emit calibParamsReady(camera_params_);
   deleteCalibDialog();
+  if (ui->comboBox_channel->findText("Undistorted") < 0)
+    ui->comboBox_channel->addItem("Undistorted");
+}
+
+void CameraWidget::handleCalibrationStatusChanged(const CalibrationStatus status)
+{
+  ui->comboBox_channel->setCurrentIndex((status == CalibrationStatus::ON)
+                                          ? VideoStreamType::AUGMENTED
+                                          : VideoStreamType::ORIGINAL);
+  ui->comboBox_channel->setDisabled(status == CalibrationStatus::ON);
 }
 
 //--------- Private functions -------------------------------------------------------//
@@ -291,17 +338,9 @@ void CameraWidget::stream()
     if (!frame.empty())
     {
       processFrame(frame);
-      emit newFrameGrabbed(frame_);
+      emit newFrameGrabbed(processed_frame_);
 
-      if (video_rec_.isOpened())
-        video_rec_.write(frame_);
-
-      if (calib_dialog_ == NULL || calib_dialog_->isHidden())
-      {
-        mapToQImage();
-        video_streamer_.setPixmap(QPixmap::fromImage(qimg_.rgbSwapped()));
-        ui->graphicsView_video->fitInView(&video_streamer_, Qt::KeepAspectRatio);
-      }
+      displayFrame();
     }
     qApp->processEvents();
   }
@@ -312,27 +351,62 @@ void CameraWidget::processFrame(const cv::Mat& raw_frame)
   switch (stream_type_)
   {
     case GRAYSCALE:
-      cv::cvtColor(raw_frame, frame_, cv::COLOR_RGB2GRAY);
+      cv::cvtColor(raw_frame, processed_frame_, cv::COLOR_RGB2GRAY);
       break;
-    case ORIGINAL:
-      frame_ = raw_frame;
+    case UNDISTORTED:
+      processed_frame_ = getUndistortedImage(raw_frame);
       break;
+    default:
+      processed_frame_ = raw_frame;
+      break;
+  }
+}
+
+cv::Mat CameraWidget::getUndistortedImage(const cv::Mat& raw_frame)
+{
+  static constexpr int kFisheyeDistCoeffNum = 4;
+
+  if (camera_params_.isEmpty())
+    return raw_frame;
+
+  cv::Mat undistorted;
+  if (camera_params_.dist_coeff.rows == kFisheyeDistCoeffNum)
+    cv::fisheye::undistortImage(raw_frame, undistorted, camera_params_.camera_matrix,
+                                camera_params_.dist_coeff, camera_params_.camera_matrix);
+  else
+    cv::undistort(raw_frame, undistorted, camera_params_.camera_matrix,
+                  camera_params_.dist_coeff, camera_params_.camera_matrix);
+  return undistorted;
+}
+
+void CameraWidget::displayFrame()
+{
+  if (stream_type_ == VideoStreamType::AUGMENTED)
+  {
+    mutex_.lock();
+    augmented_frame_.copyTo(display_frame_);
+    mutex_.unlock();
+  }
+  else
+    processed_frame_.copyTo(display_frame_);
+
+  if (video_rec_.isOpened() && !display_frame_.empty())
+    video_rec_.write(display_frame_);
+
+  if (calib_dialog_ == nullptr || calib_dialog_->isHidden())
+  {
+    mapToQImage();
+    video_streamer_.setPixmap(QPixmap::fromImage(qimg_.rgbSwapped()));
+    ui->graphicsView_video->fitInView(&video_streamer_, Qt::KeepAspectRatio);
   }
 }
 
 void CameraWidget::mapToQImage()
 {
-  switch (stream_type_)
-  {
-    case GRAYSCALE:
-      qimg_ = QImage(frame_.data, frame_.cols, frame_.rows, (int)frame_.step,
-                     QImage::Format_Grayscale8);
-      break;
-    case ORIGINAL:
-      qimg_ = QImage(frame_.data, frame_.cols, frame_.rows, (int)frame_.step,
-                     QImage::Format_RGB888);
-      break;
-  }
+  qimg_ = QImage(display_frame_.data, display_frame_.cols, display_frame_.rows,
+                 (int)display_frame_.step,
+                 (display_frame_.channels() == 1) ? QImage::Format_Grayscale8
+                                                  : QImage::Format_RGB888);
 }
 
 void CameraWidget::displayStream()
@@ -365,16 +439,18 @@ void CameraWidget::closeEvent(QCloseEvent* event)
 
 void CameraWidget::deleteCalibDialog()
 {
-  if (calib_dialog_ == NULL)
+  if (calib_dialog_ == nullptr)
     return;
 
   disconnect(this, SIGNAL(newFrameGrabbed(cv::Mat)), calib_dialog_,
-             SLOT(getNewVideoFrame(cv::Mat)));
+             SLOT(setNewVideoFrame(cv::Mat)));
   disconnect(calib_dialog_, SIGNAL(cameraParamsReady(CameraParams)), this,
              SLOT(storeCameraParams(CameraParams)));
   disconnect(calib_dialog_, SIGNAL(printToQConsole(QString)), this,
              SLOT(frwPrintToQConsole(QString)));
+  disconnect(calib_dialog_, SIGNAL(augmentedFrameAvailable(cv::Mat)), this,
+             SLOT(setAugmentedFrame(cv::Mat)));
   calib_dialog_->close();
   delete calib_dialog_;
-  calib_dialog_ = NULL;
+  calib_dialog_ = nullptr;
 }

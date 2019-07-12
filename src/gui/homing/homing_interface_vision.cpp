@@ -30,6 +30,7 @@ HomingInterfaceVision::HomingInterfaceVision(QWidget* parent, CableRobot* robot)
 
   connect(camera_widget_, SIGNAL(printToQConsole(QString)), this,
           SLOT(appendText2Browser(QString)));
+  connect(camera_widget_, SIGNAL(videoStreamStopped()), this, SLOT(stopEstimation()));
   connect(camera_widget_, SIGNAL(newFrameGrabbed(cv::Mat)), &app_,
           SLOT(setNewFrame(cv::Mat)));
   connect(camera_widget_, SIGNAL(calibParamsReady(CameraParams)), &app_,
@@ -37,6 +38,8 @@ HomingInterfaceVision::HomingInterfaceVision(QWidget* parent, CableRobot* robot)
 
   connect(&app_, SIGNAL(printToQConsole(QString)), this,
           SLOT(appendText2Browser(QString)));
+  connect(&app_, SIGNAL(frameReadyToShow(cv::Mat)), camera_widget_,
+          SLOT(setAugmentedFrame(cv::Mat)));
 
   // debug
   ext_close_cmd_ = false;
@@ -73,17 +76,26 @@ void HomingInterfaceVision::on_pushButton_move_clicked()
   CLOG(TRACE, "event");
   // TODO
   ui->pushButton_find->setEnabled(true);
+  appendText2Browser("Moving to observation point...");
 }
 
 void HomingInterfaceVision::on_pushButton_find_clicked()
 {
   ui->pushButton_find->setChecked(false);
+  if (!camera_widget_->isStreaming())
+  {
+    QMessageBox::information(this, "Video Stream Missing",
+                             "Please start and calibrate the camera before proceeding.");
+    return;
+  }
+
   if (ui->pushButton_find->text() == "Stop")
   {
     CLOG(TRACE, "event") << "Stop";
     app_.stop();
     ui->pushButton_find->setText("Find Platform Pose");
     ui->pushButton_apply->setDisabled(true);
+    camera_widget_->enableStreamType();
   }
   else
   {
@@ -94,7 +106,11 @@ void HomingInterfaceVision::on_pushButton_find_clicked()
                                "Please calibrate the camera or load a calibration file.");
       return;
     }
+    camera_widget_->changeStreamType(VideoStreamType::AUGMENTED);
+    camera_widget_->enableStreamType(false);
+    appendText2Browser("Waiting for platform to be steady...");
     robot_ptr_->WaitUntilPlatformSteady(-1.0);
+    appendText2Browser("Looking for chessboard pose...");
     app_.start();
     ui->pushButton_find->setText("Stop");
     ui->pushButton_apply->setEnabled(true);
@@ -105,10 +121,13 @@ void HomingInterfaceVision::on_pushButton_apply_clicked()
 {
   CLOG(TRACE, "event");
   if (!app_.isPoseReady())
+  {
+    appendText2Browser("WARNING: Chessboard pose not yet found. Please try again.");
     return;
+  }
 
-  app_.stop();
-  ui->pushButton_find->setText("Find Platform Pose");
+  stopEstimation();
+  app_.applyPoseEstimate();
 }
 
 void HomingInterfaceVision::on_pushButton_cancel_clicked()
@@ -129,15 +148,17 @@ void HomingInterfaceVision::on_pushButton_done_clicked()
 
 //--------- Private slots -----------------------------------------------------------//
 
+void HomingInterfaceVision::enableVisionTab() { ui->tab_vision->setEnabled(true); }
+
 void HomingInterfaceVision::appendText2Browser(const QString& text)
 {
-  if (text.contains("warning", Qt::CaseSensitivity::CaseInsensitive))
+  if (text.startsWith("warning", Qt::CaseSensitivity::CaseInsensitive))
   {
     CLOG(WARNING, "browser") << text;
     ui->textBrowser_logs->append(
       QString("<span style='color: orange'>%1</span>").arg(text));
   }
-  else if (text.contains("error", Qt::CaseSensitivity::CaseInsensitive))
+  else if (text.startsWith("error", Qt::CaseSensitivity::CaseInsensitive))
   {
     CLOG(ERROR, "browser") << text;
     ui->textBrowser_logs->append(QString("<span style='color: red'>%1</span>").arg(text));
@@ -149,7 +170,16 @@ void HomingInterfaceVision::appendText2Browser(const QString& text)
   }
 }
 
-void HomingInterfaceVision::enableVisionTab() { ui->tab_vision->setEnabled(true); }
+void HomingInterfaceVision::stopEstimation()
+{
+  if (ui->pushButton_find->text() == "Stop")
+  {
+    app_.stop();
+    ui->pushButton_find->setText("Find Platform Pose");
+    ui->pushButton_apply->setDisabled(true);
+    camera_widget_->enableStreamType();
+  }
+}
 
 //--------- Private functions -------------------------------------------------------//
 

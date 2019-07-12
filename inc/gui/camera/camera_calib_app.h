@@ -1,7 +1,7 @@
 ﻿/**
  * @file camera_calib_app.h
  * @author Simone Comari, Marco Caselli
- * @date 08 Jul 2019
+ * @date 12 Jul 2019
  * @brief File containing camera calibration class to found intrinsic parameter and
  * distorsion coefficients of camera
  */
@@ -76,7 +76,16 @@ class WorkerThread: public QThread
    * @brief Signal notifying an error in the frame processing. This is also emitted upon
    * user's stop request.
    */
-  void processFrameError() const;
+  void calibrationFailed() const;
+  /**
+   * @brief augmentedFrameAvailable
+   * @param augmented_frame
+   */
+  void augmentedFrameAvailable(const cv::Mat& augmented_frame) const;
+  /**
+   * @brief printToQConsole
+   */
+  void printToQConsole(const QString&) const;
 
  private:
   enum CalibMode
@@ -106,7 +115,7 @@ class WorkerThread: public QThread
   bool new_frame_pending_;
 
   void run();
-  bool processFrame(const cv::Mat& frame);
+  bool calibrationSamplesCollected(const cv::Mat& frame);
 
   bool storeValidFrame(const cv::Mat& view);
   bool findChessboard(const cv::Mat& image);
@@ -178,6 +187,15 @@ class CameraCalibApp: public QDialog
    * @param[in] params The newly computed calibration results, i.e. the camera parameters.
    */
   void calibrationSuccess(const CameraParams& params) const;
+  /**
+   * @brief augmentedFrameAvailable
+   * @param augmented_frame
+   */
+  void augmentedFrameAvailable(const cv::Mat& augmented_frame) const;
+  /**
+   * @brief printToQConsole
+   */
+  void printToQConsole(const QString&) const;
 
  private slots:
   void on_pushButton_stop_clicked();
@@ -188,6 +206,8 @@ class CameraCalibApp: public QDialog
   void handleResults(const CameraParams& params);
   void handleErrors();
   void workFinished();
+  void frwAugmentedFrame(const cv::Mat& augmented_frame) const;
+  void frwPrintToQConsole(const QString& msg) const;
 
  private:
   Ui::CameraCalibApp* ui;

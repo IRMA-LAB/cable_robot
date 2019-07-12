@@ -1,7 +1,7 @@
 /**
  * @file camera_calib_dialog.cpp
  * @author Simone Comari
- * @date 22 Mar 2019
+ * @date 12 Jul 2019
  * @brief This file includes definitions of class present in camera_calib_dialog.h.
  */
 
@@ -21,13 +21,17 @@ CameraCalibDialog::CameraCalibDialog(QWidget* parent)
   connect(&app_, SIGNAL(calibrationFailed()), this, SLOT(handleCalibrationFailure()));
   connect(&app_, SIGNAL(calibrationSuccess(CameraParams)), this,
           SLOT(handleCalibrationSuccess(CameraParams)));
+  connect(&app_, SIGNAL(augmentedFrameAvailable(cv::Mat)), this,
+          SLOT(frwAugmentedFrame(cv::Mat)));
+  connect(&app_, SIGNAL(printToQConsole(QString)), this,
+          SLOT(frwPrintToQConsole(QString)));
 }
 
 CameraCalibDialog::~CameraCalibDialog() { delete ui; }
 
 //--------- Public slots  ------------------------------------------------------------//
 
-void CameraCalibDialog::getNewVideoFrame(const cv::Mat& frame)
+void CameraCalibDialog::setNewVideoFrame(const cv::Mat& frame)
 {
   app_.setNewFrame(frame);
 }
@@ -38,6 +42,7 @@ void CameraCalibDialog::startCalibration(const CameraCalibSettings& settings)
 {
   app_.start(settings);
   app_.show();
+  emit calibrationStatusChanged(ON);
 }
 
 void CameraCalibDialog::handleCalibrationFailure()
@@ -45,10 +50,12 @@ void CameraCalibDialog::handleCalibrationFailure()
   QMessageBox::warning(this, "Calibration Error",
                        "Calibration failed or interrupted!\nPlease try again.");
   this->show();
+  emit calibrationStatusChanged(OFF);
 }
 
 void CameraCalibDialog::handleCalibrationSuccess(const CameraParams& params)
 {
+  emit calibrationStatusChanged(OFF);
   QMessageBox::StandardButton reply = QMessageBox::question(
     this, "Camera Info",
     "Camera calibration complete!\nDo you want to use these camera parameters now?",
@@ -57,6 +64,16 @@ void CameraCalibDialog::handleCalibrationSuccess(const CameraParams& params)
     emit cameraParamsReady(params);
   else
     this->show();
+}
+
+void CameraCalibDialog::frwAugmentedFrame(const cv::Mat& augmented_frame) const
+{
+  emit augmentedFrameAvailable(augmented_frame);
+}
+
+void CameraCalibDialog::frwPrintToQConsole(const QString& msg) const
+{
+  emit printToQConsole(msg);
 }
 
 //--------- Private GUI slots --------------------------------------------------------//
@@ -100,10 +117,8 @@ bool CameraCalibDialog::parseCalibFile(const QString& filepath)
   // Open file
   CLOG(INFO, "event") << "Parsing file '" << filepath << "'...";
 
-  // to verify that works
-  CameraParams params;
-  CameraParamsJsonParser prs;
-  if (!prs.decodeJson(params, filepath.toStdString()))
+  CameraParamsJsonParser parser;
+  if (!parser.decodeJson(camera_params_, filepath.toStdString()))
   {
     CLOG(ERROR, "event") << "Missing, invalid or incomplete calibration parameter:"
                          << "camera_matrix";

@@ -1,7 +1,7 @@
 /**
  * @file homing_interface_vision.h
  * @author Simone Comari
- * @date 09 Jul 2019
+ * @date 12 Jul 2019
  * @brief This file takes care of the functionalities of the vision-based homing
  * interface of cable robot app.
  *
@@ -52,8 +52,10 @@ class HomingInterfaceVision: public HomingInterface
   void on_pushButton_done_clicked();
 
  private slots:
-  void appendText2Browser(const QString& text);
   void enableVisionTab();
+  // Vision tab slots
+  void appendText2Browser(const QString& text);
+  void stopEstimation();
 
  private:
   Ui::HomingInterfaceVision* ui;

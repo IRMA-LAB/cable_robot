@@ -156,9 +156,7 @@ CameraParams CameraParamsJsonParser::decodeJson(
     parameters_2_read["dist_coeff"].get<std::vector<double>>();
 
   // Fill camera parameters structure.
-  memcpy(params_.camera_matrix.data, camera_matrix.data(),
-         camera_matrix.size() * sizeof(double));
-  memcpy(params_.dist_coeff.data, dist_coeff.data(), dist_coeff.size() * sizeof(double));
+  params_.fill(camera_matrix, dist_coeff);
 
   return params_;
 }
@@ -206,10 +204,7 @@ bool CameraParamsJsonParser::decodeJson(
     parameters_2_read["dist_coeff"].get<std::vector<double>>();
 
   // Fill camera parameters structure.
-  memcpy(params_in.camera_matrix.data, camera_matrix.data(),
-         camera_matrix.size() * sizeof(double));
-  memcpy(params_in.dist_coeff.data, dist_coeff.data(),
-         dist_coeff.size() * sizeof(double));
+  params_in.fill(camera_matrix, dist_coeff);
 
   return true;
 }

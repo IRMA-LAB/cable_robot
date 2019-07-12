@@ -1,7 +1,7 @@
 /**
  * @file homing_vision_app.h
  * @author Marco Caselli, Simone Comari
- * @date 10 JuL 2019
+ * @date 12 Jul 2019
  * @brief File containing homing vision structure and class to find rotation matrix and
  * traslation vector between camera and chessboard reference systems.
  */
@@ -23,7 +23,7 @@ struct HomingVisionParams
   cv::Size pattern_size = cv::Size(9, 6); /**< Corner chessboard dimension. */
   double max_precision  = 0.0001; /**< Number of max precision. thet value have to be less
                                    * than value in camera calibration. */
-  float square_size = 0.026f;     /**< Square chessboard dimension */
+  float square_size = 0.0255f;     /**< Square chessboard dimension */
   int chess_board_flags =
     cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_NORMALIZE_IMAGE |
     cv::CALIB_CB_FAST_CHECK; /**< Flags usefull to findChessboard function */

@@ -1,7 +1,7 @@
 /**
  * @file camera_calib_dialog.h
  * @author Simone Comari
- * @date 09 Jul 2019
+ * @date 12 Jul 2019
  * @brief This file includes the camera calibration dialog.
  */
 
@@ -29,6 +29,12 @@ namespace Ui {
 class CameraCalibDialog;
 }
 
+enum CalibrationStatus : uchar
+{
+  OFF = 0,
+  ON = 1
+};
+
 /**
  * @brief The CameraCalibDialog class
  */
@@ -53,14 +59,26 @@ class CameraCalibDialog: public QDialog
    * @brief printToQConsole
    */
   void printToQConsole(const QString&) const;
+  /**
+   * @brief augmentedFrameAvailable
+   * @param augmented_frame
+   */
+  void augmentedFrameAvailable(const cv::Mat& augmented_frame) const;
+  /**
+   * @brief calibrationStatusChanged
+   * @param status
+   */
+  void calibrationStatusChanged(const CalibrationStatus status);
 
  public slots:
-  void getNewVideoFrame(const cv::Mat&);
+  void setNewVideoFrame(const cv::Mat&);
 
  private slots:
   void startCalibration(const CameraCalibSettings& settings);
   void handleCalibrationFailure();
   void handleCalibrationSuccess(const CameraParams& params);
+  void frwAugmentedFrame(const cv::Mat& augmented_frame) const;
+  void frwPrintToQConsole(const QString& msg) const;
 
  private slots:
   void on_pushButton_newCalib_clicked();
