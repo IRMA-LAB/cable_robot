@@ -1,7 +1,7 @@
 /**
  * @file utils/types.h
  * @author Simone Comari
- * @date 12 Jul 2019
+ * @date 15 Jul 2019
  * @brief File containing the implementation of a custom wrapper to log cable robot data
  * employing easylogging++ package.
  */
@@ -192,10 +192,7 @@ struct CameraParams
     dist_coeff    = dist.clone();
   }
 
-  bool isEmpty() const
-  {
-    return camera_matrix.empty() || dist_coeff.empty();
-  }
+  bool isEmpty() const { return camera_matrix.empty() || dist_coeff.empty(); }
 
   void clear()
   {
@@ -224,20 +221,22 @@ struct CameraCalibSettings
 
   // Advanced settings
   cv::Size board_size = cv::Size(9, 6); /**< Chessboard corners size. */
-  float square_size   = 25.5f;             /**< The size of a chessboard square in mm. */
-  double delay        = 0.5;              /**< [s] In case of a video input. */
+  float square_size   = 26.f;           /**< The size of a chessboard square in [mm]. */
+  double delay        = 0.5; /**< [s] Minimun delay value between 2 frame processing. */
   double max_precision =
-    0.00001; /**< Number of max precision. It must be less than value in camera. */
+    0.00001; /**< Max precision of corner position in sub pixel detection;
+              * when the corner position moves by less than max_precision. */
   int chess_board_flags =
     cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_NORMALIZE_IMAGE |
     cv::CALIB_CB_FAST_CHECK; /**< Set chessboard flag to findChessboard. */
   std::string ofilepath = SRCDIR "/output_camera_calibration.json";
-  int cor_sp_size       = 11;   /**< Windows dimension for sub-pixel accurate location. */
-  int zero_zone         = -1;   /**< Half dimension of zero-zone. */
-  int max_counter       = 50;   /**< Number of max iteration. */
-  bool write_points     = true; /**< Write detected feature points. */
-  bool write_extrinsics = true; /**< Write extrinsic parameters. */
-  bool write_grid       = true; /**< Write refined 3D target grid points. */
+  int cor_sp_size       = 11; /**< Windows dimension for sub-pixel accurate location. */
+  int zero_zone         = -1; /**< Half dimension of zero-zone. */
+  int max_counter = 50; /**< Number of max iteration to computer corner position in sub
+                           pixel detection. */
+  bool write_points        = true;  /**< Write detected feature points. */
+  bool write_extrinsics    = true;  /**< Write extrinsic parameters. */
+  bool write_grid          = true;  /**< Write refined 3D target grid points. */
   bool calib_zero_tan_dist = false; /**< Set 0 tangential distortion coefficients. */
 
   /**
