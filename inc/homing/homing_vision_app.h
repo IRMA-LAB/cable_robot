@@ -13,6 +13,8 @@
 
 #include "opencv2/opencv.hpp"
 
+#include "homogeneous_transf.h"
+
 #include "robot/cablerobot.h"
 
 /**
@@ -133,5 +135,21 @@ class HomingVisionApp: public QThread
   void calcPlatformGlobalPose(grabnum::Vector3d& position,
                               grabnum::Vector3d& orientation);
 };
+
+template <uint rows, uint cols>
+/**
+ * @brief cv2grabnum
+ * @param cv_mat
+ * @return
+ */
+grabnum::MatrixXd<rows, cols> cv2grabnum(cv::Mat& cv_mat)
+{
+  assert(cv_mat.rows == rows && cv_mat.cols == cols);
+  grabnum::MatrixXd<rows, cols> mat;
+  for (int i = 0; i < cv_mat.rows; i++)
+    for (int j = 0; i < cv_mat.cols; j++)
+      mat(static_cast<uint>(i + 1), static_cast<uint>(j + 1)) = cv_mat.at<double>(i, j);
+  return mat;
+}
 
 #endif // CABLE_ROBOT_HOMING_VISION_APP_H

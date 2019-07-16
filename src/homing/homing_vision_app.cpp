@@ -31,7 +31,7 @@ void HomingVisionApp::applyPoseEstimate()
   grabcdpr::Params params = robot_ptr_->GetActiveComponentsParams();
   grabcdpr::Vars cdpr_vars; // empty container
   cdpr_vars.cables.resize(params.actuators.size());
-  //debug
+  // debug
   return;
   grabcdpr::UpdateIK0<grabnum::Vector3d, grabcdpr::Vars>(position, orientation, &params,
                                                          &cdpr_vars);
@@ -214,6 +214,11 @@ void HomingVisionApp::calcPlatformGlobalPose(grabnum::Vector3d& position,
   // Frame subscripts: b = chessboard, c = camera, p = platform, w = world
   // TODO:
   // 1. Build H_b2c from R_b2c and t_b2c
+  grabnum::Matrix4d H_b2c =
+    grabgeom::BuildHomogeneousTransf(cv2grabnum<3, 3>(R_b2c), cv2grabnum<3, 1>(t_b2c));
   // 2. Calculate H_p2w = H_p2b * H_b2c * H_c2w
+  grabnum::Matrix4d H_p2w = H_b2c;
   // 3. Extract platform pose from H_p2w
+  position    = grabgeom::GetHomgTransfTransl(H_p2w);
+  orientation = grabgeom::Rot2TiltTorsion(grabgeom::GetHomgTransfRot(H_p2w));
 }
