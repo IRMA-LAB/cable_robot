@@ -3,9 +3,6 @@
 
 #include <QDialog>
 
-#include "opencv2/calib3d.hpp"
-#include "opencv2/core.hpp"
-
 #include "utils/types.h"
 
 namespace Ui {
@@ -24,6 +21,8 @@ class CameraCalibSettingsDialog: public QDialog
   void cameraCalibSettings(const CameraCalibSettings&);
 
  private slots:
+  void on_pushButton_advancedSettings_clicked();
+
   void on_pushButton_start_clicked();
   void on_pushButton_cancel_clicked();
 
