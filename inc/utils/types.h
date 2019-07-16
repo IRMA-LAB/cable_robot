@@ -1,7 +1,7 @@
 /**
  * @file utils/types.h
  * @author Simone Comari
- * @date 15 Jul 2019
+ * @date 16 Jul 2019
  * @brief File containing the implementation of a custom wrapper to log cable robot data
  * employing easylogging++ package.
  */
@@ -229,14 +229,10 @@ struct CameraCalibSettings
   int chess_board_flags =
     cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_NORMALIZE_IMAGE |
     cv::CALIB_CB_FAST_CHECK; /**< Set chessboard flag to findChessboard. */
-  std::string ofilepath = SRCDIR "/output_camera_calibration.json";
   int cor_sp_size       = 11; /**< Windows dimension for sub-pixel accurate location. */
   int zero_zone         = -1; /**< Half dimension of zero-zone. */
   int max_counter = 50; /**< Number of max iteration to computer corner position in sub
                            pixel detection. */
-  bool write_points        = true;  /**< Write detected feature points. */
-  bool write_extrinsics    = true;  /**< Write extrinsic parameters. */
-  bool write_grid          = true;  /**< Write refined 3D target grid points. */
   bool calib_zero_tan_dist = false; /**< Set 0 tangential distortion coefficients. */
 
   /**
