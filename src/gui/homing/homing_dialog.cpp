@@ -44,7 +44,8 @@ void HomingDialog::on_buttonBox_accepted()
         interface_ = new HomingInterfaceProprioceptive(parentWidget(), robot_ptr_);
         break;
       case VISION:
-        interface_ = new HomingInterfaceVision(parentWidget(), robot_ptr_, vision_params_);
+        interface_ =
+          new HomingInterfaceVision(parentWidget(), robot_ptr_, vision_params_);
         break;
     }
     connect(interface_, SIGNAL(homingSuccess()), this, SLOT(fwdHomingSuccess()));

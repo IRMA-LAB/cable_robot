@@ -98,11 +98,11 @@ void LoginWindow::on_pushButton_load_clicked()
   QString sensors_config_filename = ui->lineEdit_sensorsConfig->text();
   if (sensors_config_filename.isEmpty())
   {
-    if (QMessageBox::No ==
-        QMessageBox::question(
-          this, "Sensors Configuration File Missing",
-          "Without sensors configuration some functionalities will not "
-          "be enabled.\nDo you wish to continue?"))
+    if (QMessageBox::No == QMessageBox::question(this,
+                                                 "Sensors Configuration File Missing",
+                                                 "Without sensors configuration some\n"
+                                                 "functionalities will not be enabled.\n"
+                                                 "Do you wish to continue?"))
     {
       on_pushButton_sensorsConfig_clicked();
       sensors_config_filename = ui->lineEdit_sensorsConfig->text();
@@ -164,14 +164,16 @@ LoginWindow::RetVal LoginWindow::isValidUser(const QString& username,
 bool LoginWindow::parseRobotConfigFile(const QString& config_filename)
 {
   RobotConfigJsonParser parser;
-  CLOG(INFO, "event") << "Parsing robot configuration file '" << config_filename << "'...";
+  CLOG(INFO, "event") << "Parsing robot configuration file '" << config_filename
+                      << "'...";
   return parser.ParseFile(config_filename, &robot_config_);
 }
 
 bool LoginWindow::parseSensorsConfigFile(const QString& config_filename)
 {
   SensorsConfigJsonParser parser;
-  CLOG(INFO, "event") << "Parsing sensors configuration file '" << config_filename << "'...";
+  CLOG(INFO, "event") << "Parsing sensors configuration file '" << config_filename
+                      << "'...";
   return parser.ParseFile(config_filename, &sensors_config_);
 }
 

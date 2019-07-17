@@ -114,8 +114,8 @@ bool SensorsConfigJsonParser::ExtractVisionConfig(const json& raw_data)
 {
   if (raw_data.count("vision") != 1)
   {
-    std::cerr << "[WARNING] Missing vision structure!" << std::endl;
-    return true;
+    std::cerr << "[ERROR] Missing vision structure!" << std::endl;
+    return false;
   }
   json vision = raw_data["vision"];
   std::string field;
@@ -133,7 +133,7 @@ bool SensorsConfigJsonParser::ExtractVisionConfig(const json& raw_data)
   }
   catch (json::type_error)
   {
-    std::cerr << "[ERROR] Missing or invalid platform parameter field: " << field
+    std::cerr << "[ERROR] Missing or invalid vision parameter field: " << field
               << std::endl;
     return false;
   }

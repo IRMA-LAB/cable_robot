@@ -34,7 +34,7 @@ MainGUI::MainGUI(QWidget* parent, const grabcdpr::RobotParams& robot_config)
   verticalSpacer_5 =
     new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::MinimumExpanding);
   ui->verticalLayout_main->insertItem(10, verticalSpacer_5);
-  connect(pushButton_debug, SIGNAL(clicked()), this, SLOT(pushButton_debug_clicked()));
+  connect(pushButton_debug, SIGNAL(clicked()), this, SLOT(on_pushButton_debug_clicked()));
   ui->groupBox_app->setEnabled(true);
 #endif
 }
@@ -51,9 +51,13 @@ MainGUI::~MainGUI()
   CloseAllApps();
   DeleteRobot();
 #if DEBUG_GUI == 1
-  disconnect(pushButton_debug, SIGNAL(clicked()), this, SLOT(pushButton_debug_clicked()));
-//  disconnect(temp_app, SIGNAL(debugCompleted()), this, SLOT(handleDebugCompleted()));
-//  delete temp_app;
+  disconnect(pushButton_debug, SIGNAL(clicked()), this,
+             SLOT(on_pushButton_debug_clicked()));
+  if (debug_app_ != nullptr)
+  {
+    disconnect(debug_app_, SIGNAL(debugCompleted()), this, SLOT(handleDebugCompleted()));
+    delete debug_app_;
+  }
 #endif
   delete ui;
   CLOG(INFO, "event") << "Main window closed";
@@ -95,8 +99,10 @@ void MainGUI::on_pushButton_calib_clicked()
 void MainGUI::on_pushButton_homing_clicked()
 {
   CLOG(TRACE, "event");
+#if DEBUG_GUI == 0
   if (!(ec_network_valid_ && rt_thread_running_))
     return;
+#endif
 
   ui->pushButton_homing->setDisabled(true);
   ui->pushButton_calib->setDisabled(true);
@@ -151,7 +157,7 @@ void MainGUI::on_pushButton_startApp_clicked()
 }
 
 #if DEBUG_GUI == 1
-void MainGUI::pushButton_debug_clicked()
+void MainGUI::on_pushButton_debug_clicked()
 {
   CLOG(TRACE, "event");
   if (!(ec_network_valid_ && rt_thread_running_))
