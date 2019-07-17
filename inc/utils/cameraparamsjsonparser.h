@@ -1,7 +1,7 @@
 /**
  * @file cameraparamsjsonparser.h
  * @author Giovanni Melandri, Simone Comari
- * @date 01 Jul 2019
+ * @date 17 Jul 2019
  * @brief This file include a JSON parser for decoding/encoding camera parameters
  * according to a custom standard format.
  */
@@ -50,19 +50,19 @@ class CameraParamsJsonParser
    * @param[in] params_2_set Camera parameters.
    */
   void setCameraParams(const CameraParams& params_2_set);
+  /**
+   * @brief Write current camera parameters onto a JSON file, if any.
+   * @param[in] o_filepath output .json file directory
+   */
+  bool writeJson(const std::string& o_filepath = SRCDIR "/output_calib.json");
 
   /**
    * @brief Write given camera parameters onto a JSON file.
    * @param[in] params_in External camera parameters to be dumped onto the file.
    * @param[in] o_filepath Output file directory.
    */
-  void writeJson(const CameraParams& params_in,
-                 const std::string& o_filepath = SRCDIR "/output_calib.json");
-  /**
-   * @brief Write current camera parameters onto a JSON file, if any.
-   * @param[in] o_filepath output .json file directory
-   */
-  void writeJson(const std::string& o_filepath = SRCDIR "/output_calib.json");
+  static bool writeJson(const CameraParams& params_in,
+                        const std::string& o_filepath = SRCDIR "/output_calib.json");
 
   /**
    * @brief Read camera parameters from a file.
@@ -72,17 +72,25 @@ class CameraParamsJsonParser
   CameraParams decodeJson(const std::string& i_filepath = SRCDIR "/output_calib.json");
   /**
    * @brief Read camera parameters from a file.
-   * @param[out] params_in An empty structure to be filled with parsed camera parameters.
+   * @param[out] params_out An empty structure to be filled with parsed camera parameters.
    * @param[in] i_filepath File from which to parse the data.
    * @return _True_ if parsing was successful, _False_ otherwise.
    */
-  bool decodeJson(CameraParams& params_in,
-                  const std::string& i_filepath = SRCDIR "/output_calib.json");
+  static bool decodeJson(CameraParams& params_out,
+                         const std::string& i_filepath = SRCDIR "/output_calib.json");
+
+  /**
+   * @brief Decode camera parameters from a json container.
+   * @param container A json container including the camera parameters.
+   * @param params_out An empty structure to be filled with parsed camera parameters.
+   * @return _True_ if decoding was successful, _False_ otherwise.
+   */
+  static bool decode(const json& container, CameraParams& params_out);
 
  private:
   CameraParams params_;
 
-  bool isEmpty(std::ifstream& p_file);
+  static bool isEmpty(std::ifstream& p_file);
 };
 
 #endif // CAMERAPARAMSJSONPARSER_H

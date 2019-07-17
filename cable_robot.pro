@@ -37,6 +37,7 @@ HEADERS = \
     $$PWD/inc/utils/msgs.h \
     $$PWD/inc/utils/easylog_wrapper.h \
     $$PWD/inc/utils/cameraparamsjsonparser.h \
+    $$PWD/inc/utils/sensorsconfigjsonparser.h \
     $$PWD/inc/debug/debug_routine.h \
     $$PWD/libs/easyloggingpp/src/easylogging++.h \
     $$PWD/libs/grab_common/grabcommon.h \
@@ -80,6 +81,7 @@ SOURCES = \
     $$PWD/src/utils/msgs.cpp \
     $$PWD/src/utils/easylog_wrapper.cpp \
     $$PWD/src/utils/cameraparamsjsonparser.cpp \
+    $$PWD/src/utils/sensorsconfigjsonparser.cpp \
     $$PWD/src/debug/debug_routine.cpp \
     $$PWD/libs/easyloggingpp/src/easylogging++.cc \
     $$PWD/libs/grab_common/grabcommon.cpp \

@@ -124,8 +124,7 @@ bool CameraCalibDialog::parseCalibFile(const QString& filepath)
   // Open file
   CLOG(INFO, "event") << "Parsing file '" << filepath << "'...";
 
-  CameraParamsJsonParser parser;
-  if (!parser.decodeJson(camera_params_, filepath.toStdString()))
+  if (!CameraParamsJsonParser::decodeJson(camera_params_, filepath.toStdString()))
   {
     CLOG(ERROR, "event") << "Missing, invalid or incomplete calibration parameter:"
                          << "camera_matrix";

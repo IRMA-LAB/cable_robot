@@ -157,17 +157,24 @@ void LoginWindow::on_pushButton_loadDefault_clicked()
   loadConfigFiles(robot_default_filename, sensors_default_filename);
 }
 
-bool LoginWindow::ParseConfigFile(const QString& config_filename)
+bool LoginWindow::ParseRobotConfigFile(const QString& config_filename)
 {
   RobotConfigJsonParser parser;
-  CLOG(INFO, "event") << "Parsing configuration file '" << config_filename << "'...";
+  CLOG(INFO, "event") << "Parsing robot configuration file '" << config_filename << "'...";
   return parser.ParseFile(config_filename, &robot_config_);
+}
+
+bool LoginWindow::ParseSensorsConfigFile(const QString& config_filename)
+{
+  SensorsConfigJsonParser parser;
+  CLOG(INFO, "event") << "Parsing sensors configuration file '" << config_filename << "'...";
+  return parser.ParseFile(config_filename, &sensors_config_);
 }
 
 void LoginWindow::loadConfigFiles(const QString& robot_config_filename,
                                   const QString& sensors_config_filename)
 {
-  if (!ParseConfigFile(robot_config_filename))
+  if (!ParseRobotConfigFile(robot_config_filename))
   {
     CLOG(WARNING, "event") << "Robot Configuration file is not valid";
     QMessageBox::warning(this, "File Error", "Robot configuration file is not valid");
@@ -180,7 +187,7 @@ void LoginWindow::loadConfigFiles(const QString& robot_config_filename,
     main_gui = new MainGUI(this, robot_config_);
   else
   {
-    if (!ParseConfigFile(sensors_config_filename))
+    if (!ParseSensorsConfigFile(sensors_config_filename))
     {
       CLOG(WARNING, "event") << "Sensors Configuration file is not valid";
       QMessageBox::warning(this, "File Error", "Sensors configuration file is not valid");

@@ -22,6 +22,8 @@
 #include "json.hpp"
 #include "robotconfigjsonparser.h"
 
+#include "utils/sensorsconfigjsonparser.h"
+
 #include "main_gui.h"
 
 using json = nlohmann::json; /**< Alias for json namespace. */
@@ -74,7 +76,8 @@ class LoginWindow: public QMainWindow
   };
 
   RetVal IsValidUser(const QString& username, const QString& password) const;
-  bool ParseConfigFile(const QString& config_filename);
+  bool ParseRobotConfigFile(const QString& config_filename);
+  bool ParseSensorsConfigFile(const QString& config_filename);
   void loadConfigFiles(const QString& robot_config_filename,
                        const QString& sensors_config_filename);
 };

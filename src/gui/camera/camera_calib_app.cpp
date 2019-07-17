@@ -1,7 +1,7 @@
 /**
  * @file camera_calib_app.cpp
  * @author Simone Comari, Marco Caselli
- * @date 15 Jul 2019
+ * @date 17 Jul 2019
  * @brief Implementation of classes declared in camera_calib_app.h
  */
 
@@ -367,6 +367,5 @@ void CameraCalibApp::saveCameraParams(const CameraParams& params)
 {
   QString file_name = QFileDialog::getSaveFileName(
     this, tr("Save Camera Parameters"), tr("../.."), tr("Camera Parameters (*.json)"));
-  CameraParamsJsonParser jsonParser;
-  jsonParser.writeJson(params, file_name.toStdString());
+  CameraParamsJsonParser::writeJson(params, file_name.toStdString());
 }
