@@ -40,7 +40,8 @@ class HomingInterfaceVision: public HomingInterface
    * @param parent The parent Qt object, in our case the homing dialog.
    * @param robot Pointer to the cable robot instance, to be passed to the inner app.
    */
-  explicit HomingInterfaceVision(QWidget* parent, CableRobot* robot);
+  explicit HomingInterfaceVision(QWidget* parent, CableRobot* robot,
+                                 const VisionParams vision_config);
   ~HomingInterfaceVision() override final;
 
  private slots:

@@ -93,7 +93,7 @@ void ControllerJointsPVT::resumeTrajectoryFollowing()
 }
 
 vect<ControlAction>
-ControllerJointsPVT::CalcCtrlActions(const grabcdpr::Vars&,
+ControllerJointsPVT::CalcCtrlActions(const grabcdpr::RobotVars&,
                                      const vect<ActuatorStatus>& actuators_status)
 {
   // Possibly apply smooth resume/stop

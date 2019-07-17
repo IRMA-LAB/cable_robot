@@ -10,7 +10,7 @@
 
 
 CalibrationDialog::CalibrationDialog(QWidget* parent, CableRobot* robot,
-                                     const grabcdpr::Params& params)
+                                     const grabcdpr::RobotParams& params)
   : QDialog(parent), ui(new Ui::CalibrationDialog), robot_ptr_(robot), params_(params)
 {
   ui->setupUi(this);

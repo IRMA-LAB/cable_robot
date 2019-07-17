@@ -1,7 +1,7 @@
 /**
  * @file login_window.h
  * @author Simone Comari
- * @date 09 Jul 2019
+ * @date 17 Jul 2019
  * @brief This file takes care of the implementation of the login window of cable robot
  * app.
  */
@@ -18,10 +18,11 @@
 #include <fstream>
 #include <iostream>
 
+#include "cdpr_types.h"
 #include "json.hpp"
-#include "libcdpr/inc/cdpr_types.h"
-#include "main_gui.h"
 #include "robotconfigjsonparser.h"
+
+#include "main_gui.h"
 
 using json = nlohmann::json; /**< Alias for json namespace. */
 
@@ -52,7 +53,8 @@ class LoginWindow: public QMainWindow
  private slots:
   void on_pushButton_login_clicked();
 
-  void on_pushButton_inputFile_clicked();
+  void on_pushButton_robotConfig_clicked();
+  void on_pushButton_sensorsConfig_clicked();
   void on_pushButton_load_clicked();
   void on_pushButton_loadDefault_clicked();
 
@@ -61,7 +63,8 @@ class LoginWindow: public QMainWindow
   MainGUI* main_gui;
 
   QString username_;
-  grabcdpr::Params config_;
+  grabcdpr::RobotParams robot_config_;
+  SensorsParams sensors_config_;
 
   enum RetVal
   {
@@ -70,8 +73,10 @@ class LoginWindow: public QMainWindow
     ERR_INVAL
   };
 
-  RetVal IsValidUser(QString& username, QString& password) const;
-  bool ParseConfigFile(QString& config_filename);
+  RetVal IsValidUser(const QString& username, const QString& password) const;
+  bool ParseConfigFile(const QString& config_filename);
+  void loadConfigFiles(const QString& robot_config_filename,
+                       const QString& sensors_config_filename);
 };
 
 #endif // CABLE_ROBOT_LOGIN_WINDOW_H

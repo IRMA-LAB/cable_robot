@@ -79,7 +79,7 @@ class CableRobot: public QObject,
    * @param[in] parent The parent Qt object.
    * @param[in] config Configuration parameters of the cable robot.
    */
-  CableRobot(QObject* parent, const grabcdpr::Params& config);
+  CableRobot(QObject* parent, const grabcdpr::RobotParams& config);
   ~CableRobot() override;
 
   /**
@@ -105,7 +105,7 @@ class CableRobot: public QObject,
    * @brief Get all robot parameters.
    * @return All robot parameters.
    */
-  const grabcdpr::Params& GetParams() const { return params_; }
+  const grabcdpr::RobotParams& GetParams() const { return params_; }
   /**
    * @brief Get the parameters of active robot components.
    *
@@ -113,7 +113,7 @@ class CableRobot: public QObject,
    * the parameters of each active actuator.
    * @return The parameters of active robot components
    */
-  grabcdpr::Params GetActiveComponentsParams() const;
+  grabcdpr::RobotParams GetActiveComponentsParams() const;
   /**
    * @brief Get a pointer to inquired actuator.
    * @param[in] motor_id The ID of the inquired actuator.
@@ -390,8 +390,8 @@ class CableRobot: public QObject,
 
  private:
   grabcdpr::PlatformVars platform_;
-  grabcdpr::Vars cdpr_status_;
-  grabcdpr::Params params_;
+  grabcdpr::RobotVars cdpr_status_;
+  grabcdpr::RobotParams params_;
 
   // Timers for status updates
   static constexpr int kMotorStatusIntervalMsec_    = 100;

@@ -1,7 +1,7 @@
 /**
  * @file camera_calib_dialog.cpp
  * @author Simone Comari
- * @date 12 Jul 2019
+ * @date 17 Jul 2019
  * @brief This file includes definitions of class present in camera_calib_dialog.h.
  */
 
@@ -11,8 +11,9 @@
 const QString CameraCalibDialog::kDefaultCalibFile_ =
   QString(SRCDIR) + "resources/default_calib_params.json";
 
-CameraCalibDialog::CameraCalibDialog(QWidget* parent)
-  : QDialog(parent), ui(new Ui::CameraCalibDialog), settings_win_(this), app_(this)
+CameraCalibDialog::CameraCalibDialog(QWidget* parent, const CameraParams default_params)
+  : QDialog(parent), ui(new Ui::CameraCalibDialog), settings_win_(this), app_(this),
+    default_camera_params_(default_params)
 {
   ui->setupUi(this);
 
@@ -106,7 +107,13 @@ void CameraCalibDialog::on_pushButton_load_clicked()
 
 void CameraCalibDialog::on_pushButton_loadDefault_clicked()
 {
-  parseCalibFile(kDefaultCalibFile_);
+  if (default_camera_params_.isEmpty())
+    parseCalibFile(kDefaultCalibFile_);
+  else
+  {
+    camera_params_ = default_camera_params_;
+    emit printToQConsole("Using default camera parameters");
+  }
   emit cameraParamsReady(camera_params_);
 }
 

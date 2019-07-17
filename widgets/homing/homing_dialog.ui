@@ -75,16 +75,6 @@
          <string>Proprioceptive-based</string>
         </property>
        </item>
-       <item>
-        <property name="text">
-         <string>Vision-based</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Sensor Fusion-based</string>
-        </property>
-       </item>
       </widget>
      </item>
     </layout>

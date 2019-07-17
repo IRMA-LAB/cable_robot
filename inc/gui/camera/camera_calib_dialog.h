@@ -47,7 +47,7 @@ class CameraCalibDialog: public QDialog
    * @brief CameraCalibDialog
    * @param parent
    */
-  explicit CameraCalibDialog(QWidget* parent = nullptr);
+  explicit CameraCalibDialog(QWidget* parent, const CameraParams default_params);
   ~CameraCalibDialog();
 
  signals:
@@ -92,6 +92,7 @@ class CameraCalibDialog: public QDialog
   CameraCalibSettingsDialog settings_win_;
   CameraCalibApp app_;
 
+  CameraParams default_camera_params_;
   CameraParams camera_params_;
 
   bool parseCalibFile(

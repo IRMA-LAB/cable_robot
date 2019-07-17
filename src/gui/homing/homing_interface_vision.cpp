@@ -8,9 +8,10 @@
 #include "gui/homing/homing_interface_vision.h"
 #include "ui_homing_interface_vision.h"
 
-HomingInterfaceVision::HomingInterfaceVision(QWidget* parent, CableRobot* robot)
-  : HomingInterface(parent, robot), ui(new Ui::HomingInterfaceVision), app_(this, robot),
-    ext_close_cmd_(false)
+HomingInterfaceVision::HomingInterfaceVision(QWidget* parent, CableRobot* robot,
+                                             const VisionParams vision_config)
+  : HomingInterface(parent, robot), ui(new Ui::HomingInterfaceVision),
+    app_(this, robot, vision_config), ext_close_cmd_(false)
 {
   ui->setupUi(this);
 
@@ -23,7 +24,7 @@ HomingInterfaceVision::HomingInterfaceVision(QWidget* parent, CableRobot* robot)
           SLOT(enableVisionTab()));
 
   // Setup camera widget in second tab
-  camera_widget_ = new CameraWidget();
+  camera_widget_ = new CameraWidget(vision_config.camera);
   ui->verticalLayout_step2->insertWidget(1, camera_widget_);
   ui->verticalLayout_step2->setStretch(1, 2);
   ui->verticalLayout_step2->setStretch(3, 1);

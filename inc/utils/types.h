@@ -1,7 +1,7 @@
 /**
  * @file utils/types.h
  * @author Simone Comari
- * @date 16 Jul 2019
+ * @date 17 Jul 2019
  * @brief File containing the implementation of a custom wrapper to log cable robot data
  * employing easylogging++ package.
  */
@@ -17,7 +17,9 @@
 #include "opencv2/calib3d.hpp"
 #include "opencv2/core.hpp"
 
+#include "cdpr_types.h"
 #include "common.h"
+#include "matrix.h"
 #include "slaves/goldsolowhistledrive.h"
 
 /**
@@ -29,6 +31,11 @@ template <typename T> using vect = std::vector<T>; /**< Alias for vector type. *
 using vectD                      = vect<double>; /**< Alias for vector of double type. */
 using vectI                      = vect<int>;    /**< Alias for vector of int type. */
 using vectS                      = vect<short>;  /**< Alias for vector of short type. */
+
+enum SensorType
+{
+  VISION
+};
 
 /**
  * @brief A structure including motor status information.
@@ -210,6 +217,34 @@ struct CameraParams
 };
 
 /**
+ * @brief The VisionParams struct
+ */
+struct VisionParams
+{
+  CameraParams camera;
+  grabnum::Matrix4d H_c2w;
+  grabnum::Matrix4d H_b2p;
+
+  bool isEmpty() const { return camera.isEmpty(); }
+};
+
+/**
+ * @brief The SensorsParams struct
+ */
+struct SensorsParams
+{
+  VisionParams vision;
+
+  vect<SensorType> activeSensors() const
+  {
+    vect<SensorType> active_sensors;
+    if (!vision.isEmpty())
+      active_sensors.push_back(SensorType::VISION);
+    return active_sensors;
+  }
+};
+
+/**
  * @brief A structure including all necessary camera calibration settings.
  */
 struct CameraCalibSettings
@@ -229,8 +264,8 @@ struct CameraCalibSettings
   int chess_board_flags =
     cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_NORMALIZE_IMAGE |
     cv::CALIB_CB_FAST_CHECK; /**< Set chessboard flag to findChessboard. */
-  int cor_sp_size       = 11; /**< Windows dimension for sub-pixel accurate location. */
-  int zero_zone         = -1; /**< Half dimension of zero-zone. */
+  int cor_sp_size = 11;      /**< Windows dimension for sub-pixel accurate location. */
+  int zero_zone   = -1;      /**< Half dimension of zero-zone. */
   int max_counter = 50; /**< Number of max iteration to computer corner position in sub
                            pixel detection. */
   bool calib_zero_tan_dist = false; /**< Set 0 tangential distortion coefficients. */

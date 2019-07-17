@@ -140,7 +140,7 @@ class ControllerBase
    * @return Control actions for each targeted motor.
    */
   virtual vect<ControlAction>
-  CalcCtrlActions(const grabcdpr::Vars& robot_status,
+  CalcCtrlActions(const grabcdpr::RobotVars& robot_status,
                   const vect<ActuatorStatus>& actuators_status) = 0;
 
   /**

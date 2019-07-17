@@ -36,7 +36,7 @@ class HomingDialog: public QDialog
    * @param robot Pointer to the cable robot instance, to be passed to the selected homing
    * procedure interface.
    */
-  HomingDialog(QWidget* parent, CableRobot* robot);
+  HomingDialog(QWidget* parent, CableRobot* robot, const SensorsParams sensor_config);
   ~HomingDialog();
 
  signals:
@@ -68,13 +68,13 @@ class HomingDialog: public QDialog
   {
     PROPRIOCEPTIVE,
     VISION,
-    FUSION,
     NONE
   };
 
-  const grabcdpr::Params* config_ptr_;
+  const grabcdpr::RobotParams* config_ptr_;
   HomingInterface* interface_ = nullptr;
   CableRobot* robot_ptr_      = nullptr;
+  VisionParams vision_params_;
   int homing_method_;
 
   void DeleteInterface();

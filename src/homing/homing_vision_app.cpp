@@ -1,16 +1,20 @@
 /**
  * @file homing_vision_app.cpp
  * @author Marco Caselli, Simone Comari
- * @date 12 Jul 2019
+ * @date 17 Jul 2019
  * @brief This file includes definitions of classes present in homing_vision_app.h.
  */
 
 #include "homing/homing_vision_app.h"
 #include "kinematics.h"
 
-HomingVisionApp::HomingVisionApp(QObject* parent, CableRobot* robot)
+HomingVisionApp::HomingVisionApp(QObject* parent, CableRobot* robot,
+                                 const VisionParams params)
   : QThread(parent), robot_ptr_(robot), new_frame_pending_(false), stop_(false)
-{}
+{
+  H_b2p = params.H_b2p;
+  H_c2w = params.H_c2w;
+}
 
 //--------- Public functions ---------------------------------------------------------//
 
@@ -28,13 +32,13 @@ void HomingVisionApp::applyPoseEstimate()
   grabnum::Vector3d orientation;
   calcPlatformGlobalPose(position, orientation);
   // Calculate inverse kinematics to get cables lenght and swivel angles from given pose.
-  grabcdpr::Params params = robot_ptr_->GetActiveComponentsParams();
-  grabcdpr::Vars cdpr_vars; // empty container
+  grabcdpr::RobotParams params = robot_ptr_->GetActiveComponentsParams();
+  grabcdpr::RobotVars cdpr_vars; // empty container
   cdpr_vars.cables.resize(params.actuators.size());
   // debug
   return;
-  grabcdpr::UpdateIK0<grabnum::Vector3d, grabcdpr::Vars>(position, orientation, &params,
-                                                         &cdpr_vars);
+  grabcdpr::UpdateIK0<grabnum::Vector3d, grabcdpr::RobotVars>(position, orientation,
+                                                              &params, &cdpr_vars);
   // Update homing configuration for each cable/pulley.
   vect<id_t> actuators_id = robot_ptr_->GetActiveMotorsID();
   for (uint i = 0; i < actuators_id.size(); i++)
@@ -193,32 +197,22 @@ void HomingVisionApp::showAugmentedFrame()
 void HomingVisionApp::calcPlatformGlobalPose(grabnum::Vector3d& position,
                                              grabnum::Vector3d& orientation)
 {
-  QString message =
-    QString("Estimated camera-to-chessboard transformation:\n"
-            "Rotation matrix:\n [ %1  %2  %3 ]\n [ %4  %5 %6 ]\n [ %7  %8  %9 ]\n"
-            "Translation vector:\n [ %10  %11  %12 ]^T")
-      .arg(R_b2c.at<double>(0, 0))
-      .arg(R_b2c.at<double>(0, 1))
-      .arg(R_b2c.at<double>(0, 2))
-      .arg(R_b2c.at<double>(1, 0))
-      .arg(R_b2c.at<double>(1, 1))
-      .arg(R_b2c.at<double>(1, 2))
-      .arg(R_b2c.at<double>(2, 0))
-      .arg(R_b2c.at<double>(2, 1))
-      .arg(R_b2c.at<double>(2, 2))
-      .arg(t_b2c.at<double>(0, 0))
-      .arg(t_b2c.at<double>(1, 0))
-      .arg(t_b2c.at<double>(2, 0));
-  emit printToQConsole(message);
-
   // Frame subscripts: b = chessboard, c = camera, p = platform, w = world
-  // TODO:
   // 1. Build H_b2c from R_b2c and t_b2c
   grabnum::Matrix4d H_b2c =
     grabgeom::BuildHomogeneousTransf(cv2grabnum<3, 3>(R_b2c), cv2grabnum<3, 1>(t_b2c));
   // 2. Calculate H_p2w = H_p2b * H_b2c * H_c2w
-  grabnum::Matrix4d H_p2w = H_b2c;
+  grabnum::Matrix4d H_p2w = grabgeom::InverseTransformation(H_b2p) * H_b2c * H_c2w;
   // 3. Extract platform pose from H_p2w
   position    = grabgeom::GetHomgTransfTransl(H_p2w);
-  orientation = grabgeom::Rot2TiltTorsion(grabgeom::GetHomgTransfRot(H_p2w));
+  orientation = grabgeom::Rot2EulerXYZ(grabgeom::GetHomgTransfRot(H_p2w));
+
+  emit printToQConsole(QString("Estimated platform position:\n [ %1  %2  %3 ] m\n"
+                               "Estimated platform orientation:\n [ %4  %5  %6 ] deg")
+                         .arg(position(1))
+                         .arg(position(2))
+                         .arg(position(3))
+                         .arg(orientation(1))
+                         .arg(orientation(2))
+                         .arg(orientation(3)));
 }

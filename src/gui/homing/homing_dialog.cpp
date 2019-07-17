@@ -1,18 +1,25 @@
 /**
  * @file homing_dialog.cpp
  * @author Simone Comari
- * @date 03 Jul 2019
+ * @date 17 Jul 2019
  * @brief This file includes definitions of class present in homing_dialog.h.
  */
 
 #include "gui/homing/homing_dialog.h"
 #include "ui_homing_dialog.h"
 
-
-HomingDialog::HomingDialog(QWidget* parent, CableRobot* robot)
+HomingDialog::HomingDialog(QWidget* parent, CableRobot* robot,
+                           const SensorsParams sensor_config)
   : QDialog(parent), ui(new Ui::HomingDialog), robot_ptr_(robot), homing_method_(NONE)
 {
   ui->setupUi(this);
+  for (auto sensor : sensor_config.activeSensors())
+    if (sensor == SensorType::VISION)
+    {
+      ui->comboBox_homingMethod->addItem("Vision-based");
+      vision_params_ = sensor_config.vision;
+      break;
+    }
 }
 
 HomingDialog::~HomingDialog()
@@ -37,12 +44,8 @@ void HomingDialog::on_buttonBox_accepted()
         interface_ = new HomingInterfaceProprioceptive(parentWidget(), robot_ptr_);
         break;
       case VISION:
-        interface_ = new HomingInterfaceVision(parentWidget(), robot_ptr_);
+        interface_ = new HomingInterfaceVision(parentWidget(), robot_ptr_, vision_params_);
         break;
-      case FUSION:
-        interface_ = nullptr;
-        fwdHomingSuccess(); // TODO: replace with homing fusion interface
-        return;
     }
     connect(interface_, SIGNAL(homingSuccess()), this, SLOT(fwdHomingSuccess()));
     connect(interface_, SIGNAL(homingFailed()), this, SLOT(fwdHomingFailed()));

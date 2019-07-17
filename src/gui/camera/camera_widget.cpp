@@ -72,6 +72,11 @@ CameraWidget::CameraWidget() : ui(new Ui::CameraWidget)
   ui->graphicsView_video->scene()->addItem(&video_streamer_);
 }
 
+CameraWidget::CameraWidget(const CameraParams& default_params) : CameraWidget()
+{
+  default_camera_params_ = default_params;
+}
+
 CameraWidget::~CameraWidget()
 {
   if (video_.isOpened())
@@ -178,7 +183,7 @@ void CameraWidget::on_pushButton_calib_clicked()
 {
   CLOG(TRACE, "event");
   deleteCalibDialog();
-  calib_dialog_ = new CameraCalibDialog(this);
+  calib_dialog_ = new CameraCalibDialog(this, default_camera_params_);
   connect(this, SIGNAL(newFrameGrabbed(cv::Mat)), calib_dialog_,
           SLOT(setNewVideoFrame(cv::Mat)));
   connect(calib_dialog_, SIGNAL(cameraParamsReady(CameraParams)), this,

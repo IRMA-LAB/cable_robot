@@ -53,10 +53,17 @@ class MainGUI: public QDialog
  public:
   /**
    * @brief MainGUI constructor.
-   * @param[in] parent The parent Qt object.
+   * @param parent The parent Qt object.
    * @param[in] config The configuration parameters of the cable robot.
    */
-  MainGUI(QWidget* parent, const grabcdpr::Params& config);
+  MainGUI(QWidget* parent, const grabcdpr::RobotParams& robot_config);
+  /**
+   * @brief MainGUI constructor.
+   * @param parent The parent Qt object.
+   * @param[in] config The configuration parameters of the cable robot.
+   */
+  MainGUI(QWidget* parent, const grabcdpr::RobotParams& robot_config,
+          const SensorsParams& sensors_config);
   ~MainGUI();
 
  private slots:
@@ -118,10 +125,11 @@ class MainGUI: public QDialog
   CalibrationDialog* calib_dialog_ = nullptr;
   HomingDialog* homing_dialog_     = nullptr;
 
-  JointsPVTDialog* joints_pvt_dialog_ = nullptr;
+  JointsPVTDialog* joints_pvt_dialog_   = nullptr;
   ManualControlDialog* man_ctrl_dialog_ = nullptr;
 
-  grabcdpr::Params config_params_;
+  grabcdpr::RobotParams robot_params_;
+  SensorsParams sensors_params_;
   CableRobot* robot_ptr_ = nullptr;
 
   void StartRobot();
@@ -139,11 +147,11 @@ class MainGUI: public QDialog
  private:
   //--------- Direct drive control stuff ---------------------------------------------//
 
-  static constexpr int16_t kTorqueSsErrTol_ = 5;
+  static constexpr int16_t kTorqueSsErrTol_  = 5;
   static constexpr int16_t kFreedriveTorque_ = -300;
 
   bool manual_ctrl_enabled_ = false;
-  bool freedrive_ = false;
+  bool freedrive_           = false;
   std::bitset<3> waiting_for_response_;
   std::bitset<5> desired_ctrl_mode_;
   id_t motor_id_;

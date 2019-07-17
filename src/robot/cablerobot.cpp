@@ -12,7 +12,7 @@ constexpr double CableRobot::kCycleWaitTimeSec;
 constexpr char* CableRobot::kStatesStr_[];
 constexpr double CableRobot::kCutoffFreq_;
 
-CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
+CableRobot::CableRobot(QObject* parent, const grabcdpr::RobotParams& config)
   : QObject(parent), StateMachine(ST_MAX_STATES), platform_(grabcdpr::TILT_TORSION),
     params_(config), log_buffer_(el::Loggers::getLogger("data")),
     stop_waiting_cmd_recv_(false), is_waiting_(false), prev_state_(ST_MAX_STATES)
@@ -98,9 +98,9 @@ CableRobot::~CableRobot()
 
 //--------- Public Functions --------------------------------------------------------//
 
-grabcdpr::Params CableRobot::GetActiveComponentsParams() const
+grabcdpr::RobotParams CableRobot::GetActiveComponentsParams() const
 {
-  grabcdpr::Params params;
+  grabcdpr::RobotParams params;
   params.platform = params_.platform;
   for (const auto& actuator_params : params_.actuators)
     if (actuator_params.active)

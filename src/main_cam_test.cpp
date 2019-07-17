@@ -1,10 +1,10 @@
 #include <QApplication>
 
-#include "libs/easyloggingpp/src/easylogging++.h"
 #include "libcdpr/tools/robotconfigjsonparser.h"
+#include "libs/easyloggingpp/src/easylogging++.h"
 
-#include "utils/easylog_wrapper.h"
 #include "gui/homing/homing_interface_vision.h"
+#include "utils/easylog_wrapper.h"
 
 INITIALIZE_EASYLOGGINGPP
 
@@ -23,10 +23,15 @@ int main(int argc, char* argv[])
   default_filename.append("config/default.json");
   CLOG(INFO, "event") << "Loaded default configuration file '" << default_filename << "'";
   CLOG(INFO, "event") << "Parsing configuration file '" << default_filename << "'...";
-  grabcdpr::Params params;
+  grabcdpr::RobotParams params;
   parser.ParseFile(default_filename, &params);
   CableRobot robot(nullptr, params);
-  HomingInterfaceVision w(nullptr, &robot);
+  VisionParams vision_params;
+  vision_params.camera.fill(
+    {704.794078001274, 0.0, 320.0, 0.0, 718.766056466343, 240.0, 0.0, 0.0, 1.0},
+    {-0.527425626579164, 1.30450069781873, 0.0116411242466877, 0.0270049043250451,
+     5.0712967746883});
+  HomingInterfaceVision w(nullptr, &robot, vision_params);
   w.show();
 
   return a.exec();

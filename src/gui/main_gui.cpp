@@ -1,15 +1,15 @@
-/**
+﻿/**
  * @file main_gui.cpp
  * @author Simone Comari
- * @date 03 Jul 2019
+ * @date 17 Jul 2019
  * @brief This file includes definitions of classes present in main_gui.h.
  */
 
 #include "gui/main_gui.h"
 #include "ui_main_gui.h"
 
-MainGUI::MainGUI(QWidget* parent, const grabcdpr::Params& config)
-  : QDialog(parent), ui(new Ui::MainGUI), config_params_(config)
+MainGUI::MainGUI(QWidget* parent, const grabcdpr::RobotParams& robot_config)
+  : QDialog(parent), ui(new Ui::MainGUI), robot_params_(robot_config)
 {
   ui->setupUi(this);
 
@@ -18,8 +18,8 @@ MainGUI::MainGUI(QWidget* parent, const grabcdpr::Params& config)
   desired_ctrl_mode_.reset();
   desired_ctrl_mode_.set(ControlMode::CABLE_LENGTH);
 
-  for (size_t i = 0; i < config.actuators.size(); i++)
-    if (config.actuators[i].active)
+  for (size_t i = 0; i < robot_config.actuators.size(); i++)
+    if (robot_config.actuators[i].active)
       ui->comboBox_motorAxis->addItem(QString::number(i));
 
   StartRobot(); // instantiate cable robot object
@@ -37,6 +37,13 @@ MainGUI::MainGUI(QWidget* parent, const grabcdpr::Params& config)
   connect(pushButton_debug, SIGNAL(clicked()), this, SLOT(pushButton_debug_clicked()));
   ui->groupBox_app->setEnabled(true);
 #endif
+}
+
+MainGUI::MainGUI(QWidget* parent, const grabcdpr::RobotParams& robot_config,
+                 const SensorsParams& sensors_config)
+  : MainGUI(parent, robot_config)
+{
+  sensors_params_ = sensors_config;
 }
 
 MainGUI::~MainGUI()
@@ -78,7 +85,7 @@ void MainGUI::on_pushButton_calib_clicked()
 
   robot_ptr_->enterCalibrationMode();
 
-  calib_dialog_ = new CalibrationDialog(this, robot_ptr_, config_params_);
+  calib_dialog_ = new CalibrationDialog(this, robot_ptr_, robot_params_);
   connect(calib_dialog_, SIGNAL(enableMainGUI(bool)), this, SLOT(enableInterface(bool)));
   connect(calib_dialog_, SIGNAL(calibrationEnd()), robot_ptr_, SLOT(eventSuccess()));
   calib_dialog_->show();
@@ -100,7 +107,7 @@ void MainGUI::on_pushButton_homing_clicked()
 
   if (homing_dialog_ == nullptr)
   {
-    homing_dialog_ = new HomingDialog(this, robot_ptr_);
+    homing_dialog_ = new HomingDialog(this, robot_ptr_, sensors_params_);
     connect(homing_dialog_, SIGNAL(enableMainGUI(bool)), this,
             SLOT(enableInterface(bool)));
     connect(homing_dialog_, SIGNAL(homingSuccess()), robot_ptr_, SLOT(eventSuccess()));
@@ -126,7 +133,7 @@ void MainGUI::on_pushButton_startApp_clicked()
   if (ui->comboBox_apps->currentText() == "Joint PVT 33")
   {
     robot_ptr_->eventSuccess();
-    joints_pvt_dialog_ = new JointsPVTDialog(this, robot_ptr_, config_params_.actuators);
+    joints_pvt_dialog_ = new JointsPVTDialog(this, robot_ptr_, robot_params_.actuators);
     connect(joints_pvt_dialog_, SIGNAL(destroyed()), robot_ptr_, SLOT(eventSuccess()));
     connect(joints_pvt_dialog_, SIGNAL(destroyed()), this, SLOT(enableInterface()));
     joints_pvt_dialog_->show();
@@ -753,7 +760,7 @@ ControlMode MainGUI::DriveOpMode2CtrlMode(const int8_t drive_op_mode)
 
 void MainGUI::StartRobot()
 {
-  robot_ptr_ = new CableRobot(this, config_params_);
+  robot_ptr_ = new CableRobot(this, robot_params_);
 
   connect(robot_ptr_, SIGNAL(printToQConsole(QString)), this,
           SLOT(appendText2Browser(QString)), Qt::ConnectionType::QueuedConnection);

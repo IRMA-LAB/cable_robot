@@ -88,6 +88,7 @@ class CameraWidget: public QWidget
    * @brief CameraWidget
    */
   CameraWidget();
+  CameraWidget(const CameraParams& default_params);
   ~CameraWidget();
 
   Ui::CameraWidget* ui;
@@ -154,6 +155,7 @@ private:
   QImage qimg_;
   VideoStreamType stream_type_;
 
+  CameraParams default_camera_params_;
   CameraParams camera_params_;
 
   void stream();

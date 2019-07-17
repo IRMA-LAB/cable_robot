@@ -36,7 +36,7 @@ class CalibrationDialog: public QDialog
    * calibration procedure interface.
    * @param[in] params Robot parameters.
    */
-  CalibrationDialog(QWidget* parent, CableRobot* robot, const grabcdpr::Params& params);
+  CalibrationDialog(QWidget* parent, CableRobot* robot, const grabcdpr::RobotParams& params);
   ~CalibrationDialog();
 
  signals:
@@ -61,7 +61,7 @@ class CalibrationDialog: public QDialog
 
   CalibInterfaceExcitation* interface_ = nullptr;
   CableRobot* robot_ptr_               = nullptr;
-  grabcdpr::Params params_;
+  grabcdpr::RobotParams params_;
 };
 
 #endif // CABLE_ROBOT_CALIBRATION_DIALOG_H

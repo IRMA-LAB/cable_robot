@@ -1,7 +1,7 @@
 /**
  * @file login_window.cpp
  * @author Simone Comari
- * @date 18 Jun 2019
+ * @date 17 Jul 2019
  * @brief This file includes definitions of window class present in login_window.h.
  */
 
@@ -15,7 +15,7 @@ LoginWindow::LoginWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::Logi
   ui->setupUi(this);
   setFixedHeight(this->geometry().height());
 
-  //debug
+  // debug
   ui->groupBox_config->setEnabled(true);
 }
 
@@ -25,7 +25,8 @@ LoginWindow::~LoginWindow()
   CLOG(INFO, "event") << "Login window closed";
 }
 
-LoginWindow::RetVal LoginWindow::IsValidUser(QString& username, QString& password) const
+LoginWindow::RetVal LoginWindow::IsValidUser(const QString& username,
+                                             const QString& password) const
 {
   std::string usb_path = "";
   foreach (const QStorageInfo& storage, QStorageInfo::mountedVolumes())
@@ -87,64 +88,111 @@ void LoginWindow::on_pushButton_login_clicked()
   }
 }
 
-void LoginWindow::on_pushButton_inputFile_clicked()
+void LoginWindow::on_pushButton_robotConfig_clicked()
 {
   CLOG(TRACE, "event");
-  QString config_filename =
-    QFileDialog::getOpenFileName(this, tr("Load Configuration File"),
-                                 tr(SRCDIR "/config"),
-                                 tr("Configuration File (*.json)"));
+  QString config_filename = QFileDialog::getOpenFileName(
+    this, tr("Load Robot Configuration File"), tr(SRCDIR "/config"),
+    tr("Robot Configuration File (*.json)"));
   if (config_filename.isEmpty())
   {
-    CLOG(WARNING, "event") << "Configuration filename is empty";
-    QMessageBox::warning(this, "File Error", "Configuration filename is empty");
+    CLOG(WARNING, "event") << "Robot configuration filename is empty";
+    QMessageBox::warning(this, "File Error", "Robot configuration filename is empty");
     return;
   }
-  ui->lineEdit_inputFile->setText(config_filename);
+  ui->lineEdit_robotConfig->setText(config_filename);
+}
+
+void LoginWindow::on_pushButton_sensorsConfig_clicked()
+{
+  CLOG(TRACE, "event");
+  QString config_filename = QFileDialog::getOpenFileName(
+    this, tr("Load Sensors Configuration File"), tr(SRCDIR "/config"),
+    tr("Sensors configuration File (*.json)"));
+  if (config_filename.isEmpty())
+  {
+    CLOG(WARNING, "event") << "Sensors configuration filename is empty";
+    QMessageBox::warning(this, "File Error", "Sensors configuration filename is empty");
+    return;
+  }
+  ui->lineEdit_sensorsConfig->setText(config_filename);
 }
 
 void LoginWindow::on_pushButton_load_clicked()
 {
   CLOG(TRACE, "event");
-  QString config_filename = ui->lineEdit_inputFile->text();
-  if (config_filename.isEmpty())
+  QString robot_config_filename = ui->lineEdit_robotConfig->text();
+  if (robot_config_filename.isEmpty())
   {
-    ui->pushButton_inputFile->click();
-    config_filename = ui->lineEdit_inputFile->text();
-    if (config_filename.isEmpty())
+    on_pushButton_robotConfig_clicked();
+    robot_config_filename = ui->lineEdit_robotConfig->text();
+    if (robot_config_filename.isEmpty())
       return;
   }
-  if (!ParseConfigFile(config_filename))
+  QString sensors_config_filename = ui->lineEdit_sensorsConfig->text();
+  if (sensors_config_filename.isEmpty())
   {
-    CLOG(WARNING, "event") << "Configuration file is not valid";
-    QMessageBox::warning(this, "File Error", "Configuration file is not valid");
-    return;
+    if (QMessageBox::No ==
+        QMessageBox::question(
+          this, "Sensors Configuration File Missing",
+          "Without sensors configuration some functionalities will not "
+          "be enabled.\nDo you wish to continue?"))
+    {
+      on_pushButton_sensorsConfig_clicked();
+      sensors_config_filename = ui->lineEdit_sensorsConfig->text();
+      if (sensors_config_filename.isEmpty())
+        return;
+    }
   }
-  CLOG(INFO, "event") << "Loaded configuration file '" << config_filename << "'";
-  main_gui = new MainGUI(this, config_);
-  hide();
-  CLOG(INFO, "event") << "Hide login window";
-  main_gui->show();
-  CLOG(INFO, "event") << "Prompt main window";
+  loadConfigFiles(robot_config_filename, sensors_config_filename);
 }
 
 void LoginWindow::on_pushButton_loadDefault_clicked()
 {
   CLOG(TRACE, "event");
-  QString default_filename(SRCDIR);
-  default_filename.append("config/default.json");
-  CLOG(INFO, "event") << "Loaded default configuration file '" << default_filename << "'";
-  ParseConfigFile(default_filename);
-  main_gui = new MainGUI(this, config_);
+  QString robot_default_filename(SRCDIR);
+  robot_default_filename.append("config/default.json");
+  QString sensors_default_filename(SRCDIR);
+  sensors_default_filename.append("config/sensors_config.json");
+  loadConfigFiles(robot_default_filename, sensors_default_filename);
+}
+
+bool LoginWindow::ParseConfigFile(const QString& config_filename)
+{
+  RobotConfigJsonParser parser;
+  CLOG(INFO, "event") << "Parsing configuration file '" << config_filename << "'...";
+  return parser.ParseFile(config_filename, &robot_config_);
+}
+
+void LoginWindow::loadConfigFiles(const QString& robot_config_filename,
+                                  const QString& sensors_config_filename)
+{
+  if (!ParseConfigFile(robot_config_filename))
+  {
+    CLOG(WARNING, "event") << "Robot Configuration file is not valid";
+    QMessageBox::warning(this, "File Error", "Robot configuration file is not valid");
+    return;
+  }
+  CLOG(INFO, "event") << "Loaded robot configuration file '" << robot_config_filename
+                      << "'";
+
+  if (sensors_config_filename.isEmpty())
+    main_gui = new MainGUI(this, robot_config_);
+  else
+  {
+    if (!ParseConfigFile(sensors_config_filename))
+    {
+      CLOG(WARNING, "event") << "Sensors Configuration file is not valid";
+      QMessageBox::warning(this, "File Error", "Sensors configuration file is not valid");
+      return;
+    }
+    CLOG(INFO, "event") << "Loaded sensors configuration file '" << robot_config_filename
+                        << "'";
+    main_gui = new MainGUI(this, robot_config_, sensors_config_);
+  }
+
   hide();
   CLOG(INFO, "event") << "Hide login window";
   main_gui->show();
   CLOG(INFO, "event") << "Prompt main window";
-}
-
-bool LoginWindow::ParseConfigFile(QString& config_filename)
-{
-  RobotConfigJsonParser parser;
-  CLOG(INFO, "event") << "Parsing configuration file '" << config_filename << "'...";
-  return parser.ParseFile(config_filename, &config_);
 }

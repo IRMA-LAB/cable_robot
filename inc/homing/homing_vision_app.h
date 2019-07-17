@@ -1,7 +1,7 @@
 /**
  * @file homing_vision_app.h
  * @author Marco Caselli, Simone Comari
- * @date 15 Jul 2019
+ * @date 17 Jul 2019
  * @brief File containing homing vision structure and class to find rotation matrix and
  * traslation vector between camera and chessboard reference systems.
  */
@@ -60,7 +60,7 @@ class HomingVisionApp: public QThread
    * @param parent The parent Qt object, in this case the corresponding interface.
    * @param robot Pointer to cable robot instance, to access robot features and commands.
    */
-  explicit HomingVisionApp(QObject* parent, CableRobot* robot);
+  explicit HomingVisionApp(QObject* parent, CableRobot* robot, const VisionParams params);
 
   /**
    * @brief User stop command, to interrupt the calibration process before completion.
@@ -125,6 +125,9 @@ class HomingVisionApp: public QThread
   std::vector<cv::Point3f> object_points_;
   std::vector<cv::Point2f> object_points_planar_;
   std::vector<cv::Point2f> image_points_;
+
+  grabnum::Matrix4d H_b2p;
+  grabnum::Matrix4d H_c2w;
 
   void run();
   bool poseEstimationFromCoplanarPoints();

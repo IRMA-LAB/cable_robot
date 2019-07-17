@@ -124,7 +124,7 @@ class ControllerJointsPVT: public QObject, public ControllerBase
    * @return Control actions for each targeted motor.
    */
   vect<ControlAction>
-  CalcCtrlActions(const grabcdpr::Vars& robot_status,
+  CalcCtrlActions(const grabcdpr::RobotVars& robot_status,
                   const vect<ActuatorStatus>& actuators_status) override final;
 
  signals:
