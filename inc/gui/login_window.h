@@ -75,9 +75,9 @@ class LoginWindow: public QMainWindow
     ERR_INVAL
   };
 
-  RetVal IsValidUser(const QString& username, const QString& password) const;
-  bool ParseRobotConfigFile(const QString& config_filename);
-  bool ParseSensorsConfigFile(const QString& config_filename);
+  RetVal isValidUser(const QString& username, const QString& password) const;
+  bool parseRobotConfigFile(const QString& config_filename);
+  bool parseSensorsConfigFile(const QString& config_filename);
   void loadConfigFiles(const QString& robot_config_filename,
                        const QString& sensors_config_filename);
 };

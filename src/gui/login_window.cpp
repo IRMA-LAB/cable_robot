@@ -25,41 +25,7 @@ LoginWindow::~LoginWindow()
   CLOG(INFO, "event") << "Login window closed";
 }
 
-LoginWindow::RetVal LoginWindow::IsValidUser(const QString& username,
-                                             const QString& password) const
-{
-  std::string usb_path = "";
-  foreach (const QStorageInfo& storage, QStorageInfo::mountedVolumes())
-  {
-    if (storage.name() == USB_STORAGE_NAME ||
-        storage.rootPath().mid(storage.rootPath().lastIndexOf("/") + 1) ==
-          USB_STORAGE_NAME)
-    {
-      usb_path = storage.rootPath().toStdString();
-      break;
-    }
-  }
-
-  // Open file
-  std::ifstream ifile(usb_path + "/.users.json");
-  if (!ifile.is_open())
-  {
-    return ERR_IO;
-  }
-
-  // Parse JSON (generic) data
-  json data;
-  ifile >> data;
-  ifile.close();
-
-  // Look for existing user
-  for (auto& user : data["users"])
-    if (username.toStdString() == user["username"] &&
-        password.toStdString() == user["password"])
-      return OK;
-
-  return ERR_INVAL;
-}
+//--------- Private slots ------------------------------------------------------------//
 
 void LoginWindow::on_pushButton_login_clicked()
 {
@@ -67,7 +33,7 @@ void LoginWindow::on_pushButton_login_clicked()
   username_        = ui->lineEdit_username->text();
   QString password = ui->lineEdit_password->text();
 
-  RetVal ret = IsValidUser(username_, password);
+  RetVal ret = isValidUser(username_, password);
   switch (ret)
   {
     case OK:
@@ -157,14 +123,52 @@ void LoginWindow::on_pushButton_loadDefault_clicked()
   loadConfigFiles(robot_default_filename, sensors_default_filename);
 }
 
-bool LoginWindow::ParseRobotConfigFile(const QString& config_filename)
+//--------- Private Functions --------------------------------------------------------//
+
+LoginWindow::RetVal LoginWindow::isValidUser(const QString& username,
+                                             const QString& password) const
+{
+  std::string usb_path = "";
+  foreach (const QStorageInfo& storage, QStorageInfo::mountedVolumes())
+  {
+    if (storage.name() == USB_STORAGE_NAME ||
+        storage.rootPath().mid(storage.rootPath().lastIndexOf("/") + 1) ==
+          USB_STORAGE_NAME)
+    {
+      usb_path = storage.rootPath().toStdString();
+      break;
+    }
+  }
+
+  // Open file
+  std::ifstream ifile(usb_path + "/.users.json");
+  if (!ifile.is_open())
+  {
+    return ERR_IO;
+  }
+
+  // Parse JSON (generic) data
+  json data;
+  ifile >> data;
+  ifile.close();
+
+  // Look for existing user
+  for (auto& user : data["users"])
+    if (username.toStdString() == user["username"] &&
+        password.toStdString() == user["password"])
+      return OK;
+
+  return ERR_INVAL;
+}
+
+bool LoginWindow::parseRobotConfigFile(const QString& config_filename)
 {
   RobotConfigJsonParser parser;
   CLOG(INFO, "event") << "Parsing robot configuration file '" << config_filename << "'...";
   return parser.ParseFile(config_filename, &robot_config_);
 }
 
-bool LoginWindow::ParseSensorsConfigFile(const QString& config_filename)
+bool LoginWindow::parseSensorsConfigFile(const QString& config_filename)
 {
   SensorsConfigJsonParser parser;
   CLOG(INFO, "event") << "Parsing sensors configuration file '" << config_filename << "'...";
@@ -174,7 +178,7 @@ bool LoginWindow::ParseSensorsConfigFile(const QString& config_filename)
 void LoginWindow::loadConfigFiles(const QString& robot_config_filename,
                                   const QString& sensors_config_filename)
 {
-  if (!ParseRobotConfigFile(robot_config_filename))
+  if (!parseRobotConfigFile(robot_config_filename))
   {
     CLOG(WARNING, "event") << "Robot Configuration file is not valid";
     QMessageBox::warning(this, "File Error", "Robot configuration file is not valid");
@@ -187,7 +191,7 @@ void LoginWindow::loadConfigFiles(const QString& robot_config_filename,
     main_gui = new MainGUI(this, robot_config_);
   else
   {
-    if (!ParseSensorsConfigFile(sensors_config_filename))
+    if (!parseSensorsConfigFile(sensors_config_filename))
     {
       CLOG(WARNING, "event") << "Sensors Configuration file is not valid";
       QMessageBox::warning(this, "File Error", "Sensors configuration file is not valid");
