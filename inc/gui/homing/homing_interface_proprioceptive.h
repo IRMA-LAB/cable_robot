@@ -23,7 +23,7 @@
 
 
 namespace Ui {
-class HomingInterfaceProprioceptive;
+class HomingInterfaceProprioceptiveWidget;
 }
 
 /**
@@ -31,7 +31,7 @@ class HomingInterfaceProprioceptive;
  * allows the user to triggers events, set important parameters and interact with the
  * homing applications.
  */
-class HomingInterfaceProprioceptive: public HomingInterface
+class HomingInterfaceProprioceptiveWidget: public QWidget
 {
   Q_OBJECT
 
@@ -41,14 +41,12 @@ class HomingInterfaceProprioceptive: public HomingInterface
    * @param parent The parent Qt object, in our case the homing dialog.
    * @param robot Pointer to the cable robot instance, to be passed to the inner app.
    */
-  explicit HomingInterfaceProprioceptive(QWidget* parent, CableRobot* robot);
-  ~HomingInterfaceProprioceptive() override final;
+  explicit HomingInterfaceProprioceptiveWidget(QWidget* parent, CableRobot* robot);
+  ~HomingInterfaceProprioceptiveWidget() override final;
 
- signals:
-  void homingCompleted() const;
+  HomingProprioceptiveApp app;
 
  private slots:
-  void closeEvent(QCloseEvent* event) override final;
 
   void on_pushButton_enable_clicked();
   void on_pushButton_clearFaults_clicked();
@@ -64,29 +62,36 @@ class HomingInterfaceProprioceptive: public HomingInterface
   void on_pushButton_extFile_clicked();
   void on_pushButton_ok_clicked();
 
-  void on_pushButton_cancel_clicked();
-  void on_pushButton_done_clicked();
-
  private slots:
   void appendText2Browser(const QString& text);
   void updateAcquisitionProgress(const int value);
   void updateOptimizationProgress(const int value);
 
   void handleAcquisitionComplete();
-  void handleHomingComplete();
   void handleStateChanged(const quint8& state);
+  void handleHomingComplete();
 
  private:
-  Ui::HomingInterfaceProprioceptive* ui;
+  Ui::HomingInterfaceProprioceptiveWidget* ui;
   QVector<InitTorqueForm*> init_torque_forms_;
 
-  HomingProprioceptiveApp app_;
+  CableRobot* robot_ptr_ = nullptr;
   bool acquisition_complete_;
   bool ext_close_cmd_;
 
   void UpdateTorquesLimits();
+};
 
-  void Close() override final;
+class HomingInterfaceProprioceptive: public HomingInterface
+{
+ public:
+  explicit HomingInterfaceProprioceptive(QWidget* parent, CableRobot* robot);
+  ~HomingInterfaceProprioceptive() override;
+
+ private:
+  HomingInterfaceProprioceptiveWidget widget_;
+
+  bool rejectedExitRoutine(const bool force_exit = false) override final;
 };
 
 #endif // CABLE_ROBOT_HOMING_INTERFACE_PROPRIOCEPTIVE_H

@@ -100,6 +100,8 @@ void CameraWidget::stopVideoStream()
   if (!video_.isOpened())
     return;
 
+  deleteCalibDialog();
+
   if (video_rec_.isOpened())
     ui->pushButton_stopRec->click();
   video_.release();
@@ -398,12 +400,9 @@ void CameraWidget::displayFrame()
   if (video_rec_.isOpened() && !display_frame_.empty())
     video_rec_.write(display_frame_);
 
-  if (calib_dialog_ == nullptr || calib_dialog_->isHidden())
-  {
-    mapToQImage();
-    video_streamer_.setPixmap(QPixmap::fromImage(qimg_.rgbSwapped()));
-    ui->graphicsView_video->fitInView(&video_streamer_, Qt::KeepAspectRatio);
-  }
+  mapToQImage();
+  video_streamer_.setPixmap(QPixmap::fromImage(qimg_.rgbSwapped()));
+  ui->graphicsView_video->fitInView(&video_streamer_, Qt::KeepAspectRatio);
 }
 
 void CameraWidget::mapToQImage()

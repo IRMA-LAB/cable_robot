@@ -19,6 +19,8 @@ CameraCalibDialog::CameraCalibDialog(QWidget* parent, const CameraParams default
 
   connect(&settings_win_, SIGNAL(cameraCalibSettings(CameraCalibSettings)), this,
           SLOT(startCalibration(CameraCalibSettings)));
+  connect(&settings_win_, SIGNAL(cancelClicked()), this, SLOT(show()));
+
   connect(&app_, SIGNAL(calibrationFailed()), this, SLOT(handleCalibrationFailure()));
   connect(&app_, SIGNAL(calibrationSuccess(CameraParams)), this,
           SLOT(handleCalibrationSuccess(CameraParams)));
@@ -28,7 +30,21 @@ CameraCalibDialog::CameraCalibDialog(QWidget* parent, const CameraParams default
           SLOT(frwPrintToQConsole(QString)));
 }
 
-CameraCalibDialog::~CameraCalibDialog() { delete ui; }
+CameraCalibDialog::~CameraCalibDialog()
+{
+  disconnect(&settings_win_, SIGNAL(cameraCalibSettings(CameraCalibSettings)), this,
+             SLOT(startCalibration(CameraCalibSettings)));
+  disconnect(&settings_win_, SIGNAL(cancelClicked()), this, SLOT(show()));
+
+  disconnect(&app_, SIGNAL(calibrationFailed()), this, SLOT(handleCalibrationFailure()));
+  disconnect(&app_, SIGNAL(calibrationSuccess(CameraParams)), this,
+             SLOT(handleCalibrationSuccess(CameraParams)));
+  disconnect(&app_, SIGNAL(augmentedFrameAvailable(cv::Mat)), this,
+             SLOT(frwAugmentedFrame(cv::Mat)));
+  disconnect(&app_, SIGNAL(printToQConsole(QString)), this,
+             SLOT(frwPrintToQConsole(QString)));
+  delete ui;
+}
 
 //--------- Public slots  ------------------------------------------------------------//
 
@@ -50,7 +66,7 @@ void CameraCalibDialog::handleCalibrationFailure()
 {
   QMessageBox::warning(this, "Calibration Error",
                        "Calibration failed or interrupted!\nPlease try again.");
-  this->show();
+  this->setEnabled(true);
   emit calibrationStatusChanged(OFF);
 }
 
@@ -64,7 +80,7 @@ void CameraCalibDialog::handleCalibrationSuccess(const CameraParams& params)
   if (reply == QMessageBox::Yes)
     emit cameraParamsReady(params);
   else
-    this->show();
+    this->setEnabled(true);
 }
 
 void CameraCalibDialog::frwAugmentedFrame(const cv::Mat& augmented_frame) const
@@ -79,10 +95,19 @@ void CameraCalibDialog::frwPrintToQConsole(const QString& msg) const
 
 //--------- Private GUI slots --------------------------------------------------------//
 
+void CameraCalibDialog::closeEvent(QCloseEvent* event)
+{
+  if (settings_win_.isVisible())
+    settings_win_.close();
+  if (app_.isVisible())
+    app_.close();
+  event->accept();
+}
+
 void CameraCalibDialog::on_pushButton_newCalib_clicked()
 {
   settings_win_.show();
-  this->hide();
+//  this->setDisabled(true);
 }
 
 void CameraCalibDialog::on_pushButton_load_clicked()

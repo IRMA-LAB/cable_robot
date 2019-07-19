@@ -18,7 +18,8 @@ class CameraCalibSettingsDialog: public QDialog
   ~CameraCalibSettingsDialog();
 
  signals:
-  void cameraCalibSettings(const CameraCalibSettings&);
+  void cameraCalibSettings(const CameraCalibSettings&) const;
+  void cancelClicked() const;
 
  private slots:
   void on_pushButton_advancedSettings_clicked();

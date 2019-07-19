@@ -1,19 +1,23 @@
-/**
+﻿/**
  * @file homing_interface_proprioceptive.cpp
  * @author Simone Comari
- * @date 09 Jul 2019
+ * @date 18 Jul 2019
  * @brief This file includes definitions of classes present in
  * homing_interface_proprioceptive.h.
  */
 
 #include "gui/homing/homing_interface_proprioceptive.h"
+#include "ui_homing_interface.h"
 #include "ui_homing_interface_proprioceptive.h"
 
+//------------------------------------------------------------------------------------//
+//--------- HomingInterfaceProprioceptiveWidget class --------------------------------//
+//------------------------------------------------------------------------------------//
 
-HomingInterfaceProprioceptive::HomingInterfaceProprioceptive(QWidget* parent,
-                                                             CableRobot* robot)
-  : HomingInterface(parent, robot), ui(new Ui::HomingInterfaceProprioceptive),
-    app_(this, robot), acquisition_complete_(false), ext_close_cmd_(false)
+HomingInterfaceProprioceptiveWidget::HomingInterfaceProprioceptiveWidget(
+  QWidget* parent, CableRobot* robot)
+  : QWidget(parent), app(this, robot), ui(new Ui::HomingInterfaceProprioceptiveWidget),
+    robot_ptr_(robot), acquisition_complete_(false), ext_close_cmd_(false)
 {
   ui->setupUi(this);
 
@@ -33,26 +37,26 @@ HomingInterfaceProprioceptive::HomingInterfaceProprioceptive(QWidget* parent,
 
   connect(robot_ptr_, SIGNAL(printToQConsole(QString)), this,
           SLOT(appendText2Browser(QString)), Qt::ConnectionType::QueuedConnection);
-  connect(&app_, SIGNAL(printToQConsole(QString)), this,
-          SLOT(appendText2Browser(QString)), Qt::ConnectionType::DirectConnection);
-  connect(&app_, SIGNAL(acquisitionComplete()), this, SLOT(handleAcquisitionComplete()));
-  connect(&app_, SIGNAL(homingComplete()), this, SLOT(handleHomingComplete()));
-  connect(&app_, SIGNAL(stateChanged(quint8)), this, SLOT(handleStateChanged(quint8)),
+  connect(&app, SIGNAL(printToQConsole(QString)), this, SLOT(appendText2Browser(QString)),
+          Qt::ConnectionType::DirectConnection);
+  connect(&app, SIGNAL(acquisitionComplete()), this, SLOT(handleAcquisitionComplete()));
+  connect(&app, SIGNAL(stateChanged(quint8)), this, SLOT(handleStateChanged(quint8)),
           Qt::ConnectionType::QueuedConnection);
+  connect(&app, SIGNAL(homingComplete()), this, SLOT(handleHomingComplete()));
 }
 
-HomingInterfaceProprioceptive::~HomingInterfaceProprioceptive()
+HomingInterfaceProprioceptiveWidget::~HomingInterfaceProprioceptiveWidget()
 {
   disconnect(robot_ptr_, SIGNAL(printToQConsole(QString)), this,
              SLOT(appendText2Browser(QString)));
-  disconnect(&app_, SIGNAL(printToQConsole(QString)), this,
+  disconnect(&app, SIGNAL(printToQConsole(QString)), this,
              SLOT(appendText2Browser(QString)));
-  disconnect(&app_, SIGNAL(progressValue(int)), this,
+  disconnect(&app, SIGNAL(progressValue(int)), this,
              SLOT(updateAcquisitionProgress(int)));
-  disconnect(&app_, SIGNAL(acquisitionComplete()), this,
+  disconnect(&app, SIGNAL(acquisitionComplete()), this,
              SLOT(handleAcquisitionComplete()));
-  disconnect(&app_, SIGNAL(homingComplete()), this, SLOT(handleHomingComplete()));
-  disconnect(&app_, SIGNAL(stateChanged(quint8)), this, SLOT(handleStateChanged(quint8)));
+  disconnect(&app, SIGNAL(homingComplete()), this, SLOT(handleHomingComplete()));
+  disconnect(&app, SIGNAL(stateChanged(quint8)), this, SLOT(handleStateChanged(quint8)));
 
   for (InitTorqueForm* form : init_torque_forms_)
     delete form;
@@ -62,22 +66,7 @@ HomingInterfaceProprioceptive::~HomingInterfaceProprioceptive()
 
 //--------- Private GUI slots -------------------------------------------------------//
 
-void HomingInterfaceProprioceptive::closeEvent(QCloseEvent* event)
-{
-  if (ext_close_cmd_)
-  {
-    ext_close_cmd_ = false;
-    event->accept();
-  }
-  else
-  {
-    event->ignore();
-    // This becomes like user hit Cancel button.
-    ui->pushButton_cancel->click();
-  }
-}
-
-void HomingInterfaceProprioceptive::on_pushButton_enable_clicked()
+void HomingInterfaceProprioceptiveWidget::on_pushButton_enable_clicked()
 {
   bool robot_enabled = ui->pushButton_enable->text() == "Disable";
   CLOG(TRACE, "event") << (robot_enabled ? "DISABLE" : "ENABLE");
@@ -85,11 +74,11 @@ void HomingInterfaceProprioceptive::on_pushButton_enable_clicked()
 
   if (!robot_enabled)
   {
-    app_.Start(nullptr); // IDLE --> ENABLED
+    app.Start(nullptr); // IDLE --> ENABLED
     return;
   }
 
-  if (app_.IsCollectingData())
+  if (app.IsCollectingData())
   {
     QMessageBox::StandardButton reply =
       QMessageBox::question(this, "Acquisition in progress",
@@ -114,17 +103,17 @@ void HomingInterfaceProprioceptive::on_pushButton_enable_clicked()
     if (reply == QMessageBox::No)
       return;
   }
-  app_.Disable(); // any --> ENABLED --> IDLE
+  app.Disable(); // any --> ENABLED --> IDLE
 }
 
-void HomingInterfaceProprioceptive::on_pushButton_clearFaults_clicked()
+void HomingInterfaceProprioceptiveWidget::on_pushButton_clearFaults_clicked()
 {
   CLOG(TRACE, "event");
   ui->pushButton_start->setChecked(false);
-  app_.FaultReset();
+  app.FaultReset();
 }
 
-void HomingInterfaceProprioceptive::on_checkBox_useCurrentTorque_stateChanged(int)
+void HomingInterfaceProprioceptiveWidget::on_checkBox_useCurrentTorque_stateChanged(int)
 {
   CLOG(TRACE, "event");
   if (ui->checkBox_useCurrentTorque->isChecked())
@@ -134,7 +123,7 @@ void HomingInterfaceProprioceptive::on_checkBox_useCurrentTorque_stateChanged(in
   UpdateTorquesLimits();
 }
 
-void HomingInterfaceProprioceptive::on_checkBox_initTorque_stateChanged(int)
+void HomingInterfaceProprioceptiveWidget::on_checkBox_initTorque_stateChanged(int)
 {
   CLOG(TRACE, "event");
   if (ui->checkBox_initTorque->isChecked())
@@ -149,13 +138,13 @@ void HomingInterfaceProprioceptive::on_checkBox_initTorque_stateChanged(int)
   UpdateTorquesLimits();
 }
 
-void HomingInterfaceProprioceptive::on_spinBox_initTorque_valueChanged(int value)
+void HomingInterfaceProprioceptiveWidget::on_spinBox_initTorque_valueChanged(int value)
 {
   for (auto* init_torque_form : init_torque_forms_)
     init_torque_form->SetInitTorque(value);
 }
 
-void HomingInterfaceProprioceptive::on_checkBox_maxTorque_stateChanged(int)
+void HomingInterfaceProprioceptiveWidget::on_checkBox_maxTorque_stateChanged(int)
 {
   CLOG(TRACE, "event");
   for (auto* init_torque_form : init_torque_forms_)
@@ -164,16 +153,16 @@ void HomingInterfaceProprioceptive::on_checkBox_maxTorque_stateChanged(int)
   UpdateTorquesLimits();
 }
 
-void HomingInterfaceProprioceptive::on_spinBox_maxTorque_valueChanged(int value)
+void HomingInterfaceProprioceptiveWidget::on_spinBox_maxTorque_valueChanged(int value)
 {
   for (auto* init_torque_form : init_torque_forms_)
     init_torque_form->SetMaxTorque(value);
 }
 
-void HomingInterfaceProprioceptive::on_pushButton_start_clicked()
+void HomingInterfaceProprioceptiveWidget::on_pushButton_start_clicked()
 {
   ui->pushButton_start->setChecked(false);
-  if (app_.IsCollectingData())
+  if (app.IsCollectingData())
   {
     QMessageBox::StandardButton reply =
       QMessageBox::question(this, "Homing in progress",
@@ -184,8 +173,8 @@ void HomingInterfaceProprioceptive::on_pushButton_start_clicked()
     CLOG(TRACE, "event") << "(STOP?) --> " << (reply == QMessageBox::Yes);
     if (reply == QMessageBox::Yes)
     {
-      app_.Stop(); // any --> ENABLED
-      disconnect(&app_, SIGNAL(progressValue(int)), this,
+      app.Stop(); // any --> ENABLED
+      disconnect(&app, SIGNAL(progressValue(int)), this,
                  SLOT(updateAcquisitionProgress(int)));
     }
     return;
@@ -207,12 +196,12 @@ void HomingInterfaceProprioceptive::on_pushButton_start_clicked()
   ui->radioButton_external->toggled(true);
   ui->pushButton_ok->setDisabled(true);
   acquisition_complete_ = false;
-  connect(&app_, SIGNAL(progressValue(int)), this, SLOT(updateAcquisitionProgress(int)),
+  connect(&app, SIGNAL(progressValue(int)), this, SLOT(updateAcquisitionProgress(int)),
           Qt::ConnectionType::DirectConnection);
-  app_.Start(data);
+  app.Start(data);
 }
 
-void HomingInterfaceProprioceptive::on_radioButton_internal_clicked()
+void HomingInterfaceProprioceptiveWidget::on_radioButton_internal_clicked()
 {
   CLOG(TRACE, "event");
   ui->radioButton_external->toggled(false);
@@ -221,7 +210,7 @@ void HomingInterfaceProprioceptive::on_radioButton_internal_clicked()
   ui->pushButton_ok->setEnabled(true);
 }
 
-void HomingInterfaceProprioceptive::on_radioButton_external_clicked()
+void HomingInterfaceProprioceptiveWidget::on_radioButton_external_clicked()
 {
   CLOG(TRACE, "event");
   ui->radioButton_internal->toggled(false);
@@ -231,7 +220,7 @@ void HomingInterfaceProprioceptive::on_radioButton_external_clicked()
                                 !ui->lineEdit_extFile->text().isEmpty());
 }
 
-void HomingInterfaceProprioceptive::on_pushButton_extFile_clicked()
+void HomingInterfaceProprioceptiveWidget::on_pushButton_extFile_clicked()
 {
   CLOG(TRACE, "event");
   QString config_filename =
@@ -245,26 +234,26 @@ void HomingInterfaceProprioceptive::on_pushButton_extFile_clicked()
   ui->lineEdit_extFile->setText(config_filename);
 }
 
-void HomingInterfaceProprioceptive::on_pushButton_ok_clicked()
+void HomingInterfaceProprioceptiveWidget::on_pushButton_ok_clicked()
 {
   CLOG(TRACE, "event");
   ui->pushButton_ok->setChecked(false);
   ui->progressBar_optimization->setValue(0);
-  connect(&app_, SIGNAL(progressValue(int)), this, SLOT(updateOptimizationProgress(int)),
+  connect(&app, SIGNAL(progressValue(int)), this, SLOT(updateOptimizationProgress(int)),
           Qt::ConnectionType::DirectConnection);
   // "Internal" optimization (ext call to Matlab)
   if (ui->radioButton_internal->isChecked())
   {
-    if (QFile::exists(app_.kMatlabOptimizationResultsLoc))
-      if (QFile::remove(app_.kMatlabOptimizationResultsLoc))
+    if (QFile::exists(app.kMatlabOptimizationResultsLoc))
+      if (QFile::remove(app.kMatlabOptimizationResultsLoc))
         CLOG(INFO, "event") << "Removed old matlab homing optimization results";
     ui->groupBox_dataCollection->setEnabled(false);
-    app_.Optimize();
+    app.Optimize();
     return;
   }
   // "External" optimization = load results obtained somehow externally
   HomingProprioceptiveHomeData* home_data = new HomingProprioceptiveHomeData;
-  if (!app_.ParseExtFile(ui->lineEdit_extFile->text(), home_data))
+  if (!app.ParseExtFile(ui->lineEdit_extFile->text(), home_data))
   {
     QMessageBox::warning(this, "File Error",
                          "File content is not valid!\nPlease load a different file.");
@@ -272,76 +261,12 @@ void HomingInterfaceProprioceptive::on_pushButton_ok_clicked()
   }
   ui->progressBar_optimization->setValue(100);
   ui->groupBox_dataCollection->setEnabled(false);
-  app_.GoHome(home_data);
-}
-
-void HomingInterfaceProprioceptive::on_pushButton_cancel_clicked()
-{
-  CLOG(TRACE, "event");
-  switch (static_cast<HomingProprioceptiveApp::States>(app_.GetCurrentState()))
-  {
-    case HomingProprioceptiveApp::ST_IDLE:
-      break;
-    case HomingProprioceptiveApp::ST_OPTIMIZING:
-    {
-      QMessageBox::StandardButton reply =
-        QMessageBox::question(this, "Optimization in progress",
-                              "The application is still evaluating data to complete the "
-                              "homing procedure. If you quit now all progress will be "
-                              "lost.\nAre you sure you want to abort the operation?",
-                              QMessageBox::Yes | QMessageBox::No);
-      if (reply == QMessageBox::No)
-        return;
-      CLOG(INFO, "event") << "Homing interrupted by user during optimizazion";
-      break;
-    }
-    case HomingProprioceptiveApp::ST_HOME:
-    {
-      QMessageBox::StandardButton reply =
-        QMessageBox::question(this, "Homing in progress",
-                              "The robot is moving to the homing position. If you "
-                              "quit now all progress will be lost.\nAre you sure "
-                              "you want to abort the operation?",
-                              QMessageBox::Yes | QMessageBox::No);
-      if (reply == QMessageBox::No)
-        return;
-      CLOG(INFO, "event") << "Homing interrupted by user while moving to home position";
-      break;
-    }
-    case HomingProprioceptiveApp::ST_FAULT:
-    {
-      QMessageBox::information(this, "Fault present",
-                               "Please clear faults before quitting the application.");
-      return;
-    }
-    default:
-    {
-      QMessageBox::StandardButton reply = QMessageBox::question(
-        this, "Acquisition in progress",
-        "The application is still acquiring data from the robot. If you quit now all "
-        "progress will be lost.\nAre you sure you want to abort the operation?",
-        QMessageBox::Yes | QMessageBox::No);
-      if (reply == QMessageBox::No)
-        return;
-      CLOG(INFO, "event") << "Homing interrupted by user during data acquisition";
-    }
-  }
-  app_.Disable(); // any --> IDLE
-  emit homingFailed();
-  hide();
-  CLOG(INFO, "event") << "Hide homing interface proprioceptive";
-}
-
-void HomingInterfaceProprioceptive::on_pushButton_done_clicked()
-{
-  CLOG(TRACE, "event");
-  emit homingSuccess();
-  hide();
+  app.GoHome(home_data);
 }
 
 //--------- Private slots -----------------------------------------------------------//
 
-void HomingInterfaceProprioceptive::appendText2Browser(const QString& text)
+void HomingInterfaceProprioceptiveWidget::appendText2Browser(const QString& text)
 {
   if (text.contains("warning", Qt::CaseSensitivity::CaseInsensitive))
   {
@@ -361,38 +286,30 @@ void HomingInterfaceProprioceptive::appendText2Browser(const QString& text)
   }
 }
 
-void HomingInterfaceProprioceptive::updateAcquisitionProgress(const int value)
+void HomingInterfaceProprioceptiveWidget::updateAcquisitionProgress(const int value)
 {
   if (static_cast<int>(value) > ui->progressBar_acquisition->value())
     ui->progressBar_acquisition->setValue(static_cast<int>(value));
 }
 
-void HomingInterfaceProprioceptive::updateOptimizationProgress(const int value)
+void HomingInterfaceProprioceptiveWidget::updateOptimizationProgress(const int value)
 {
   if (value > ui->progressBar_optimization->value())
     ui->progressBar_optimization->setValue(value);
 }
 
-void HomingInterfaceProprioceptive::handleAcquisitionComplete()
+void HomingInterfaceProprioceptiveWidget::handleAcquisitionComplete()
 {
   CLOG(INFO, "event") << "Acquisition complete";
   ui->radioButton_internal->setEnabled(true);
   ui->pushButton_ok->setEnabled(true);
   acquisition_complete_ = true;
 
-  disconnect(&app_, SIGNAL(progressValue(int)), this,
+  disconnect(&app, SIGNAL(progressValue(int)), this,
              SLOT(updateAcquisitionProgress(int)));
 }
 
-void HomingInterfaceProprioceptive::handleHomingComplete()
-{
-  CLOG(INFO, "event") << "Homing complete";
-  ui->groupBox_dataCollection->setEnabled(true);
-  ui->pushButton_done->setEnabled(true);
-  emit homingCompleted();
-}
-
-void HomingInterfaceProprioceptive::handleStateChanged(const quint8& state)
+void HomingInterfaceProprioceptiveWidget::handleStateChanged(const quint8& state)
 {
   switch (state)
   {
@@ -414,16 +331,16 @@ void HomingInterfaceProprioceptive::handleStateChanged(const quint8& state)
     }
     case HomingProprioceptiveApp::ST_START_UP:
       ui->pushButton_start->setText(tr("Stop"));
-      app_.Start(nullptr);
+      app.Start(nullptr);
       break;
     case HomingProprioceptiveApp::ST_SWITCH_CABLE:
-      app_.Start(nullptr);
+      app.Start(nullptr);
       break;
     case HomingProprioceptiveApp::ST_COILING:
-      app_.Start(nullptr);
+      app.Start(nullptr);
       break;
     case HomingProprioceptiveApp::ST_UNCOILING:
-      app_.Start(nullptr);
+      app.Start(nullptr);
       break;
     case HomingProprioceptiveApp::ST_FAULT:
       ui->pushButton_enable->setDisabled(true);
@@ -432,7 +349,7 @@ void HomingInterfaceProprioceptive::handleStateChanged(const quint8& state)
       ui->pushButton_clearFaults->setEnabled(true);
       break;
     case HomingProprioceptiveApp::ST_HOME:
-      disconnect(&app_, SIGNAL(progressValue(int)), this,
+      disconnect(&app, SIGNAL(progressValue(int)), this,
                  SLOT(updateOptimizationProgress(int)));
       break;
     default:
@@ -440,17 +357,23 @@ void HomingInterfaceProprioceptive::handleStateChanged(const quint8& state)
   }
 }
 
-//--------- Private functions ------------------------------------------------------//
-
-void HomingInterfaceProprioceptive::UpdateTorquesLimits()
+void HomingInterfaceProprioceptiveWidget::handleHomingComplete()
 {
-  if (app_.GetCurrentState() == HomingProprioceptiveApp::ST_ENABLED &&
+  CLOG(INFO, "event") << "Homing complete";
+  ui->groupBox_dataCollection->setEnabled(true);
+}
+
+//--------- Private functions -------------------------------------------------------//
+
+void HomingInterfaceProprioceptiveWidget::UpdateTorquesLimits()
+{
+  if (app.GetCurrentState() == HomingProprioceptiveApp::ST_ENABLED &&
       ui->checkBox_useCurrentTorque->isChecked())
   {
-    std::vector<id_t> motors_id = app_.GetActuatorsID();
+    std::vector<id_t> motors_id = app.GetActuatorsID();
     for (size_t i = 0; i < motors_id.size(); i++)
       init_torque_forms_[static_cast<int>(i)]->SetInitTorque(
-        app_.GetActuatorStatus(motors_id[i]).motor_torque);
+        app.GetActuatorStatus(motors_id[i]).motor_torque);
   }
   if (ui->checkBox_maxTorque->isChecked())
   {
@@ -465,8 +388,86 @@ void HomingInterfaceProprioceptive::UpdateTorquesLimits()
   }
 }
 
-void HomingInterfaceProprioceptive::Close()
+//------------------------------------------------------------------------------------//
+//--------- HomingInterfaceProprioceptive class --------------------------------------//
+//------------------------------------------------------------------------------------//
+
+HomingInterfaceProprioceptive::HomingInterfaceProprioceptive(QWidget* parent,
+                                                             CableRobot* robot)
+  : HomingInterface(parent, robot), widget_(this, robot)
 {
-  ext_close_cmd_ = true;
-  close();
+  connect(&(widget_.app), SIGNAL(homingComplete()), this, SLOT(enableOkButton()));
+  ui->verticalLayout->insertWidget(0, &widget_);
+}
+
+HomingInterfaceProprioceptive::~HomingInterfaceProprioceptive()
+{
+  disconnect(&(widget_.app), SIGNAL(homingComplete()), this, SLOT(enableOkButton()));
+}
+
+//--------- Private functions -------------------------------------------------------//
+
+bool HomingInterfaceProprioceptive::rejectedExitRoutine(const bool force_exit /*= false*/)
+{
+  switch (static_cast<HomingProprioceptiveApp::States>(widget_.app.GetCurrentState()))
+  {
+    case HomingProprioceptiveApp::ST_IDLE:
+      break;
+    case HomingProprioceptiveApp::ST_OPTIMIZING:
+    {
+      if (!force_exit)
+      {
+        QMessageBox::StandardButton reply = QMessageBox::question(
+          this, "Optimization in progress",
+          "The application is still evaluating data to complete the "
+          "homing procedure. If you quit now all progress will be "
+          "lost.\nAre you sure you want to abort the operation?",
+          QMessageBox::Yes | QMessageBox::No);
+        if (reply == QMessageBox::No)
+          return false;
+      }
+      CLOG(INFO, "event") << "Homing interrupted by user during optimizazion";
+      break;
+    }
+    case HomingProprioceptiveApp::ST_HOME:
+    {
+      if (!force_exit)
+      {
+        QMessageBox::StandardButton reply =
+          QMessageBox::question(this, "Homing in progress",
+                                "The robot is moving to the homing position. If you "
+                                "quit now all progress will be lost.\nAre you sure "
+                                "you want to abort the operation?",
+                                QMessageBox::Yes | QMessageBox::No);
+        if (reply == QMessageBox::No)
+          return false;
+      }
+      CLOG(INFO, "event") << "Homing interrupted by user while moving to home position";
+      break;
+    }
+    case HomingProprioceptiveApp::ST_FAULT:
+    {
+      if (force_exit)
+        break;
+      QMessageBox::information(this, "Fault present",
+                               "Please clear faults before quitting the application.");
+      return false;
+    }
+    default:
+    {
+      if (!force_exit)
+      {
+        QMessageBox::StandardButton reply = QMessageBox::question(
+          this, "Acquisition in progress",
+          "The application is still acquiring data from the robot. If you quit now all "
+          "progress will be lost.\nAre you sure you want to abort the operation?",
+          QMessageBox::Yes | QMessageBox::No);
+        if (reply == QMessageBox::No)
+          return false;
+      }
+      CLOG(INFO, "event") << "Homing interrupted by user during data acquisition";
+    }
+  }
+  widget_.app.Disable(); // any --> IDLE
+  return true;
 }

@@ -1,9 +1,8 @@
 /**
  * @file homing_interface.h
  * @author Simone Comari
- * @date 02 Jul 2019
- * @brief This file includes the abstract class for any homing interface of cable robot
- * app.
+ * @date 17 Jul 2019
+ * @brief This file includes the base class for any homing interface of cable robot app.
  */
 
 #ifndef CABLE_ROBOT_HOMING_INTERFACE_H
@@ -15,10 +14,14 @@
 
 #include "robot/cablerobot.h"
 
+namespace Ui {
+class HomingInterface;
+}
+
 /**
- * @brief The abstract base class for any homing interface of cable robot app.
+ * @brief The base class for any homing interface of cable robot app.
  *
- * This abstract class takes care of the basic functionalities of any homing interface of
+ * This base class takes care of the basic functionalities of any homing interface of
  * cable robot app: signaling, necessary attributes and closing behaviour.
  */
 class HomingInterface: public QDialog
@@ -33,12 +36,12 @@ class HomingInterface: public QDialog
    * derived class.
    */
   HomingInterface(QWidget* parent, CableRobot* robot);
-  virtual ~HomingInterface() = 0;
+  virtual ~HomingInterface() override;
 
   /**
-   * @brief Close command.
+   * @brief External close command.
    */
-  virtual void Close() { close(); }
+  void extClose();
 
  signals:
   /**
@@ -51,7 +54,21 @@ class HomingInterface: public QDialog
   void homingSuccess() const;
 
  protected:
+  Ui::HomingInterface* ui;
   CableRobot* robot_ptr_ = nullptr; /**< Pointer to the cable robot instance. */
+  bool ext_close_cmd_;
+
+  virtual bool acceptedExitRoutine() { return true; }
+  virtual bool rejectedExitRoutine(const bool force_exit = false) { return true; }
+
+ private slots:
+  void closeEvent(QCloseEvent* event) override final;
+
+  void on_buttonBox_accepted();
+  void on_buttonBox_rejected();
+
+ private slots:
+  void enableOkButton();
 };
 
 #endif // CABLE_ROBOT_HOMING_INTERFACE_H

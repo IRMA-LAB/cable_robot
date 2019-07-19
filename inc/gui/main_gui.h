@@ -64,9 +64,11 @@ class MainGUI: public QDialog
    */
   MainGUI(QWidget* parent, const grabcdpr::RobotParams& robot_config,
           const SensorsParams& sensors_config);
-  ~MainGUI();
+  ~MainGUI() override;
 
  private slots:
+  void closeEvent(QCloseEvent* event) override final;
+
   void on_pushButton_reset_clicked();
 
   void on_pushButton_calib_clicked();

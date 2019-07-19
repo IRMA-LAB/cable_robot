@@ -48,7 +48,7 @@ class CameraCalibDialog: public QDialog
    * @param parent
    */
   explicit CameraCalibDialog(QWidget* parent, const CameraParams default_params);
-  ~CameraCalibDialog();
+  ~CameraCalibDialog() override;
 
  signals:
   /**
@@ -81,6 +81,8 @@ class CameraCalibDialog: public QDialog
   void frwPrintToQConsole(const QString& msg) const;
 
  private slots:
+  void closeEvent(QCloseEvent* event) override final;
+
   void on_pushButton_newCalib_clicked();
   void on_pushButton_load_clicked();
   void on_pushButton_loadDefault_clicked();

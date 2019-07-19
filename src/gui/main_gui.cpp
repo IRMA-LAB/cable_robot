@@ -48,7 +48,6 @@ MainGUI::MainGUI(QWidget* parent, const grabcdpr::RobotParams& robot_config,
 
 MainGUI::~MainGUI()
 {
-  CloseAllApps();
   DeleteRobot();
 #if DEBUG_GUI == 1
   disconnect(pushButton_debug, SIGNAL(clicked()), this,
@@ -64,6 +63,12 @@ MainGUI::~MainGUI()
 }
 
 //--------- Public GUI slots ---------------------------------------------------------//
+
+void MainGUI::closeEvent(QCloseEvent* event)
+{
+  CloseAllApps();
+  event->accept();
+}
 
 void MainGUI::on_pushButton_reset_clicked()
 {

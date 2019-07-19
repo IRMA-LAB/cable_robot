@@ -302,7 +302,7 @@ void CameraCalibApp::start(const CameraCalibSettings& settings)
   connect(worker_thread_, &WorkerThread::calibFrameCaptured, this,
           &CameraCalibApp::updateProgressBar);
   connect(worker_thread_, &WorkerThread::resultReady, this,
-          &CameraCalibApp::handleResults);
+          &CameraCalibApp::handleResults, Qt::BlockingQueuedConnection);
   connect(worker_thread_, &WorkerThread::calibrationFailed, this,
           &CameraCalibApp::handleErrors);
   connect(worker_thread_, &WorkerThread::finished, this, &CameraCalibApp::workFinished);
@@ -327,11 +327,14 @@ void CameraCalibApp::on_pushButton_stop_clicked() { worker_thread_->stop(); }
 
 void CameraCalibApp::handleResults(const CameraParams& params)
 {
-  QMessageBox::StandardButton reply = QMessageBox::question(
-    this, "Save Results", "Do you want to save the camera parameters for later?",
-    QMessageBox::Yes | QMessageBox::No);
+  this->hide();
+  updateProgressBar(0, 1);
+  reply = QMessageBox::question(this, "SaveResults ",
+                                "Do you want to save the camera parameters for later?",
+                                QMessageBox::Yes | QMessageBox::No);
   if (reply == QMessageBox::Yes)
     saveCameraParams(params);
+
   emit calibrationSuccess(params);
 }
 

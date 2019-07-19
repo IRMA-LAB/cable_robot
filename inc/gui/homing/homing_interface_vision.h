@@ -1,7 +1,7 @@
 /**
  * @file homing_interface_vision.h
  * @author Simone Comari
- * @date 12 Jul 2019
+ * @date 18 Jul 2019
  * @brief This file takes care of the functionalities of the vision-based homing
  * interface of cable robot app.
  *
@@ -22,7 +22,7 @@
 #include "homing/homing_vision_app.h"
 
 namespace Ui {
-class HomingInterfaceVision;
+class HomingInterfaceVisionWidget;
 }
 
 /**
@@ -30,10 +30,43 @@ class HomingInterfaceVision;
  * allows the user to triggers events, set important parameters and interact with the
  * homing applications.
  */
-class HomingInterfaceVision: public HomingInterface
+class HomingInterfaceVisionWidget: public QWidget
 {
   Q_OBJECT
 
+ public:
+  /**
+   * @brief HomingInterfaceVision constructor.
+   * @param parent The parent Qt object, in our case the homing dialog.
+   * @param robot Pointer to the cable robot instance, to be passed to the inner app.
+   */
+  explicit HomingInterfaceVisionWidget(QWidget* parent, CableRobot* robot,
+                                       const VisionParams vision_config);
+  ~HomingInterfaceVisionWidget();
+
+  CameraWidget camera_widget;
+  HomingInterfaceProprioceptiveWidget proprioceptive_widget;
+
+ private slots:
+  void on_pushButton_move_clicked();
+  void on_pushButton_find_clicked();
+  void on_pushButton_apply_clicked();
+
+ private slots:
+  void enableVisionTab();
+  // Vision tab slots
+  void appendText2Browser(const QString& text);
+  void stopEstimation();
+
+ private:
+  Ui::HomingInterfaceVisionWidget* ui;
+
+  CableRobot* robot_ptr_;
+  HomingVisionApp app_;
+};
+
+class HomingInterfaceVision: public HomingInterface
+{
  public:
   /**
    * @brief HomingInterfaceVision constructor.
@@ -44,29 +77,10 @@ class HomingInterfaceVision: public HomingInterface
                                  const VisionParams vision_config);
   ~HomingInterfaceVision() override final;
 
- private slots:
-  void on_pushButton_move_clicked();
-  void on_pushButton_find_clicked();
-  void on_pushButton_apply_clicked();
-
-  void on_pushButton_cancel_clicked();
-  void on_pushButton_done_clicked();
-
- private slots:
-  void enableVisionTab();
-  // Vision tab slots
-  void appendText2Browser(const QString& text);
-  void stopEstimation();
-
  private:
-  Ui::HomingInterfaceVision* ui;
-  HomingInterfaceProprioceptive* proprioceptive_widget_;
-  CameraWidget* camera_widget_ = nullptr;
+  HomingInterfaceVisionWidget widget_;
 
-  HomingVisionApp app_;
-  bool ext_close_cmd_;
-
-  void closeEvent(QCloseEvent* event) override final;
+  bool rejectedExitRoutine(const bool) override final;
 };
 
 #endif // CABLE_ROBOT_HOMING_INTERFACE_VISION_H

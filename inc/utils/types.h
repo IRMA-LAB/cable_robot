@@ -255,7 +255,7 @@ struct CameraCalibSettings
   bool use_fisheye = false; /*<< use fisheye camera model for calibration. */
 
   // Advanced settings
-  cv::Size board_size = cv::Size(9, 6); /**< Chessboard corners size. */
+  cv::Size board_size = cv::Size(6, 4); /**< Chessboard corners size. */
   float square_size   = 26.f;           /**< The size of a chessboard square in [mm]. */
   double delay        = 0.5; /**< [s] Minimun delay value between 2 frame processing. */
   double max_precision =

@@ -213,6 +213,8 @@ class CameraCalibApp: public QDialog
   Ui::CameraCalibApp* ui;
   WorkerThread* worker_thread_ = nullptr;
 
+  QMessageBox::StandardButton reply;
+
   void saveCameraParams(const CameraParams& params);
 };
 

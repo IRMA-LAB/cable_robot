@@ -60,4 +60,8 @@ void CameraCalibSettingsDialog::on_pushButton_start_clicked()
   close();
 }
 
-void CameraCalibSettingsDialog::on_pushButton_cancel_clicked() { close(); }
+void CameraCalibSettingsDialog::on_pushButton_cancel_clicked()
+{
+  emit cancelClicked();
+  close();
+}

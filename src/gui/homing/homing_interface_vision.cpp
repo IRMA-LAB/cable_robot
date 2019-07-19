@@ -1,78 +1,80 @@
 /**
  * @file homing_interface_vision.cpp
  * @author Simone Comari
- * @date 17 Jul 2019
+ * @date 18 Jul 2019
  * @brief This file includes definitions of classes present in homing_interface_vision.h.
  */
 
 #include "gui/homing/homing_interface_vision.h"
+#include "ui_homing_interface.h"
 #include "ui_homing_interface_vision.h"
 
-HomingInterfaceVision::HomingInterfaceVision(QWidget* parent, CableRobot* robot,
-                                             const VisionParams vision_config)
-  : HomingInterface(parent, robot), ui(new Ui::HomingInterfaceVision),
-    app_(this, robot, vision_config), ext_close_cmd_(false)
+//------------------------------------------------------------------------------------//
+//--------- HomingInterfaceVisionWidget class ----------------------------------------//
+//------------------------------------------------------------------------------------//
+
+HomingInterfaceVisionWidget::HomingInterfaceVisionWidget(QWidget* parent,
+                                                         CableRobot* robot,
+                                                         const VisionParams vision_config)
+  : QWidget(parent), camera_widget(vision_config.camera),
+    proprioceptive_widget(this, robot), ui(new Ui::HomingInterfaceVisionWidget),
+    robot_ptr_(robot), app_(this, robot, vision_config)
 {
   ui->setupUi(this);
 
   // Setup first tab --> proprioceptive homing interface
-  proprioceptive_widget_ = new HomingInterfaceProprioceptive(this, robot);
-  ui->verticalLayout_step1->addWidget(proprioceptive_widget_);
+  ui->verticalLayout_step1->addWidget(&proprioceptive_widget);
 
-  connect(proprioceptive_widget_, SIGNAL(destroyed()), this, SLOT(close()));
-  connect(proprioceptive_widget_, SIGNAL(homingCompleted()), this,
+  //  connect(proprioceptive_widget_, SIGNAL(destroyed()), this, SLOT(close()));
+  connect(&(proprioceptive_widget.app), SIGNAL(homingComplete()), this,
           SLOT(enableVisionTab()));
 
   // Setup camera widget in second tab
-  camera_widget_ = new CameraWidget(vision_config.camera);
-  ui->verticalLayout_step2->insertWidget(1, camera_widget_);
+  ui->verticalLayout_step2->insertWidget(1, &camera_widget);
   ui->verticalLayout_step2->setStretch(1, 2);
   ui->verticalLayout_step2->setStretch(3, 1);
 
-  connect(camera_widget_, SIGNAL(printToQConsole(QString)), this,
+  connect(&camera_widget, SIGNAL(printToQConsole(QString)), this,
           SLOT(appendText2Browser(QString)));
-  connect(camera_widget_, SIGNAL(videoStreamStopped()), this, SLOT(stopEstimation()));
-  connect(camera_widget_, SIGNAL(newFrameGrabbed(cv::Mat)), &app_,
+  connect(&camera_widget, SIGNAL(videoStreamStopped()), this, SLOT(stopEstimation()));
+  connect(&camera_widget, SIGNAL(newFrameGrabbed(cv::Mat)), &app_,
           SLOT(setNewFrame(cv::Mat)));
-  connect(camera_widget_, SIGNAL(calibParamsReady(CameraParams)), &app_,
+  connect(&camera_widget, SIGNAL(calibParamsReady(CameraParams)), &app_,
           SLOT(setCameraParams(CameraParams)));
 
   connect(&app_, SIGNAL(printToQConsole(QString)), this,
           SLOT(appendText2Browser(QString)));
-  connect(&app_, SIGNAL(frameReadyToShow(cv::Mat)), camera_widget_,
+  connect(&app_, SIGNAL(frameReadyToShow(cv::Mat)), &camera_widget,
           SLOT(setAugmentedFrame(cv::Mat)));
 
   // debug
-  ext_close_cmd_ = false;
   enableVisionTab();
 }
 
-HomingInterfaceVision::~HomingInterfaceVision()
+HomingInterfaceVisionWidget::~HomingInterfaceVisionWidget()
 {
   disconnect(&app_, SIGNAL(printToQConsole(QString)), this,
              SLOT(appendText2Browser(QString)));
 
-  disconnect(proprioceptive_widget_, SIGNAL(destroyed()), this, SLOT(close()));
-  disconnect(proprioceptive_widget_, SIGNAL(homingCompleted()), this,
+  //  disconnect(proprioceptive_widget_, SIGNAL(destroyed()), this, SLOT(close()));
+  disconnect(&(proprioceptive_widget.app), SIGNAL(homingComplete()), this,
              SLOT(enableVisionTab()));
-  delete proprioceptive_widget_;
 
-  disconnect(camera_widget_, SIGNAL(printToQConsole(QString)), this,
+  disconnect(&camera_widget, SIGNAL(printToQConsole(QString)), this,
              SLOT(appendText2Browser(QString)));
-  disconnect(camera_widget_, SIGNAL(newFrameGrabbed(cv::Mat)), &app_,
+  disconnect(&camera_widget, SIGNAL(newFrameGrabbed(cv::Mat)), &app_,
              SLOT(setNewFrame(cv::Mat)));
-  disconnect(camera_widget_, SIGNAL(calibParamsReady(CameraParams)), &app_,
+  disconnect(&camera_widget, SIGNAL(calibParamsReady(CameraParams)), &app_,
              SLOT(setCameraParams(CameraParams)));
-  camera_widget_->stopVideoStream();
-  delete camera_widget_;
+  camera_widget.stopVideoStream();
 
   delete ui;
   CLOG(INFO, "event") << "Homing interface vision closed";
 }
 
-//--------- Private slots -----------------------------------------------------------//
+//--------- Private GUI slots -------------------------------------------------------//
 
-void HomingInterfaceVision::on_pushButton_move_clicked()
+void HomingInterfaceVisionWidget::on_pushButton_move_clicked()
 {
   CLOG(TRACE, "event");
   // TODO
@@ -80,10 +82,10 @@ void HomingInterfaceVision::on_pushButton_move_clicked()
   appendText2Browser("Moving to observation point...");
 }
 
-void HomingInterfaceVision::on_pushButton_find_clicked()
+void HomingInterfaceVisionWidget::on_pushButton_find_clicked()
 {
   ui->pushButton_find->setChecked(false);
-  if (!camera_widget_->isStreaming())
+  if (!camera_widget.isStreaming())
   {
     QMessageBox::information(this, "Video Stream Missing",
                              "Please start and calibrate the camera before proceeding.");
@@ -96,7 +98,7 @@ void HomingInterfaceVision::on_pushButton_find_clicked()
     app_.stop();
     ui->pushButton_find->setText("Find Platform Pose");
     ui->pushButton_apply->setDisabled(true);
-    camera_widget_->enableStreamType();
+    camera_widget.enableStreamType();
   }
   else
   {
@@ -107,8 +109,8 @@ void HomingInterfaceVision::on_pushButton_find_clicked()
                                "Please calibrate the camera or load a calibration file.");
       return;
     }
-    camera_widget_->changeStreamType(VideoStreamType::AUGMENTED);
-    camera_widget_->enableStreamType(false);
+    camera_widget.changeStreamType(VideoStreamType::AUGMENTED);
+    camera_widget.enableStreamType(false);
     appendText2Browser("Waiting for platform to be steady...");
     robot_ptr_->WaitUntilPlatformSteady(-1.0);
     appendText2Browser("Looking for chessboard pose...");
@@ -118,7 +120,7 @@ void HomingInterfaceVision::on_pushButton_find_clicked()
   }
 }
 
-void HomingInterfaceVision::on_pushButton_apply_clicked()
+void HomingInterfaceVisionWidget::on_pushButton_apply_clicked()
 {
   CLOG(TRACE, "event");
   if (!app_.isPoseReady())
@@ -131,27 +133,11 @@ void HomingInterfaceVision::on_pushButton_apply_clicked()
   app_.applyPoseEstimate();
 }
 
-void HomingInterfaceVision::on_pushButton_cancel_clicked()
-{
-  CLOG(TRACE, "event");
-  emit homingFailed();
-  camera_widget_->stopVideoStream();
-  hide();
-  CLOG(INFO, "event") << "Hide homing interface vision";
-}
-
-void HomingInterfaceVision::on_pushButton_done_clicked()
-{
-  CLOG(TRACE, "event");
-  emit homingSuccess();
-  hide();
-}
-
 //--------- Private slots -----------------------------------------------------------//
 
-void HomingInterfaceVision::enableVisionTab() { ui->tab_vision->setEnabled(true); }
+void HomingInterfaceVisionWidget::enableVisionTab() { ui->tab_vision->setEnabled(true); }
 
-void HomingInterfaceVision::appendText2Browser(const QString& text)
+void HomingInterfaceVisionWidget::appendText2Browser(const QString& text)
 {
   if (text.startsWith("warning", Qt::CaseSensitivity::CaseInsensitive))
   {
@@ -171,30 +157,40 @@ void HomingInterfaceVision::appendText2Browser(const QString& text)
   }
 }
 
-void HomingInterfaceVision::stopEstimation()
+void HomingInterfaceVisionWidget::stopEstimation()
 {
   if (ui->pushButton_find->text() == "Stop")
   {
     app_.stop();
     ui->pushButton_find->setText("Find Platform Pose");
     ui->pushButton_apply->setDisabled(true);
-    camera_widget_->enableStreamType();
+    camera_widget.enableStreamType();
   }
 }
 
-//--------- Private functions -------------------------------------------------------//
+//------------------------------------------------------------------------------------//
+//--------- HomingInterfaceVision class ----------------------------------------------//
+//------------------------------------------------------------------------------------//
 
-void HomingInterfaceVision::closeEvent(QCloseEvent* event)
+HomingInterfaceVision::HomingInterfaceVision(QWidget* parent, CableRobot* robot,
+                                             const VisionParams vision_config)
+  : HomingInterface(parent, robot), widget_(this, robot, vision_config)
 {
-  if (ext_close_cmd_)
-  {
-    ext_close_cmd_ = false;
-    event->accept();
-  }
-  else
-  {
-    event->ignore();
-    // This becomes like user hit Cancel button.
-    ui->pushButton_cancel->click();
-  }
+  ui->verticalLayout->insertWidget(0, &widget_);
+  connect(&(widget_.proprioceptive_widget.app), SIGNAL(homingComplete()), this,
+          SLOT(enableOkButton()));
+}
+
+HomingInterfaceVision::~HomingInterfaceVision()
+{
+  disconnect(&(widget_.proprioceptive_widget.app), SIGNAL(homingComplete()), this,
+             SLOT(enableOkButton()));
+}
+
+//--------- Private function --------------------------------------------------------//
+
+bool HomingInterfaceVision::rejectedExitRoutine(const bool)
+{
+  widget_.camera_widget.stopVideoStream();
+  return true;
 }

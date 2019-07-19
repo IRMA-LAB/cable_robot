@@ -94,6 +94,7 @@ FORMS += \
     $$PWD/widgets/calib/calibration_dialog.ui \
     $$PWD/widgets/calib/calib_interface_excitation.ui \
     $$PWD/widgets/homing/homing_dialog.ui \
+    $$PWD/widgets/homing/homing_interface.ui \
     $$PWD/widgets/homing/homing_interface_proprioceptive.ui\
     $$PWD/widgets/homing/homing_interface_vision.ui \
     $$PWD/widgets/homing/init_torque_form.ui \
@@ -131,7 +132,7 @@ DEFINES += ELPP_QT_LOGGING    \
 
 DEFINES += SRCDIR=\\\"$$PWD/\\\"
 DEFINES += USE_QT=1
-DEFINES += DEBUG_GUI=0
+DEFINES += DEBUG_GUI=1
 
 # GRAB Ethercat lib
 unix:!macx: LIBS += -L$$PWD/libs/grab_common/libgrabec/lib/ -lgrabec

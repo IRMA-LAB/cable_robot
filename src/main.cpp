@@ -26,6 +26,7 @@ int main(int argc, char* argv[])
   qRegisterMetaType<cv::Mat>("cv::Mat");
   qRegisterMetaType<CameraParams>("CameraParams");
   qRegisterMetaType<std::bitset<3>>("std::bitset<3>");
+  qRegisterMetaType<CalibrationStatus>("CalibrationStatus");
   CLOG(INFO, "event") << "App START";
 
   LoginWindow w;

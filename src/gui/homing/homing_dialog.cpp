@@ -87,7 +87,7 @@ void HomingDialog::DeleteInterface()
 {
   if (interface_ != nullptr)
   {
-    interface_->Close();
+    interface_->extClose();
     disconnect(interface_, SIGNAL(homingSuccess()), this, SLOT(fwdHomingSuccess()));
     disconnect(interface_, SIGNAL(homingFailed()), this, SLOT(fwdHomingFailed()));
     delete interface_;

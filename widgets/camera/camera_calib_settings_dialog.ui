@@ -22,7 +22,7 @@
    </font>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Calilbration Settings</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="sizeConstraint">
@@ -55,7 +55,10 @@
         <set>Qt::AlignCenter</set>
        </property>
        <property name="minimum">
-        <number>15</number>
+        <number>3</number>
+       </property>
+       <property name="value">
+        <number>3</number>
        </property>
       </widget>
      </item>
