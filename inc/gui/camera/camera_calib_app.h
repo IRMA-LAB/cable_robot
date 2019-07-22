@@ -1,7 +1,7 @@
 ﻿/**
  * @file camera_calib_app.h
  * @author Simone Comari, Marco Caselli
- * @date 12 Jul 2019
+ * @date 22 Jul 2019
  * @brief File containing camera calibration class to found intrinsic parameter and
  * distorsion coefficients of camera
  */
@@ -9,6 +9,7 @@
 #ifndef CABLE_ROBOT_HOMING_CAMERA_CALIB_APP_H
 #define CABLE_ROBOT_HOMING_CAMERA_CALIB_APP_H
 
+#include <QCloseEvent>
 #include <QDialog>
 #include <QFileDialog>
 #include <QMessageBox>
@@ -159,7 +160,7 @@ class CameraCalibApp: public QDialog
    * @param parent The parent object, in this case the corresponding widget class.
    */
   explicit CameraCalibApp(QWidget* parent = nullptr);
-  ~CameraCalibApp();
+  ~CameraCalibApp() override;
 
   /**
    * @brief Start a parallel thread that execute the calibration process.
@@ -198,6 +199,8 @@ class CameraCalibApp: public QDialog
   void printToQConsole(const QString&) const;
 
  private slots:
+  void closeEvent(QCloseEvent* event) override final;
+
   void on_pushButton_stop_clicked();
 
  private slots:

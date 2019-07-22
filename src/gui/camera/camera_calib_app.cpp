@@ -1,7 +1,7 @@
 /**
  * @file camera_calib_app.cpp
  * @author Simone Comari, Marco Caselli
- * @date 17 Jul 2019
+ * @date 22 Jul 2019
  * @brief Implementation of classes declared in camera_calib_app.h
  */
 
@@ -321,13 +321,19 @@ void CameraCalibApp::setNewFrame(const cv::Mat& frame)
 
 //--------- Private GUI slots --------------------------------------------------------//
 
+void CameraCalibApp::closeEvent(QCloseEvent* event)
+{
+  if (worker_thread_ != nullptr && worker_thread_->isRunning())
+    worker_thread_->stop();
+  event->accept();
+}
+
 void CameraCalibApp::on_pushButton_stop_clicked() { worker_thread_->stop(); }
 
 //--------- Private slots ------------------------------------------------------------//
 
 void CameraCalibApp::handleResults(const CameraParams& params)
 {
-  this->hide();
   updateProgressBar(0, 1);
   reply = QMessageBox::question(this, "SaveResults ",
                                 "Do you want to save the camera parameters for later?",

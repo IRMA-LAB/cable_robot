@@ -1,7 +1,7 @@
 /**
  * @file camera_calib_dialog.cpp
  * @author Simone Comari
- * @date 17 Jul 2019
+ * @date 22 Jul 2019
  * @brief This file includes definitions of class present in camera_calib_dialog.h.
  */
 
@@ -73,14 +73,7 @@ void CameraCalibDialog::handleCalibrationFailure()
 void CameraCalibDialog::handleCalibrationSuccess(const CameraParams& params)
 {
   emit calibrationStatusChanged(OFF);
-  QMessageBox::StandardButton reply = QMessageBox::question(
-    this, "Camera Info",
-    "Camera calibration complete!\nDo you want to use these camera parameters now?",
-    QMessageBox::Yes | QMessageBox::No);
-  if (reply == QMessageBox::Yes)
-    emit cameraParamsReady(params);
-  else
-    this->setEnabled(true);
+  emit cameraParamsReady(params);
 }
 
 void CameraCalibDialog::frwAugmentedFrame(const cv::Mat& augmented_frame) const
@@ -104,14 +97,13 @@ void CameraCalibDialog::closeEvent(QCloseEvent* event)
   event->accept();
 }
 
-void CameraCalibDialog::on_pushButton_newCalib_clicked()
-{
-  settings_win_.show();
-//  this->setDisabled(true);
-}
+void CameraCalibDialog::on_pushButton_newCalib_clicked() { settings_win_.show(); }
 
 void CameraCalibDialog::on_pushButton_load_clicked()
 {
+  if (settings_win_.isVisible() || app_.isVisible())
+    return;
+
   CLOG(TRACE, "event");
   QString calib_file = QFileDialog::getOpenFileName(
     this, tr("Load Camera Parameters"), tr("../.."), tr("Camera Parameters (*.json)"));
@@ -132,6 +124,9 @@ void CameraCalibDialog::on_pushButton_load_clicked()
 
 void CameraCalibDialog::on_pushButton_loadDefault_clicked()
 {
+  if (settings_win_.isVisible() || app_.isVisible())
+    return;
+
   if (default_camera_params_.isEmpty())
     parseCalibFile(kDefaultCalibFile_);
   else
