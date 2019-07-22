@@ -1,7 +1,7 @@
 /**
  * @file homing_vision_app.cpp
  * @author Marco Caselli, Simone Comari
- * @date 17 Jul 2019
+ * @date 22 Jul 2019
  * @brief This file includes definitions of classes present in homing_vision_app.h.
  */
 
@@ -112,7 +112,7 @@ bool HomingVisionApp::poseEstimationFromCoplanarPoints()
   cv::Mat c2 = H.col(1);
   cv::Mat c3 = c1.cross(c2);
   R_b2c      = cv::Mat(3, 3, CV_64F);
-  t_b2c      = H.col(2);
+  t_b2c      = H.col(2) * 0.001; // convert [mm] to [m]
 
   for (int i = 0; i < 3; i++)
   {
@@ -189,7 +189,7 @@ void HomingVisionApp::showAugmentedFrame()
     cv::Mat rvec;
     cv::Rodrigues(R_b2c, rvec);
     cv::drawFrameAxes(augm_frame, camera_params_.camera_matrix, camera_params_.dist_coeff,
-                      rvec, t_b2c, 2 * settings_.square_size);
+                      rvec, t_b2c * 1000, 2 * settings_.square_size);
   }
   emit frameReadyToShow(augm_frame);
 }
@@ -204,15 +204,15 @@ void HomingVisionApp::calcPlatformGlobalPose(grabnum::Vector3d& position,
   // 2. Calculate H_p2w = H_p2b * H_b2c * H_c2w
   grabnum::Matrix4d H_p2w = grabgeom::InverseTransformation(H_b2p) * H_b2c * H_c2w;
   // 3. Extract platform pose from H_p2w
-  position    = grabgeom::GetHomgTransfTransl(H_p2w);
-  orientation = grabgeom::Rot2EulerXYZ(grabgeom::GetHomgTransfRot(H_p2w));
+  position    = grabgeom::GetHomgTransfTransl(H_p2w); // [m]
+  orientation = grabgeom::Rot2EulerXYZ(grabgeom::GetHomgTransfRot(H_p2w)); // [rad]
 
   emit printToQConsole(QString("Estimated platform position:\n [ %1  %2  %3 ] m\n"
                                "Estimated platform orientation:\n [ %4  %5  %6 ] deg")
                          .arg(position(1))
                          .arg(position(2))
                          .arg(position(3))
-                         .arg(orientation(1))
-                         .arg(orientation(2))
-                         .arg(orientation(3)));
+                         .arg(orientation(1) * 180.0 / M_PI)
+                         .arg(orientation(2) * 180.0 / M_PI)
+                         .arg(orientation(3) * 180.0 / M_PI));
 }

@@ -1,7 +1,7 @@
 /**
  * @file sensorsconfigjsonparser.cpp
  * @author Simone Comari
- * @date 17 Jul 2019
+ * @date 22 Jul 2019
  * @brief This file includes definitions of class declared in sensorsconfigjsonparser.h.
  */
 
@@ -121,7 +121,7 @@ bool SensorsConfigJsonParser::ExtractVisionConfig(const json& raw_data)
   std::string field;
   try
   {
-    for (uint8_t i = 0; i < 3; i++)
+    for (uint8_t i = 0; i < 4; i++)
     {
       field = "H_cam2world";
       config_params_.vision.H_c2w.SetRow(i + 1,
@@ -144,16 +144,18 @@ bool SensorsConfigJsonParser::ExtractVisionConfig(const json& raw_data)
 
 bool SensorsConfigJsonParser::IsVisionConfigValid() const
 {
-  if (grabgeom::GetHomgTransfRot(config_params_.vision.H_c2w).IsPositiveDefinite() &&
-      config_params_.vision.H_c2w.GetRow(4) == grabnum::MatrixXd<1, 4>({0, 0, 0, 1}))
+  if (!(grabgeom::GetHomgTransfRot(config_params_.vision.H_c2w).IsPositiveDefinite() &&
+        config_params_.vision.H_c2w.GetRow(4).IsApprox(
+          grabnum::MatrixXd<1, 4>({0, 0, 0, 1}))))
   {
     std::cerr << "[ERROR] H_cam2world is not a valid homogeneous transformation matrix!"
               << std::endl;
     return false;
   }
 
-  if (grabgeom::GetHomgTransfRot(config_params_.vision.H_b2p).IsPositiveDefinite() &&
-      config_params_.vision.H_b2p.GetRow(4) == grabnum::MatrixXd<1, 4>({0, 0, 0, 1}))
+  if (!(grabgeom::GetHomgTransfRot(config_params_.vision.H_b2p).IsPositiveDefinite() &&
+        config_params_.vision.H_b2p.GetRow(4).IsApprox(
+          grabnum::MatrixXd<1, 4>({0, 0, 0, 1}))))
   {
     std::cerr
       << "[ERROR] H_board2platform is not a valid homogeneous transformation matrix!"

@@ -1,7 +1,7 @@
 /**
  * @file homing_vision_app.h
  * @author Marco Caselli, Simone Comari
- * @date 17 Jul 2019
+ * @date 22 Jul 2019
  * @brief File containing homing vision structure and class to find rotation matrix and
  * traslation vector between camera and chessboard reference systems.
  */
@@ -150,7 +150,7 @@ grabnum::MatrixXd<rows, cols> cv2grabnum(cv::Mat& cv_mat)
   assert(cv_mat.rows == rows && cv_mat.cols == cols);
   grabnum::MatrixXd<rows, cols> mat;
   for (int i = 0; i < cv_mat.rows; i++)
-    for (int j = 0; i < cv_mat.cols; j++)
+    for (int j = 0; j < cv_mat.cols; j++)
       mat(static_cast<uint>(i + 1), static_cast<uint>(j + 1)) = cv_mat.at<double>(i, j);
   return mat;
 }
