@@ -35,10 +35,8 @@ void HomingVisionApp::applyPoseEstimate()
   grabcdpr::RobotParams params = robot_ptr_->GetActiveComponentsParams();
   grabcdpr::RobotVars cdpr_vars; // empty container
   cdpr_vars.cables.resize(params.actuators.size());
-  // debug
-  return;
-  grabcdpr::UpdateIK0<grabnum::Vector3d, grabcdpr::RobotVars>(position, orientation,
-                                                              &params, &cdpr_vars);
+//  grabcdpr::UpdateIK0<grabnum::Vector3d, grabcdpr::RobotVars>(position, orientation,
+//                                                              &params, &cdpr_vars);
   // Update homing configuration for each cable/pulley.
   vect<id_t> actuators_id = robot_ptr_->GetActiveMotorsID();
   for (uint i = 0; i < actuators_id.size(); i++)
@@ -204,7 +202,7 @@ void HomingVisionApp::calcPlatformGlobalPose(grabnum::Vector3d& position,
   // 2. Calculate H_p2w = H_p2b * H_b2c * H_c2w
   grabnum::Matrix4d H_p2w = grabgeom::InverseTransformation(H_b2p) * H_b2c * H_c2w;
   // 3. Extract platform pose from H_p2w
-  position    = grabgeom::GetHomgTransfTransl(H_p2w); // [m]
+  position    = grabgeom::GetHomgTransfTransl(H_p2w);                      // [m]
   orientation = grabgeom::Rot2EulerXYZ(grabgeom::GetHomgTransfRot(H_p2w)); // [rad]
 
   emit printToQConsole(QString("Estimated platform position:\n [ %1  %2  %3 ] m\n"

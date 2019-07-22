@@ -47,6 +47,9 @@ class HomingInterfaceVisionWidget: public QWidget
   CameraWidget camera_widget;
   HomingInterfaceProprioceptiveWidget proprioceptive_widget;
 
+ public slots:
+  void stopEstimation();
+
  private slots:
   void on_pushButton_move_clicked();
   void on_pushButton_find_clicked();
@@ -56,7 +59,6 @@ class HomingInterfaceVisionWidget: public QWidget
   void enableVisionTab();
   // Vision tab slots
   void appendText2Browser(const QString& text);
-  void stopEstimation();
 
  private:
   Ui::HomingInterfaceVisionWidget* ui;

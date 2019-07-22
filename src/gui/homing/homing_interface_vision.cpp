@@ -191,6 +191,7 @@ HomingInterfaceVision::~HomingInterfaceVision()
 
 bool HomingInterfaceVision::rejectedExitRoutine(const bool)
 {
+  widget_.stopEstimation();
   widget_.camera_widget.stopVideoStream();
   return true;
 }
