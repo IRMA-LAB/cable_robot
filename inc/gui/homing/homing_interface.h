@@ -1,7 +1,7 @@
 /**
  * @file homing_interface.h
  * @author Simone Comari
- * @date 17 Jul 2019
+ * @date 23 Jul 2019
  * @brief This file includes the base class for any homing interface of cable robot app.
  */
 
@@ -53,6 +53,9 @@ class HomingInterface: public QDialog
    */
   void homingSuccess() const;
 
+ protected slots:
+  void enableOkButton();
+
  protected:
   Ui::HomingInterface* ui;
   CableRobot* robot_ptr_ = nullptr; /**< Pointer to the cable robot instance. */
@@ -66,9 +69,6 @@ class HomingInterface: public QDialog
 
   void on_buttonBox_accepted();
   void on_buttonBox_rejected();
-
- private slots:
-  void enableOkButton();
 };
 
 #endif // CABLE_ROBOT_HOMING_INTERFACE_H

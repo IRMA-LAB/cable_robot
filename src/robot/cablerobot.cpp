@@ -13,14 +13,12 @@ constexpr char* CableRobot::kStatesStr_[];
 constexpr double CableRobot::kCutoffFreq_;
 
 CableRobot::CableRobot(QObject* parent, const grabcdpr::RobotParams& config)
-  : QObject(parent), StateMachine(ST_MAX_STATES), platform_(grabcdpr::TILT_TORSION),
+  : QObject(parent), StateMachine(ST_MAX_STATES),
     params_(config), log_buffer_(el::Loggers::getLogger("data")),
     stop_waiting_cmd_recv_(false), is_waiting_(false), prev_state_(ST_MAX_STATES)
 {
   PrintStateTransition(prev_state_, ST_IDLE);
   prev_state_ = ST_IDLE;
-
-  cdpr_status_.platform = &platform_;
 
   // Setup EtherCAT network
   max_shutdown_wait_time_sec_ = 3.0; // [sec]

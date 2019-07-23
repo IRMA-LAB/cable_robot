@@ -14,6 +14,7 @@
 #include "opencv2/opencv.hpp"
 
 #include "homogeneous_transf.h"
+#include "kinematics.h"
 
 #include "robot/cablerobot.h"
 

@@ -389,7 +389,6 @@ class CableRobot: public QObject,
   void EcRtThreadStatusChanged(const bool active) override final;
 
  private:
-  grabcdpr::PlatformVars platform_;
   grabcdpr::RobotVars cdpr_status_;
   grabcdpr::RobotParams params_;
 

@@ -1,7 +1,7 @@
 /**
  * @file homing_interface.cpp
  * @author Simone Comari
- * @date 17 Jul 2019
+ * @date 23 Jul 2019
  * @brief This file includes definitions of classes present in homing_interface.h.
  */
 
@@ -23,6 +23,13 @@ void HomingInterface::extClose()
 {
   ext_close_cmd_ = true;
   close();
+}
+
+//--------- Protected slots ---------------------------------------------------------//
+
+void HomingInterface::enableOkButton()
+{
+  ui->buttonBox->addButton(QDialogButtonBox::Ok);
 }
 
 //--------- Private GUI slots -------------------------------------------------------//
@@ -61,11 +68,4 @@ void HomingInterface::on_buttonBox_rejected()
     emit homingFailed();
     hide();
   }
-}
-
-//--------- Private slots -----------------------------------------------------------//
-
-void HomingInterface::enableOkButton()
-{
-  ui->buttonBox->setStandardButtons(QDialogButtonBox::Ok);
 }

@@ -48,7 +48,7 @@ HomingInterfaceVisionWidget::HomingInterfaceVisionWidget(QWidget* parent,
           SLOT(setAugmentedFrame(cv::Mat)));
 
   // debug
-  enableVisionTab();
+//  enableVisionTab();
 }
 
 HomingInterfaceVisionWidget::~HomingInterfaceVisionWidget()
