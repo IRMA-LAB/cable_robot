@@ -46,9 +46,6 @@ HomingInterfaceVisionWidget::HomingInterfaceVisionWidget(QWidget* parent,
           SLOT(appendText2Browser(QString)));
   connect(&app_, SIGNAL(frameReadyToShow(cv::Mat)), &camera_widget,
           SLOT(setAugmentedFrame(cv::Mat)));
-
-  // debug
-//  enableVisionTab();
 }
 
 HomingInterfaceVisionWidget::~HomingInterfaceVisionWidget()
@@ -190,6 +187,13 @@ HomingInterfaceVision::~HomingInterfaceVision()
 //--------- Private function --------------------------------------------------------//
 
 bool HomingInterfaceVision::rejectedExitRoutine(const bool)
+{
+  widget_.stopEstimation();
+  widget_.camera_widget.stopVideoStream();
+  return true;
+}
+
+bool HomingInterfaceVision::acceptedExitRoutine()
 {
   widget_.stopEstimation();
   widget_.camera_widget.stopVideoStream();

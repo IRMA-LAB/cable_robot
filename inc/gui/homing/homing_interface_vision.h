@@ -83,6 +83,7 @@ class HomingInterfaceVision: public HomingInterface
   HomingInterfaceVisionWidget widget_;
 
   bool rejectedExitRoutine(const bool) override final;
+  bool acceptedExitRoutine() override final;
 };
 
 #endif // CABLE_ROBOT_HOMING_INTERFACE_VISION_H

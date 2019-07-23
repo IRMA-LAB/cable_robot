@@ -1,7 +1,7 @@
 /**
  * @file login_window.cpp
  * @author Simone Comari
- * @date 17 Jul 2019
+ * @date 23 Jul 2019
  * @brief This file includes definitions of window class present in login_window.h.
  */
 
@@ -14,9 +14,6 @@ LoginWindow::LoginWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::Logi
 {
   ui->setupUi(this);
   setFixedHeight(this->geometry().height());
-
-  // debug
-  ui->groupBox_config->setEnabled(true);
 }
 
 LoginWindow::~LoginWindow()
