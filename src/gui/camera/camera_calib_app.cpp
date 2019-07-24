@@ -94,13 +94,27 @@ bool WorkerThread::storeValidFrame(const cv::Mat& view)
 
 bool WorkerThread::findChessboard(const cv::Mat& image)
 {
-  bool found = cv::findChessboardCorners(image, settings_.board_size, point_buf_,
-                                         settings_.chess_board_flags);
+  bool found = true;
+  if (image.rows > 480)
+  {
+    cv::Mat shrinked;
+    double scale = 360.0 / image.rows;
+    cv::resize(image, shrinked, cv::Size(), scale, scale, cv::INTER_AREA);
+    cv::Mat point_buf;
+    found = cv::findChessboardCorners(shrinked, settings_.board_size, point_buf,
+                                      settings_.chess_board_flags);
+  }
 
   // Draw the corners.
   cv::Mat augmented_image = image.clone();
-  cv::drawChessboardCorners(augmented_image, settings_.board_size, cv::Mat(point_buf_),
-                            found);
+
+  if (found)
+  {
+    found = cv::findChessboardCorners(image, settings_.board_size, point_buf_,
+                                      settings_.chess_board_flags);
+    cv::drawChessboardCorners(augmented_image, settings_.board_size, cv::Mat(point_buf_),
+                              found);
+  }
   emit augmentedFrameAvailable(augmented_image);
 
   return found;

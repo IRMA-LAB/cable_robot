@@ -1,7 +1,7 @@
 /**
  * @file homing_vision_app.cpp
  * @author Marco Caselli, Simone Comari
- * @date 22 Jul 2019
+ * @date 24 Jul 2019
  * @brief This file includes definitions of classes present in homing_vision_app.h.
  */
 
@@ -142,8 +142,20 @@ bool HomingVisionApp::calcImageCorner()
   object_points_planar_.clear();
   image_points_.clear();
 
-  bool found = cv::findChessboardCorners(frame_, settings_.pattern_size, corners,
-                                         settings_.chess_board_flags);
+  bool found = true;
+  if (frame_.rows > 480)
+  {
+    cv::Mat shrinked;
+    double scale = 360.0 / frame_.rows;
+    cv::resize(frame_, shrinked, cv::Size(), scale, scale, cv::INTER_AREA);
+    cv::Mat point_buf;
+    found = cv::findChessboardCorners(shrinked, settings_.pattern_size, point_buf,
+                                      settings_.chess_board_flags);
+  }
+
+  if (found)
+    found = cv::findChessboardCorners(frame_, settings_.pattern_size, corners,
+                                      settings_.chess_board_flags);
   if (!found)
   {
     if (clock.Elapsed() > kWarningMsgPeriod)
