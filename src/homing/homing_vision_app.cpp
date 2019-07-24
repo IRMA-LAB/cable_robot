@@ -192,8 +192,9 @@ void HomingVisionApp::showAugmentedFrame()
   {
     cv::Mat rvec;
     cv::Rodrigues(R_b2c, rvec);
+    int thickness = augm_frame.rows / 160;
     cv::drawFrameAxes(augm_frame, camera_params_.camera_matrix, camera_params_.dist_coeff,
-                      rvec, t_b2c * 1000, 2 * settings_.square_size);
+                      rvec, t_b2c * 1000, 2 * settings_.square_size, thickness);
   }
   emit frameReadyToShow(augm_frame);
 }
