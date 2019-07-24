@@ -1,7 +1,7 @@
 /**
  * @file camera_calib_app.cpp
  * @author Simone Comari, Marco Caselli
- * @date 22 Jul 2019
+ * @date 24 Jul 2019
  * @brief Implementation of classes declared in camera_calib_app.h
  */
 
@@ -68,18 +68,19 @@ void WorkerThread::run()
     emit resultReady(camera_params_);
   else
     emit calibrationFailed();
+
+  // Clear samples
+  image_points_.clear();
 }
 
 bool WorkerThread::calibrationSamplesCollected(const cv::Mat& frame)
 {
-  static ulong counter = 0;
   if (storeValidFrame(frame))
-    emit calibFrameCaptured(++counter, settings_.num_frames);
+    emit calibFrameCaptured(image_points_.size(), settings_.num_frames);
 
-  if (counter < settings_.num_frames)
+  if (image_points_.size() < settings_.num_frames)
     return false;
 
-  counter = 0;
   return true;
 }
 
