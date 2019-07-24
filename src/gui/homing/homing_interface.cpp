@@ -12,7 +12,8 @@ HomingInterface::HomingInterface(QWidget* parent, CableRobot* robot)
   : QDialog(parent), ui(new Ui::HomingInterface), robot_ptr_(robot), ext_close_cmd_(false)
 {
   ui->setupUi(this);
-  //  setAttribute(Qt::WA_DeleteOnClose);
+  // debug
+  ext_close_cmd_ = true;
 }
 
 HomingInterface::~HomingInterface() { delete ui; }

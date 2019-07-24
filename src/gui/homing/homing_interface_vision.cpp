@@ -46,6 +46,9 @@ HomingInterfaceVisionWidget::HomingInterfaceVisionWidget(QWidget* parent,
           SLOT(appendText2Browser(QString)));
   connect(&app_, SIGNAL(frameReadyToShow(cv::Mat)), &camera_widget,
           SLOT(setAugmentedFrame(cv::Mat)));
+
+  // debug
+  ui->tab_vision->setEnabled(true);
 }
 
 HomingInterfaceVisionWidget::~HomingInterfaceVisionWidget()
