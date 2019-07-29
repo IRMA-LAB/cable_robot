@@ -1,7 +1,7 @@
 /**
  * @file camera_calib_app.cpp
  * @author Simone Comari, Marco Caselli
- * @date 24 Jul 2019
+ * @date 29 Jul 2019
  * @brief Implementation of classes declared in camera_calib_app.h
  */
 
@@ -95,27 +95,26 @@ bool WorkerThread::storeValidFrame(const cv::Mat& view)
 
 bool WorkerThread::findChessboard(const cv::Mat& image)
 {
-  bool found = true;
-  if (image.rows > 480)
+  bool found = false;
+  point_buf_.release();
+  if (image.rows > settings_.resize_height)
   {
     cv::Mat shrinked;
-    double scale = 360.0 / image.rows;
+    double scale = settings_.resize_height / static_cast<double>(image.rows);
     cv::resize(image, shrinked, cv::Size(), scale, scale, cv::INTER_AREA);
-    cv::Mat point_buf;
-    found = cv::findChessboardCorners(shrinked, settings_.board_size, point_buf,
+    found = cv::findChessboardCorners(shrinked, settings_.board_size, point_buf_,
                                       settings_.chess_board_flags);
+    if (!point_buf_.empty())
+      point_buf_ /= scale;
   }
+  else
+    found = cv::findChessboardCorners(image, settings_.board_size, point_buf_,
+                                      settings_.chess_board_flags);
 
   // Draw the corners.
   cv::Mat augmented_image = image.clone();
-
-  if (found)
-  {
-    found = cv::findChessboardCorners(image, settings_.board_size, point_buf_,
-                                      settings_.chess_board_flags);
-    cv::drawChessboardCorners(augmented_image, settings_.board_size, cv::Mat(point_buf_),
-                              found);
-  }
+  cv::drawChessboardCorners(augmented_image, settings_.board_size, cv::Mat(point_buf_),
+                            found);
   emit augmentedFrameAvailable(augmented_image);
 
   return found;
@@ -158,15 +157,16 @@ bool WorkerThread::compareFrameAgainstPrev()
   static uint delta_y_   = 0;
   static uint counter_   = 0;
 
-  for (uint j = 0; j < uint(image_points_.size()); ++j)
+  for (ulong j = 0; j < image_points_.size(); ++j)
   {
-    for (uint i = 0; i < uint(settings_.board_size.width); ++i)
+    for (int i = 0; i < settings_.board_size.width; ++i)
     {
-      delta_x_ = delta_x_ + uint(std::abs(point_buf_[i].x - image_points_[j][i].x));
+      delta_x_ +=
+        uint(std::abs(point_buf_.at<double>(i, 0) - image_points_[j].at<double>(i, 0)));
       if (counter_ < uint(settings_.board_size.height))
-        delta_y_ =
-          delta_y_ + int(std::abs(point_buf_[i + settings_.board_size.width].y -
-                                  image_points_[j][i + settings_.board_size.width].y));
+        delta_y_ +=
+          std::abs(point_buf_.at<double>(i + settings_.board_size.width, 1) -
+                   image_points_[j].at<double>(i + settings_.board_size.width, 1));
       counter_++;
     }
     if (delta_x_ > kErrorX_)

@@ -1,7 +1,7 @@
 /**
  * @file homing_vision_app.h
  * @author Marco Caselli, Simone Comari
- * @date 22 Jul 2019
+ * @date 29 Jul 2019
  * @brief File containing homing vision structure and class to find rotation matrix and
  * traslation vector between camera and chessboard reference systems.
  */
@@ -23,21 +23,22 @@
  */
 struct HomingVisionParams
 {
-  cv::Size pattern_size = cv::Size(9, 6); /**< Corner chessboard dimension. */
+  cv::Size pattern_size = cv::Size(4, 6); /**< Corner chessboard dimension. */
   double max_precision =
     0.0001;                 /**< Max precision of corner position in sub pixel detection;
                              * when the corner position moves by less than max_precision.
                              * This value must be less or equal to max_precision in
                              * CameraCalibSettings defined in types.h */
-  float square_size = 26.f; /**< Chessboard squares dimension in [mm] */
+  float square_size = 32.f; /**< Chessboard squares dimension in [mm] */
   int chess_board_flags =
     cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_NORMALIZE_IMAGE |
     cv::CALIB_CB_FAST_CHECK; /**< Flags usefull to findChessboard function */
   int cor_sp_size = 11;      /**< Windows dimension for sub pixel accurate location */
   int zero_zone   = -1;      /**< Half diemsnion of zero-zone */
-  int max_counter = 30; /**< Number of max iteration to computer corner position in sub
-                         * pixel detection.  This value must be less or equal to
-                         * max_counter in CameraCalibSettings defined in types.h */
+  int max_counter = 30;    /**< Number of max iteration to computer corner position in sub
+                            * pixel detection.  This value must be less or equal to
+                            * max_counter in CameraCalibSettings defined in types.h */
+  int resize_height = 360; /**< Height of downscaled image if greater than this value. */
 };
 
 /**

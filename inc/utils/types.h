@@ -269,6 +269,7 @@ struct CameraCalibSettings
   int max_counter = 50; /**< Number of max iteration to computer corner position in sub
                            pixel detection. */
   bool calib_zero_tan_dist = false; /**< Set 0 tangential distortion coefficients. */
+  int resize_height = 360; /**< Height of downscaled image if greater than this value. */
 
   /**
    * @brief Default constructor.

@@ -1,7 +1,7 @@
 ﻿/**
  * @file camera_calib_app.h
  * @author Simone Comari, Marco Caselli
- * @date 22 Jul 2019
+ * @date 29 Jul 2019
  * @brief File containing camera calibration class to found intrinsic parameter and
  * distorsion coefficients of camera
  */
@@ -107,8 +107,8 @@ class WorkerThread: public QThread
   QMutex mutex_;
   QWaitCondition new_frame_available_;
 
-  std::vector<cv::Point2f> point_buf_;
-  std::vector<std::vector<cv::Point2f>> image_points_;
+  cv::Mat point_buf_;
+  std::vector<cv::Mat> image_points_;
   CameraParams camera_params_;
   cv::Size image_size_;
   CalibMode calib_mode_;
