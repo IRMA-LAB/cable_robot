@@ -63,12 +63,27 @@ void ManualControlDialog::appendText2Browser(const QString& text)
 void ManualControlDialog::updateActualXYZ()
 {
   grabnum::Vector3d actual_pos = app_.getActualPos();
-  ui->lcdNumber_x->display(actual_pos(Coordinates::X) * 1000);
-  ui->lcdNumber_y->display(actual_pos(Coordinates::Y) * 1000);
-  ui->lcdNumber_z->display(actual_pos(Coordinates::Z) * 1000);
+  ui->lcdNumber_x->display(actual_pos(Axis::X) * 1000);
+  ui->lcdNumber_y->display(actual_pos(Axis::Y) * 1000);
+  ui->lcdNumber_z->display(actual_pos(Axis::Z) * 1000);
 }
 
 //--------- Private GUI slots -------------------------------------------------------//
+
+void ManualControlDialog::on_spinBox_x_valueChanged(int x_coord)
+{
+  app_.setTarget(Axis::X, x_coord);
+}
+
+void ManualControlDialog::on_spinBox_y_valueChanged(int y_coord)
+{
+  app_.setTarget(Axis::Y, y_coord);
+}
+
+void ManualControlDialog::on_spinBox_z_valueChanged(int z_coord)
+{
+  app_.setTarget(Axis::Z, z_coord);
+}
 
 void ManualControlDialog::on_pushButton_reset_clicked()
 {
@@ -89,7 +104,7 @@ void ManualControlDialog::on_pushButton_return_clicked()
 void ManualControlDialog::resetTargetXYZ()
 {
   grabnum::Vector3d actual_pos = app_.getActualPos();
-  ui->spinBox_x->setValue(static_cast<int>(actual_pos(Coordinates::X) * 1000));
-  ui->spinBox_x->setValue(static_cast<int>(actual_pos(Coordinates::Y) * 1000));
-  ui->spinBox_x->setValue(static_cast<int>(actual_pos(Coordinates::Z) * 1000));
+  ui->spinBox_x->setValue(static_cast<int>(actual_pos(Axis::X) * 1000));
+  ui->spinBox_x->setValue(static_cast<int>(actual_pos(Axis::Y) * 1000));
+  ui->spinBox_x->setValue(static_cast<int>(actual_pos(Axis::Z) * 1000));
 }

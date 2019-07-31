@@ -1,37 +1,45 @@
 /**
  * @file manual_control_app.cpp
  * @author Simone Comari
- * @date 03 Jul 2019
+ * @date 31 Jul 2019
  * @brief This file includes definitions of class present in manual_control_app.h.
  */
 
 #include "apps/manual_control_app.h"
 
 ManualControlApp::ManualControlApp(QObject* parent, CableRobot* robot)
-  : QObject(parent), robot_ptr_(robot)
+  : QObject(parent), robot_ptr_(robot),
+    controller_(robot->GetActiveMotorsID(), robot->GetRtCycleTimeNsec(),
+                robot->GetActiveComponentsParams())
 {
-  // TODO:
-  // 1. Initialize target position with current platform position
-  // 2. Setup axes controller with initial target and assign it to robot object
+  target_pos_ = getActualPos();
+  robot_ptr_->SetController(&controller_);
 }
 
 ManualControlApp::~ManualControlApp() { robot_ptr_->SetController(nullptr); }
 
 //--------- Public functions ---------------------------------------------------------//
 
-const grabnum::Vector3d& ManualControlApp::getActualPos() const
+const grabnum::Vector3d& ManualControlApp::getActualPos()
 {
-  // TODO: get actual platform pose from controller
+  pthread_mutex_lock(&robot_ptr_->Mutex());
+  actual_pos_ = robot_ptr_->GetCdprStatus().platform.position;
+  pthread_mutex_unlock(&robot_ptr_->Mutex());
   return actual_pos_;
 }
 
-void ManualControlApp::setTarget(const Coordinates coord, const double value)
+void ManualControlApp::setTarget(const Axis coord, const double value)
 {
   target_pos_(coord) = value;
-  // TODO: set new updated controller target
+  pthread_mutex_lock(&robot_ptr_->Mutex());
+  controller_.setAxesTarget(target_pos_);
+  pthread_mutex_unlock(&robot_ptr_->Mutex());
 }
 
 void ManualControlApp::resetTarget()
 {
-  // TODO: set controller target position with current platform position
+  pthread_mutex_lock(&robot_ptr_->Mutex());
+  controller_.stop();
+  pthread_mutex_unlock(&robot_ptr_->Mutex());
+  target_pos_ = getActualPos();
 }

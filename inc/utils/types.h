@@ -38,6 +38,27 @@ enum SensorType
 };
 
 /**
+ * @brief A numerical sign enum
+ */
+enum class Sign : int16_t
+{
+  POS = 1,
+  NEG = -1
+};
+
+template <typename T>
+/**
+ * @brief operator * for Sign type.
+ * @param sign Equivalent to 1 or -1.
+ * @param value A scalar value.
+ * @return A scalar value.
+ */
+T operator*(const Sign& sign, const T value)
+{
+  return static_cast<T>(sign) * value;
+}
+
+/**
  * @brief A structure including motor status information.
  */
 struct MotorStatus

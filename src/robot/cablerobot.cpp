@@ -547,6 +547,14 @@ STATE_DEFINE(CableRobot, Enabled, NoEventData)
   PrintStateTransition(prev_state_, ST_ENABLED);
   prev_state_ = ST_ENABLED;
 
+  pthread_mutex_lock(&mutex_);
+  if (state_estimator_ != nullptr)
+  {
+    delete state_estimator_;
+    state_estimator_ = nullptr;
+  }
+  pthread_mutex_unlock(&mutex_);
+
   StopTimers();
   motor_status_timer_->start(kMotorStatusIntervalMsec_);
 }
@@ -564,6 +572,14 @@ STATE_DEFINE(CableRobot, Homing, NoEventData)
   PrintStateTransition(prev_state_, ST_HOMING);
   prev_state_ = ST_HOMING;
 
+  pthread_mutex_lock(&mutex_);
+  if (state_estimator_ != nullptr)
+  {
+    delete state_estimator_;
+    state_estimator_ = nullptr;
+  }
+  pthread_mutex_unlock(&mutex_);
+
   StopTimers();
   actuator_status_timer_->start(kActuatorStatusIntervalMsec_);
 }
@@ -572,6 +588,11 @@ STATE_DEFINE(CableRobot, Ready, NoEventData)
 {
   PrintStateTransition(prev_state_, ST_READY);
   prev_state_ = ST_READY;
+
+  pthread_mutex_lock(&mutex_);
+  if (state_estimator_ == nullptr)
+    state_estimator_ = new StateEstimatorBase();
+  pthread_mutex_unlock(&mutex_);
 
   StopTimers();
   motor_status_timer_->start(kMotorStatusIntervalMsec_);
@@ -699,6 +720,9 @@ void CableRobot::EcWorkFun()
 {
   for (grabec::EthercatSlave* slave_ptr : slaves_ptrs_)
     slave_ptr->ReadInputs(); // read pdos
+
+  if (state_estimator_ != nullptr)
+    state_estimator_->EstimatePlatformPose(cdpr_status_);
 
   if (controller_ != nullptr)
     ControlStep();

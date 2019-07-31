@@ -31,6 +31,8 @@ HEADERS = \
     $$PWD/inc/ctrl/controller_singledrive.h \
     $$PWD/inc/ctrl/controller_joints_pvt.h \
     $$PWD/inc/ctrl/winch_torque_controller.h \
+    $$PWD/inc/ctrl/controller_axes.h \
+    $$PWD/inc/state_estimation/state_estimator_base.h \
 #    $$PWD/inc/state_estimation/ext_kalman_filter.h \
     $$PWD/inc/utils/types.h \
     $$PWD/inc/utils/macros.h \
@@ -41,7 +43,7 @@ HEADERS = \
     $$PWD/inc/debug/debug_routine.h \
     $$PWD/libs/easyloggingpp/src/easylogging++.h \
     $$PWD/libs/grab_common/grabcommon.h \
-    $$PWD/libs/grab_common/pid/pid.h \
+    $$PWD/libs/grab_common/pid/pid.h
 
 SOURCES = \
 #    $$PWD/src/main.cpp \
@@ -78,6 +80,8 @@ SOURCES = \
     $$PWD/src/ctrl/controller_singledrive.cpp \
     $$PWD/src/ctrl/controller_joints_pvt.cpp \
     $$PWD/src/ctrl/winch_torque_controller.cpp \
+    $$PWD/src/ctrl/controller_axes.cpp \
+    $$PWD/src/state_estimation/state_estimator_base.cpp \
 #    $$PWD/src/state_estimation/ext_kalman_filter.cpp \
     $$PWD/src/utils/msgs.cpp \
     $$PWD/src/utils/easylog_wrapper.cpp \
@@ -86,7 +90,7 @@ SOURCES = \
     $$PWD/src/debug/debug_routine.cpp \
     $$PWD/libs/easyloggingpp/src/easylogging++.cc \
     $$PWD/libs/grab_common/grabcommon.cpp \
-    $$PWD/libs/grab_common/pid/pid.cpp \
+    $$PWD/libs/grab_common/pid/pid.cpp
 
 FORMS += \
     $$PWD/widgets/main_gui.ui \
@@ -105,7 +109,7 @@ FORMS += \
     $$PWD/widgets/apps/joints_pvt_dialog.ui \
     $$PWD/widgets/apps/manual_control_dialog.ui \
     $$PWD/widgets/misc/scatter3d_widget.ui \
-    $$PWD/widgets/misc/file_selection_form.ui \
+    $$PWD/widgets/misc/file_selection_form.ui
 
 RESOURCES += \
     resources/resources.qrc

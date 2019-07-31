@@ -27,6 +27,7 @@
 #include "components/actuator.h"
 #include "ctrl/controller_base.h"
 #include "ctrl/controller_singledrive.h"
+#include "state_estimation/state_estimator_base.h"
 #include "utils/easylog_wrapper.h"
 
 /**
@@ -114,6 +115,11 @@ class CableRobot: public QObject,
    * @return The parameters of active robot components
    */
   grabcdpr::RobotParams GetActiveComponentsParams() const;
+  /**
+   * @brief GetCdprStatus
+   * @return
+   */
+  const grabcdpr::RobotVars& GetCdprStatus() const { return cdpr_status_; }
   /**
    * @brief Get a pointer to inquired actuator.
    * @param[in] motor_id The ID of the inquired actuator.
@@ -428,7 +434,8 @@ class CableRobot: public QObject,
   bool is_waiting_            = false;
 
   // Control related
-  ControllerBase* controller_ = nullptr;
+  StateEstimatorBase* state_estimator_ = nullptr;
+  ControllerBase* controller_          = nullptr;
 
   void ControlStep();
 

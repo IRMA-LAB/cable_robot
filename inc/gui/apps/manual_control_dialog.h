@@ -45,9 +45,14 @@ class ManualControlDialog: public QDialog
   void updateActualXYZ();
 
  private slots:
+  void on_spinBox_x_valueChanged(int x_coord);
+  void on_spinBox_y_valueChanged(int y_coord);
+  void on_spinBox_z_valueChanged(int z_coord);
+
   void on_pushButton_reset_clicked();
 
   void on_pushButton_return_clicked();
+
 
  private:
   static constexpr uint kTimerPeriodMsec_ = 100;
