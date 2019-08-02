@@ -6,7 +6,7 @@
 
 #include "controller_base.h"
 
-enum Axis: uchar
+enum Axis : uchar
 {
   X = 1,
   Y,
@@ -20,7 +20,7 @@ class ControllerAxes: public ControllerBase
                           const grabcdpr::RobotParams& params);
   ~ControllerAxes() override {}
 
-  void setAxesTarget(const Vector3d &target_pos);
+  void setAxesTarget(const Vector3d& target_pos);
   void SingleAxisIncrement(const Axis axis, const bool active,
                            const Sign sign = Sign::POS);
 
@@ -33,6 +33,8 @@ class ControllerAxes: public ControllerBase
 
  private:
   static constexpr double kAbsDeltaMovePerSec_ = 0.01; // [m/s]
+  static constexpr double kMinCableTension_    = 2.0;  // [N]
+  static constexpr double kMaxCableTension_    = 10.0; // [N]
 
   grabcdpr::RobotParams params_;
   double period_sec_;
@@ -41,11 +43,14 @@ class ControllerAxes: public ControllerBase
   grabnum::VectorXd<POSE_DIM> delta_move_;
   grabnum::VectorXd<POSE_DIM> target_pose_;
 
-  grabnum::Vector3d
-  NonLinsolveJacGeomStatic(const grabnum::VectorXd<POSE_DIM>& init_guess,
-                           const uint8_t nmax = 100) const;
+  bool calcRealTargetPose(grabnum::Vector3d& position,
+                          grabnum::Vector3d& orientation) const;
 
-  bool isPoseReachable(const grabcdpr::RobotVars& vars) const;
+  arma::vec NonLinsolveJacGeomStatic(const grabnum::VectorXd<POSE_DIM>& init_guess,
+                                     const grabnum::VectorXi<POSE_DIM>& mask,
+                                     const uint8_t nmax = 100) const;
+
+  bool isPoseReachable(grabcdpr::RobotVars& vars) const;
 };
 
 #endif // CABLE_ROBOT_CONTROLLER_AXES_H
