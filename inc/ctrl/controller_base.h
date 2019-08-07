@@ -140,14 +140,14 @@ class ControllerBase
    * @return Control actions for each targeted motor.
    */
   virtual vect<ControlAction>
-  CalcCtrlActions(const grabcdpr::RobotVars& robot_status,
+  calcCtrlActions(const grabcdpr::RobotVars& robot_status,
                   const vect<ActuatorStatus>& actuators_status) = 0;
 
   /**
    * @brief Check if control target was reached.
    * @return _True_ if control target was reached, _false_ otherwise.
    */
-  virtual bool TargetReached() const = 0;
+  virtual bool targetReached() const = 0;
 
  protected:
   vect<id_t> motors_id_;    /**< IDs of the motors to be controlled. */

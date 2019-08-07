@@ -20,6 +20,7 @@
 #include "gui/homing/homing_interface.h"
 #include "gui/homing/homing_interface_proprioceptive.h"
 #include "homing/homing_vision_app.h"
+#include "ctrl/controller_axes.h"
 
 namespace Ui {
 class HomingInterfaceVisionWidget;
@@ -61,9 +62,12 @@ class HomingInterfaceVisionWidget: public QWidget
   void appendText2Browser(const QString& text);
 
  private:
+  static const grabnum::Vector3d kObservationPos_;
+
   Ui::HomingInterfaceVisionWidget* ui;
 
   CableRobot* robot_ptr_;
+  ControllerAxes controller_;
   HomingVisionApp app_;
 };
 

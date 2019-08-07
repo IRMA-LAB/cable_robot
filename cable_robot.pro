@@ -201,3 +201,6 @@ LIBS += -lopencv_photo
 LIBS += -lopencv_stitching
 LIBS += -lopencv_video
 LIBS += -lopencv_videoio
+
+# Armadillo lib
+LIBS += -llapack -lblas -larmadillo

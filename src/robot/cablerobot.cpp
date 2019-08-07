@@ -343,7 +343,7 @@ RetVal CableRobot::WaitUntilTargetReached(const double max_wait_time_sec)
   {
     // Check if target is reached
     pthread_mutex_lock(&mutex_);
-    if (controller_->TargetReached())
+    if (controller_->targetReached())
     {
       pthread_mutex_unlock(&mutex_);
       qmutex_.lock();
@@ -748,7 +748,7 @@ void CableRobot::ControlStep()
     active_actuators_status_[i] = active_actuators_ptrs_[i]->GetStatus();
 
   std::vector<ControlAction> ctrl_actions =
-    controller_->CalcCtrlActions(cdpr_status_, active_actuators_status_);
+    controller_->calcCtrlActions(cdpr_status_, active_actuators_status_);
   for (const ControlAction& ctrl_action : ctrl_actions)
   {
     // Safety check to see if given motor id is valid

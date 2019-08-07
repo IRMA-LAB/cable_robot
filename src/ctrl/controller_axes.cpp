@@ -2,23 +2,23 @@
 
 ControllerAxes::ControllerAxes(const vect<id_t>& motors_id, const uint32_t period_nsec,
                                const grabcdpr::RobotParams& params)
-  : ControllerBase(motors_id), params_(params), period_sec_(period_nsec * 0.000000001),
-    change_target_(false), target_set_(false)
+  : ControllerBase(motors_id), params_(params), change_target_(false), target_set_(false)
 {
   SetMode(ControlMode::CABLE_LENGTH);
   delta_move_.SetZero();
+  abs_delta_move_per_cycle_ = period_nsec * 0.000000001 * kAbsDeltaMovePerSec_;
 }
 
 //--------- Public functions ---------------------------------------------------------//
 
-void ControllerAxes::setAxesTarget(const grabnum::Vector3d& target_pos)
+void ControllerAxes::setTargetPosition(const grabnum::Vector3d& target_pos)
 {
-  change_target_ = false;
-  target_set_    = true;
-  target_pose_.SetBlock<3, 1>(1, 1, target_pos);
+  change_target_   = false;
+  target_set_      = true;
+  target_position_ = target_pos;
 }
 
-void ControllerAxes::SingleAxisIncrement(const Axis axis, const bool active,
+void ControllerAxes::singleAxisIncrement(const Axis axis, const bool active,
                                          const Sign sign /*= Sign::POS*/)
 {
   if (active == change_target_)
@@ -29,7 +29,7 @@ void ControllerAxes::SingleAxisIncrement(const Axis axis, const bool active,
   if (change_target_)
   {
     delta_move_.SetZero();
-    delta_move_(axis) = sign * kAbsDeltaMovePerSec_ * period_sec_;
+    delta_move_(axis) = sign * abs_delta_move_per_cycle_;
   }
 }
 
@@ -39,7 +39,7 @@ void ControllerAxes::stop()
   target_set_    = false;
 }
 
-vect<ControlAction> ControllerAxes::CalcCtrlActions(const grabcdpr::RobotVars& vars,
+vect<ControlAction> ControllerAxes::calcCtrlActions(const grabcdpr::RobotVars& vars,
                                                     const vect<ActuatorStatus>&)
 {
   vect<ControlAction> ctrl_actions(motors_id_.size());
@@ -51,13 +51,15 @@ vect<ControlAction> ControllerAxes::CalcCtrlActions(const grabcdpr::RobotVars& v
     target_pose_ = vars.platform.pose + delta_move_;
   else
   {
-    target_pose_.SetBlock<3, 1>(4, 1, vars.platform.orientation);
-    // Check if position was reached
-    if (vars.platform.position.IsApprox(target_pose_.GetBlock<3, 1>(1, 1)))
+    // Check if position was reached (within 1mm tolerance)
+    if (vars.platform.position.IsApprox(target_position_, 0.001))
     {
       target_set_ = false;
       return ctrl_actions;
     }
+    // Because we work in quasi-static conditions, cannot assign a too large target change
+    interpPosTarget(vars.platform.position); // set position in target_pose_
+    target_pose_.SetBlock<3, 1>(4, 1, vars.platform.orientation);
   }
 
   // Find feasible target pose according to number of cables (under/fully/over-actuated)
@@ -79,6 +81,21 @@ vect<ControlAction> ControllerAxes::CalcCtrlActions(const grabcdpr::RobotVars& v
 
 //--------- Private functions --------------------------------------------------------//
 
+void ControllerAxes::interpPosTarget(const grabnum::Vector3d& current_pos)
+{
+  double distance = grabnum::Norm(current_pos - target_position_);
+  if (distance <= abs_delta_move_per_cycle_)
+  {
+    target_pose_.SetBlock<3, 1>(1, 1, target_position_);
+    return;
+  }
+  // Else interpolate (from parametric representation of a 3D line passing by two points)
+  double t        = abs_delta_move_per_cycle_ / distance; // (0:1)
+  target_pose_(X) = current_pos(X) + (target_position_(X) - current_pos(X)) * t;
+  target_pose_(Y) = current_pos(Y) + (target_position_(Y) - current_pos(Y)) * t;
+  target_pose_(Z) = current_pos(Z) + (target_position_(Z) - current_pos(Z)) * t;
+}
+
 bool ControllerAxes::calcRealTargetPose(grabnum::Vector3d& position,
                                         grabnum::Vector3d& orientation) const
 {
@@ -89,16 +106,16 @@ bool ControllerAxes::calcRealTargetPose(grabnum::Vector3d& position,
       // Calculate feasible orientation for given position
       const grabnum::VectorXi<POSE_DIM> kMask({1, 1, 1, 0, 0, 0});
       position            = target_pose_.GetBlock<3, 1>(1, 1);
-      arma::vec3 solution = NonLinsolveJacGeomStatic(target_pose_, kMask);
+      arma::vec3 solution = nonLinsolveJacGeomStatic(target_pose_, kMask);
       orientation         = arma::conv_to<vectD>::from(solution);
       break;
     }
     case 4:
     {
       // Calculate feasible orientation for given position
-      const grabnum::VectorXi<POSE_DIM> kMask({1, 1, 1, 1, 0, 0}); // ok?
+      const grabnum::VectorXi<POSE_DIM> kMask({1, 1, 1, 0, 0, 1});
       position            = target_pose_.GetBlock<3, 1>(1, 1);
-      arma::vec2 solution = NonLinsolveJacGeomStatic(target_pose_, kMask);
+      arma::vec2 solution = nonLinsolveJacGeomStatic(target_pose_, kMask);
       orientation(4)      = target_pose_(4);
       orientation(5)      = solution(4);
       orientation(6)      = solution(5);
@@ -107,9 +124,9 @@ bool ControllerAxes::calcRealTargetPose(grabnum::Vector3d& position,
     case 5:
     {
       // Calculate feasible orientation for given position
-      const grabnum::VectorXi<POSE_DIM> kMask({1, 1, 1, 1, 1, 0}); // ok?
+      const grabnum::VectorXi<POSE_DIM> kMask({1, 1, 1, 0, 1, 1});
       position           = target_pose_.GetBlock<3, 1>(1, 1);
-      arma::vec solution = NonLinsolveJacGeomStatic(target_pose_, kMask);
+      arma::vec solution = nonLinsolveJacGeomStatic(target_pose_, kMask);
       orientation(4)     = target_pose_(4);
       orientation(5)     = target_pose_(5);
       orientation(6)     = solution(5);
@@ -131,7 +148,7 @@ bool ControllerAxes::calcRealTargetPose(grabnum::Vector3d& position,
 }
 
 arma::vec
-ControllerAxes::NonLinsolveJacGeomStatic(const grabnum::VectorXd<POSE_DIM>& init_guess,
+ControllerAxes::nonLinsolveJacGeomStatic(const grabnum::VectorXd<POSE_DIM>& init_guess,
                                          const grabnum::VectorXi<POSE_DIM>& mask,
                                          const uint8_t nmax /*= 100*/) const
 {

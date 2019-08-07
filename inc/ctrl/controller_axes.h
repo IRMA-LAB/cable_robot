@@ -20,15 +20,15 @@ class ControllerAxes: public ControllerBase
                           const grabcdpr::RobotParams& params);
   ~ControllerAxes() override {}
 
-  void setAxesTarget(const Vector3d& target_pos);
-  void SingleAxisIncrement(const Axis axis, const bool active,
+  void setTargetPosition(const Vector3d& target_pos);
+  void singleAxisIncrement(const Axis axis, const bool active,
                            const Sign sign = Sign::POS);
 
   void stop();
-  bool TargetReached() const override final { return !target_set_; }
+  bool targetReached() const override final { return !target_set_; }
 
   vect<ControlAction>
-  CalcCtrlActions(const grabcdpr::RobotVars& vars,
+  calcCtrlActions(const grabcdpr::RobotVars& vars,
                   const vect<ActuatorStatus>& robot_status) override final;
 
  private:
@@ -37,16 +37,19 @@ class ControllerAxes: public ControllerBase
   static constexpr double kMaxCableTension_    = 10.0; // [N]
 
   grabcdpr::RobotParams params_;
-  double period_sec_;
+  double abs_delta_move_per_cycle_;
   bool change_target_;
   bool target_set_;
   grabnum::VectorXd<POSE_DIM> delta_move_;
   grabnum::VectorXd<POSE_DIM> target_pose_;
+  grabnum::Vector3d target_position_;
+
+  void interpPosTarget(const grabnum::Vector3d& current_pos);
 
   bool calcRealTargetPose(grabnum::Vector3d& position,
                           grabnum::Vector3d& orientation) const;
 
-  arma::vec NonLinsolveJacGeomStatic(const grabnum::VectorXd<POSE_DIM>& init_guess,
+  arma::vec nonLinsolveJacGeomStatic(const grabnum::VectorXd<POSE_DIM>& init_guess,
                                      const grabnum::VectorXi<POSE_DIM>& mask,
                                      const uint8_t nmax = 100) const;
 

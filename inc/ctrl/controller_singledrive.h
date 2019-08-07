@@ -151,7 +151,7 @@ class ControllerSingleDrive: public ControllerBase
    * @brief Check if active target is reached, independently from the control mode.
    * @return _True_ if target is reached, _false_ otherwise.
    */
-  bool TargetReached() const override { return modes_.empty() ? false : on_target_; }
+  bool targetReached() const override { return modes_.empty() ? false : on_target_; }
 
   /**
    * @brief Calculate control actions depending on current robot status.
@@ -175,7 +175,7 @@ class ControllerSingleDrive: public ControllerBase
    * @return Control actions for each targeted motor.
    */
   vect<ControlAction>
-  CalcCtrlActions(const grabcdpr::RobotVars& robot_status,
+  calcCtrlActions(const grabcdpr::RobotVars& robot_status,
                   const vect<ActuatorStatus>& actuators_status) override final;
 
  private:

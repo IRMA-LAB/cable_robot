@@ -13,19 +13,23 @@
 //--------- HomingInterfaceVisionWidget class ----------------------------------------//
 //------------------------------------------------------------------------------------//
 
+const grabnum::Vector3d HomingInterfaceVisionWidget::kObservationPos_({3,2,3});
+
 HomingInterfaceVisionWidget::HomingInterfaceVisionWidget(QWidget* parent,
                                                          CableRobot* robot,
                                                          const VisionParams vision_config)
   : QWidget(parent), camera_widget(vision_config.camera),
     proprioceptive_widget(this, robot), ui(new Ui::HomingInterfaceVisionWidget),
-    robot_ptr_(robot), app_(this, robot, vision_config)
+    robot_ptr_(robot),
+    controller_(robot->GetActiveMotorsID(), robot->GetRtCycleTimeNsec(),
+                robot->GetActiveComponentsParams()),
+    app_(this, robot, vision_config)
 {
   ui->setupUi(this);
 
   // Setup first tab --> proprioceptive homing interface
   ui->verticalLayout_step1->addWidget(&proprioceptive_widget);
 
-  //  connect(proprioceptive_widget_, SIGNAL(destroyed()), this, SLOT(close()));
   connect(&(proprioceptive_widget.app), SIGNAL(homingComplete()), this,
           SLOT(enableVisionTab()));
 
@@ -77,9 +81,10 @@ HomingInterfaceVisionWidget::~HomingInterfaceVisionWidget()
 void HomingInterfaceVisionWidget::on_pushButton_move_clicked()
 {
   CLOG(TRACE, "event");
-  // TODO
-  ui->pushButton_find->setEnabled(true);
   appendText2Browser("Moving to observation point...");
+  controller_.setTargetPosition(kObservationPos_);
+  robot_ptr_->SetController(&controller_);
+  ui->pushButton_find->setEnabled(true);
 }
 
 void HomingInterfaceVisionWidget::on_pushButton_find_clicked()

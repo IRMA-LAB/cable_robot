@@ -1,5 +1,4 @@
 {
-  "rotation_patametrization": "TAYT_BRYAN",
   "actuator": [
     {
       "active": true,
@@ -315,12 +314,18 @@
     }
   ],
   "platform": {
+    "rotation_parametrization": "TAIT_BRYAN",
     "ext_torque_loc": [
       [0],
       [0],
       [0]
     ],
     "mass": 8.0,
+    "gravity_axis": [
+      [-0.00706363344904404],
+      [0.0156543383060401],
+      [0.999852512511069]
+    ],
     "inertia_mat_G_loc": [
       [
         0.138743801545143,

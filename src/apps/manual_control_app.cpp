@@ -32,7 +32,7 @@ void ManualControlApp::setTarget(const Axis coord, const double value)
 {
   target_pos_(coord) = value;
   pthread_mutex_lock(&robot_ptr_->Mutex());
-  controller_.setAxesTarget(target_pos_);
+  controller_.setTargetPosition(target_pos_);
   pthread_mutex_unlock(&robot_ptr_->Mutex());
 }
 

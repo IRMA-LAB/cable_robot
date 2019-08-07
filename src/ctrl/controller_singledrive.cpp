@@ -109,7 +109,7 @@ void ControllerSingleDrive::MotorTorqueIncrement(const bool active,
 }
 
 vect<ControlAction>
-ControllerSingleDrive::CalcCtrlActions(const grabcdpr::RobotVars&,
+ControllerSingleDrive::calcCtrlActions(const grabcdpr::RobotVars&,
                                        const vect<ActuatorStatus>& actuators_status)
 {
   ControlAction res;
