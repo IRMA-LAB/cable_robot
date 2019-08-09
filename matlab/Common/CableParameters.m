@@ -6,6 +6,7 @@ classdef CableParameters
   %   homonymous object's properties.
   %
   properties
+    active;
     pos_A_loc;%is a vector (size[3,1], [m]), containing the components of the distal anchor point A, projected in the local frame.
     pos_D_glob;%is a vector (size[3,1], [m]), containing the components of the proximal anchor point D, projected in the fixed frame.
     vers_i;%
@@ -23,6 +24,7 @@ classdef CableParameters
       %   CABLEPARAMETERS instantiates an object of CableParameters type.
       %   CABLE_PARAMETERS_STRUCT is a structure containing the cable
       %   parameters, arranged in different fields.
+      obj.active = actuator_p_struct.active;
       obj.pos_A_loc = actuator_p_struct.winch.pos_PA_loc;
       obj.pos_D_glob = actuator_p_struct.pulley.pos_OD_glob;
       obj.vers_i = actuator_p_struct.pulley.vers_i;

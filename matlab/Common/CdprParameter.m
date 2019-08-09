@@ -34,5 +34,16 @@ classdef CdprParameter
       obj.cable = cable;
       cd(current_folder);
     end
+    
+    function active_actuators_id = activeActuatorsId(obj)
+      k = 0;
+      for i = 1:obj.n_cables
+        if obj.cable(i, 1).active
+          k = k + 1;
+          active_actuators_id(k) = i;
+        end
+      end
+    end
+    
   end
 end

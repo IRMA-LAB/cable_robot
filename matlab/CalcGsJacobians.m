@@ -1,4 +1,4 @@
-function J_q = CalcGsJacobians(cdpr_v,Ja,Ju,mg)
+function J_q = CalcGsJacobians(cdpr_v, Ja, Ju, mg)
 
 n = length(Ja);
 m = length([Ja Ju]);

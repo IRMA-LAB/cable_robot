@@ -1,4 +1,4 @@
-function cdpr_v = CalcExternalLoads(cdpr_v,cdpr_p,R)
+function platform_v = CalcExternalLoads(platform_v, platform_p, R)
 %CALCEXTERNALLOADS computes the external loads acting on the platform.
 %
 %   CALCEXTERNALLOADS computes the components of the external loads in terms of
@@ -10,13 +10,14 @@ function cdpr_v = CalcExternalLoads(cdpr_v,cdpr_p,R)
 %   the position vector (G-P), projected on the global frame.
 %   R is a matrix (size[6,6]), that premultiplies the equation of dynamic
 %   equilibrium in order to make the mass matrix symmetric.
-%     
+%
 %   EXT_LOAD is a vector([6,1]), containing the components of external
 %   forces and moments, projected on the global frame.
 
-  cdpr_v.ext_load(1:3,1) = R*(cdpr_p.platform.mass.*cdpr_p.platform.gravity_acceleration + ...
-    cdpr_v.platform.rot_mat*cdpr_p.platform.ext_force_loc);
-  cdpr_v.ext_load(4:6,1) = (Anti(cdpr_v.platform.pos_PG_glob)*cdpr_v.ext_load(1:3,1) + ...
-    cdpr_v.platform.rot_mat*cdpr_p.platform.ext_moments_loc);
+platform_v.ext_load(1:3, 1) = R * (platform_p.mass .* ...
+  platform_p.gravity_acceleration + platform_v.rot_mat * ...
+  platform_p.ext_force_loc);
+platform_v.ext_load(4:6, 1) = Anti(platform_v.pos_PG_glob) * ...
+  platform_v.ext_load(1:3, 1) + platform_v.rot_mat * platform_p.ext_moments_loc;
 
 end

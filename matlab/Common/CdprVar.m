@@ -14,9 +14,7 @@ classdef CdprVar
     analitic_jacobian_a;%
     analitic_jacobian_u;%
     
-    ext_load;%
     dyn_load;%
-    ext_load_ss;%
     dyn_load_ss;%
     total_load;%
     total_load_ss;%
