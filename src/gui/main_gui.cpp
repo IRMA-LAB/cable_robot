@@ -45,8 +45,11 @@ MainGUI::~MainGUI()
   DeleteRobot();
 #if DEBUG_GUI == 1
   disconnect(pushButton_debug, SIGNAL(clicked()), this, SLOT(pushButton_debug_clicked()));
-  disconnect(temp_app, SIGNAL(debugCompleted()), this, SLOT(handleDebugCompleted()));
-  delete temp_app;
+  if (debug_app_ != nullptr)
+  {
+    disconnect(debug_app_, SIGNAL(debugCompleted()), this, SLOT(handleDebugCompleted()));
+    delete debug_app_;
+  }
 #endif
   delete ui;
   CLOG(INFO, "event") << "Main window closed";

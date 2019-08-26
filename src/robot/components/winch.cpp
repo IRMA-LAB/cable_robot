@@ -77,10 +77,10 @@ void Winch::UpdateConfig(const int32_t servo_pos)
 
 double Winch::CountsToLength(const int counts) const
 {
-  return counts * params_.CountsToLengthFactor();
+  return counts * params_.CountsToMetersFactor();
 }
 
 int Winch::LengthToCounts(const double length) const
 {
-  return static_cast<int>(length / params_.CountsToLengthFactor());
+  return static_cast<int>(length / params_.CountsToMetersFactor());
 }

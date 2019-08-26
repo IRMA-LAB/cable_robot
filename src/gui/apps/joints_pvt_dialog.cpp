@@ -1,7 +1,7 @@
 /**
  * @file joints_pvt_dialog.cpp
  * @author Simone Comari
- * @date 03 Jul 2019
+ * @date 26 Aug 2019
  * @brief This file includes definitions of classes present in joints_pvt_dialog.h.
  */
 
@@ -108,7 +108,7 @@ void JointsPVTDialog::progressUpdate(const int progress_value, const double time
   const TrajectorySet traj_set = app_.getTrajectorySet(traj_counter_);
   switch (traj_set.traj_type)
   {
-    case CABLE_LENGTH:
+    case TrajectoryType::CABLE_LENGTH:
       for (uint i = 0; i < traj_set.traj_cables_len.size(); i++)
       {
         WayPointD waypoint =
@@ -116,31 +116,32 @@ void JointsPVTDialog::progressUpdate(const int progress_value, const double time
         chart_views_[i]->highlightCurrentPoint(QPointF(waypoint.ts, waypoint.value));
       }
       break;
-    case MOTOR_POSITION:
-      for (uint i = 0; i < traj_set.traj_cables_len.size(); i++)
+    case TrajectoryType::MOTOR_POSITION:
+      for (uint i = 0; i < traj_set.traj_motors_pos.size(); i++)
       {
         WayPointI waypoint =
           traj_set.traj_motors_pos[i].waypointFromAbsTime(timestamp, 0.01);
         chart_views_[i]->highlightCurrentPoint(QPointF(waypoint.ts, waypoint.value));
       }
       break;
-    case MOTOR_SPEED:
-      for (uint i = 0; i < traj_set.traj_cables_len.size(); i++)
+    case TrajectoryType::CABLE_SPEED:
+    case TrajectoryType::MOTOR_SPEED:
+      for (uint i = 0; i < traj_set.traj_motors_vel.size(); i++)
       {
         WayPointI waypoint =
           traj_set.traj_motors_vel[i].waypointFromAbsTime(timestamp, 0.01);
         chart_views_[i]->highlightCurrentPoint(QPointF(waypoint.ts, waypoint.value));
       }
       break;
-    case MOTOR_TORQUE:
-      for (uint i = 0; i < traj_set.traj_cables_len.size(); i++)
+    case TrajectoryType::MOTOR_TORQUE:
+      for (uint i = 0; i < traj_set.traj_motors_torque.size(); i++)
       {
         WayPointS waypoint =
           traj_set.traj_motors_torque[i].waypointFromAbsTime(timestamp, 0.01);
         chart_views_[i]->highlightCurrentPoint(QPointF(waypoint.ts, waypoint.value));
       }
       break;
-    case NONE:
+    case TrajectoryType::NONE:
       break;
   }
 }
@@ -289,19 +290,20 @@ void JointsPVTDialog::updatePlots(const TrajectorySet& traj_set)
     ChartView* chart_view = new ChartView(chart);
     switch (traj_set.traj_type)
     {
-      case CABLE_LENGTH:
+      case TrajectoryType::CABLE_LENGTH:
         chart_view->setCableTrajectory(traj_set.traj_cables_len[i]);
         break;
-      case MOTOR_POSITION:
+      case TrajectoryType::MOTOR_POSITION:
         chart_view->setMotorPosTrajectory(traj_set.traj_motors_pos[i]);
         break;
-      case MOTOR_SPEED:
+      case TrajectoryType::CABLE_SPEED:
+      case TrajectoryType::MOTOR_SPEED:
         chart_view->setMotorVelTrajectory(traj_set.traj_motors_vel[i]);
         break;
-      case MOTOR_TORQUE:
+      case TrajectoryType::MOTOR_TORQUE:
         chart_view->setMotorTorqueTrajectory(traj_set.traj_motors_torque[i]);
         break;
-      case NONE:
+      case TrajectoryType::NONE:
         break;
     }
     chart_view->setMinimumWidth(traj_display_.width() / 2);
