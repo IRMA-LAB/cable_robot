@@ -23,9 +23,5 @@ DebugClass::~DebugClass()
 void DebugClass::start()
 {
   // Debug routine here..
-  if (robot_->MotorsEnabled())
-    robot_->DisableMotors();
-  else
-    robot_->EnableMotors();
   QTimer::singleShot(500, this, SLOT(stop()));
 }
