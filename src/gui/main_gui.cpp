@@ -1,7 +1,7 @@
 /**
  * @file main_gui.cpp
  * @author Simone Comari
- * @date 08 Jul 2019
+ * @date 27 Aug 2019
  * @brief This file includes definitions of classes present in main_gui.h.
  */
 
@@ -160,8 +160,8 @@ void MainGUI::pushButton_debug_clicked()
   {
     debug_app_ = new DebugClass(this, robot_ptr_);
     connect(debug_app_, SIGNAL(debugCompleted()), this, SLOT(handleDebugCompleted()));
-    debug_app_->start();
   }
+  debug_app_->start();
 }
 
 void MainGUI::handleDebugCompleted() { pushButton_debug->setEnabled(true); }
@@ -688,7 +688,7 @@ bool MainGUI::ExitReadyStateRequest()
 {
   QMessageBox::StandardButton reply = QMessageBox::question(
     this, "Robot ready",
-    "If you proceed with direct manual motor control motors will be"
+    "If you proceed with direct manual motor control motors will be "
     "disabled and you will have to repeat the homing procedure "
     "before starting a new application.\nAre you sure you want to continue?",
     QMessageBox::Yes | QMessageBox::No);

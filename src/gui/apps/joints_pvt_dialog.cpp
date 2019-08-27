@@ -1,7 +1,7 @@
 /**
  * @file joints_pvt_dialog.cpp
  * @author Simone Comari
- * @date 26 Aug 2019
+ * @date 27 Aug 2019
  * @brief This file includes definitions of classes present in joints_pvt_dialog.h.
  */
 
@@ -88,6 +88,9 @@ void JointsPVTDialog::handleTrajectoryCompleted()
   ui->progressBar->setValue(0);
   for (const auto& chart_view : chart_views_)
     chart_view->removeHighlight();
+  // Enable pausing only in position or cable length control mode
+  ui->pushButton_pause->setEnabled(
+    app_.getTrajectorySet(traj_counter_).traj_type < TrajectoryType::MOTOR_SPEED);
   app_.runTransition(traj_counter_);
   connect(this, SIGNAL(progressUpdateTrigger(int, double)), this,
           SLOT(progressUpdate(int, double)), Qt::QueuedConnection);
@@ -186,7 +189,9 @@ void JointsPVTDialog::on_pushButton_read_clicked()
 
   // Clear all trajectories.
   app_.clearAllTrajectories();
-  num_traj_ = 0; // reset
+  // Reset
+  num_traj_ = 0;
+  traj_counter_ = 0;
 
   // Read trajectories from each file.
   for (const QString& input_filename : input_filenames)
@@ -201,7 +206,7 @@ void JointsPVTDialog::on_pushButton_read_clicked()
     num_traj_++;
   }
 
-  updatePlots(app_.getTrajectorySet(0)); // display first trajectory in queue
+  updatePlots(app_.getTrajectorySet(traj_counter_)); // display first trajectory in queue
   ui->pushButton_start->setEnabled(true);
 }
 
@@ -214,15 +219,20 @@ void JointsPVTDialog::on_pushButton_start_clicked()
 {
   CLOG(TRACE, "event");
 
+  if (traj_counter_ > 0)
+  {
+    traj_counter_ = 0; // reset
+    updatePlots(app_.getTrajectorySet(traj_counter_)); // display 1st trajectory in queue
+  }
+
   ui->pushButton_start->setDisabled(true);
-#if DEBUG_GUI == 1
-  ui->pushButton_pause->setEnabled(true);
-#endif
+  // Enable pausing only in position or cable length control mode
+  if (app_.getTrajectorySet(traj_counter_).traj_type < TrajectoryType::MOTOR_SPEED)
+    ui->pushButton_pause->setEnabled(true);
   ui->pushButton_stop->setEnabled(true);
   ui->pushButton_return->setDisabled(true);
   ui->groupBox_inputs->setDisabled(true);
 
-  traj_counter_ = 0; // reset
   ui->progressBar->setFormat(
     QString("Transition %1 in progress... %p%").arg(traj_counter_));
   ui->progressBar->setValue(0);

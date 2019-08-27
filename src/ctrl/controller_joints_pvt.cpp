@@ -1,7 +1,7 @@
 /**
  * @file controller_joints_pvt.cpp
  * @author Simone Comari
- * @date 03 Jul 2019
+ * @date 27 Aug 2019
  * @brief This file includes definitions of class present in controller_joints_pvt.h.
  */
 
@@ -111,21 +111,21 @@ ControllerJointsPVT::CalcCtrlActions(const grabcdpr::Vars&,
       case CABLE_LENGTH:
         if (target_flags_.test(LENGTH))
           actions[i].cable_length =
-            getTrajectoryPointValue(actions[i].motor_id, traj_cables_len_);
+            getTrajectoryPointValue(actions[i].motor_id, traj_cables_len_, CABLE_LENGTH);
         else
           actions[i].ctrl_mode = NONE;
         break;
       case MOTOR_POSITION:
         if (target_flags_.test(POSITION))
           actions[i].motor_position =
-            getTrajectoryPointValue(actions[i].motor_id, traj_motors_pos_);
+            getTrajectoryPointValue(actions[i].motor_id, traj_motors_pos_, MOTOR_POSITION);
         else
           actions[i].ctrl_mode = NONE;
         break;
       case MOTOR_SPEED:
         if (target_flags_.test(SPEED))
           actions[i].motor_speed =
-            getTrajectoryPointValue(actions[i].motor_id, traj_motors_vel_);
+            getTrajectoryPointValue(actions[i].motor_id, traj_motors_vel_, MOTOR_SPEED);
         else
           actions[i].ctrl_mode = NONE;
         break;
@@ -134,7 +134,7 @@ ControllerJointsPVT::CalcCtrlActions(const grabcdpr::Vars&,
           actions[i].motor_torque =
             winches_controller_[actions[i].motor_id].calcServoTorqueSetpoint(
               actuators_status[i],
-              getTrajectoryPointValue(actions[i].motor_id, traj_motors_torque_));
+              getTrajectoryPointValue(actions[i].motor_id, traj_motors_torque_, MOTOR_TORQUE));
         else
           actions[i].ctrl_mode = NONE;
         break;
@@ -163,9 +163,9 @@ void ControllerJointsPVT::processTrajTime()
 
   if (stop_request_)
   {
-    double time_since_stop_request = true_traj_time_ - stop_request_time_;
-    if (time_since_stop_request <= arrest_time_)
-      traj_time_ += cycle_time_ * exp(slowing_exp_ * time_since_stop_request);
+    time_since_stop_request_ = true_traj_time_ - stop_request_time_;
+    if (time_since_stop_request_ <= arrest_time_)
+      traj_time_ += cycle_time_ * exp(slowing_exp_ * time_since_stop_request_);
     else
     {
       stop_         = true;
@@ -188,7 +188,8 @@ void ControllerJointsPVT::processTrajTime()
 
 template <typename T>
 T ControllerJointsPVT::getTrajectoryPointValue(const id_t id,
-                                               const vect<Trajectory<T>>& trajectories)
+                                               const vect<Trajectory<T>>& trajectories,
+                                               const ControlMode mode)
 {
   static const ulong kProgressTriggerCounts = 200 * motors_id_.size();
 
@@ -200,7 +201,18 @@ T ControllerJointsPVT::getTrajectoryPointValue(const id_t id,
     if (traj.id != id)
       continue;
     if (resume_request_ || stop_request_)
+    {
       waypoint = traj.waypointFromRelTime(traj_time_);
+      if (mode == MOTOR_SPEED)
+        // On stop request, linearly move to null velocity
+        waypoint.value = static_cast<T>((arrest_time_ - time_since_stop_request_) /
+                                        arrest_time_ * waypoint.value);
+      if (mode == MOTOR_TORQUE)
+        // On stop request, linearly move to a sufficient torque to stand still
+        waypoint.value = static_cast<T>(kTorqueStopValue_ +
+                                        (arrest_time_ - time_since_stop_request_) /
+                                        arrest_time_ * (waypoint.value - kTorqueStopValue_));
+    }
     else
       waypoint = traj.waypointFromRelTime(traj_time_, cycle_time_);
     progress = waypoint.ts / traj.timestamps.back();
@@ -227,6 +239,8 @@ void ControllerJointsPVT::reset()
   resume_request_   = false;
   new_trajectory_   = true;
   progress_counter_ = 0;
+  arrest_time_ = -1.0;
+  time_since_stop_request_ = -1.0;
 }
 
 void ControllerJointsPVT::resetTime()

@@ -1,7 +1,7 @@
 /**
  * @file joints_pvt_app.cpp
  * @author Simone Comari
- * @date 26 Aug 2019
+ * @date 27 Aug 2019
  * @brief This file includes definitions of classes present in joints_pvt_app.h.
  */
 
@@ -235,7 +235,7 @@ STATE_DEFINE(JointsPVTApp, Transition, JointsPVTAppData)
 
   static constexpr double kMaxCableSpeed = 0.006; // [m/s]
 
-  if (traj_sets_[data->traj_idx].traj_type == CABLE_LENGTH)
+  if (traj_sets_[data->traj_idx].traj_type == TrajectoryType::CABLE_LENGTH)
   {
     vect<TrajectoryD> transition_trajectories =
       traj_sets_[data->traj_idx].traj_cables_len;
@@ -270,7 +270,7 @@ STATE_DEFINE(JointsPVTApp, Transition, JointsPVTAppData)
     controller_.setCablesLenTrajectories(transition_trajectories);
     pthread_mutex_unlock(&robot_ptr_->Mutex());
   }
-  else if (traj_sets_[data->traj_idx].traj_type == MOTOR_POSITION)
+  else if (traj_sets_[data->traj_idx].traj_type == TrajectoryType::MOTOR_POSITION)
   {
     vect<TrajectoryI> transition_trajectories =
       traj_sets_[data->traj_idx].traj_motors_pos;
@@ -301,6 +301,8 @@ STATE_DEFINE(JointsPVTApp, Transition, JointsPVTAppData)
     controller_.setMotorsPosTrajectories(transition_trajectories);
     pthread_mutex_unlock(&robot_ptr_->Mutex());
   }
+  else
+    emit transitionComplete(); // no need for transition in torque or velocity mode
 }
 
 STATE_DEFINE(JointsPVTApp, TrajectoryFollow, JointsPVTAppData)
