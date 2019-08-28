@@ -21,8 +21,8 @@ if (type == 1) % translational
         
         p = cdpr_p.workspace_center+[r*cos(ang);r*sin(ang);z];
         %tic
-        or = fsolve(@(v) CalcWPGeometricStatic(cdpr_p,p,v,gStat_mask),...
-        in_guess,ut.fsolve_options_grad);
+        or = fsolve(@(v) CalcWPGeometricStatic(cdpr_p, p, v, gStat_mask),...
+        in_guess, ut.fsolve_options_grad);
         %toc
         in_guess = or;
         pose = [p;or];

@@ -41,5 +41,3 @@ cdpr_v.tension_vector = linsolve(Ja', Wa);
 vector = Ju' * cdpr_v.tension_vector - Wu;
 mat = CalcGsJacobians(cdpr_v, Ja, Ju, cdpr_p.platform.mass .* ...
   cdpr_p.platform.gravity_acceleration);
-
-end

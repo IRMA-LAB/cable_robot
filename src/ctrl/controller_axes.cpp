@@ -153,8 +153,8 @@ ControllerAxes::nonLinsolveJacGeomStatic(const grabnum::VectorXd<POSE_DIM>& init
                                          const uint8_t nmax /*= 100*/) const
 {
   // TODO: check how to properly implement this
-  static const double kFtol = 1e-9;
-  static const double kXtol = 1e-7;
+  static const double kFtol = 1e-4;
+  static const double kXtol = 1e-3;
 
   // Distribute initial guess between fixed and variable coordinates (i.e. the solution of
   // the iterative process)
@@ -162,11 +162,11 @@ ControllerAxes::nonLinsolveJacGeomStatic(const grabnum::VectorXd<POSE_DIM>& init
   arma::vec var_coord(POSE_DIM - fixed_coord.n_elem, arma::fill::none);
   ulong fixed_idx = 0;
   ulong var_idx   = 0;
-  for (uint i = 0; i < POSE_DIM; i++)
+  for (uint i = 1; i <= POSE_DIM; i++)
     if (mask(i) == 1)
-      fixed_coord(fixed_idx++) = init_guess(i + 1);
+      fixed_coord(fixed_idx++) = init_guess(i);
     else
-      var_coord(var_idx++) = init_guess(i + 1);
+      var_coord(var_idx++) = init_guess(i);
 
   // First round to init function value and jacobian
   arma::vec func_val;
@@ -183,7 +183,7 @@ ControllerAxes::nonLinsolveJacGeomStatic(const grabnum::VectorXd<POSE_DIM>& init
   while (iter < nmax && arma::norm(func_val) > kFtol && err > cond)
   {
     iter++;
-    arma::solve(func_jacob, func_val, s);
+    s = arma::solve(func_jacob, func_val);
     var_coord -= s;
     grabcdpr::calcGeometricStatic(params_, fixed_coord, var_coord, mask, func_jacob,
                                   func_val);
