@@ -36,7 +36,7 @@
 /cable_robot.creator.user
 
 # Build folders
-build
+build*
 /lib/grab_common/libnumeric/build*
 /lib/grab_common/libgeom/build*
 /lib/grab_common/libcdpr/build*
