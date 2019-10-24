@@ -113,23 +113,23 @@ bool ControllerAxes::calcRealTargetPose(grabnum::Vector3d& position,
     case 4:
     {
       // Calculate feasible orientation for given position
-      const grabnum::VectorXi<POSE_DIM> kMask({1, 1, 1, 0, 0, 1});
+      const grabnum::VectorXi<POSE_DIM> kMask({1, 1, 1, 1, 0, 0});
       position            = target_pose_.GetBlock<3, 1>(1, 1);
       arma::vec2 solution = nonLinsolveJacGeomStatic(target_pose_, kMask);
-      orientation(4)      = target_pose_(4);
-      orientation(5)      = solution(4);
-      orientation(6)      = solution(5);
+      orientation(4)      = target_pose_(4); // index starts at 1
+      orientation(5)      = solution(4); // index starts at 0
+      orientation(6)      = solution(5); // index starts at 0
       break;
     }
     case 5:
     {
       // Calculate feasible orientation for given position
-      const grabnum::VectorXi<POSE_DIM> kMask({1, 1, 1, 0, 1, 1});
+      const grabnum::VectorXi<POSE_DIM> kMask({1, 1, 1, 1, 1, 0});
       position           = target_pose_.GetBlock<3, 1>(1, 1);
-      arma::vec solution = nonLinsolveJacGeomStatic(target_pose_, kMask);
-      orientation(4)     = target_pose_(4);
-      orientation(5)     = target_pose_(5);
-      orientation(6)     = solution(5);
+      arma::vec solution = nonLinsolveJacGeomStatic(target_pose_, kMask); // "scalar"
+      orientation(4)     = target_pose_(4); // index starts at 1
+      orientation(5)     = target_pose_(5); // index starts at 1
+      orientation(6)     = solution(5); // index starts at 0
       break;
     }
     case 6:
@@ -152,7 +152,6 @@ ControllerAxes::nonLinsolveJacGeomStatic(const grabnum::VectorXd<POSE_DIM>& init
                                          const grabnum::VectorXi<POSE_DIM>& mask,
                                          const uint8_t nmax /*= 100*/) const
 {
-  // TODO: check how to properly implement this
   static const double kFtol = 1e-4;
   static const double kXtol = 1e-3;
 
