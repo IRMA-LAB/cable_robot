@@ -240,7 +240,7 @@ class CableRobot: public QObject,
    * @brief Collect and dump current cable robot measurements onto data.log file without
    * locking the RT-thread mutex.
    */
-  void CollectAndDumpMeasRt();
+  void CollectAndDumpMeasRt(const bool active_actuators_status_updated = false);
   /**
    * @brief Collect and dump current cable robot measurements onto data.log file locking
    * the RT-thread mutex.
@@ -433,11 +433,12 @@ class CableRobot: public QObject,
   bool stop_waiting_cmd_recv_ = false;
   bool is_waiting_            = false;
 
-  // Control related
+  // RT cyclic steps related
   StateEstimatorBase* state_estimator_ = nullptr;
   ControllerBase* controller_          = nullptr;
 
-  void ControlStep();
+  void StateEstimationStep(const bool active_actuators_status_updated);
+  void ControlStep(const bool active_actuators_status_updated);
 
   // Tuning params for detecting platform steadyness
   static constexpr double kBufferingTimeSec_  = 3.0;     // [sec]

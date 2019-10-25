@@ -13,9 +13,9 @@ constexpr char* CableRobot::kStatesStr_[];
 constexpr double CableRobot::kCutoffFreq_;
 
 CableRobot::CableRobot(QObject* parent, const grabcdpr::RobotParams& config)
-  : QObject(parent), StateMachine(ST_MAX_STATES),
-    params_(config), log_buffer_(el::Loggers::getLogger("data")),
-    stop_waiting_cmd_recv_(false), is_waiting_(false), prev_state_(ST_MAX_STATES)
+  : QObject(parent), StateMachine(ST_MAX_STATES), params_(config),
+    log_buffer_(el::Loggers::getLogger("data")), stop_waiting_cmd_recv_(false),
+    is_waiting_(false), prev_state_(ST_MAX_STATES)
 {
   PrintStateTransition(prev_state_, ST_IDLE);
   prev_state_ = ST_IDLE;
@@ -241,14 +241,22 @@ void CableRobot::DumpMeas() const
     emit sendMsg(meas_[i].serialized());
 }
 
-void CableRobot::CollectAndDumpMeasRt()
+void CableRobot::CollectAndDumpMeasRt(const bool active_actuators_status_updated)
 {
-  for (size_t i = 0; i < active_actuators_ptrs_.size(); i++)
-  {
-    meas_[i].body             = active_actuators_ptrs_[i]->GetStatus();
-    meas_[i].header.timestamp = clock_.Elapsed();
-    emit sendMsg(meas_[i].serialized());
-  }
+  if (active_actuators_status_updated)
+    for (size_t i = 0; i < active_actuators_status_.size(); i++)
+    {
+      meas_[i].body             = active_actuators_status_[i];
+      meas_[i].header.timestamp = clock_.Elapsed();
+      emit sendMsg(meas_[i].serialized());
+    }
+  else
+    for (size_t i = 0; i < active_actuators_ptrs_.size(); i++)
+    {
+      meas_[i].body             = active_actuators_ptrs_[i]->GetStatus();
+      meas_[i].header.timestamp = clock_.Elapsed();
+      emit sendMsg(meas_[i].serialized());
+    }
 }
 
 void CableRobot::CollectAndDumpMeas()
@@ -591,7 +599,7 @@ STATE_DEFINE(CableRobot, Ready, NoEventData)
 
   pthread_mutex_lock(&mutex_);
   if (state_estimator_ == nullptr)
-    state_estimator_ = new StateEstimatorBase();
+    state_estimator_ = new StateEstimatorBase(params_);
   pthread_mutex_unlock(&mutex_);
 
   StopTimers();
@@ -719,18 +727,19 @@ void CableRobot::EcRtThreadStatusChanged(const bool active)
 void CableRobot::EcWorkFun()
 {
   for (grabec::EthercatSlave* slave_ptr : slaves_ptrs_)
-    slave_ptr->ReadInputs(); // read pdos
+    slave_ptr->ReadInputs();                    // read pdos
+  bool active_actuators_status_updated = false; // reset
 
   if (state_estimator_ != nullptr)
-    state_estimator_->EstimatePlatformPose(cdpr_status_);
+    StateEstimationStep(active_actuators_status_updated);
 
   if (controller_ != nullptr)
-    ControlStep();
+    ControlStep(active_actuators_status_updated);
 
   static uint log_counter = 0;
   if (rt_logging_enabled_ && (++log_counter % rt_logging_mod_ == 0))
   {
-    CollectAndDumpMeasRt();
+    CollectAndDumpMeasRt(active_actuators_status_updated);
     log_counter = 0;
   }
 
@@ -740,14 +749,24 @@ void CableRobot::EcWorkFun()
 
 void CableRobot::EcEmergencyFun() {}
 
-//--------- Control related private functions ---------------------------------------//
+//--------- RT cyclic steps related private functions -------------------------------//
 
-void CableRobot::ControlStep()
+void CableRobot::StateEstimationStep(const bool active_actuators_status_updated)
 {
-  for (size_t i = 0; i < active_actuators_status_.size(); i++)
-    active_actuators_status_[i] = active_actuators_ptrs_[i]->GetStatus();
+  if (!active_actuators_status_updated)
+    for (size_t i = 0; i < active_actuators_status_.size(); i++)
+      active_actuators_status_[i] = active_actuators_ptrs_[i]->GetStatus();
 
-  std::vector<ControlAction> ctrl_actions =
+  state_estimator_->EstimatePlatformPose(active_actuators_status_, cdpr_status_);
+}
+
+void CableRobot::ControlStep(const bool active_actuators_status_updated)
+{
+  if (!active_actuators_status_updated)
+    for (size_t i = 0; i < active_actuators_status_.size(); i++)
+      active_actuators_status_[i] = active_actuators_ptrs_[i]->GetStatus();
+
+  vect<ControlAction> ctrl_actions =
     controller_->calcCtrlActions(cdpr_status_, active_actuators_status_);
   for (const ControlAction& ctrl_action : ctrl_actions)
   {
