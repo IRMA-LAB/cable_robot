@@ -13,7 +13,7 @@ ManualControlApp::ManualControlApp(QObject* parent, CableRobot* robot)
                 robot->GetActiveComponentsParams())
 {
   target_pos_ = getActualPos();
-  robot_ptr_->SetController(&controller_);
+//  robot_ptr_->SetController(&controller_);
 }
 
 ManualControlApp::~ManualControlApp() { robot_ptr_->SetController(nullptr); }

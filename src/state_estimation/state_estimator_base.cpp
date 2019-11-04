@@ -10,9 +10,13 @@ void StateEstimatorBase::EstimatePlatformPose(
   {
     cables_length[i] = active_actuators_status[i].cable_length;
     swivel_angles[i] = active_actuators_status[i].pulley_angle;
+
+//    std::cout << cables_length[i] << " " << swivel_angles[i] << std::endl;
   }
   // Take platform pose from latest known/computed value, possibly all zeros
   grabnum::VectorXd<POSE_DIM> init_guess_pose = robot_vars.platform.pose;
+
+//  std::cout << init_guess_pose << std::endl;
 
   // Solve direct kinematics
   static const bool kUseGsJacobian = true;
