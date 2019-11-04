@@ -11,6 +11,7 @@
 
 #include <QObject>
 #include <QString>
+#include <QTextStream>
 
 #include "json.hpp"
 
@@ -96,6 +97,10 @@ class HomingProprioceptiveHomeData: public EventData
    * optimization step.
    */
   vect<double> init_angles;
+  /**
+   * @brief init_pose Initial pose of the platform a
+   */
+  grabnum::VectorXd<6> init_pose;
 };
 
 /**

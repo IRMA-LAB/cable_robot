@@ -152,6 +152,7 @@ class CableRobot: public QObject,
    */
   void UpdateHomeConfig(const id_t motor_id, const double cable_len,
                         const double pulley_angle);
+  void UpdateHomePlatformPose(const grabnum::VectorXd<POSE_DIM>& home_pose);
 
   /**
    * @brief Check if inquired motor is enabled.

@@ -15,9 +15,12 @@ void StateEstimatorBase::EstimatePlatformPose(
   grabnum::VectorXd<POSE_DIM> init_guess_pose = robot_vars.platform.pose;
 
   // Solve direct kinematics
+  static const bool kUseGsJacobian = true;
+  static const uint8_t kNMax = 10;
   grabnum::VectorXd<POSE_DIM> new_pose =
-    SolveDK0(cables_length, swivel_angles, init_guess_pose, params_);
-  // Update inverse kinematics (?)
+    SolveDK0(cables_length, swivel_angles, init_guess_pose, params_, kUseGsJacobian,
+             kNMax);
+  // Update inverse kinematics
   grabcdpr::UpdateIK0(new_pose.GetBlock<3, 1>(1, 1), new_pose.GetBlock<3, 1>(4, 1),
                       params_, robot_vars);
 }

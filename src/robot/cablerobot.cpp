@@ -131,6 +131,13 @@ void CableRobot::UpdateHomeConfig(const id_t motor_id, const double cable_len,
   actuators_ptrs_[motor_id]->UpdateHomeConfig(cable_len, pulley_angle);
 }
 
+void CableRobot::UpdateHomePlatformPose(const grabnum::VectorXd<POSE_DIM>& home_pose)
+{
+  pthread_mutex_lock(&mutex_);
+  cdpr_status_.platform.SetPose(home_pose);
+  pthread_mutex_unlock(&mutex_);
+}
+
 bool CableRobot::MotorEnabled(const id_t motor_id)
 {
   return actuators_ptrs_[motor_id]->IsEnabled();

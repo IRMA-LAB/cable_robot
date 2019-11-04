@@ -42,7 +42,7 @@ std::ostream& operator<<(std::ostream& stream, const HomingProprioceptiveHomeDat
   stream << " ], initial pulley angles = [ ";
   for (const double& value : data.init_angles)
     stream << value << " ";
-  stream << " ]";
+  stream << " ], initial platform pose =" << data.init_pose;
   return stream;
 }
 
@@ -656,6 +656,10 @@ STATE_DEFINE(HomingProprioceptiveApp, Home, HomingProprioceptiveHomeData)
                              .arg(data->init_lengths[i])
                              .arg(data->init_angles[i]));
     }
+    std::stringstream msg;
+    msg << "Initial platform pose:" << data->init_pose << std::endl;
+    emit printToQConsole(msg.str().c_str());
+    robot_ptr_->UpdateHomePlatformPose(data->init_pose); // set initial platform pose
     emit homingComplete();
   }
   else
@@ -713,6 +717,8 @@ bool HomingProprioceptiveApp::ParseExtFile(const QString& filepath,
       field = "init_lengths";
       home_data->init_lengths.push_back(optimization_results[field.toStdString()].at(i));
     }
+    for (uint i = 0; i < POSE_DIM; ++i)
+      home_data->init_pose(i + 1) = optimization_results["init_pose"].at(i);
   }
   catch (json::type_error)
   {

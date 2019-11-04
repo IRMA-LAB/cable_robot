@@ -46,8 +46,8 @@ HEADERS = \
     $$PWD/libs/grab_common/pid/pid.h
 
 SOURCES = \
-#    $$PWD/src/main.cpp \
-    $$PWD/src/main_cam_test.cpp \
+    $$PWD/src/main.cpp \
+#    $$PWD/src/main_cam_test.cpp \
     $$PWD/src/robot/cablerobot.cpp \
     $$PWD/src/robot/components/actuator.cpp \
     $$PWD/src/robot/components/winch.cpp \
@@ -203,4 +203,5 @@ LIBS += -lopencv_video
 LIBS += -lopencv_videoio
 
 # Armadillo lib
+DEFINES += ARMA_DONT_PRINT_ERRORS
 LIBS += -llapack -lblas -larmadillo
