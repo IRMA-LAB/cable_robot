@@ -43,7 +43,10 @@ HEADERS = \
     $$PWD/inc/debug/debug_routine.h \
     $$PWD/libs/easyloggingpp/src/easylogging++.h \
     $$PWD/libs/grab_common/grabcommon.h \
-    $$PWD/libs/grab_common/pid/pid.h
+    $$PWD/libs/grab_common/pid/pid.h \
+  libs/array_lock_free_queue_single_producer.h \
+  libs/array_lock_free_queue_single_producer_impl.h \
+  libs/atomic_ops.h
 
 SOURCES = \
     $$PWD/src/main.cpp \

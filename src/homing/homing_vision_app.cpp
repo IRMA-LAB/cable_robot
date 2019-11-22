@@ -31,15 +31,15 @@ void HomingVisionApp::applyPoseEstimate()
   grabnum::Vector3d orientation;
   calcPlatformGlobalPose(position, orientation);
   // Calculate inverse kinematics to get cables lenght and swivel angles from given pose.
-  grabcdpr::RobotParams params = robot_ptr_->GetActiveComponentsParams();
+  grabcdpr::RobotParams params = robot_ptr_->getActiveComponentsParams();
   grabcdpr::RobotVars cdpr_vars; // empty container
   cdpr_vars.cables.resize(params.actuators.size());
   grabcdpr::UpdateIK0(position, orientation, params, cdpr_vars);
   // Update homing configuration for each cable/pulley.
-  vect<id_t> actuators_id = robot_ptr_->GetActiveMotorsID();
+  vect<id_t> actuators_id = robot_ptr_->getActiveMotorsID();
   for (uint i = 0; i < actuators_id.size(); i++)
   {
-    robot_ptr_->UpdateHomeConfig(actuators_id[i], cdpr_vars.cables[i].length,
+    robot_ptr_->updateHomeConfig(actuators_id[i], cdpr_vars.cables[i].length,
                                  cdpr_vars.cables[i].swivel_ang);
     emit printToQConsole(QString("Cable #%1 length: %2 [m]\n"
                                  "Swivel pulley #%3 angle: %4 [deg]")

@@ -67,7 +67,7 @@ HomingProprioceptiveApp::HomingProprioceptiveApp(QObject* parent, CableRobot* ro
   controller_.SetMotorTorqueSsErrTol(kTorqueSsErrTol_);
 
   // Setup connection to track robot status
-  active_actuators_id_ = robot_ptr_->GetActiveMotorsID();
+  active_actuators_id_ = robot_ptr_->getActiveMotorsID();
   actuators_status_.resize(active_actuators_id_.size());
   connect(robot_ptr_, SIGNAL(actuatorStatus(ActuatorStatus)), this,
           SLOT(handleActuatorStatusUpdate(ActuatorStatus)));
@@ -292,7 +292,7 @@ GUARD_DEFINE(HomingProprioceptiveApp, GuardIdle, NoEventData)
   if (prev_state_ != ST_FAULT)
     return true;
 
-  robot_ptr_->ClearFaults();
+  robot_ptr_->clearFaults();
 
   grabrt::ThreadClock clock(grabrt::Sec2NanoSec(CableRobot::kCycleWaitTimeSec));
   bool faults_cleared = false;
@@ -320,12 +320,12 @@ GUARD_DEFINE(HomingProprioceptiveApp, GuardIdle, NoEventData)
 
 STATE_DEFINE(HomingProprioceptiveApp, Idle, NoEventData)
 {
-  PrintStateTransition(prev_state_, ST_IDLE);
+  printStateTransition(prev_state_, ST_IDLE);
   prev_state_ = ST_IDLE;
   emit stateChanged(ST_IDLE);
 
-  if (robot_ptr_->AnyMotorEnabled())
-    robot_ptr_->DisableMotors();
+  if (robot_ptr_->anyMotorEnabled())
+    robot_ptr_->disableMotors();
 
   qmutex_.lock();
   disable_cmd_recv_ = false; // reset
@@ -334,13 +334,13 @@ STATE_DEFINE(HomingProprioceptiveApp, Idle, NoEventData)
 
 GUARD_DEFINE(HomingProprioceptiveApp, GuardEnabled, NoEventData)
 {
-  robot_ptr_->SetController(nullptr);
-  robot_ptr_->EnableMotors();
+  robot_ptr_->setController(nullptr);
+  robot_ptr_->enableMotors();
 
   grabrt::ThreadClock clock(grabrt::Sec2NanoSec(CableRobot::kCycleWaitTimeSec));
   while (1)
   {
-    if (robot_ptr_->MotorsEnabled())
+    if (robot_ptr_->motorsEnabled())
       return true;
     if (clock.ElapsedFromStart() > CableRobot::kMaxWaitTimeSec)
       break;
@@ -353,11 +353,10 @@ GUARD_DEFINE(HomingProprioceptiveApp, GuardEnabled, NoEventData)
 
 STATE_DEFINE(HomingProprioceptiveApp, Enabled, NoEventData)
 {
-  PrintStateTransition(prev_state_, ST_ENABLED);
+  printStateTransition(prev_state_, ST_ENABLED);
   prev_state_ = ST_ENABLED;
   emit stateChanged(ST_ENABLED);
 
-  robot_ptr_->SetMotorsOpMode(grabec::CYCLIC_TORQUE);
   qmutex_.lock();
   if (disable_cmd_recv_)
     InternalEvent(ST_IDLE);
@@ -366,7 +365,7 @@ STATE_DEFINE(HomingProprioceptiveApp, Enabled, NoEventData)
 
 STATE_DEFINE(HomingProprioceptiveApp, StartUp, HomingProprioceptiveStartData)
 {
-  PrintStateTransition(prev_state_, ST_START_UP);
+  printStateTransition(prev_state_, ST_START_UP);
   prev_state_ = ST_START_UP;
 
   QString msg("Start up phase complete\nRobot in predefined configuration\nInitial "
@@ -385,7 +384,7 @@ STATE_DEFINE(HomingProprioceptiveApp, StartUp, HomingProprioceptiveStartData)
 #endif
 
   RetVal ret = RetVal::OK;
-  robot_ptr_->SetController(&controller_);
+  robot_ptr_->setController(&controller_);
   for (size_t i = 0; i < active_actuators_id_.size(); ++i)
   {
     // Setup initial target torque for each motor
@@ -396,12 +395,12 @@ STATE_DEFINE(HomingProprioceptiveApp, StartUp, HomingProprioceptiveStartData)
     controller_.SetMotorTorqueTarget(init_torques_.back()); // = data->init_torques[i]
     pthread_mutex_unlock(&robot_ptr_->Mutex());
     // Wait until each motor reached user-given initial torque setpoint
-    ret = robot_ptr_->WaitUntilTargetReached();
+    ret = robot_ptr_->waitUntilTargetReached();
     if (ret != RetVal::OK)
       break;
     msg.append(QString("\n\t%1±%2 ‰").arg(init_torques_.back()).arg(kTorqueSsErrTol_));
   }
-  if (ret != RetVal::OK || robot_ptr_->WaitUntilPlatformSteady(-1.) != RetVal::OK)
+  if (ret != RetVal::OK || robot_ptr_->waitUntilPlatformSteady(-1.) != RetVal::OK)
   {
     emit printToQConsole("WARNING: Start up phase failed");
     InternalEvent(ST_ENABLED);
@@ -409,7 +408,7 @@ STATE_DEFINE(HomingProprioceptiveApp, StartUp, HomingProprioceptiveStartData)
   }
   // At the beginning we don't know where we are, neither we care.
   // Just update encoder home position to be used as reference to compute deltas.
-  robot_ptr_->UpdateHomeConfig(0.0, 0.0);
+  robot_ptr_->updateHomeConfig(0.0, 0.0);
 
   // Flush previous data logs if any.
 //  robot_ptr_->FlushDataLogs();
@@ -439,15 +438,15 @@ GUARD_DEFINE(HomingProprioceptiveApp, GuardSwitch, NoEventData)
 
 STATE_DEFINE(HomingProprioceptiveApp, SwitchCable, NoEventData)
 {
-  PrintStateTransition(prev_state_, ST_SWITCH_CABLE);
+  printStateTransition(prev_state_, ST_SWITCH_CABLE);
   prev_state_ = ST_SWITCH_CABLE;
 
 #if HOMING_ACK
   static constexpr double kDeltaLen = -0.1; // [m]
-  qint32 delta_pos = robot_ptr_->GetActuator(active_actuators_id_[working_actuator_idx_])
+  qint32 delta_pos = robot_ptr_->getActuator(active_actuators_id_[working_actuator_idx_])
                        ->GetWinch()
                        .LengthToCounts(kDeltaLen);
-  qint32 init_pos = robot_ptr_->GetActuatorStatus(
+  qint32 init_pos = robot_ptr_->getActuatorStatus(
               active_actuators_id_[working_actuator_idx_]).motor_position;
   // Compute sequence of position setpoints for i-th actuator, given the fact that cable
   for (quint8 i = 0; i < num_meas_; ++i)
@@ -487,8 +486,8 @@ STATE_DEFINE(HomingProprioceptiveApp, SwitchCable, NoEventData)
 #endif
   meas_step_ = 0; // reset
 
-  if (robot_ptr_->WaitUntilTargetReached() == RetVal::OK &&
-      robot_ptr_->WaitUntilPlatformSteady(-1.) == RetVal::OK)
+  if (robot_ptr_->waitUntilTargetReached() == RetVal::OK &&
+      robot_ptr_->waitUntilPlatformSteady(-1.) == RetVal::OK)
   {
     emit stateChanged(ST_SWITCH_CABLE);
     return;
@@ -500,7 +499,7 @@ ENTRY_DEFINE(HomingProprioceptiveApp, EntryCoiling, NoEventData)
 {
 #if !HOMING_ACK
   // Record initial motor position for future uncoiling phase
-  reg_pos_[0] = robot_ptr_->GetActuatorStatus(active_actuators_id_[working_actuator_idx_])
+  reg_pos_[0] = robot_ptr_->getActuatorStatus(active_actuators_id_[working_actuator_idx_])
                   .motor_position;
 #endif
 
@@ -509,7 +508,7 @@ ENTRY_DEFINE(HomingProprioceptiveApp, EntryCoiling, NoEventData)
 
 STATE_DEFINE(HomingProprioceptiveApp, Coiling, NoEventData)
 {
-  PrintStateTransition(prev_state_, ST_COILING);
+  printStateTransition(prev_state_, ST_COILING);
   prev_state_ = ST_COILING;
 
   if (meas_step_ == num_meas_)
@@ -532,13 +531,13 @@ STATE_DEFINE(HomingProprioceptiveApp, Coiling, NoEventData)
   emit printToQConsole(QString("Next torque setpoint = %1 ‰").arg(torques_[meas_step_]));
 #endif
 
-  if (robot_ptr_->WaitUntilTargetReached() == RetVal::OK &&
-      robot_ptr_->WaitUntilPlatformSteady(-1.) == RetVal::OK)
+  if (robot_ptr_->waitUntilTargetReached() == RetVal::OK &&
+      robot_ptr_->waitUntilPlatformSteady(-1.) == RetVal::OK)
   {
 #if !HOMING_ACK
     // Record motor position for future uncoiling phase
     reg_pos_[meas_step_] =
-      robot_ptr_->GetActuatorStatus(active_actuators_id_[working_actuator_idx_])
+      robot_ptr_->getActuatorStatus(active_actuators_id_[working_actuator_idx_])
         .motor_position;
     emit printToQConsole(QString("Torque setpoint reached with motor position = %1")
                            .arg(reg_pos_[meas_step_]));
@@ -553,7 +552,7 @@ STATE_DEFINE(HomingProprioceptiveApp, Coiling, NoEventData)
 
 STATE_DEFINE(HomingProprioceptiveApp, Uncoiling, NoEventData)
 {
-  PrintStateTransition(prev_state_, ST_UNCOILING);
+  printStateTransition(prev_state_, ST_UNCOILING);
   prev_state_ = ST_UNCOILING;
 
   if (meas_step_ == (2 * num_meas_ - 1))
@@ -567,8 +566,8 @@ STATE_DEFINE(HomingProprioceptiveApp, Uncoiling, NoEventData)
     controller_.SetMotorTorqueTarget(torques_.front());
 #endif
     pthread_mutex_unlock(&robot_ptr_->Mutex());
-    if (robot_ptr_->WaitUntilTargetReached() == RetVal::OK &&
-        robot_ptr_->WaitUntilPlatformSteady(-1.) == RetVal::OK)
+    if (robot_ptr_->waitUntilTargetReached() == RetVal::OK &&
+        robot_ptr_->waitUntilPlatformSteady(-1.) == RetVal::OK)
     {
       working_actuator_idx_++;
       InternalEvent(ST_SWITCH_CABLE);
@@ -597,12 +596,12 @@ STATE_DEFINE(HomingProprioceptiveApp, Uncoiling, NoEventData)
     QString("Next position setpoint = %1").arg(reg_pos_[kOffset - meas_step_]));
 #endif
 
-  if (robot_ptr_->WaitUntilTargetReached() == RetVal::OK &&
-      robot_ptr_->WaitUntilPlatformSteady(-1.) == RetVal::OK)
+  if (robot_ptr_->waitUntilTargetReached() == RetVal::OK &&
+      robot_ptr_->waitUntilPlatformSteady(-1.) == RetVal::OK)
   {
 #if !HOMING_ACK
     int16_t actual_torque =
-      robot_ptr_->GetActuatorStatus(active_actuators_id_[working_actuator_idx_])
+      robot_ptr_->getActuatorStatus(active_actuators_id_[working_actuator_idx_])
         .motor_torque;
     emit printToQConsole(
       QString("Position setpoint reached with torque = %1 ‰ (original was %2 ‰)")
@@ -619,7 +618,7 @@ STATE_DEFINE(HomingProprioceptiveApp, Uncoiling, NoEventData)
 
 STATE_DEFINE(HomingProprioceptiveApp, Optimizing, NoEventData)
 {
-  PrintStateTransition(prev_state_, ST_OPTIMIZING);
+  printStateTransition(prev_state_, ST_OPTIMIZING);
   prev_state_ = ST_OPTIMIZING;
   emit stateChanged(ST_OPTIMIZING);
   // Run matlab optimization script from shell command
@@ -636,19 +635,19 @@ STATE_DEFINE(HomingProprioceptiveApp, Optimizing, NoEventData)
 
 STATE_DEFINE(HomingProprioceptiveApp, Home, HomingProprioceptiveHomeData)
 {
-  PrintStateTransition(prev_state_, ST_HOME);
+  printStateTransition(prev_state_, ST_HOME);
   prev_state_ = ST_HOME;
   emit stateChanged(ST_HOME);
 
   // Current home corresponds to robot configuration at the beginning of homing procedure.
   // Remind that motors home count corresponds to null cable length, which needs to be
   // updated...
-  if (robot_ptr_->GoHome()) // (position control)
+  if (robot_ptr_->goHome()) // (position control)
   {
     // ...which is done here.
     for (uint i = 0; i < active_actuators_id_.size(); i++)
     {
-      robot_ptr_->UpdateHomeConfig(active_actuators_id_[i], data->init_lengths[i],
+      robot_ptr_->updateHomeConfig(active_actuators_id_[i], data->init_lengths[i],
                                    data->init_angles[i]);
       emit printToQConsole(QString("Homing results for drive #%1:\n\tcable length = %2 "
                                    "[m]\n\tpulley angle = %3 [deg]")
@@ -659,7 +658,7 @@ STATE_DEFINE(HomingProprioceptiveApp, Home, HomingProprioceptiveHomeData)
     std::stringstream msg;
     msg << "Initial platform pose:" << data->init_pose << std::endl;
     emit printToQConsole(msg.str().c_str());
-    robot_ptr_->UpdateHomePlatformPose(data->init_pose); // set initial platform pose
+    robot_ptr_->setPlatformPose(data->init_pose); // set initial platform pose
     emit homingComplete();
   }
   else
@@ -671,7 +670,7 @@ STATE_DEFINE(HomingProprioceptiveApp, Home, HomingProprioceptiveHomeData)
 
 STATE_DEFINE(HomingProprioceptiveApp, Fault, NoEventData)
 {
-  PrintStateTransition(prev_state_, ST_FAULT);
+  printStateTransition(prev_state_, ST_FAULT);
   prev_state_ = ST_FAULT;
   emit stateChanged(ST_FAULT);
 }
@@ -680,7 +679,7 @@ STATE_DEFINE(HomingProprioceptiveApp, Fault, NoEventData)
 
 void HomingProprioceptiveApp::DumpMeasAndMoveNext()
 {
-  robot_ptr_->CollectAndDumpMeas();
+  robot_ptr_->collectAndDumpMeas();
   emit printToQConsole("Measurements collected and dumped onto log file");
   meas_step_++;
   double normalized_value = round(
@@ -729,7 +728,7 @@ bool HomingProprioceptiveApp::ParseExtFile(const QString& filepath,
   return true;
 }
 
-void HomingProprioceptiveApp::PrintStateTransition(const States current_state,
+void HomingProprioceptiveApp::printStateTransition(const States current_state,
                                                 const States new_state) const
 {
   if (current_state == new_state)

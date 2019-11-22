@@ -35,15 +35,9 @@ Winch::Winch(const id_t id, const uint8_t slave_position,
 
 WinchStatus Winch::GetStatus()
 {
-  WinchStatus status;
-  status.id             = id_;
-  status.op_mode        = servo_.GetOpMode();
-  status.motor_position = servo_.GetPosition();
-  status.motor_speed    = servo_.GetVelocity();
-  status.motor_torque   = servo_.GetTorque();
+  WinchStatus status(id_, servo_.GetDriveStatus());
   UpdateConfig(status.motor_position);
   status.cable_length = cable_.GetLength();
-  status.aux_position = servo_.GetAuxPosition();
   return status;
 }
 

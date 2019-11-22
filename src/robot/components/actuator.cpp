@@ -100,18 +100,10 @@ void Actuator::faultReset()
 const ActuatorStatus Actuator::GetStatus()
 {
   WinchStatus winch_status = winch_.GetStatus();
-  ActuatorStatus status;
-  status.op_mode        = winch_status.op_mode;
-  status.motor_position = winch_status.motor_position;
-  status.motor_speed    = winch_status.motor_speed;
-  status.motor_torque   = winch_status.motor_torque;
-  status.cable_length   = winch_status.cable_length;
-  status.aux_position   = winch_status.aux_position;
-  status.id             = id_;
-  status.state          = DriveState2ActuatorState(
+  States state             = DriveState2ActuatorState(
     static_cast<GSWDStates>(winch_.GetServo()->GetCurrentState()));
-  status.pulley_angle = pulley_.GetAngleRad(status.aux_position);
-  return status;
+  double pulley_angle = pulley_.GetAngleRad(winch_status.aux_position);
+  return ActuatorStatus(winch_status, pulley_angle, state);
 }
 
 void Actuator::SetCableLength(const double target_length)
@@ -203,7 +195,7 @@ GUARD_DEFINE(Actuator, GuardIdle, NoEventData)
 
 STATE_DEFINE(Actuator, Idle, NoEventData)
 {
-  PrintStateTransition(ST_IDLE);
+  printStateTransition(ST_IDLE);
   prev_state_ = ST_IDLE;
 }
 
@@ -265,7 +257,7 @@ GUARD_DEFINE(Actuator, GuardEnabled, NoEventData)
 
 STATE_DEFINE(Actuator, Enabled, NoEventData)
 {
-  PrintStateTransition(ST_ENABLED);
+  printStateTransition(ST_ENABLED);
   prev_state_ = ST_ENABLED;
 }
 
@@ -296,13 +288,13 @@ GUARD_DEFINE(Actuator, GuardFault, NoEventData)
 
 STATE_DEFINE(Actuator, Fault, NoEventData)
 {
-  PrintStateTransition(ST_FAULT);
+  printStateTransition(ST_FAULT);
   prev_state_ = ST_FAULT;
 }
 
 //--------- Miscellaneous private --------------------------------------------------//
 
-void Actuator::PrintStateTransition(const States current_state) const
+void Actuator::printStateTransition(const States current_state) const
 {
   if (current_state == prev_state_)
     return;

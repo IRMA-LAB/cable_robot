@@ -48,7 +48,7 @@ class Actuator: public QObject, public StateMachine
   Actuator(const id_t id, const uint8_t slave_position,
            const grabcdpr::ActuatorParams& params, QObject* parent = nullptr);
 
-  ~Actuator();
+  ~Actuator() override;
 
   /**
    * @brief The actuator states enum
@@ -256,7 +256,7 @@ class Actuator: public QObject, public StateMachine
   // clang-format on
   END_STATE_MAP_EX
 
-  void PrintStateTransition(const States current_state) const;
+  void printStateTransition(const States current_state) const;
 };
 
 #endif // CABLE_ROBOT_ACTUATOR_H

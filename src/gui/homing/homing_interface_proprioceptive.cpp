@@ -22,7 +22,7 @@ HomingInterfaceProprioceptiveWidget::HomingInterfaceProprioceptiveWidget(
   ui->setupUi(this);
 
   quint8 pos = 5; // insert position in vertical layout
-  for (id_t motor_id : robot->GetActiveMotorsID())
+  for (id_t motor_id : robot->getActiveMotorsID())
   {
     init_torque_forms_.append(new InitTorqueForm(motor_id, this));
 #if HOMING_ACK

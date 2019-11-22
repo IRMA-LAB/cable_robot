@@ -346,7 +346,7 @@ class HomingProprioceptiveApp: public QObject, public StateMachine
   // clang-format on
   END_STATE_MAP_EX
 
-  void PrintStateTransition(const States current_state, const States new_state) const;
+  void printStateTransition(const States current_state, const States new_state) const;
 };
 
 #endif // CABLE_ROBOT_HOMING_PROPRIOCEPTIVE_H

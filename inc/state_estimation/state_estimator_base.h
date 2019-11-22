@@ -12,7 +12,7 @@ class StateEstimatorBase
   StateEstimatorBase(const grabcdpr::RobotParams& params): params_(params) {}
   virtual ~StateEstimatorBase() {}
 
-  virtual void EstimatePlatformPose(const vect<ActuatorStatus>& active_actuators_status,
+  virtual bool EstimatePlatformPose(const vect<ActuatorStatus>& active_actuators_status,
                                     grabcdpr::RobotVars& robot_vars);
 
  protected:

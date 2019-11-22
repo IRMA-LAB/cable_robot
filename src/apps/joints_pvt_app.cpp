@@ -35,8 +35,8 @@ JointsPVTApp::JointsPVTApp(QObject* parent, CableRobot* robot,
           Qt::ConnectionType::DirectConnection);
   connect(this, SIGNAL(stopWaitingCmd()), robot_ptr_, SLOT(stopWaiting()));
 
-  controller_.SetMotorsID(robot_ptr_->GetActiveMotorsID());
-  robot->SetController(&controller_);
+  controller_.SetMotorsID(robot_ptr_->getActiveMotorsID());
+  robot->setController(&controller_);
 
   prev_state_ = ST_MAX_STATES;
   ExternalEvent(ST_IDLE);
@@ -53,7 +53,7 @@ JointsPVTApp::~JointsPVTApp()
   disconnect(this, SIGNAL(printToQConsole(QString)), this, SLOT(logInfo(QString)));
   disconnect(this, SIGNAL(stopWaitingCmd()), robot_ptr_, SLOT(stopWaiting()));
 
-  robot_ptr_->SetController(nullptr);
+  robot_ptr_->setController(nullptr);
 }
 
 //--------- Public functions --------------------------------------------------------//
@@ -245,7 +245,7 @@ STATE_DEFINE(JointsPVTApp, Transition, JointsPVTAppData)
       transition_traj.values.clear();
       // Current cable length becomes start point of transition.
       double current_cable_len =
-        robot_ptr_->GetActuatorStatus(transition_traj.id).cable_length;
+        robot_ptr_->getActuatorStatus(transition_traj.id).cable_length;
       // Calculate necessary time to move from A to B with fixed constant velocity.
       double t = std::abs(target_cable_len - current_cable_len) / kMaxCableSpeed;
       t_max    = std::max(t, t_max);
@@ -277,12 +277,12 @@ STATE_DEFINE(JointsPVTApp, Transition, JointsPVTAppData)
       int target_motor_pos = transition_trajectories[i].values.front();
       transition_trajectories[i].timestamps.clear();
       transition_trajectories[i].values.clear();
-      double max_motor_speed = robot_ptr_->GetActuator(transition_trajectories[i].id)
+      double max_motor_speed = robot_ptr_->getActuator(transition_trajectories[i].id)
                                  ->GetWinch()
                                  .LengthToCounts(kMaxCableSpeed); // [counts/s]
       // Current motor position becomes start point of transition.
       int current_motor_pos =
-        robot_ptr_->GetActuatorStatus(transition_trajectories[i].id).motor_position;
+        robot_ptr_->getActuatorStatus(transition_trajectories[i].id).motor_position;
       // Calculate necessary time to move from A to B with fixed constant velocity.
       double t = std::abs(target_motor_pos - current_motor_pos) / max_motor_speed;
       // Set a simple trajectory composed by two waypoints (begin, end).
@@ -305,7 +305,7 @@ STATE_DEFINE(JointsPVTApp, TrajectoryFollow, JointsPVTAppData)
   printStateTransition(prev_state_, ST_TRAJECTORY_FOLLOW);
   prev_state_ = ST_TRAJECTORY_FOLLOW;
 
-  if (robot_ptr_->WaitUntilPlatformSteady(-1.) != RetVal::OK)
+  if (robot_ptr_->waitUntilPlatformSteady(-1.) != RetVal::OK)
   {
     InternalEvent(ST_READY);
     return;
@@ -351,7 +351,7 @@ void JointsPVTApp::setCablesLenTraj(const bool relative, const vect<id_t>& motor
   for (size_t i = 0; i < motors_id.size(); i++)
   {
     traj_set.traj_cables_len[i].id = motors_id[i];
-    current_cables_len[i] = robot_ptr_->GetActuatorStatus(motors_id[i]).cable_length;
+    current_cables_len[i] = robot_ptr_->getActuatorStatus(motors_id[i]).cable_length;
   }
   while (!s.atEnd())
   {
@@ -379,7 +379,7 @@ void JointsPVTApp::setMotorPosTraj(const bool relative, const vect<id_t>& motors
   for (size_t i = 0; i < motors_id.size(); i++)
   {
     traj_set.traj_motors_pos[i].id = motors_id[i];
-    current_motors_pos[i] = robot_ptr_->GetActuatorStatus(motors_id[i]).motor_position;
+    current_motors_pos[i] = robot_ptr_->getActuatorStatus(motors_id[i]).motor_position;
   }
   while (!s.atEnd())
   {
@@ -425,7 +425,7 @@ void JointsPVTApp::setMotorTorqueTraj(const bool relative, const vect<id_t>& mot
   for (size_t i = 0; i < motors_id.size(); i++)
   {
     traj_set.traj_motors_torque[i].id = motors_id[i];
-    current_motors_torque[i] = robot_ptr_->GetActuatorStatus(motors_id[i]).motor_torque;
+    current_motors_torque[i] = robot_ptr_->getActuatorStatus(motors_id[i]).motor_torque;
   }
   while (!s.atEnd())
   {

@@ -206,10 +206,10 @@ void MainGUI::on_pushButton_freedrive_pressed()
 
   if (freedrive_)
   {
-    robot_ptr_->SetController(nullptr);
+    robot_ptr_->setController(nullptr);
     delete man_ctrl_ptr_;
     if (robot_ptr_->GetCurrentState() != CableRobot::ST_READY)
-      robot_ptr_->DisableMotors();
+      robot_ptr_->disableMotors();
     freedrive_ = false;
     return;
   }
@@ -218,11 +218,11 @@ void MainGUI::on_pushButton_freedrive_pressed()
   if (robot_ptr_->GetCurrentState() != CableRobot::ST_READY)
   {
     // Attempt to enable all motors
-    robot_ptr_->EnableMotors();
+    robot_ptr_->enableMotors();
     grabrt::ThreadClock clock(grabrt::Sec2NanoSec(CableRobot::kCycleWaitTimeSec));
     while (1)
     {
-      if (robot_ptr_->MotorsEnabled())
+      if (robot_ptr_->motorsEnabled())
         break;
       if (clock.ElapsedFromStart() > CableRobot::kMaxWaitTimeSec)
       {
@@ -236,8 +236,8 @@ void MainGUI::on_pushButton_freedrive_pressed()
   // Set all motors in torque control mode
   man_ctrl_ptr_ = new ControllerSingleDrive(motor_id_, robot_ptr_->GetRtCycleTimeNsec());
   man_ctrl_ptr_->SetMotorTorqueSsErrTol(kTorqueSsErrTol_);
-  robot_ptr_->SetController(man_ctrl_ptr_);
-  for (const id_t id : robot_ptr_->GetActiveMotorsID())
+  robot_ptr_->setController(man_ctrl_ptr_);
+  for (const id_t id : robot_ptr_->getActiveMotorsID())
   {
     pthread_mutex_lock(&robot_ptr_->Mutex());
     man_ctrl_ptr_->SetMotorID(id);
@@ -245,7 +245,7 @@ void MainGUI::on_pushButton_freedrive_pressed()
     man_ctrl_ptr_->SetMotorTorqueTarget(kFreedriveTorque_);
     pthread_mutex_unlock(&robot_ptr_->Mutex());
     // Wait until each motor reached user-given initial torque setpoint
-    if (robot_ptr_->WaitUntilTargetReached() != RetVal::OK)
+    if (robot_ptr_->waitUntilTargetReached() != RetVal::OK)
     {
       appendText2Browser(
         QString("WARNING: Could not switch motor %1 to torque control mode").arg(id));
@@ -259,7 +259,7 @@ void MainGUI::on_pushButton_freedrive_pressed()
 void MainGUI::on_pushButton_faultReset_clicked()
 {
   CLOG(TRACE, "event");
-  robot_ptr_->ClearFaults();
+  robot_ptr_->clearFaults();
 }
 
 void MainGUI::on_pushButton_exitReady_clicked()
@@ -269,7 +269,7 @@ void MainGUI::on_pushButton_exitReady_clicked()
     return;
   if (!ExitReadyStateRequest())
     return;
-  robot_ptr_->DisableMotors();
+  robot_ptr_->disableMotors();
   robot_ptr_->stop();
   ui->pushButton_exitReady->setDisabled(true);
   enableInterface(false);
@@ -290,7 +290,7 @@ void MainGUI::on_radioButton_posMode_clicked()
   if (manual_ctrl_enabled_)
   {
     man_ctrl_ptr_->SetCableLenTarget(
-      robot_ptr_->GetActuatorStatus(motor_id_).cable_length);
+      robot_ptr_->getActuatorStatus(motor_id_).cable_length);
     pthread_mutex_lock(&robot_ptr_->Mutex());
     man_ctrl_ptr_->SetMode(ControlMode::CABLE_LENGTH);
     pthread_mutex_unlock(&robot_ptr_->Mutex());
@@ -335,7 +335,7 @@ void MainGUI::on_radioButton_torqueMode_clicked()
   if (manual_ctrl_enabled_)
   {
     man_ctrl_ptr_->SetMotorTorqueTarget(
-      robot_ptr_->GetActuatorStatus(motor_id_).motor_torque);
+      robot_ptr_->getActuatorStatus(motor_id_).motor_torque);
     pthread_mutex_lock(&robot_ptr_->Mutex());
     man_ctrl_ptr_->SetMode(ControlMode::MOTOR_TORQUE);
     pthread_mutex_unlock(&robot_ptr_->Mutex());
@@ -720,12 +720,12 @@ void MainGUI::SetupDirectMotorCtrl(const bool enable)
   if (enable)
   {
     motor_id_ = ui->comboBox_motorAxis->currentText().toUInt();
-    robot_ptr_->UpdateHomeConfig(motor_id_, 0.0, 0.0); // (re-)initialize reference values
+    robot_ptr_->updateHomeConfig(motor_id_, 0.0, 0.0); // (re-)initialize reference values
     // Setup controller before enabling the motor
     man_ctrl_ptr_ =
       new ControllerSingleDrive(motor_id_, robot_ptr_->GetRtCycleTimeNsec());
     man_ctrl_ptr_->SetMotorTorqueSsErrTol(kTorqueSsErrTol_);
-    ActuatorStatus current_status = robot_ptr_->GetActuatorStatus(motor_id_);
+    ActuatorStatus current_status = robot_ptr_->getActuatorStatus(motor_id_);
     if (ui->radioButton_posMode->isChecked())
     {
       man_ctrl_ptr_->SetMode(ControlMode::CABLE_LENGTH);
@@ -741,16 +741,16 @@ void MainGUI::SetupDirectMotorCtrl(const bool enable)
       man_ctrl_ptr_->SetMode(ControlMode::MOTOR_TORQUE);
       man_ctrl_ptr_->SetMotorTorqueTarget(current_status.motor_torque);
     }
-    robot_ptr_->SetController(man_ctrl_ptr_);
+    robot_ptr_->setController(man_ctrl_ptr_);
 
-    robot_ptr_->EnableMotor(motor_id_);
+    robot_ptr_->enableMotor(motor_id_);
   }
   else
   {
-    robot_ptr_->SetController(nullptr);
+    robot_ptr_->setController(nullptr);
     delete man_ctrl_ptr_;
 
-    robot_ptr_->DisableMotor(motor_id_);
+    robot_ptr_->disableMotor(motor_id_);
   }
 }
 
