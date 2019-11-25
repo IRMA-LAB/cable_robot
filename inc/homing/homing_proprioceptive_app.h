@@ -171,13 +171,6 @@ class HomingProprioceptiveApp: public QObject, public StateMachine
   vect<id_t> GetActuatorsID() const { return active_actuators_id_; }
 
   /**
-   * @brief Get status of active actuator corresponding to given ID.
-   * @param[in] id The ID of the inquired actuator.
-   * @return The status of the inquired actuator.
-   */
-  ActuatorStatus GetActuatorStatus(const id_t id);
-
-  /**
    * @brief Parse an external file with homing data and fill the relative structure.
    * @param[in] filepath The filepath of the external file with the homing data, resulting
    * from an optimization process.
@@ -262,7 +255,6 @@ class HomingProprioceptiveApp: public QObject, public StateMachine
   void stopWaitingCmd() const;
 
  private slots:
-  void handleActuatorStatusUpdate(const ActuatorStatus& actuator_status);
   void handleMatlabResultsReady();
   void updateOptimizationProgress();
 
@@ -290,7 +282,6 @@ class HomingProprioceptiveApp: public QObject, public StateMachine
   QMutex qmutex_;
 
   vect<id_t> active_actuators_id_;
-  vect<ActuatorStatus> actuators_status_;
 
   static constexpr int kOptProgressIntervalMsec_ = 150;
   QTimer optimization_progess_timer_;

@@ -22,24 +22,24 @@ ManualControlApp::~ManualControlApp() { robot_ptr_->setController(nullptr); }
 
 const grabnum::Vector3d& ManualControlApp::getActualPos()
 {
-  pthread_mutex_lock(&robot_ptr_->Mutex());
+  pthread_mutex_lock(&robot_ptr_->RtMutex());
   actual_pos_ = robot_ptr_->getRobotVars().platform.position;
-  pthread_mutex_unlock(&robot_ptr_->Mutex());
+  pthread_mutex_unlock(&robot_ptr_->RtMutex());
   return actual_pos_;
 }
 
 void ManualControlApp::setTarget(const Axis coord, const double value)
 {
   target_pos_(coord) = value;
-  pthread_mutex_lock(&robot_ptr_->Mutex());
+  pthread_mutex_lock(&robot_ptr_->RtMutex());
   controller_.setTargetPosition(target_pos_);
-  pthread_mutex_unlock(&robot_ptr_->Mutex());
+  pthread_mutex_unlock(&robot_ptr_->RtMutex());
 }
 
 void ManualControlApp::resetTarget()
 {
-  pthread_mutex_lock(&robot_ptr_->Mutex());
+  pthread_mutex_lock(&robot_ptr_->RtMutex());
   controller_.stop();
-  pthread_mutex_unlock(&robot_ptr_->Mutex());
+  pthread_mutex_unlock(&robot_ptr_->RtMutex());
   target_pos_ = getActualPos();
 }

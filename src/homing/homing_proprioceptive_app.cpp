@@ -66,11 +66,8 @@ HomingProprioceptiveApp::HomingProprioceptiveApp(QObject* parent, CableRobot* ro
   prev_state_ = ST_IDLE;
   controller_.SetMotorTorqueSsErrTol(kTorqueSsErrTol_);
 
-  // Setup connection to track robot status
+  // Setup connection to manually interrupt some operation
   active_actuators_id_ = robot_ptr_->getActiveMotorsID();
-  actuators_status_.resize(active_actuators_id_.size());
-  connect(robot_ptr_, SIGNAL(actuatorStatus(ActuatorStatus)), this,
-          SLOT(handleActuatorStatusUpdate(ActuatorStatus)));
   connect(this, SIGNAL(stopWaitingCmd()), robot_ptr_, SLOT(stopWaiting()));
 
   // Setup timer for optimization progress
@@ -80,8 +77,6 @@ HomingProprioceptiveApp::HomingProprioceptiveApp(QObject* parent, CableRobot* ro
 
 HomingProprioceptiveApp::~HomingProprioceptiveApp()
 {
-  disconnect(robot_ptr_, SIGNAL(actuatorStatus(ActuatorStatus)), this,
-             SLOT(handleActuatorStatusUpdate(ActuatorStatus)));
   disconnect(this, SIGNAL(stopWaitingCmd()), robot_ptr_, SLOT(stopWaiting()));
   disconnect(&optimization_progess_timer_, SIGNAL(timeout()), this,
              SLOT(updateOptimizationProgress()));
@@ -107,21 +102,6 @@ bool HomingProprioceptiveApp::IsCollectingData()
     default:
       return true;
   }
-}
-
-ActuatorStatus HomingProprioceptiveApp::GetActuatorStatus(const id_t id)
-{
-  ActuatorStatus status;
-  for (size_t i = 0; i < active_actuators_id_.size(); i++)
-  {
-    if (active_actuators_id_[i] != id)
-      continue;
-    qmutex_.lock();
-    status = actuators_status_[i];
-    qmutex_.unlock();
-    break;
-  }
-  return status;
 }
 
 //--------- External events ----------------------------------------------------------//
@@ -243,25 +223,6 @@ void HomingProprioceptiveApp::FaultReset()
 
 //--------- Private slots  -----------------------------------------------------------//
 
-void HomingProprioceptiveApp::handleActuatorStatusUpdate(
-  const ActuatorStatus& actuator_status)
-{
-  for (size_t i = 0; i < active_actuators_id_.size(); i++)
-  {
-    if (active_actuators_id_[i] != actuator_status.id)
-      continue;
-    if (actuator_status.state == Actuator::ST_FAULT)
-    {
-      FaultTrigger();
-      return;
-    }
-    qmutex_.lock();
-    actuators_status_[i] = actuator_status;
-    qmutex_.unlock();
-    break;
-  }
-}
-
 void HomingProprioceptiveApp::handleMatlabResultsReady()
 {
   optimization_progess_timer_.stop();
@@ -305,14 +266,13 @@ GUARD_DEFINE(HomingProprioceptiveApp, GuardIdle, NoEventData)
       return false;
     }
     faults_cleared = true;
-    qmutex_.lock();
-    for (ActuatorStatus& actuator_status : actuators_status_)
+    vect<ActuatorStatus> actuators_status = robot_ptr_->getActuatorsStatus();
+    for (ActuatorStatus& actuator_status : actuators_status)
       if (actuator_status.state == ST_FAULT)
       {
         faults_cleared = false;
         break;
       }
-    qmutex_.unlock();
     clock.WaitUntilNext();
   }
   return true;
@@ -389,11 +349,11 @@ STATE_DEFINE(HomingProprioceptiveApp, StartUp, HomingProprioceptiveStartData)
   {
     // Setup initial target torque for each motor
     init_torques_.push_back(data->init_torques[i]);
-    pthread_mutex_lock(&robot_ptr_->Mutex());
+    robot_ptr_->lockMutex();
     controller_.SetMotorID(active_actuators_id_[i]);
     controller_.SetMode(ControlMode::MOTOR_TORQUE);
     controller_.SetMotorTorqueTarget(init_torques_.back()); // = data->init_torques[i]
-    pthread_mutex_unlock(&robot_ptr_->Mutex());
+    robot_ptr_->unlockMutex();
     // Wait until each motor reached user-given initial torque setpoint
     ret = robot_ptr_->waitUntilTargetReached();
     if (ret != RetVal::OK)
@@ -422,14 +382,9 @@ GUARD_DEFINE(HomingProprioceptiveApp, GuardSwitch, NoEventData)
   if (prev_state_ == ST_START_UP)
     return true;
 
-  pthread_mutex_lock(&robot_ptr_->Mutex());
   if (working_actuator_idx_ < active_actuators_id_.size())
-  {
     // We are not done ==> move to next cable
-    pthread_mutex_unlock(&robot_ptr_->Mutex());
     return true;
-  }
-  pthread_mutex_unlock(&robot_ptr_->Mutex());
 
   InternalEvent(ST_ENABLED);
   emit acquisitionComplete();
@@ -453,11 +408,11 @@ STATE_DEFINE(HomingProprioceptiveApp, SwitchCable, NoEventData)
     positions_[i] = init_pos + i * delta_pos;
 
   // Setup first setpoint of the sequence
-  pthread_mutex_lock(&robot_ptr_->Mutex());
+  robot_ptr_->lockMutex();
   controller_.SetMotorID(active_actuators_id_[working_actuator_idx_]);
   controller_.SetMode(ControlMode::MOTOR_POSITION);
   controller_.SetMotorPosTarget(positions_.front());
-  pthread_mutex_unlock(&robot_ptr_->Mutex());
+  robot_ptr_->unlockMutex();
 
   emit printToQConsole(
     QString("Switched to actuator #%1.\nInitial position setpoint = %2")
@@ -473,11 +428,11 @@ STATE_DEFINE(HomingProprioceptiveApp, SwitchCable, NoEventData)
   torques_.back() = max_torques_[working_actuator_idx_]; // last element = max torque
 
   // Setup first setpoint of the sequence
-  pthread_mutex_lock(&robot_ptr_->Mutex());
+  robot_ptr_->lockMutex();
   controller_.SetMotorID(active_actuators_id_[working_actuator_idx_]);
   controller_.SetMode(ControlMode::MOTOR_TORQUE);
   controller_.SetMotorTorqueTarget(torques_.front());
-  pthread_mutex_unlock(&robot_ptr_->Mutex());
+  robot_ptr_->unlockMutex();
 
   emit printToQConsole(
     QString("Switched to actuator #%1.\nInitial torque setpoint = %2 ‰")
@@ -518,16 +473,16 @@ STATE_DEFINE(HomingProprioceptiveApp, Coiling, NoEventData)
   }
 
 #if HOMING_ACK
-  pthread_mutex_lock(&robot_ptr_->Mutex());
+  robot_ptr_->lockMutex();
   controller_.SetMotorPosTarget(positions_[meas_step_], true,
                                 kPositionStepTransTime_);
-  pthread_mutex_unlock(&robot_ptr_->Mutex());
+  robot_ptr_->unlockMutex();
   emit printToQConsole(
     QString("Next position setpoint = %1").arg(positions_[meas_step_]));
 #else
-  pthread_mutex_lock(&robot_ptr_->Mutex());
+  robot_ptr_->lockMutex();
   controller_.SetMotorTorqueTarget(torques_[meas_step_]);
-  pthread_mutex_unlock(&robot_ptr_->Mutex());
+  robot_ptr_->unlockMutex();
   emit printToQConsole(QString("Next torque setpoint = %1 ‰").arg(torques_[meas_step_]));
 #endif
 
@@ -558,14 +513,14 @@ STATE_DEFINE(HomingProprioceptiveApp, Uncoiling, NoEventData)
   if (meas_step_ == (2 * num_meas_ - 1))
   {
     // At the end of uncoiling phase, restore torque control before moving to next cable
-    pthread_mutex_lock(&robot_ptr_->Mutex());
+    robot_ptr_->lockMutex();
     controller_.SetMode(ControlMode::MOTOR_TORQUE);
 #if HOMING_ACK
     controller_.SetMotorTorqueTarget(init_torques_[working_actuator_idx_]);
 #else
     controller_.SetMotorTorqueTarget(torques_.front());
 #endif
-    pthread_mutex_unlock(&robot_ptr_->Mutex());
+    robot_ptr_->unlockMutex();
     if (robot_ptr_->waitUntilTargetReached() == RetVal::OK &&
         robot_ptr_->waitUntilPlatformSteady(-1.) == RetVal::OK)
     {
@@ -580,18 +535,18 @@ STATE_DEFINE(HomingProprioceptiveApp, Uncoiling, NoEventData)
   const ulong kOffset = num_tot_meas_ / active_actuators_id_.size() - 1;
   // Uncoiling done in position control to return to previous steps. In torque control
   // this wouldn't happen due to friction.
-  pthread_mutex_lock(&robot_ptr_->Mutex());
+  robot_ptr_->lockMutex();
   controller_.SetMode(ControlMode::MOTOR_POSITION);
 #if HOMING_ACK
   controller_.SetMotorPosTarget(positions_[kOffset - meas_step_], true,
           kPositionStepTransTime_);
-  pthread_mutex_unlock(&robot_ptr_->Mutex());
+  robot_ptr_->unlockMutex();
   emit printToQConsole(
     QString("Next position setpoint = %1").arg(positions_[kOffset - meas_step_]));
 #else
   controller_.SetMotorPosTarget(reg_pos_[kOffset - meas_step_], true,
           kPositionStepTransTime_);
-  pthread_mutex_unlock(&robot_ptr_->Mutex());
+  robot_ptr_->unlockMutex();
   emit printToQConsole(
     QString("Next position setpoint = %1").arg(reg_pos_[kOffset - meas_step_]));
 #endif

@@ -60,7 +60,7 @@ JointsPVTApp::~JointsPVTApp()
 
 void JointsPVTApp::pause()
 {
-  pthread_mutex_lock(&robot_ptr_->Mutex());
+  pthread_mutex_lock(&robot_ptr_->RtMutex());
   if (!controller_.requestPending())
   {
     if (controller_.isPaused())
@@ -68,7 +68,7 @@ void JointsPVTApp::pause()
     else
       controller_.pauseTrajectoryFollowing();
   }
-  pthread_mutex_unlock(&robot_ptr_->Mutex());
+  pthread_mutex_unlock(&robot_ptr_->RtMutex());
 }
 
 const TrajectorySet& JointsPVTApp::getTrajectorySet(const int traj_idx) const
@@ -220,9 +220,9 @@ STATE_DEFINE(JointsPVTApp, Ready, NoEventData)
   printStateTransition(prev_state_, ST_READY);
   prev_state_ = ST_READY;
 
-  pthread_mutex_lock(&robot_ptr_->Mutex());
+  pthread_mutex_lock(&robot_ptr_->RtMutex());
   controller_.stopTrajectoryFollowing();
-  pthread_mutex_unlock(&robot_ptr_->Mutex());
+  pthread_mutex_unlock(&robot_ptr_->RtMutex());
 }
 
 STATE_DEFINE(JointsPVTApp, Transition, JointsPVTAppData)
@@ -263,9 +263,9 @@ STATE_DEFINE(JointsPVTApp, Transition, JointsPVTAppData)
                                .arg(t_max);
     }
     // Send trajectories
-    pthread_mutex_lock(&robot_ptr_->Mutex());
+    pthread_mutex_lock(&robot_ptr_->RtMutex());
     controller_.setCablesLenTrajectories(transition_trajectories);
-    pthread_mutex_unlock(&robot_ptr_->Mutex());
+    pthread_mutex_unlock(&robot_ptr_->RtMutex());
   }
   else if (traj_sets_[data->traj_idx].traj_type == MOTOR_POSITION)
   {
@@ -294,9 +294,9 @@ STATE_DEFINE(JointsPVTApp, Transition, JointsPVTAppData)
                                .arg(target_motor_pos);
     }
     // Send trajectories
-    pthread_mutex_lock(&robot_ptr_->Mutex());
+    pthread_mutex_lock(&robot_ptr_->RtMutex());
     controller_.setMotorsPosTrajectories(transition_trajectories);
-    pthread_mutex_unlock(&robot_ptr_->Mutex());
+    pthread_mutex_unlock(&robot_ptr_->RtMutex());
   }
 }
 
@@ -314,25 +314,25 @@ STATE_DEFINE(JointsPVTApp, TrajectoryFollow, JointsPVTAppData)
   switch (traj_sets_[data->traj_idx].traj_type)
   {
     case CABLE_LENGTH:
-      pthread_mutex_lock(&robot_ptr_->Mutex());
+      pthread_mutex_lock(&robot_ptr_->RtMutex());
       controller_.setCablesLenTrajectories(traj_sets_[data->traj_idx].traj_cables_len);
-      pthread_mutex_unlock(&robot_ptr_->Mutex());
+      pthread_mutex_unlock(&robot_ptr_->RtMutex());
       break;
     case MOTOR_POSITION:
-      pthread_mutex_lock(&robot_ptr_->Mutex());
+      pthread_mutex_lock(&robot_ptr_->RtMutex());
       controller_.setMotorsPosTrajectories(traj_sets_[data->traj_idx].traj_motors_pos);
-      pthread_mutex_unlock(&robot_ptr_->Mutex());
+      pthread_mutex_unlock(&robot_ptr_->RtMutex());
       break;
     case MOTOR_SPEED:
-      pthread_mutex_lock(&robot_ptr_->Mutex());
+      pthread_mutex_lock(&robot_ptr_->RtMutex());
       controller_.setMotorsVelTrajectories(traj_sets_[data->traj_idx].traj_motors_vel);
-      pthread_mutex_unlock(&robot_ptr_->Mutex());
+      pthread_mutex_unlock(&robot_ptr_->RtMutex());
       break;
     case MOTOR_TORQUE:
-      pthread_mutex_lock(&robot_ptr_->Mutex());
+      pthread_mutex_lock(&robot_ptr_->RtMutex());
       controller_.setMotorsTorqueTrajectories(
         traj_sets_[data->traj_idx].traj_motors_torque);
-      pthread_mutex_unlock(&robot_ptr_->Mutex());
+      pthread_mutex_unlock(&robot_ptr_->RtMutex());
       break;
     case NONE:
       return;

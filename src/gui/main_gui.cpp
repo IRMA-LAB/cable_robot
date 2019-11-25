@@ -239,11 +239,11 @@ void MainGUI::on_pushButton_freedrive_pressed()
   robot_ptr_->setController(man_ctrl_ptr_);
   for (const id_t id : robot_ptr_->getActiveMotorsID())
   {
-    pthread_mutex_lock(&robot_ptr_->Mutex());
+    robot_ptr_->lockMutex();
     man_ctrl_ptr_->SetMotorID(id);
     man_ctrl_ptr_->SetMode(ControlMode::MOTOR_TORQUE);
     man_ctrl_ptr_->SetMotorTorqueTarget(kFreedriveTorque_);
-    pthread_mutex_unlock(&robot_ptr_->Mutex());
+    robot_ptr_->unlockMutex();
     // Wait until each motor reached user-given initial torque setpoint
     if (robot_ptr_->waitUntilTargetReached() != RetVal::OK)
     {
@@ -289,11 +289,11 @@ void MainGUI::on_radioButton_posMode_clicked()
 
   if (manual_ctrl_enabled_)
   {
-    man_ctrl_ptr_->SetCableLenTarget(
-      robot_ptr_->getActuatorStatus(motor_id_).cable_length);
-    pthread_mutex_lock(&robot_ptr_->Mutex());
+    double cable_len_target = robot_ptr_->getActuatorStatus(motor_id_).cable_length;
+    robot_ptr_->lockMutex();
+    man_ctrl_ptr_->SetCableLenTarget(cable_len_target);
     man_ctrl_ptr_->SetMode(ControlMode::CABLE_LENGTH);
-    pthread_mutex_unlock(&robot_ptr_->Mutex());
+    robot_ptr_->unlockMutex();
     waiting_for_response_.set(Actuator::ST_ENABLED);
   }
 }
@@ -312,10 +312,10 @@ void MainGUI::on_radioButton_velMode_clicked()
 
   if (manual_ctrl_enabled_)
   {
+    robot_ptr_->lockMutex();
     man_ctrl_ptr_->SetMotorSpeedTarget(0);
-    pthread_mutex_lock(&robot_ptr_->Mutex());
     man_ctrl_ptr_->SetMode(ControlMode::MOTOR_SPEED);
-    pthread_mutex_unlock(&robot_ptr_->Mutex());
+    robot_ptr_->unlockMutex();
     waiting_for_response_.set(Actuator::ST_ENABLED);
   }
 }
@@ -334,11 +334,11 @@ void MainGUI::on_radioButton_torqueMode_clicked()
 
   if (manual_ctrl_enabled_)
   {
-    man_ctrl_ptr_->SetMotorTorqueTarget(
-      robot_ptr_->getActuatorStatus(motor_id_).motor_torque);
-    pthread_mutex_lock(&robot_ptr_->Mutex());
+    short torque_target = robot_ptr_->getActuatorStatus(motor_id_).motor_torque;
+    robot_ptr_->lockMutex();
+    man_ctrl_ptr_->SetMotorTorqueTarget(torque_target);
     man_ctrl_ptr_->SetMode(ControlMode::MOTOR_TORQUE);
-    pthread_mutex_unlock(&robot_ptr_->Mutex());
+    robot_ptr_->unlockMutex();
     waiting_for_response_.set(Actuator::ST_ENABLED);
   }
 }
@@ -346,65 +346,65 @@ void MainGUI::on_radioButton_torqueMode_clicked()
 void MainGUI::on_pushButton_posPlus_pressed()
 {
   CLOG(TRACE, "event");
-  pthread_mutex_lock(&robot_ptr_->Mutex());
+  robot_ptr_->lockMutex();
   man_ctrl_ptr_->CableLenIncrement(true, Sign::POS, false);
-  pthread_mutex_unlock(&robot_ptr_->Mutex());
+  robot_ptr_->unlockMutex();
 }
 
 void MainGUI::on_pushButton_posPlus_released()
 {
   CLOG(TRACE, "event");
-  pthread_mutex_lock(&robot_ptr_->Mutex());
+  robot_ptr_->lockMutex();
   man_ctrl_ptr_->CableLenIncrement(false);
-  pthread_mutex_unlock(&robot_ptr_->Mutex());
+  robot_ptr_->unlockMutex();
 }
 
 void MainGUI::on_pushButton_posMinus_pressed()
 {
   CLOG(TRACE, "event");
-  pthread_mutex_lock(&robot_ptr_->Mutex());
+  robot_ptr_->lockMutex();
   man_ctrl_ptr_->CableLenIncrement(true, Sign::NEG, false);
-  pthread_mutex_unlock(&robot_ptr_->Mutex());
+  robot_ptr_->unlockMutex();
 }
 
 void MainGUI::on_pushButton_posMinus_released()
 {
   CLOG(TRACE, "event");
-  pthread_mutex_lock(&robot_ptr_->Mutex());
+  robot_ptr_->lockMutex();
   man_ctrl_ptr_->CableLenIncrement(false);
-  pthread_mutex_unlock(&robot_ptr_->Mutex());
+  robot_ptr_->unlockMutex();
 }
 
 void MainGUI::on_pushButton_posMicroPlus_pressed()
 {
   CLOG(TRACE, "event");
-  pthread_mutex_lock(&robot_ptr_->Mutex());
+  robot_ptr_->lockMutex();
   man_ctrl_ptr_->CableLenIncrement(true, Sign::POS, true);
-  pthread_mutex_unlock(&robot_ptr_->Mutex());
+  robot_ptr_->unlockMutex();
 }
 
 void MainGUI::on_pushButton_posMicroPlus_released()
 {
   CLOG(TRACE, "event");
-  pthread_mutex_lock(&robot_ptr_->Mutex());
+  robot_ptr_->lockMutex();
   man_ctrl_ptr_->CableLenIncrement(false);
-  pthread_mutex_unlock(&robot_ptr_->Mutex());
+  robot_ptr_->unlockMutex();
 }
 
 void MainGUI::on_pushButton_posMicroMinus_pressed()
 {
   CLOG(TRACE, "event");
-  pthread_mutex_lock(&robot_ptr_->Mutex());
+  robot_ptr_->lockMutex();
   man_ctrl_ptr_->CableLenIncrement(true, Sign::NEG, true);
-  pthread_mutex_unlock(&robot_ptr_->Mutex());
+  robot_ptr_->unlockMutex();
 }
 
 void MainGUI::on_pushButton_posMicroMinus_released()
 {
   CLOG(TRACE, "event");
-  pthread_mutex_lock(&robot_ptr_->Mutex());
+  robot_ptr_->lockMutex();
   man_ctrl_ptr_->CableLenIncrement(false);
-  pthread_mutex_unlock(&robot_ptr_->Mutex());
+  robot_ptr_->unlockMutex();
 }
 
 void MainGUI::on_horizontalSlider_speed_ctrl_sliderPressed() { CLOG(TRACE, "event"); }
@@ -412,9 +412,9 @@ void MainGUI::on_horizontalSlider_speed_ctrl_sliderPressed() { CLOG(TRACE, "even
 void MainGUI::on_horizontalSlider_speed_ctrl_sliderMoved(int position)
 {
   CLOG(TRACE, "event");
-  pthread_mutex_lock(&robot_ptr_->Mutex());
+  robot_ptr_->lockMutex();
   man_ctrl_ptr_->ScaleMotorSpeed(position * 0.01);
-  pthread_mutex_unlock(&robot_ptr_->Mutex());
+  robot_ptr_->unlockMutex();
 }
 
 void MainGUI::on_horizontalSlider_speed_ctrl_sliderReleased()
@@ -427,33 +427,33 @@ void MainGUI::on_horizontalSlider_speed_ctrl_sliderReleased()
 void MainGUI::on_pushButton_torquePlus_pressed()
 {
   CLOG(TRACE, "event");
-  pthread_mutex_lock(&robot_ptr_->Mutex());
+  robot_ptr_->lockMutex();
   man_ctrl_ptr_->MotorTorqueIncrement(true, Sign::POS);
-  pthread_mutex_unlock(&robot_ptr_->Mutex());
+  robot_ptr_->unlockMutex();
 }
 
 void MainGUI::on_pushButton_torquePlus_released()
 {
   CLOG(TRACE, "event");
-  pthread_mutex_lock(&robot_ptr_->Mutex());
+  robot_ptr_->lockMutex();
   man_ctrl_ptr_->MotorTorqueIncrement(false);
-  pthread_mutex_unlock(&robot_ptr_->Mutex());
+  robot_ptr_->unlockMutex();
 }
 
 void MainGUI::on_pushButton_torqueMinus_pressed()
 {
   CLOG(TRACE, "event");
-  pthread_mutex_lock(&robot_ptr_->Mutex());
+  robot_ptr_->lockMutex();
   man_ctrl_ptr_->MotorTorqueIncrement(true, Sign::NEG);
-  pthread_mutex_unlock(&robot_ptr_->Mutex());
+  robot_ptr_->unlockMutex();
 }
 
 void MainGUI::on_pushButton_torqueMinus_released()
 {
   CLOG(TRACE, "event");
-  pthread_mutex_lock(&robot_ptr_->Mutex());
+  robot_ptr_->lockMutex();
   man_ctrl_ptr_->MotorTorqueIncrement(false);
-  pthread_mutex_unlock(&robot_ptr_->Mutex());
+  robot_ptr_->unlockMutex();
 }
 
 //--------- Private slots ------------------------------------------------------------//
@@ -536,20 +536,16 @@ void MainGUI::updateRtThreadStatusLED(const bool active)
   }
 }
 
-void MainGUI::handleMotorStatusUpdate(const id_t& id,
-                                      const grabec::GSWDriveInPdos& motor_status)
+void MainGUI::handleActuatorStatusUpdate(const ActuatorStatus& actuator_status)
 {
   // Check if signal corresponds to current selected axis
-  if (id != ui->comboBox_motorAxis->currentText().toULong())
+  if (actuator_status.id != ui->comboBox_motorAxis->currentText().toULong())
     return;
 
-  UpdateDriveStatusTable(motor_status);
-
-  Actuator::States actuator_state = Actuator::DriveState2ActuatorState(
-    grabec::GoldSoloWhistleDrive::GetDriveState(motor_status.status_word));
+  UpdateDriveStatusTable(actuator_status);
 
   // Check if motor is in fault and set panel accordingly
-  if (actuator_state == Actuator::ST_FAULT)
+  if (actuator_status.state == Actuator::ST_FAULT)
   {
     ui->pushButton_enable->setText(tr("Enable"));
     ui->pushButton_enable->setDisabled(true);
@@ -566,8 +562,8 @@ void MainGUI::handleMotorStatusUpdate(const id_t& id,
     return;
   }
 
-  UpdateDriveCtrlPanel(actuator_state);
-  UpdateDriveCtrlButtons(DriveOpMode2CtrlMode(motor_status.display_op_mode));
+  UpdateDriveCtrlPanel(actuator_status.state);
+  UpdateDriveCtrlButtons(DriveOpMode2CtrlMode(actuator_status.op_mode));
 }
 
 //--------- Private GUI methods ------------------------------------------------------//
@@ -597,13 +593,13 @@ void MainGUI::DisableTorqueCtrlButtons(const bool value)
                     << (value ? "enabled" : "disabled");
 }
 
-void MainGUI::UpdateDriveStatusTable(const grabec::GSWDriveInPdos& status)
+void MainGUI::UpdateDriveStatusTable(const ActuatorStatus& status)
 {
   std::string status_word =
-    grabec::GoldSoloWhistleDrive::GetDriveStateStr(status.status_word);
+    grabec::GoldSoloWhistleDrive::GetDriveStateStr(status.motor_status_word);
   ui->table_inputPdos->item(0, 0)->setData(Qt::DisplayRole, status_word.c_str());
   std::string op_mode_str;
-  switch (status.display_op_mode)
+  switch (status.op_mode)
   {
     case grabec::NONE:
       op_mode_str = "NONE";
@@ -636,19 +632,19 @@ void MainGUI::UpdateDriveStatusTable(const grabec::GSWDriveInPdos& status)
       op_mode_str = "CYCLIC_SYNC_TORQUE";
       break;
     default:
-      op_mode_str = "UNKNOWN: " + std::to_string(status.display_op_mode);
+      op_mode_str = "UNKNOWN: " + std::to_string(status.op_mode);
       break;
   }
   ui->table_inputPdos->item(1, 0)->setData(Qt::DisplayRole, op_mode_str.c_str());
-  ui->table_inputPdos->item(2, 0)->setData(Qt::DisplayRole, status.pos_actual_value);
-  ui->table_inputPdos->item(3, 0)->setData(Qt::DisplayRole, status.vel_actual_value);
-  ui->table_inputPdos->item(4, 0)->setData(Qt::DisplayRole, status.torque_actual_value);
-  ui->table_inputPdos->item(5, 0)->setData(Qt::DisplayRole, status.digital_inputs);
-  ui->table_inputPdos->item(6, 0)->setData(Qt::DisplayRole, status.aux_pos_actual_value);
+  ui->table_inputPdos->item(2, 0)->setData(Qt::DisplayRole, status.motor_position);
+  ui->table_inputPdos->item(3, 0)->setData(Qt::DisplayRole, status.motor_speed);
+  ui->table_inputPdos->item(4, 0)->setData(Qt::DisplayRole, status.motor_torque);
+  ui->table_inputPdos->item(5, 0)->setData(Qt::DisplayRole, status.cable_length);
+  ui->table_inputPdos->item(6, 0)->setData(Qt::DisplayRole, status.pulley_angle);
   CVLOG(2, "event") << "Drive status table updated";
 }
 
-void MainGUI::UpdateDriveCtrlPanel(const Actuator::States state)
+void MainGUI::UpdateDriveCtrlPanel(const uint8_t state)
 {
   if (waiting_for_response_.test(Actuator::ST_ENABLED) && state != Actuator::ST_ENABLED)
     return;
@@ -775,8 +771,8 @@ void MainGUI::StartRobot()
 
   connect(robot_ptr_, SIGNAL(printToQConsole(QString)), this,
           SLOT(appendText2Browser(QString)), Qt::ConnectionType::QueuedConnection);
-  connect(robot_ptr_, SIGNAL(motorStatus(id_t, grabec::GSWDriveInPdos)), this,
-          SLOT(handleMotorStatusUpdate(id_t, grabec::GSWDriveInPdos)));
+  connect(robot_ptr_, SIGNAL(actutorStatus(ActuatorStatus)), this,
+          SLOT(handleActuatorStatusUpdate(ActuatorStatus)));
   connect(robot_ptr_, SIGNAL(ecStateChanged(std::bitset<3>)), this,
           SLOT(updateEcStatusLED(std::bitset<3>)), Qt::ConnectionType::QueuedConnection);
   connect(robot_ptr_, SIGNAL(rtThreadStatusChanged(bool)), this,
@@ -794,7 +790,7 @@ void MainGUI::DeleteRobot()
 
   // We don't disconnect printToQConsole so we still have logs on shutdown
   disconnect(robot_ptr_, SIGNAL(motorStatus(id_t, grabec::GSWDriveInPdos)), this,
-             SLOT(handleMotorStatusUpdate(id_t, grabec::GSWDriveInPdos)));
+             SLOT(handleActuatorStatusUpdate(id_t, grabec::GSWDriveInPdos)));
   disconnect(robot_ptr_, SIGNAL(ecStateChanged(std::bitset<3>)), this,
              SLOT(updateEcStatusLED(std::bitset<3>)));
   disconnect(robot_ptr_, SIGNAL(rtThreadStatusChanged(bool)), this,

@@ -184,7 +184,12 @@ class CableRobot: public QObject,
    * @param[in] motor_id The ID of the inquired actuator.
    * @return The status of the inquired actuator.
    */
-  const ActuatorStatus getActuatorStatus(const id_t motor_id);
+  ActuatorStatus getActuatorStatus(const id_t motor_id);
+  /**
+   * @brief Get active actuators status.
+   * @return The status of the active actuators.
+   */
+  vect<ActuatorStatus> getActuatorsStatus();
 
   /**
    * @brief Update home configuration of all actuators at once.
@@ -330,6 +335,23 @@ class CableRobot: public QObject,
    */
   bool isWaiting();
 
+  /**
+   * @brief Lock mutex of non-RT thread.
+   *
+   * This should be used for operation not inherently thread-safe, such as external
+   * changes to a running controller or state estimator object.
+   * @see unlockMutex
+   */
+  void lockMutex() { loop_thread_->lockMutex(); }
+  /**
+   * @brief Unlock mutex of non-RT thread.
+   *
+   * This should be used for operation not inherently thread-safe, such as external
+   * changes to a running controller or state estimator object.
+   * @see lockMutex
+   */
+  void unlockMutex() { loop_thread_->unlockMutex(); }
+
  public slots:
   /**
    * @brief Stop waiting command, to be used to manually interrupt a waiting cycle.
@@ -429,10 +451,10 @@ class CableRobot: public QObject,
   CableRobotLoopThread* loop_thread_;
 
   // Timers for status updates
-  static constexpr int kMotorStatusIntervalMsec_    = 100;
-  static constexpr int kActuatorStatusIntervalMsec_ = 10;
-  QTimer* motor_status_timer_                       = nullptr;
-  QTimer* actuator_status_timer_                    = nullptr;
+  static constexpr int kGuiTimerIntervalMsec_ = 100;
+  static constexpr int kOpTimerIntervalMsec_  = 10;
+  QTimer* motor_status_timer_                 = nullptr;
+  QTimer* actuator_status_timer_              = nullptr;
 
   void stopTimers();
 

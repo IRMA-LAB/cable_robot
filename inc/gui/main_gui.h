@@ -117,7 +117,7 @@ class MainGUI: public QDialog
   void appendText2Browser(const QString& text);
   void updateEcStatusLED(const std::bitset<3>& ec_status_flags);
   void updateRtThreadStatusLED(const bool active);
-  void handleMotorStatusUpdate(const id_t&, const grabec::GSWDriveInPdos& motor_status);
+  void handleActuatorStatusUpdate(const ActuatorStatus &actuator_status);
 
  private:
   bool ec_network_valid_  = false;
@@ -163,8 +163,8 @@ class MainGUI: public QDialog
   void DisableVelCtrlButtons(const bool value);
   void DisableTorqueCtrlButtons(const bool value);
 
-  void UpdateDriveStatusTable(const grabec::GSWDriveInPdos& status);
-  void UpdateDriveCtrlPanel(const Actuator::States state);
+  void UpdateDriveStatusTable(const ActuatorStatus &status);
+  void UpdateDriveCtrlPanel(const uint8_t state);
   void UpdateDriveCtrlButtons(const ControlMode ctrl_mode);
 
   void SetupDirectMotorCtrl(const bool enable);

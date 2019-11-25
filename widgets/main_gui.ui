@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>872</width>
-    <height>954</height>
+    <height>996</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -1099,27 +1099,27 @@
             </row>
             <row>
              <property name="text">
-              <string>Position Actual Value</string>
+              <string>Position Value</string>
              </property>
             </row>
             <row>
              <property name="text">
-              <string>Velocity Actual Value</string>
+              <string>Velocity Value</string>
              </property>
             </row>
             <row>
              <property name="text">
-              <string>Torque Actual Value</string>
+              <string>Torque Value</string>
              </property>
             </row>
             <row>
              <property name="text">
-              <string>Digital Inputs</string>
+              <string>Cable length</string>
              </property>
             </row>
             <row>
              <property name="text">
-              <string>Auxiliary Position Value</string>
+              <string>Swivel Pulley Angle</string>
              </property>
             </row>
             <column>
@@ -1136,31 +1136,49 @@
              </property>
             </item>
             <item row="1" column="0">
+             <property name="text">
+              <string/>
+             </property>
              <property name="textAlignment">
               <set>AlignCenter</set>
              </property>
             </item>
             <item row="2" column="0">
+             <property name="text">
+              <string/>
+             </property>
              <property name="textAlignment">
               <set>AlignCenter</set>
              </property>
             </item>
             <item row="3" column="0">
+             <property name="text">
+              <string/>
+             </property>
              <property name="textAlignment">
               <set>AlignCenter</set>
              </property>
             </item>
             <item row="4" column="0">
+             <property name="text">
+              <string/>
+             </property>
              <property name="textAlignment">
               <set>AlignCenter</set>
              </property>
             </item>
             <item row="5" column="0">
+             <property name="text">
+              <string/>
+             </property>
              <property name="textAlignment">
               <set>AlignCenter</set>
              </property>
             </item>
             <item row="6" column="0">
+             <property name="text">
+              <string/>
+             </property>
              <property name="textAlignment">
               <set>AlignCenter</set>
              </property>

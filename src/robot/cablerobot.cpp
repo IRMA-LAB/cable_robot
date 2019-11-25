@@ -251,15 +251,20 @@ const Actuator* CableRobot::getActuator(const id_t motor_id)
   return rt_actuators_ptrs_[motor_id];
 }
 
-const ActuatorStatus CableRobot::getActuatorStatus(const id_t motor_id)
+ActuatorStatus CableRobot::getActuatorStatus(const id_t motor_id)
 {
-  vect<ActuatorStatus> active_actuators_status = loop_thread_->getActiveActuatorsStatus();
+  vect<ActuatorStatus> active_actuators_status = getActuatorsStatus();
 
   for (const ActuatorStatus& actuator_status : active_actuators_status)
     if (actuator_status.id == motor_id)
       return actuator_status;
   // If not found
   throw std::invalid_argument("invalid motor ID");
+}
+
+vect<ActuatorStatus> CableRobot::getActuatorsStatus()
+{
+  return loop_thread_->getActiveActuatorsStatus();
 }
 
 void CableRobot::updateHomeConfig(const double cable_len, const double pulley_angle)
@@ -632,8 +637,7 @@ STATE_DEFINE(CableRobot, Enabled, NoEventData)
 
   loop_thread_->reset();
 
-  stopTimers();
-  motor_status_timer_->start(kMotorStatusIntervalMsec_);
+  actuator_status_timer_->start(kGuiTimerIntervalMsec_);
 }
 
 STATE_DEFINE(CableRobot, Calibration, NoEventData)
@@ -642,8 +646,6 @@ STATE_DEFINE(CableRobot, Calibration, NoEventData)
   prev_state_ = ST_CALIBRATION;
 
   loop_thread_->reset();
-
-  stopTimers();
 }
 
 STATE_DEFINE(CableRobot, Homing, NoEventData)
@@ -654,7 +656,6 @@ STATE_DEFINE(CableRobot, Homing, NoEventData)
   loop_thread_->reset();
 
   stopTimers();
-  actuator_status_timer_->start(kActuatorStatusIntervalMsec_);
 }
 
 STATE_DEFINE(CableRobot, Ready, NoEventData)
@@ -665,8 +666,7 @@ STATE_DEFINE(CableRobot, Ready, NoEventData)
   loop_thread_->reset();
   loop_thread_->setStateEstimator(new StateEstimatorBase(params_));
 
-  stopTimers();
-  motor_status_timer_->start(kMotorStatusIntervalMsec_);
+  actuator_status_timer_->start(kGuiTimerIntervalMsec_);
 }
 
 STATE_DEFINE(CableRobot, Operational, NoEventData)

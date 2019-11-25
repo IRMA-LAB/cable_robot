@@ -373,7 +373,7 @@ void HomingInterfaceProprioceptiveWidget::UpdateTorquesLimits()
     std::vector<id_t> motors_id = app.GetActuatorsID();
     for (size_t i = 0; i < motors_id.size(); i++)
       init_torque_forms_[static_cast<int>(i)]->SetInitTorque(
-        app.GetActuatorStatus(motors_id[i]).motor_torque);
+        robot_ptr_->getActuatorStatus(motors_id[i]).motor_torque);
   }
   if (ui->checkBox_maxTorque->isChecked())
   {

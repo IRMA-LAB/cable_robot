@@ -215,11 +215,11 @@ STATE_DEFINE(CalibExcitation, PosControl, NoEventData)
   for (const id_t id : active_actuators_id_)
   {
     int motor_pos = robot_ptr_->getActuatorStatus(id).motor_position;
-    pthread_mutex_lock(&robot_ptr_->Mutex());
+    robot_ptr_->lockMutex();
     controller_single_drive_.SetMotorID(id);
     controller_single_drive_.SetMode(ControlMode::MOTOR_POSITION);
     controller_single_drive_.SetMotorPosTarget(motor_pos, false);
-    pthread_mutex_unlock(&robot_ptr_->Mutex());
+    robot_ptr_->unlockMutex();
     // Wait until each motor reached user-given initial torque setpoint
     ret = robot_ptr_->waitUntilTargetReached();
     if (ret != RetVal::OK)
@@ -241,11 +241,11 @@ STATE_DEFINE(CalibExcitation, TorqueControl, CalibExcitationData)
   RetVal ret = RetVal::OK;
   for (const id_t id : active_actuators_id_)
   {
-    pthread_mutex_lock(&robot_ptr_->Mutex());
+    robot_ptr_->lockMutex();
     controller_single_drive_.SetMotorID(id);
     controller_single_drive_.SetMode(ControlMode::MOTOR_TORQUE);
     controller_single_drive_.SetMotorTorqueTarget(data->torque);
-    pthread_mutex_unlock(&robot_ptr_->Mutex());
+    robot_ptr_->unlockMutex();
     // Wait until each motor reached user-given initial torque setpoint
     ret = robot_ptr_->waitUntilTargetReached();
     if (ret != RetVal::OK)
