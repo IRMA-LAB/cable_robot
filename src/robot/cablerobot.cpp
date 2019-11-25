@@ -204,6 +204,7 @@ CableRobot::~CableRobot()
 {
   // Stop non-RT loop (state est. + control)
   loop_thread_->stop();
+  loop_thread_->exit();
 
   // Close data logging
   log_buffer_.stop();

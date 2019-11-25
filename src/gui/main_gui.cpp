@@ -771,7 +771,7 @@ void MainGUI::StartRobot()
 
   connect(robot_ptr_, SIGNAL(printToQConsole(QString)), this,
           SLOT(appendText2Browser(QString)), Qt::ConnectionType::QueuedConnection);
-  connect(robot_ptr_, SIGNAL(actutorStatus(ActuatorStatus)), this,
+  connect(robot_ptr_, SIGNAL(actuatorStatus(ActuatorStatus)), this,
           SLOT(handleActuatorStatusUpdate(ActuatorStatus)));
   connect(robot_ptr_, SIGNAL(ecStateChanged(std::bitset<3>)), this,
           SLOT(updateEcStatusLED(std::bitset<3>)), Qt::ConnectionType::QueuedConnection);
@@ -789,8 +789,8 @@ void MainGUI::DeleteRobot()
     return;
 
   // We don't disconnect printToQConsole so we still have logs on shutdown
-  disconnect(robot_ptr_, SIGNAL(motorStatus(id_t, grabec::GSWDriveInPdos)), this,
-             SLOT(handleActuatorStatusUpdate(id_t, grabec::GSWDriveInPdos)));
+  disconnect(robot_ptr_, SIGNAL(actuatorStatus(ActuatorStatus)), this,
+             SLOT(handleActuatorStatusUpdate(ActuatorStatus)));
   disconnect(robot_ptr_, SIGNAL(ecStateChanged(std::bitset<3>)), this,
              SLOT(updateEcStatusLED(std::bitset<3>)));
   disconnect(robot_ptr_, SIGNAL(rtThreadStatusChanged(bool)), this,
