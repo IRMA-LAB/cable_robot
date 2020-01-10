@@ -53,7 +53,7 @@ std::ostream& operator<<(std::ostream& stream, const HomingProprioceptiveHomeDat
 // For static constexpr passed by reference we need a dummy definition no matter what
 constexpr char* HomingProprioceptive::kStatesStr[];
 const QString HomingProprioceptive::kMatlabOptimizationResultsLoc = QString(SRCDIR) +
-        "matlab/homing/results.json";
+        "libs/grab_common/libcdpr/cdpr_matlab/data/homing_results.json";
 
 HomingProprioceptive::HomingProprioceptive(QObject* parent, CableRobot* robot)
   : QObject(parent), StateMachine(ST_MAX_STATES), robot_ptr_(robot),
@@ -623,7 +623,8 @@ STATE_DEFINE(HomingProprioceptive, Optimizing, NoEventData)
   prev_state_ = ST_OPTIMIZING;
   emit stateChanged(ST_OPTIMIZING);
   // Run matlab optimization script from shell command
-  const QString script_loc    = QString(SRCDIR) + "matlab/homing/ExternalHomingScript.m";
+  const QString script_loc    = QString(SRCDIR) +
+               "libs/grab_common/libcdpr/cdpr_matlab/apps/homing/ExternalHomingScript.m";
   MatlabThread* matlab_thread = new MatlabThread(this, script_loc);
   connect(matlab_thread, SIGNAL(resultsReady()), this, SLOT(handleMatlabResultsReady()));
   connect(matlab_thread, SIGNAL(printToQConsole(QString)), this->parent(),
