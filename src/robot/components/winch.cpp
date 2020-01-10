@@ -1,7 +1,7 @@
 /**
  * @file winch.cpp
  * @author Simone Comari, Edoardo Idà
- * @date 13 May 2019
+ * @date 28 Nov 2019
  * @brief This file includes definitions of class declared in winch.h.
  */
 
@@ -77,10 +77,10 @@ void Winch::UpdateConfig(const int32_t servo_pos)
 
 double Winch::CountsToLength(const int counts) const
 {
-  return counts * params_.CountsToMetersFactor();
+  return counts * params_.transmission_ratio;
 }
 
 int Winch::LengthToCounts(const double length) const
 {
-  return static_cast<int>(length / params_.CountsToMetersFactor());
+  return static_cast<int>(length / params_.transmission_ratio);
 }

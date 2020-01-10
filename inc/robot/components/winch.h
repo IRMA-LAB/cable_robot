@@ -1,14 +1,14 @@
 /**
  * @file winch.h
  * @author Simone Comari, Edoardo Idà
- * @date 13 May 2019
+ * @date 28 Nov 2019
  * @brief File containing the virtualization of a winch system of the cable robot.
  */
 
 #ifndef CABLE_ROBOT_WINCH_H
 #define CABLE_ROBOT_WINCH_H
 
-#include "libcdpr/inc/types.h"
+#include "libcdpr/inc/cdpr_types.h"
 #include "libgrabec/inc/slaves/goldsolowhistledrive.h"
 
 #include "utils/types.h"
