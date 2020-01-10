@@ -1,7 +1,7 @@
 /**
  * @file main_gui.h
  * @author Simone Comari
- * @date 03 Jul 2019
+ * @date 10 Jan 2020
  * @brief This file takes care of the functionalities of the main GUI of cable robot app.
  *
  * The functionalities of the main GUI include buttons management, signaling with children
@@ -15,7 +15,7 @@
 #include <QSpacerItem>
 
 #include "easylogging++.h"
-#include "libcdpr/inc/types.h"
+#include "libcdpr/inc/cdpr_types.h"
 
 #include "ctrl/controller_singledrive.h"
 #include "gui/apps/joints_pvt_dialog.h"
@@ -56,7 +56,7 @@ class MainGUI: public QDialog
    * @param[in] parent The parent Qt object.
    * @param[in] config The configuration parameters of the cable robot.
    */
-  MainGUI(QWidget* parent, const grabcdpr::Params& config);
+  MainGUI(QWidget* parent, const grabcdpr::RobotParams& config);
   ~MainGUI();
 
  private slots:
@@ -121,7 +121,7 @@ class MainGUI: public QDialog
   JointsPVTDialog* joints_pvt_dialog_ = nullptr;
   ManualControlDialog* man_ctrl_dialog_ = nullptr;
 
-  grabcdpr::Params config_params_;
+  grabcdpr::RobotParams config_params_;
   CableRobot* robot_ptr_ = nullptr;
 
   void StartRobot();

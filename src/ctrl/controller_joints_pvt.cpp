@@ -1,7 +1,7 @@
 /**
  * @file controller_joints_pvt.cpp
  * @author Simone Comari
- * @date 27 Aug 2019
+ * @date 10 Jan 2020
  * @brief This file includes definitions of class present in controller_joints_pvt.h.
  */
 
@@ -93,7 +93,7 @@ void ControllerJointsPVT::resumeTrajectoryFollowing()
 }
 
 vect<ControlAction>
-ControllerJointsPVT::CalcCtrlActions(const grabcdpr::Vars&,
+ControllerJointsPVT::CalcCtrlActions(const grabcdpr::RobotVars &,
                                      const vect<ActuatorStatus>& actuators_status)
 {
   // Possibly apply smooth resume/stop

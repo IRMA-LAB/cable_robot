@@ -1,7 +1,7 @@
 /**
  * @file controller_singledrive.h
  * @author Simone Comari
- * @date 08 Jul 2019
+ * @date 10 Jan 2020
  * @brief File containing a simple single drive controller class for cable robot.
  */
 
@@ -196,7 +196,7 @@ class ControllerSingleDrive: public ControllerBase
    * @return Control actions for each targeted motor.
    */
   vect<ControlAction>
-  CalcCtrlActions(const grabcdpr::Vars& robot_status,
+  CalcCtrlActions(const grabcdpr::RobotVars& robot_status,
                   const vect<ActuatorStatus>& actuators_status) override final;
 
  private:

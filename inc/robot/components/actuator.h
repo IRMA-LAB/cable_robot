@@ -1,7 +1,7 @@
 /**
  * @file actuator.h
  * @author Simone Comari, Edoardo Idà
- * @date 11 Mar 2019
+ * @date 10 Jan 2020
  * @brief File containing the virtualization of a single actuator of the cable robot.
  */
 
@@ -12,7 +12,7 @@
 
 #include "StateMachine.h"
 #include "easylogging++.h"
-#include "libcdpr/inc/types.h"
+#include "libcdpr/inc/cdpr_types.h"
 #include "libgrabrt/inc/clocks.h"
 
 #include "pulleys_system.h"

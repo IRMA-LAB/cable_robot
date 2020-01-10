@@ -1,7 +1,7 @@
 /**
  * @file homing_dialog.h
  * @author Simone Comari
- * @date 02 Jul 2019
+ * @date 10 Jan 2020
  * @brief This file include the homing dialog class.
  */
 
@@ -11,7 +11,7 @@
 #include <QDialog>
 
 #include "easylogging++.h"
-#include "libcdpr/inc/types.h"
+#include "libcdpr/inc/cdpr_types.h"
 
 #include "gui/homing/homing_interface_proprioceptive.h"
 
@@ -71,7 +71,6 @@ class HomingDialog: public QDialog
     NONE
   };
 
-  const grabcdpr::Params* config_ptr_;
   HomingInterface* interface_ = nullptr;
   CableRobot* robot_ptr_      = nullptr;
   int homing_method_;

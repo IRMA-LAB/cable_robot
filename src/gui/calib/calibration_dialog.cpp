@@ -1,7 +1,7 @@
 /**
  * @file calibration_dialog.cpp
  * @author Simone Comari
- * @date 02 Jul 2019
+ * @date 10 Jan 2020
  * @brief This file includes definitions of class present in calibration_dialog.h.
  */
 
@@ -10,7 +10,7 @@
 
 
 CalibrationDialog::CalibrationDialog(QWidget* parent, CableRobot* robot,
-                                     const grabcdpr::Params& params)
+                                     const grabcdpr::RobotParams& params)
   : QDialog(parent), ui(new Ui::CalibrationDialog), robot_ptr_(robot), params_(params)
 {
   ui->setupUi(this);

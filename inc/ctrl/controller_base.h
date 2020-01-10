@@ -1,7 +1,7 @@
 /**
  * @file controller_base.h
  * @author Simone Comari
- * @date 22 Mar 2019
+ * @date 10 Jan 2020
  * @brief File containing the base class of cable robot controller.
  */
 
@@ -10,7 +10,7 @@
 
 #include <stdint.h>
 
-#include "libcdpr/inc/types.h"
+#include "libcdpr/inc/cdpr_types.h"
 #include "libgrabec/inc/slaves/goldsolowhistledrive.h"
 
 #include "utils/types.h"
@@ -140,7 +140,7 @@ class ControllerBase
    * @return Control actions for each targeted motor.
    */
   virtual vect<ControlAction>
-  CalcCtrlActions(const grabcdpr::Vars& robot_status,
+  CalcCtrlActions(const grabcdpr::RobotVars& robot_status,
                   const vect<ActuatorStatus>& actuators_status) = 0;
 
   /**

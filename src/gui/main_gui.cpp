@@ -1,14 +1,14 @@
 /**
  * @file main_gui.cpp
  * @author Simone Comari
- * @date 27 Aug 2019
+ * @date 10 Jan 2020
  * @brief This file includes definitions of classes present in main_gui.h.
  */
 
 #include "gui/main_gui.h"
 #include "ui_main_gui.h"
 
-MainGUI::MainGUI(QWidget* parent, const grabcdpr::Params& config)
+MainGUI::MainGUI(QWidget* parent, const grabcdpr::RobotParams &config)
   : QDialog(parent), ui(new Ui::MainGUI), config_params_(config)
 {
   ui->setupUi(this);

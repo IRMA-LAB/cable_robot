@@ -1,14 +1,14 @@
 /**
  * @file joints_pvt_app.h
  * @author Simone Comari
- * @date 03 Jul 2019
+ * @date 10 Jan 2020
  * @brief This file includes the implementation of winch controllers.
  */
 
 #ifndef CABLE_ROBOT_WINCH_TORQUE_CONTROLLER_H
 #define CABLE_ROBOT_WINCH_TORQUE_CONTROLLER_H
 
-#include "libcdpr/inc/types.h"
+#include "libcdpr/inc/cdpr_types.h"
 
 #include "utils/types.h"
 

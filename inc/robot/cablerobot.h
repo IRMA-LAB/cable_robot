@@ -1,7 +1,7 @@
 /**
  * @file cablerobot.h
  * @author Simone Comari, Edoardo Idà
- * @date 18 Jun 2019
+ * @date 10 Jan 2020
  * @brief File containing the virtualization of the physical cable robot, in terms of
  * components, signalig and low level operations.
  */
@@ -17,7 +17,7 @@
 #include "StateMachine.h"
 #include "easylogging++.h"
 #include "inc/filters.h"
-#include "libcdpr/inc/types.h"
+#include "libcdpr/inc/cdpr_types.h"
 #include "libgrabec/inc/ethercatmaster.h"
 #if INCLUDE_EASYCAT
 #include "slaves/easycat/TestEasyCAT1_slave.h"
@@ -79,7 +79,7 @@ class CableRobot: public QObject,
    * @param[in] parent The parent Qt object.
    * @param[in] config Configuration parameters of the cable robot.
    */
-  CableRobot(QObject* parent, const grabcdpr::Params& config);
+  CableRobot(QObject* parent, const grabcdpr::RobotParams& config);
   ~CableRobot() override;
 
   /**
@@ -377,7 +377,7 @@ class CableRobot: public QObject,
 
  private:
   grabcdpr::PlatformVars platform_;
-  grabcdpr::Vars cdpr_status_;
+  grabcdpr::RobotVars cdpr_status_;
 
   // Timers for status updates
   static constexpr int kMotorStatusIntervalMsec_    = 100;

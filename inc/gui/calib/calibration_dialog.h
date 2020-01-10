@@ -1,7 +1,7 @@
 /**
  * @file calibration_dialog.h
  * @author Simone Comari
- * @date 02 Jul 2019
+ * @date 10 Jan 2020
  * @brief This file include the calibration dialog class.
  */
 
@@ -11,7 +11,7 @@
 #include <QDialog>
 
 #include "easylogging++.h"
-#include "libcdpr/inc/types.h"
+#include "libcdpr/inc/cdpr_types.h"
 
 #include "gui/calib/calib_interface_excitation.h"
 #include "robot/cablerobot.h"
@@ -36,7 +36,8 @@ class CalibrationDialog: public QDialog
    * calibration procedure interface.
    * @param[in] params Robot parameters.
    */
-  CalibrationDialog(QWidget* parent, CableRobot* robot, const grabcdpr::Params& params);
+  CalibrationDialog(QWidget* parent, CableRobot* robot,
+                    const grabcdpr::RobotParams& params);
   ~CalibrationDialog();
 
  signals:
@@ -61,7 +62,7 @@ class CalibrationDialog: public QDialog
 
   CalibInterfaceExcitation* interface_ = nullptr;
   CableRobot* robot_ptr_               = nullptr;
-  grabcdpr::Params params_;
+  grabcdpr::RobotParams params_;
 };
 
 #endif // CABLE_ROBOT_CALIBRATION_DIALOG_H

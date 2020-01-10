@@ -1,7 +1,7 @@
 /**
  * @file cablerobot.cpp
  * @author Simone Comari, Edoardo Idà
- * @date 19 Jun 2019
+ * @date 10 Jan 2020
  * @brief File containing definitions of functions and class declared in cablerobot.h.
  */
 
@@ -12,7 +12,7 @@ constexpr double CableRobot::kCycleWaitTimeSec;
 constexpr char* CableRobot::kStatesStr_[];
 constexpr double CableRobot::kCutoffFreq_;
 
-CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
+CableRobot::CableRobot(QObject* parent, const grabcdpr::RobotParams &config)
   : QObject(parent), StateMachine(ST_MAX_STATES), platform_(grabcdpr::TILT_TORSION),
     log_buffer_(el::Loggers::getLogger("data")), stop_waiting_cmd_recv_(false),
     is_waiting_(false), prev_state_(ST_MAX_STATES)
@@ -20,7 +20,7 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
   PrintStateTransition(prev_state_, ST_IDLE);
   prev_state_ = ST_IDLE;
 
-  cdpr_status_.platform = &platform_;
+  cdpr_status_.platform = platform_;
 
   // Setup EtherCAT network
   max_shutdown_wait_time_sec_ = 3.0; // [sec]

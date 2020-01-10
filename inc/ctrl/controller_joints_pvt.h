@@ -1,7 +1,7 @@
 /**
  * @file controller_joints_pvt.h
  * @author Simone Comari
- * @date 27 Aug 2019
+ * @date 10 Jan 2020
  * @brief This file includes the implementation of the controller for the joints pvt app.
  */
 
@@ -124,7 +124,7 @@ class ControllerJointsPVT: public QObject, public ControllerBase
    * @return Control actions for each targeted motor.
    */
   vect<ControlAction>
-  CalcCtrlActions(const grabcdpr::Vars& robot_status,
+  CalcCtrlActions(const grabcdpr::RobotVars& robot_status,
                   const vect<ActuatorStatus>& actuators_status) override final;
 
  signals:
