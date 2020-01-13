@@ -136,7 +136,7 @@ void HomingProprioceptive::Start(HomingProprioceptiveStartData* data)
       TRANSITION_MAP_ENTRY (ST_COILING)         // ST_COILING
       TRANSITION_MAP_ENTRY (ST_UNCOILING)       // ST_UNCOILING
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)      // ST_OPTIMIZING
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)      // ST_HOME
+      TRANSITION_MAP_ENTRY (ST_START_UP)        // ST_HOME
       TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)      // ST_FAULT
   END_TRANSITION_MAP(data)
   // clang-format on
@@ -406,7 +406,7 @@ STATE_DEFINE(HomingProprioceptive, StartUp, HomingProprioceptiveStartData)
   robot_ptr_->UpdateHomeConfig(0.0, 0.0);
 
   // Flush previous data logs if any.
-  //  robot_ptr_->FlushDataLogs();
+  robot_ptr_->FlushDataLogs();
 
   emit printToQConsole(msg);
   emit stateChanged(ST_START_UP);

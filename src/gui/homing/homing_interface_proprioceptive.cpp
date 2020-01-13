@@ -1,7 +1,7 @@
 /**
  * @file homing_interface_proprioceptive.cpp
  * @author Simone Comari
- * @date 19 Jun 2019
+ * @date 13 Jan 2020
  * @brief This file includes definitions of classes present in
  * homing_interface_proprioceptive.h.
  */
@@ -202,10 +202,9 @@ void HomingInterfaceProprioceptive::on_pushButton_start_clicked()
                                   : form->GetMaxTorque());
   }
   ui->progressBar_acquisition->setValue(0);
-  ui->radioButton_internal->setDisabled(true);
   ui->lineEdit_extFile->clear();
   ui->radioButton_external->toggled(true);
-  ui->pushButton_ok->setDisabled(true);
+  ui->groupBox_optimization->setDisabled(true);
   acquisition_complete_ = false;
   connect(&app_, SIGNAL(progressValue(int)), this, SLOT(updateAcquisitionProgress(int)),
           Qt::ConnectionType::DirectConnection);
@@ -337,6 +336,7 @@ void HomingInterfaceProprioceptive::on_pushButton_done_clicked()
   CLOG(TRACE, "event");
   emit homingSuccess();
   hide();
+  CLOG(INFO, "event") << "Hide homing interface proprioceptive";
 }
 
 //--------- Private slots -----------------------------------------------------------//
@@ -376,8 +376,7 @@ void HomingInterfaceProprioceptive::updateOptimizationProgress(const int value)
 void HomingInterfaceProprioceptive::handleAcquisitionComplete()
 {
   CLOG(INFO, "event") << "Acquisition complete";
-  ui->radioButton_internal->setEnabled(true);
-  ui->pushButton_ok->setEnabled(true);
+  ui->groupBox_optimization->setEnabled(true);
   acquisition_complete_ = true;
 
   disconnect(&app_, SIGNAL(progressValue(int)), this,
