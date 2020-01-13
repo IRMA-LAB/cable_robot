@@ -156,3 +156,7 @@ INCLUDEPATH += $$PWD/libs/grab_common/libnumeric \
     $$PWD/libs/grab_common/libnumeric/inc/
 DEPENDPATH += $$PWD/libs/grab_common/libnumeric
 unix:!macx: PRE_TARGETDEPS += $$PWD/libs/grab_common/libnumeric/lib/libnumeric.a
+
+# Armadillo lib
+DEFINES += ARMA_DONT_PRINT_ERRORS
+LIBS += -llapack -lblas -larmadillo
