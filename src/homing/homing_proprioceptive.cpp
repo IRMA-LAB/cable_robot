@@ -1,7 +1,7 @@
 /**
  * @file homing_proprioceptive.cpp
  * @author Simone Comari
- * @date 19 Jun 2019
+ * @date 13 Jan 2020
  * @brief This file includes definitions of classes present in homing_proprioceptive.h.
  */
 
@@ -36,13 +36,7 @@ std::ostream& operator<<(std::ostream& stream, const HomingProprioceptiveStartDa
 
 std::ostream& operator<<(std::ostream& stream, const HomingProprioceptiveHomeData& data)
 {
-  stream << "initial cable lengths = [ ";
-  for (const double& value : data.init_lengths)
-    stream << value << " ";
-  stream << " ], initial pulley angles = [ ";
-  for (const double& value : data.init_angles)
-    stream << value << " ";
-  stream << " ]";
+  stream << "initial robot pose =\n" << data.init_pose;
   return stream;
 }
 
@@ -52,8 +46,8 @@ std::ostream& operator<<(std::ostream& stream, const HomingProprioceptiveHomeDat
 
 // For static constexpr passed by reference we need a dummy definition no matter what
 constexpr char* HomingProprioceptive::kStatesStr[];
-const QString HomingProprioceptive::kMatlabOptimizationResultsLoc = QString(SRCDIR) +
-        "libs/grab_common/libcdpr/cdpr_matlab/data/homing_results.json";
+const QString HomingProprioceptive::kMatlabOptimizationResultsLoc =
+  QString(SRCDIR) + "libs/grab_common/libcdpr/cdpr_matlab/data/homing_results.json";
 
 HomingProprioceptive::HomingProprioceptive(QObject* parent, CableRobot* robot)
   : QObject(parent), StateMachine(ST_MAX_STATES), robot_ptr_(robot),
@@ -153,7 +147,7 @@ void HomingProprioceptive::Stop()
   CLOG(TRACE, "event");
 
   if (robot_ptr_->isWaiting())
-      emit stopWaitingCmd();
+    emit stopWaitingCmd();
 }
 
 void HomingProprioceptive::Disable()
@@ -164,7 +158,7 @@ void HomingProprioceptive::Disable()
   disable_cmd_recv_ = true;
   qmutex_.unlock();
   if (robot_ptr_->isWaiting())
-      emit stopWaitingCmd();
+    emit stopWaitingCmd();
 
   // clang-format off
   BEGIN_TRANSITION_MAP                          // - Current State -
@@ -412,7 +406,7 @@ STATE_DEFINE(HomingProprioceptive, StartUp, HomingProprioceptiveStartData)
   robot_ptr_->UpdateHomeConfig(0.0, 0.0);
 
   // Flush previous data logs if any.
-//  robot_ptr_->FlushDataLogs();
+  //  robot_ptr_->FlushDataLogs();
 
   emit printToQConsole(msg);
   emit stateChanged(ST_START_UP);
@@ -447,8 +441,9 @@ STATE_DEFINE(HomingProprioceptive, SwitchCable, NoEventData)
   qint32 delta_pos = robot_ptr_->GetActuator(active_actuators_id_[working_actuator_idx_])
                        ->GetWinch()
                        .LengthToCounts(kDeltaLen);
-  qint32 init_pos = robot_ptr_->GetActuatorStatus(
-              active_actuators_id_[working_actuator_idx_]).motor_position;
+  qint32 init_pos =
+    robot_ptr_->GetActuatorStatus(active_actuators_id_[working_actuator_idx_])
+      .motor_position;
   // Compute sequence of position setpoints for i-th actuator, given the fact that cable
   for (quint8 i = 0; i < num_meas_; ++i)
     positions_[i] = init_pos + i * delta_pos;
@@ -520,8 +515,7 @@ STATE_DEFINE(HomingProprioceptive, Coiling, NoEventData)
 
 #if HOMING_ACK
   pthread_mutex_lock(&robot_ptr_->Mutex());
-  controller_.SetMotorPosTarget(positions_[meas_step_], true,
-                                kPositionStepTransTime_);
+  controller_.SetMotorPosTarget(positions_[meas_step_], true, kPositionStepTransTime_);
   pthread_mutex_unlock(&robot_ptr_->Mutex());
   emit printToQConsole(
     QString("Next position setpoint = %1").arg(positions_[meas_step_]));
@@ -585,13 +579,13 @@ STATE_DEFINE(HomingProprioceptive, Uncoiling, NoEventData)
   controller_.SetMode(ControlMode::MOTOR_POSITION);
 #if HOMING_ACK
   controller_.SetMotorPosTarget(positions_[kOffset - meas_step_], true,
-          kPositionStepTransTime_);
+                                kPositionStepTransTime_);
   pthread_mutex_unlock(&robot_ptr_->Mutex());
   emit printToQConsole(
     QString("Next position setpoint = %1").arg(positions_[kOffset - meas_step_]));
 #else
   controller_.SetMotorPosTarget(reg_pos_[kOffset - meas_step_], true,
-          kPositionStepTransTime_);
+                                kPositionStepTransTime_);
   pthread_mutex_unlock(&robot_ptr_->Mutex());
   emit printToQConsole(
     QString("Next position setpoint = %1").arg(reg_pos_[kOffset - meas_step_]));
@@ -623,8 +617,9 @@ STATE_DEFINE(HomingProprioceptive, Optimizing, NoEventData)
   prev_state_ = ST_OPTIMIZING;
   emit stateChanged(ST_OPTIMIZING);
   // Run matlab optimization script from shell command
-  const QString script_loc    = QString(SRCDIR) +
-               "libs/grab_common/libcdpr/cdpr_matlab/apps/homing/ExternalHomingScript.m";
+  const QString script_loc =
+    QString(SRCDIR) +
+    "libs/grab_common/libcdpr/cdpr_matlab/apps/homing/ExternalHomingScript.m";
   MatlabThread* matlab_thread = new MatlabThread(this, script_loc);
   connect(matlab_thread, SIGNAL(resultsReady()), this, SLOT(handleMatlabResultsReady()));
   connect(matlab_thread, SIGNAL(printToQConsole(QString)), this->parent(),
@@ -647,16 +642,14 @@ STATE_DEFINE(HomingProprioceptive, Home, HomingProprioceptiveHomeData)
   if (robot_ptr_->GoHome()) // (position control)
   {
     // ...which is done here.
+    robot_ptr_->UpdateHomeConfig(data->init_pose);
+    grabcdpr::RobotVars robot_vars = robot_ptr_->GetRobotVars();
     for (uint i = 0; i < active_actuators_id_.size(); i++)
-    {
-      robot_ptr_->UpdateHomeConfig(active_actuators_id_[i], data->init_lengths[i],
-                                   data->init_angles[i]);
       emit printToQConsole(QString("Homing results for drive #%1:\n\tcable length = %2 "
                                    "[m]\n\tpulley angle = %3 [deg]")
                              .arg(active_actuators_id_[i])
-                             .arg(data->init_lengths[i])
-                             .arg(data->init_angles[i]));
-    }
+                             .arg(robot_vars.cables[i].length)
+                             .arg(robot_vars.cables[i].swivel_ang * 180. / M_PI));
     emit homingComplete();
   }
   else
@@ -707,13 +700,8 @@ bool HomingProprioceptive::ParseExtFile(const QString& filepath,
   QString field;
   try
   {
-    for (size_t i = 0; i < active_actuators_id_.size(); i++)
-    {
-      field = "init_angles";
-      home_data->init_angles.push_back(optimization_results[field.toStdString()].at(i));
-      field = "init_lengths";
-      home_data->init_lengths.push_back(optimization_results[field.toStdString()].at(i));
-    }
+    std::vector<double> init_pose = optimization_results["init_pose"];
+    home_data->init_pose.Fill(init_pose);
   }
   catch (json::type_error)
   {

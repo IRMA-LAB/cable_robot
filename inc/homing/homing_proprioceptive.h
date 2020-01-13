@@ -1,7 +1,7 @@
 /**
  * @file homing_proprioceptive.h
  * @author Simone Comari
- * @date 19 Jun 2019
+ * @date 13 Jan 2020
  * @brief This file includes classes necessary to implement the homing proprioceptive
  * algorithm.
  */
@@ -13,7 +13,6 @@
 #include <QString>
 
 #include "json.hpp"
-
 #include "StateMachine.h"
 #include "easylogging++.h"
 
@@ -87,15 +86,9 @@ class HomingProprioceptiveHomeData: public EventData
 {
  public:
   /**
-   * @brief init_lengths Cable lengths at homing position, resulting from optimization
-   * step.
+   * @brief init_pose Robot pose at homing position, resulting from optimization step.
    */
-  vect<double> init_lengths;
-  /**
-   * @brief init_angles Swivel pulley angles at homing position, resulting from
-   * optimization step.
-   */
-  vect<double> init_angles;
+  grabnum::Vector6d init_pose;
 };
 
 /**

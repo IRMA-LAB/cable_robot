@@ -12,10 +12,10 @@ constexpr double CableRobot::kCycleWaitTimeSec;
 constexpr char* CableRobot::kStatesStr_[];
 constexpr double CableRobot::kCutoffFreq_;
 
-CableRobot::CableRobot(QObject* parent, const grabcdpr::RobotParams &config)
+CableRobot::CableRobot(QObject* parent, const grabcdpr::RobotParams& params)
   : QObject(parent), StateMachine(ST_MAX_STATES), platform_(grabcdpr::TILT_TORSION),
-    log_buffer_(el::Loggers::getLogger("data")), stop_waiting_cmd_recv_(false),
-    is_waiting_(false), prev_state_(ST_MAX_STATES)
+    params_(params), log_buffer_(el::Loggers::getLogger("data")),
+    stop_waiting_cmd_recv_(false), is_waiting_(false), prev_state_(ST_MAX_STATES)
 {
   PrintStateTransition(prev_state_, ST_IDLE);
   prev_state_ = ST_IDLE;
@@ -31,13 +31,13 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::RobotParams &config)
   easycat2_ptr_ = new grabec::TestEasyCAT2Slave(slave_pos++);
   slaves_ptrs_.push_back(easycat2_ptr_);
 #endif
-  for (uint i = 0; i < config.actuators.size(); i++)
+  for (uint i = 0; i < params.actuators.size(); i++)
   {
     grabcdpr::CableVars cable;
     cdpr_status_.cables.push_back(cable);
-    actuators_ptrs_.push_back(new Actuator(i, slave_pos++, config.actuators[i], this));
+    actuators_ptrs_.push_back(new Actuator(i, slave_pos++, params.actuators[i], this));
     slaves_ptrs_.push_back(actuators_ptrs_[i]->GetWinch().GetServo());
-    if (config.actuators[i].active)
+    if (params.actuators[i].active)
     {
       active_actuators_id_.push_back(i);
       active_actuators_ptrs_.push_back(actuators_ptrs_[i]);
@@ -51,7 +51,7 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::RobotParams &config)
 
   // Setup data logging
   rt_logging_enabled_ = false;
-  rt_logging_mod_ = 1;
+  rt_logging_mod_     = 1;
   meas_.resize(active_actuators_id_.size());
   connect(this, SIGNAL(sendMsg(QByteArray)), &log_buffer_, SLOT(collectMsg(QByteArray)),
           Qt::QueuedConnection);
@@ -123,6 +123,15 @@ void CableRobot::UpdateHomeConfig(const id_t motor_id, const double cable_len,
                                   const double pulley_angle)
 {
   actuators_ptrs_[motor_id]->UpdateHomeConfig(cable_len, pulley_angle);
+}
+
+void CableRobot::UpdateHomeConfig(const grabnum::Vector6d& home_pose)
+{
+  grabcdpr::updateIK0(home_pose, params_, cdpr_status_);
+  std::vector<id_t> active_actuators_id = params_.activeActuatorsId();
+  for (uint8_t i = 0; i < active_actuators_id.size(); ++i)
+    UpdateHomeConfig(active_actuators_id[i], cdpr_status_.cables[i].length,
+                     cdpr_status_.cables[i].swivel_ang);
 }
 
 bool CableRobot::MotorEnabled(const id_t motor_id)
@@ -269,7 +278,7 @@ void CableRobot::StartRtLogging(const uint rt_cycle_multiplier)
 {
   pthread_mutex_lock(&mutex_);
   rt_logging_enabled_ = true;
-  rt_logging_mod_ = rt_cycle_multiplier;
+  rt_logging_mod_     = rt_cycle_multiplier;
   pthread_mutex_unlock(&mutex_);
 }
 

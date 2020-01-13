@@ -1,7 +1,7 @@
 /**
  * @file cablerobot.h
  * @author Simone Comari, Edoardo Idà
- * @date 10 Jan 2020
+ * @date 13 Jan 2020
  * @brief File containing the virtualization of the physical cable robot, in terms of
  * components, signalig and low level operations.
  */
@@ -17,7 +17,7 @@
 #include "StateMachine.h"
 #include "easylogging++.h"
 #include "inc/filters.h"
-#include "libcdpr/inc/cdpr_types.h"
+#include "libcdpr/inc/kinematics.h"
 #include "libgrabec/inc/ethercatmaster.h"
 #if INCLUDE_EASYCAT
 #include "slaves/easycat/TestEasyCAT1_slave.h"
@@ -79,7 +79,7 @@ class CableRobot: public QObject,
    * @param[in] parent The parent Qt object.
    * @param[in] config Configuration parameters of the cable robot.
    */
-  CableRobot(QObject* parent, const grabcdpr::RobotParams& config);
+  CableRobot(QObject* parent, const grabcdpr::RobotParams& params);
   ~CableRobot() override;
 
   /**
@@ -99,7 +99,7 @@ class CableRobot: public QObject,
 
   // Tuning params for waiting functions
   static constexpr double kCycleWaitTimeSec = 0.02; /**< [sec] Cycle time when waiting. */
-  static constexpr double kMaxWaitTimeSec   = 5.0; /**< [sec] Maximum waiting time. */
+  static constexpr double kMaxWaitTimeSec   = 5.0;  /**< [sec] Maximum waiting time. */
 
   /**
    * @brief Get a pointer to inquired actuator.
@@ -115,6 +115,7 @@ class CableRobot: public QObject,
    */
   const ActuatorStatus GetActuatorStatus(const id_t motor_id);
 
+  const grabcdpr::RobotVars& GetRobotVars() const { return cdpr_status_; }
   /**
    * @brief Update home configuration of all actuators at once.
    *
@@ -133,6 +134,11 @@ class CableRobot: public QObject,
    */
   void UpdateHomeConfig(const id_t motor_id, const double cable_len,
                         const double pulley_angle);
+  /**
+   * @brief Update home configuration of all actuators at once.
+   * @param[in] home_pose Platform pose at homing position.
+   */
+  void UpdateHomeConfig(const grabnum::Vector6d& home_pose);
 
   /**
    * @brief Check if inquired motor is enabled.
@@ -378,6 +384,7 @@ class CableRobot: public QObject,
  private:
   grabcdpr::PlatformVars platform_;
   grabcdpr::RobotVars cdpr_status_;
+  grabcdpr::RobotParams params_;
 
   // Timers for status updates
   static constexpr int kMotorStatusIntervalMsec_    = 100;

@@ -1,7 +1,7 @@
 /**
  * @file actuator.h
  * @author Simone Comari, Edoardo Idà
- * @date 10 Jan 2020
+ * @date 13 Jan 2020
  * @brief File containing the virtualization of a single actuator of the cable robot.
  */
 
@@ -48,7 +48,7 @@ class Actuator: public QObject, public StateMachine
   Actuator(const id_t id, const uint8_t slave_position,
            const grabcdpr::ActuatorParams& params, QObject* parent = nullptr);
 
-  ~Actuator();
+  ~Actuator() override;
 
   /**
    * @brief The actuator states enum
