@@ -204,7 +204,7 @@ void HomingInterfaceProprioceptive::on_pushButton_start_clicked()
   ui->progressBar_acquisition->setValue(0);
   ui->lineEdit_extFile->clear();
   ui->radioButton_external->toggled(true);
-  ui->groupBox_optimization->setDisabled(true);
+  ui->pushButton_ok->setDisabled(true);
   acquisition_complete_ = false;
   connect(&app_, SIGNAL(progressValue(int)), this, SLOT(updateAcquisitionProgress(int)),
           Qt::ConnectionType::DirectConnection);
@@ -217,7 +217,6 @@ void HomingInterfaceProprioceptive::on_radioButton_internal_clicked()
   ui->radioButton_external->toggled(false);
   ui->lineEdit_extFile->setDisabled(true);
   ui->pushButton_extFile->setDisabled(true);
-  ui->pushButton_ok->setEnabled(true);
 }
 
 void HomingInterfaceProprioceptive::on_radioButton_external_clicked()
@@ -226,8 +225,6 @@ void HomingInterfaceProprioceptive::on_radioButton_external_clicked()
   ui->radioButton_internal->toggled(false);
   ui->lineEdit_extFile->setEnabled(true);
   ui->pushButton_extFile->setEnabled(true);
-  ui->pushButton_ok->setEnabled(acquisition_complete_ &&
-                                !ui->lineEdit_extFile->text().isEmpty());
 }
 
 void HomingInterfaceProprioceptive::on_pushButton_extFile_clicked()
@@ -376,7 +373,7 @@ void HomingInterfaceProprioceptive::updateOptimizationProgress(const int value)
 void HomingInterfaceProprioceptive::handleAcquisitionComplete()
 {
   CLOG(INFO, "event") << "Acquisition complete";
-  ui->groupBox_optimization->setEnabled(true);
+  ui->pushButton_ok->setEnabled(true);
   acquisition_complete_ = true;
 
   disconnect(&app_, SIGNAL(progressValue(int)), this,

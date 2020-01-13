@@ -66,7 +66,8 @@ void LogActuatorStatusMsg(el::Logger* data_logger, const ActuatorStatusMsg& msg)
 
 void LogBuffer::flush()
 {
-  logger_->flush();
+  std::string path = "/tmp/cable-robot-logs/" + logger_->id() + ".log";
+  QFile::resize(path.c_str(), 0);
 }
 
 void LogBuffer::stop()
