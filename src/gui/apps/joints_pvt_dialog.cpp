@@ -154,15 +154,34 @@ void JointsPVTDialog::progressUpdate(const int progress_value, const double time
 void JointsPVTDialog::on_pushButton_addTraj_clicked()
 {
   CLOG(TRACE, "event");
-  line_edits_.append(new FileSelectionForm(this));
+  const int n = line_edits_.size();
+  line_edits_.append(new FileSelectionForm(this, n));
   ui->verticalLayout_inputSource->insertWidget(input_form_pos_++, line_edits_.last());
   ui->pushButton_removeTraj->setEnabled(true);
+  // Connect all line edits so that parent director is always up-to-date
+  for (int i = 0; i < n; ++i)
+  {
+    connect(line_edits_[i], SIGNAL(parentDirChanged(QString)), line_edits_[n],
+            SLOT(setParentDirectory(QString)));
+    connect(line_edits_[n], SIGNAL(parentDirChanged(QString)), line_edits_[i],
+            SLOT(setParentDirectory(QString)));
+  }
 }
 
 void JointsPVTDialog::on_pushButton_removeTraj_clicked()
 {
   CLOG(TRACE, "event");
   ui->verticalLayout_inputSource->removeWidget(line_edits_.last());
+  // Disconnect all line edits
+  const int n = line_edits_.size() - 1;
+  for (int i = 0; i < n; ++i)
+  {
+    disconnect(line_edits_[i], SIGNAL(parentDirChanged(QString)), line_edits_[n],
+            SLOT(setParentDirectory(QString)));
+    disconnect(line_edits_[n], SIGNAL(parentDirChanged(QString)), line_edits_[i],
+            SLOT(setParentDirectory(QString)));
+  }
+  // Safely remove line edit object
   delete line_edits_.last();
   line_edits_.pop_back();
   if (--input_form_pos_ <= kInputFormPosInit_)

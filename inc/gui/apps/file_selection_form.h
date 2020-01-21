@@ -31,7 +31,7 @@ class FileSelectionForm: public QWidget
    * @brief Full constructor.
    * @param parent An optional parent widget.
    */
-  explicit FileSelectionForm(QWidget* parent = nullptr);
+  explicit FileSelectionForm(QWidget* parent = nullptr, const int num = 0);
   ~FileSelectionForm();
 
   /**
@@ -45,11 +45,27 @@ class FileSelectionForm: public QWidget
    */
   QString getFilepath() const;
 
+ signals:
+  /**
+   * @brief parentDirChanged
+   * @param parent_dir
+   */
+  void parentDirChanged(const QString& parent_dir) const;
+
+ public slots:
+  /**
+   * @brief setParentDirectory
+   * @param parent_dir
+   */
+  void setParentDirectory(const QString& parent_dir) { parent_dir_ = parent_dir; }
+
  private slots:
   void on_pushButton_fileSelection_clicked();
 
  private:
   Ui::FileSelectionForm* ui;
+
+  QString parent_dir_ = "../..";
 };
 
 #endif // CABLE_ROBOT_JOINTS_PVT_INPUT_FORM_H
