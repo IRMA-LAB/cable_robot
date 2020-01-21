@@ -47,6 +47,8 @@ CalibExcitation::CalibExcitation(QObject* parent, CableRobot* robot, const vect<
   controller_joints_ptv_->SetMotorsID(active_actuators_id_);
   connect(controller_joints_ptv_, SIGNAL(trajectoryCompleted()), this,
           SLOT(stopLogging()), Qt::ConnectionType::QueuedConnection);
+
+  robot_ptr_->FlushDataLogs();
 }
 
 CalibExcitation::~CalibExcitation()
