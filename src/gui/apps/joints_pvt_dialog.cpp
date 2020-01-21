@@ -22,6 +22,8 @@ JointsPVTDialog::JointsPVTDialog(QWidget* parent, CableRobot* robot,
   ui->verticalLayout_inputSource->insertWidget(kInputFormPosInit_ - 1,
                                                line_edits_.last());
 
+  screen_width_ = QGuiApplication::screens()[0]->geometry().width();
+
   connect(&app_, SIGNAL(transitionComplete()), this, SLOT(handleTransitionCompleted()));
   connect(&app_, SIGNAL(trajectoryComplete()), this, SLOT(handleTrajectoryCompleted()));
   connect(&app_, SIGNAL(trajectoryProgress(int, double)), this,
@@ -335,7 +337,10 @@ void JointsPVTDialog::updatePlots(const TrajectorySet& traj_set)
       case TrajectoryType::NONE:
         break;
     }
-    chart_view->setMinimumWidth(traj_display_.width() / 2);
+    if (this->width() > screen_width_ / 2)
+      chart_view->setMaximumWidth(screen_width_ / 4);
+    else
+      chart_view->setMinimumWidth(traj_display_.width() / 2);
     chart_views_.append(QSharedPointer<ChartView>(chart_view));
 
     int row = static_cast<int>(i) / 2;
