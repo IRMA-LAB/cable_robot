@@ -13,6 +13,10 @@ HomingDialog::HomingDialog(QWidget* parent, CableRobot* robot)
   : QDialog(parent), ui(new Ui::HomingDialog), robot_ptr_(robot), homing_method_(NONE)
 {
   ui->setupUi(this);
+  // TODO: remove this
+  ui->comboBox_homingMethod->removeItem(FUSION);
+  ui->comboBox_homingMethod->removeItem(VISION);
+  //
 }
 
 HomingDialog::~HomingDialog()

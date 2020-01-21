@@ -37,6 +37,11 @@ MainGUI::MainGUI(QWidget* parent, const grabcdpr::RobotParams &config)
   connect(pushButton_debug, SIGNAL(clicked()), this, SLOT(pushButton_debug_clicked()));
   ui->groupBox_app->setEnabled(true);
 #endif
+
+  // TODO: remove this
+  ui->comboBox_apps->removeItem(2);
+  ui->comboBox_apps->removeItem(1);
+  //
 }
 
 MainGUI::~MainGUI()
