@@ -1,7 +1,7 @@
 /**
  * @file joints_pvt_app.h
  * @author Simone Comari
- * @date 03 Jul 2019
+ * @date 26 Aug 2019
  * @brief This file includes the implementation of the joints pvt app.
  */
 
@@ -17,6 +17,16 @@
 #include "ctrl/controller_joints_pvt.h"
 #include "robot/cablerobot.h"
 
+// clang-format off
+ENUM_CLASS(TrajectoryType,
+           CABLE_LENGTH   = 0,
+           CABLE_SPEED    = 5,
+           MOTOR_POSITION = 1,
+           MOTOR_SPEED    = 2,
+           MOTOR_TORQUE   = 3,
+           NONE           = 4)
+// clang-format on
+
 /**
  * @brief A convenient structure to include a generic joints trajectory type.
  *
@@ -25,7 +35,7 @@
  */
 struct TrajectorySet
 {
-  ControlMode traj_type; /**< Trajectory type, defining which one is not empty. */
+  ushort traj_type; /**< Trajectory type, defining which one is not empty. */
   vect<TrajectoryD> traj_platform;   /**< Platform trajectory in global 3D coordinates. */
   vect<TrajectoryD> traj_cables_len; /**< Cable lengths trajectories, one per actuator. */
   vect<TrajectoryI> traj_motors_pos; /**< Motor positions trajectories, one per motor. */
@@ -177,11 +187,13 @@ class JointsPVTApp: public QObject, public StateMachine
 
   void setCablesLenTraj(const bool relative, const vect<id_t>& motors_id, QTextStream& s,
                         TrajectorySet& traj_set);
-  void setMotorPosTraj(const bool relative, const vect<id_t>& motors_id, QTextStream& s,
+  void setCablesVelTraj(const vect<id_t>& motors_id, QTextStream& s,
+                        TrajectorySet& traj_set);
+  void setMotorsPosTraj(const bool relative, const vect<id_t>& motors_id, QTextStream& s,
                        TrajectorySet& traj_set);
-  void setMotorVelTraj(const vect<id_t>& motors_id, QTextStream& s,
+  void setMotorsVelTraj(const vect<id_t>& motors_id, QTextStream& s,
                        TrajectorySet& traj_set);
-  void setMotorTorqueTraj(const bool relative, const vect<id_t>& motors_id,
+  void setMotorsTorqueTraj(const bool relative, const vect<id_t>& motors_id,
                           QTextStream& s, TrajectorySet& traj_set);
 
  public:

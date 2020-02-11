@@ -16,7 +16,11 @@
    </font>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Joints PVT Control Panel</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="../../resources/resources.qrc">
+    <normaloff>:/img/img/grab.jpg</normaloff>:/img/img/grab.jpg</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_4" stretch="0,1,0">
    <item>
@@ -315,6 +319,8 @@
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../../resources/resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

@@ -1,7 +1,7 @@
 /**
  * @file winch.cpp
  * @author Simone Comari, Edoardo Idà
- * @date 13 May 2019
+ * @date 11 Feb 2020
  * @brief This file includes definitions of class declared in winch.h.
  */
 
@@ -16,7 +16,7 @@ void Cable::UpdateCableLen(const double delta_length)
   length_ = home_length_ + delta_length;
 }
 
-double Cable::GetLength(const double delta_length)
+double Cable::GetUpdatedLength(const double delta_length)
 {
   UpdateCableLen(delta_length);
   return length_;
@@ -77,10 +77,10 @@ void Winch::UpdateConfig(const int32_t servo_pos)
 
 double Winch::CountsToLength(const int counts) const
 {
-  return counts * params_.CountsToLengthFactor();
+  return counts * params_.transmission_ratio;
 }
 
 int Winch::LengthToCounts(const double length) const
 {
-  return static_cast<int>(length / params_.CountsToLengthFactor());
+  return static_cast<int>(length / params_.transmission_ratio);
 }

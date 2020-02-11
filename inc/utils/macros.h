@@ -1,3 +1,10 @@
+/**
+ * @file macros.h
+ * @author Simone Comari
+ * @date 11 Feb 2020
+ * @brief File containing useful macros used troughout cable robot firmware.
+ */
+
 #ifndef CABLE_ROBOT_MACROS_H
 #define CABLE_ROBOT_MACROS_H
 
@@ -5,6 +12,7 @@
 
 //---------------------- DECLARATIONS ------------------------------------------------//
 
+// @cond DO_NOT_DOCUMENT
 #ifndef MSG_SERIALIZATION_DECLARE
 #define MSG_SERIALIZATION_DECLARE(_MsgType)                                              \
   QDataStream& operator<<(QDataStream& ostream, const _MsgType& data);                   \
@@ -74,5 +82,6 @@
     return buf;                                                                          \
   }
 #endif
+// @endcond
 
 #endif // CABLE_ROBOT_MACROS_H

@@ -22,6 +22,8 @@ JointsPVTDialog::JointsPVTDialog(QWidget* parent, CableRobot* robot,
   ui->verticalLayout_inputSource->insertWidget(kInputFormPosInit_ - 1,
                                                line_edits_.last());
 
+  screen_width_ = QGuiApplication::screens()[0]->geometry().width();
+
   connect(&app_, SIGNAL(transitionComplete()), this, SLOT(handleTransitionCompleted()));
   connect(&app_, SIGNAL(trajectoryComplete()), this, SLOT(handleTrajectoryCompleted()));
   connect(&app_, SIGNAL(trajectoryProgress(int, double)), this,
@@ -88,6 +90,9 @@ void JointsPVTDialog::handleTrajectoryCompleted()
   ui->progressBar->setValue(0);
   for (const auto& chart_view : chart_views_)
     chart_view->removeHighlight();
+  // Enable pausing only in position or cable length control mode
+  ui->pushButton_pause->setEnabled(
+    app_.getTrajectorySet(traj_counter_).traj_type < TrajectoryType::MOTOR_SPEED);
   app_.runTransition(traj_counter_);
   connect(this, SIGNAL(progressUpdateTrigger(int, double)), this,
           SLOT(progressUpdate(int, double)), Qt::QueuedConnection);
@@ -108,7 +113,7 @@ void JointsPVTDialog::progressUpdate(const int progress_value, const double time
   const TrajectorySet traj_set = app_.getTrajectorySet(traj_counter_);
   switch (traj_set.traj_type)
   {
-    case CABLE_LENGTH:
+    case TrajectoryType::CABLE_LENGTH:
       for (uint i = 0; i < traj_set.traj_cables_len.size(); i++)
       {
         WayPointD waypoint =
@@ -116,31 +121,32 @@ void JointsPVTDialog::progressUpdate(const int progress_value, const double time
         chart_views_[i]->highlightCurrentPoint(QPointF(waypoint.ts, waypoint.value));
       }
       break;
-    case MOTOR_POSITION:
-      for (uint i = 0; i < traj_set.traj_cables_len.size(); i++)
+    case TrajectoryType::MOTOR_POSITION:
+      for (uint i = 0; i < traj_set.traj_motors_pos.size(); i++)
       {
         WayPointI waypoint =
           traj_set.traj_motors_pos[i].waypointFromAbsTime(timestamp, 0.01);
         chart_views_[i]->highlightCurrentPoint(QPointF(waypoint.ts, waypoint.value));
       }
       break;
-    case MOTOR_SPEED:
-      for (uint i = 0; i < traj_set.traj_cables_len.size(); i++)
+    case TrajectoryType::CABLE_SPEED:
+    case TrajectoryType::MOTOR_SPEED:
+      for (uint i = 0; i < traj_set.traj_motors_vel.size(); i++)
       {
         WayPointI waypoint =
           traj_set.traj_motors_vel[i].waypointFromAbsTime(timestamp, 0.01);
         chart_views_[i]->highlightCurrentPoint(QPointF(waypoint.ts, waypoint.value));
       }
       break;
-    case MOTOR_TORQUE:
-      for (uint i = 0; i < traj_set.traj_cables_len.size(); i++)
+    case TrajectoryType::MOTOR_TORQUE:
+      for (uint i = 0; i < traj_set.traj_motors_torque.size(); i++)
       {
         WayPointS waypoint =
           traj_set.traj_motors_torque[i].waypointFromAbsTime(timestamp, 0.01);
         chart_views_[i]->highlightCurrentPoint(QPointF(waypoint.ts, waypoint.value));
       }
       break;
-    case NONE:
+    case TrajectoryType::NONE:
       break;
   }
 }
@@ -150,15 +156,34 @@ void JointsPVTDialog::progressUpdate(const int progress_value, const double time
 void JointsPVTDialog::on_pushButton_addTraj_clicked()
 {
   CLOG(TRACE, "event");
-  line_edits_.append(new FileSelectionForm(this));
+  const int n = line_edits_.size();
+  line_edits_.append(new FileSelectionForm(this, n));
   ui->verticalLayout_inputSource->insertWidget(input_form_pos_++, line_edits_.last());
   ui->pushButton_removeTraj->setEnabled(true);
+  // Connect all line edits so that parent director is always up-to-date
+  for (int i = 0; i < n; ++i)
+  {
+    connect(line_edits_[i], SIGNAL(parentDirChanged(QString)), line_edits_[n],
+            SLOT(setParentDirectory(QString)));
+    connect(line_edits_[n], SIGNAL(parentDirChanged(QString)), line_edits_[i],
+            SLOT(setParentDirectory(QString)));
+  }
 }
 
 void JointsPVTDialog::on_pushButton_removeTraj_clicked()
 {
   CLOG(TRACE, "event");
   ui->verticalLayout_inputSource->removeWidget(line_edits_.last());
+  // Disconnect all line edits
+  const int n = line_edits_.size() - 1;
+  for (int i = 0; i < n; ++i)
+  {
+    disconnect(line_edits_[i], SIGNAL(parentDirChanged(QString)), line_edits_[n],
+            SLOT(setParentDirectory(QString)));
+    disconnect(line_edits_[n], SIGNAL(parentDirChanged(QString)), line_edits_[i],
+            SLOT(setParentDirectory(QString)));
+  }
+  // Safely remove line edit object
   delete line_edits_.last();
   line_edits_.pop_back();
   if (--input_form_pos_ <= kInputFormPosInit_)
@@ -185,7 +210,9 @@ void JointsPVTDialog::on_pushButton_read_clicked()
 
   // Clear all trajectories.
   app_.clearAllTrajectories();
-  num_traj_ = 0; // reset
+  // Reset
+  num_traj_ = 0;
+  traj_counter_ = 0;
 
   // Read trajectories from each file.
   for (const QString& input_filename : input_filenames)
@@ -200,7 +227,7 @@ void JointsPVTDialog::on_pushButton_read_clicked()
     num_traj_++;
   }
 
-  updatePlots(app_.getTrajectorySet(0)); // display first trajectory in queue
+  updatePlots(app_.getTrajectorySet(traj_counter_)); // display first trajectory in queue
   ui->pushButton_start->setEnabled(true);
 }
 
@@ -213,15 +240,20 @@ void JointsPVTDialog::on_pushButton_start_clicked()
 {
   CLOG(TRACE, "event");
 
+  if (traj_counter_ > 0)
+  {
+    traj_counter_ = 0; // reset
+    updatePlots(app_.getTrajectorySet(traj_counter_)); // display 1st trajectory in queue
+  }
+
   ui->pushButton_start->setDisabled(true);
-#if DEBUG_GUI == 1
-  ui->pushButton_pause->setEnabled(true);
-#endif
+  // Enable pausing only in position or cable length control mode
+  if (app_.getTrajectorySet(traj_counter_).traj_type < TrajectoryType::MOTOR_SPEED)
+    ui->pushButton_pause->setEnabled(true);
   ui->pushButton_stop->setEnabled(true);
   ui->pushButton_return->setDisabled(true);
   ui->groupBox_inputs->setDisabled(true);
 
-  traj_counter_ = 0; // reset
   ui->progressBar->setFormat(
     QString("Transition %1 in progress... %p%").arg(traj_counter_));
   ui->progressBar->setValue(0);
@@ -289,22 +321,26 @@ void JointsPVTDialog::updatePlots(const TrajectorySet& traj_set)
     ChartView* chart_view = new ChartView(chart);
     switch (traj_set.traj_type)
     {
-      case CABLE_LENGTH:
+      case TrajectoryType::CABLE_LENGTH:
         chart_view->setCableTrajectory(traj_set.traj_cables_len[i]);
         break;
-      case MOTOR_POSITION:
+      case TrajectoryType::MOTOR_POSITION:
         chart_view->setMotorPosTrajectory(traj_set.traj_motors_pos[i]);
         break;
-      case MOTOR_SPEED:
+      case TrajectoryType::CABLE_SPEED:
+      case TrajectoryType::MOTOR_SPEED:
         chart_view->setMotorVelTrajectory(traj_set.traj_motors_vel[i]);
         break;
-      case MOTOR_TORQUE:
+      case TrajectoryType::MOTOR_TORQUE:
         chart_view->setMotorTorqueTrajectory(traj_set.traj_motors_torque[i]);
         break;
-      case NONE:
+      case TrajectoryType::NONE:
         break;
     }
-    chart_view->setMinimumWidth(traj_display_.width() / 2);
+    if (this->width() > screen_width_ / 2)
+      chart_view->setMaximumWidth(screen_width_ / 4);
+    else
+      chart_view->setMinimumWidth(traj_display_.width() / 2);
     chart_views_.append(QSharedPointer<ChartView>(chart_view));
 
     int row = static_cast<int>(i) / 2;

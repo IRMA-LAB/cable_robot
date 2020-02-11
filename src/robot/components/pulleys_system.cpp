@@ -1,7 +1,7 @@
 /**
  * @file pulleys_system.cpp
  * @author Simone Comari, Edoardo Idà
- * @date 11 Mar 2019
+ * @date 10 Jan 2020
  * @brief This file includes definitions of class declared in pulleys_system.h.
  */
 
@@ -30,10 +30,10 @@ void PulleysSystem::UpdateConfig(const int counts)
 
 double PulleysSystem::CountsToPulleyAngleDeg(const int counts) const
 {
-  return counts * params_.PulleyAngleFactorDeg();
+  return counts * params_.pulleyAngleFactorDeg();
 }
 
 double PulleysSystem::CountsToPulleyAngleRad(const int counts) const
 {
-  return counts * params_.PulleyAngleFactorRad();
+  return counts * params_.pulleyAngleFactorRad();
 }

@@ -1,7 +1,7 @@
 /**
  * @file calibration_dialog.h
  * @author Simone Comari
- * @date 02 Jul 2019
+ * @date 10 Jan 2020
  * @brief This file include the calibration dialog class.
  */
 
@@ -36,7 +36,8 @@ class CalibrationDialog: public QDialog
    * calibration procedure interface.
    * @param[in] params Robot parameters.
    */
-  CalibrationDialog(QWidget* parent, CableRobot* robot, const grabcdpr::RobotParams& params);
+  CalibrationDialog(QWidget* parent, CableRobot* robot,
+                    const grabcdpr::RobotParams& params);
   ~CalibrationDialog();
 
  signals:

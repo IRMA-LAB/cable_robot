@@ -1,7 +1,7 @@
 /**
  * @file controller_joints_pvt.h
  * @author Simone Comari
- * @date 03 Jul 2019
+ * @date 10 Jan 2020
  * @brief This file includes the implementation of the controller for the joints pvt app.
  */
 
@@ -140,6 +140,7 @@ class ControllerJointsPVT: public QObject, public ControllerBase
  private:
   static constexpr double kMinArrestTime_       = 1.0;     // [sec]
   static constexpr double kVel2ArrestTimeRatio_ = 1500000; // [counts/sec^2]
+  static constexpr short kTorqueStopValue_ = -300; // [nominal points]
 
   enum BitPosition
   {
@@ -165,6 +166,7 @@ class ControllerJointsPVT: public QObject, public ControllerBase
   vectI motors_vel_;
   double slowing_exp_;
   double arrest_time_; // [sec]
+  double time_since_stop_request_; // [sec]
 
   WinchesTorqueControl winches_controller_;
 
@@ -176,7 +178,7 @@ class ControllerJointsPVT: public QObject, public ControllerBase
   void processTrajTime();
 
   template <typename T>
-  T getTrajectoryPointValue(const id_t id, const vect<Trajectory<T>>& trajectories);
+  T getTrajectoryPointValue(const id_t id, const vect<Trajectory<T>>& trajectories, const ControlMode mode);
 
   void reset();
   void resetTime();

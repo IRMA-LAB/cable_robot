@@ -114,19 +114,22 @@ bool JointsPVTApp::readTrajectories(const QString& ifilepath)
   // Fill trajectories accordingly reading text body line-by-line
   switch (traj_set.traj_type)
   {
-    case CABLE_LENGTH:
+    case TrajectoryType::CABLE_LENGTH:
       setCablesLenTraj(relative, motors_id, s, traj_set);
       break;
-    case MOTOR_POSITION:
-      setMotorPosTraj(relative, motors_id, s, traj_set);
+    case TrajectoryType::CABLE_SPEED:
+      setCablesVelTraj(motors_id, s, traj_set);
       break;
-    case MOTOR_SPEED:
-      setMotorVelTraj(motors_id, s, traj_set);
+    case TrajectoryType::MOTOR_POSITION:
+      setMotorsPosTraj(relative, motors_id, s, traj_set);
       break;
-    case MOTOR_TORQUE:
-      setMotorTorqueTraj(relative, motors_id, s, traj_set);
+    case TrajectoryType::MOTOR_SPEED:
+      setMotorsVelTraj(motors_id, s, traj_set);
       break;
-    case NONE:
+    case TrajectoryType::MOTOR_TORQUE:
+      setMotorsTorqueTraj(relative, motors_id, s, traj_set);
+      break;
+    case TrajectoryType::NONE:
       return false;
   }
   traj_sets_.append(traj_set);
@@ -232,7 +235,7 @@ STATE_DEFINE(JointsPVTApp, Transition, JointsPVTAppData)
 
   static constexpr double kMaxCableSpeed = 0.006; // [m/s]
 
-  if (traj_sets_[data->traj_idx].traj_type == CABLE_LENGTH)
+  if (traj_sets_[data->traj_idx].traj_type == TrajectoryType::CABLE_LENGTH)
   {
     vect<TrajectoryD> transition_trajectories =
       traj_sets_[data->traj_idx].traj_cables_len;
@@ -267,7 +270,7 @@ STATE_DEFINE(JointsPVTApp, Transition, JointsPVTAppData)
     controller_.setCablesLenTrajectories(transition_trajectories);
     pthread_mutex_unlock(&robot_ptr_->Mutex());
   }
-  else if (traj_sets_[data->traj_idx].traj_type == MOTOR_POSITION)
+  else if (traj_sets_[data->traj_idx].traj_type == TrajectoryType::MOTOR_POSITION)
   {
     vect<TrajectoryI> transition_trajectories =
       traj_sets_[data->traj_idx].traj_motors_pos;
@@ -298,6 +301,8 @@ STATE_DEFINE(JointsPVTApp, Transition, JointsPVTAppData)
     controller_.setMotorsPosTrajectories(transition_trajectories);
     pthread_mutex_unlock(&robot_ptr_->Mutex());
   }
+  else
+    emit transitionComplete(); // no need for transition in torque or velocity mode
 }
 
 STATE_DEFINE(JointsPVTApp, TrajectoryFollow, JointsPVTAppData)
@@ -313,28 +318,29 @@ STATE_DEFINE(JointsPVTApp, TrajectoryFollow, JointsPVTAppData)
 
   switch (traj_sets_[data->traj_idx].traj_type)
   {
-    case CABLE_LENGTH:
+    case TrajectoryType::CABLE_LENGTH:
       pthread_mutex_lock(&robot_ptr_->Mutex());
       controller_.setCablesLenTrajectories(traj_sets_[data->traj_idx].traj_cables_len);
       pthread_mutex_unlock(&robot_ptr_->Mutex());
       break;
-    case MOTOR_POSITION:
+    case TrajectoryType::MOTOR_POSITION:
       pthread_mutex_lock(&robot_ptr_->Mutex());
       controller_.setMotorsPosTrajectories(traj_sets_[data->traj_idx].traj_motors_pos);
       pthread_mutex_unlock(&robot_ptr_->Mutex());
       break;
-    case MOTOR_SPEED:
+    case TrajectoryType::CABLE_SPEED:
+    case TrajectoryType::MOTOR_SPEED:
       pthread_mutex_lock(&robot_ptr_->Mutex());
       controller_.setMotorsVelTrajectories(traj_sets_[data->traj_idx].traj_motors_vel);
       pthread_mutex_unlock(&robot_ptr_->Mutex());
       break;
-    case MOTOR_TORQUE:
+    case TrajectoryType::MOTOR_TORQUE:
       pthread_mutex_lock(&robot_ptr_->Mutex());
       controller_.setMotorsTorqueTrajectories(
         traj_sets_[data->traj_idx].traj_motors_torque);
       pthread_mutex_unlock(&robot_ptr_->Mutex());
       break;
-    case NONE:
+    case TrajectoryType::NONE:
       return;
   }
 }
@@ -369,7 +375,29 @@ void JointsPVTApp::setCablesLenTraj(const bool relative, const vect<id_t>& motor
   }
 }
 
-void JointsPVTApp::setMotorPosTraj(const bool relative, const vect<id_t>& motors_id,
+void JointsPVTApp::setCablesVelTraj(const vect<id_t>& motors_id, QTextStream& s,
+                                    TrajectorySet& traj_set)
+{
+  CLOG(INFO, "event") << "File contains cables velocity trajectories";
+  traj_set.traj_motors_vel.resize(motors_id.size());
+  for (size_t i = 0; i < motors_id.size(); i++)
+    traj_set.traj_motors_vel[i].id = motors_id[i];
+  while (!s.atEnd())
+  {
+    QStringList line = s.readLine().split(" ");
+    for (auto& traj : traj_set.traj_motors_vel)
+      traj.timestamps.push_back(line[0].toDouble());
+    for (int i = 1; i < line.size(); i++)
+    {
+      int motor_vel = robot_ptr_->GetActuator(motors_id[static_cast<size_t>(i)])
+                        ->GetWinch()
+                        .LengthToCounts(line[i].toDouble()); // m/s --> counts/s
+      traj_set.traj_motors_vel[static_cast<size_t>(i) - 1].values.push_back(motor_vel);
+    }
+  }
+}
+
+void JointsPVTApp::setMotorsPosTraj(const bool relative, const vect<id_t>& motors_id,
                                    QTextStream& s, TrajectorySet& traj_set)
 {
   CLOG(INFO, "event") << QString("File contains %1 motors position trajectories")
@@ -397,7 +425,7 @@ void JointsPVTApp::setMotorPosTraj(const bool relative, const vect<id_t>& motors
   }
 }
 
-void JointsPVTApp::setMotorVelTraj(const vect<id_t>& motors_id, QTextStream& s,
+void JointsPVTApp::setMotorsVelTraj(const vect<id_t>& motors_id, QTextStream& s,
                                    TrajectorySet& traj_set)
 {
   CLOG(INFO, "event") << "File contains motors velocity trajectories";
@@ -415,7 +443,7 @@ void JointsPVTApp::setMotorVelTraj(const vect<id_t>& motors_id, QTextStream& s,
   }
 }
 
-void JointsPVTApp::setMotorTorqueTraj(const bool relative, const vect<id_t>& motors_id,
+void JointsPVTApp::setMotorsTorqueTraj(const bool relative, const vect<id_t>& motors_id,
                                       QTextStream& s, TrajectorySet& traj_set)
 {
   CLOG(INFO, "event") << QString("File contains %1 motors torque trajectories")

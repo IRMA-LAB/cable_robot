@@ -1,7 +1,7 @@
 /**
  * @file main_gui.h
  * @author Simone Comari
- * @date 03 Jul 2019
+ * @date 10 Jan 2020
  * @brief This file takes care of the functionalities of the main GUI of cable robot app.
  *
  * The functionalities of the main GUI include buttons management, signaling with children
@@ -53,7 +53,7 @@ class MainGUI: public QDialog
  public:
   /**
    * @brief MainGUI constructor.
-   * @param parent The parent Qt object.
+   * @param[in] parent The parent Qt object.
    * @param[in] config The configuration parameters of the cable robot.
    */
   MainGUI(QWidget* parent, const grabcdpr::RobotParams& robot_config);

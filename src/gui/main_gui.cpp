@@ -1,7 +1,7 @@
-﻿/**
+/**
  * @file main_gui.cpp
  * @author Simone Comari
- * @date 17 Jul 2019
+ * @date 10 Jan 2020
  * @brief This file includes definitions of classes present in main_gui.h.
  */
 
@@ -703,7 +703,7 @@ bool MainGUI::ExitReadyStateRequest()
 {
   QMessageBox::StandardButton reply = QMessageBox::question(
     this, "Robot ready",
-    "If you proceed with direct manual motor control motors will be"
+    "If you proceed with direct manual motor control motors will be "
     "disabled and you will have to repeat the homing procedure "
     "before starting a new application.\nAre you sure you want to continue?",
     QMessageBox::Yes | QMessageBox::No);

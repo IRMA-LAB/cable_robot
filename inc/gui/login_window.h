@@ -1,7 +1,7 @@
 /**
  * @file login_window.h
  * @author Simone Comari
- * @date 17 Jul 2019
+ * @date 10 Jan 2020
  * @brief This file takes care of the implementation of the login window of cable robot
  * app.
  */

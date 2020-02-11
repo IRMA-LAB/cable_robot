@@ -1,7 +1,7 @@
-﻿/**
+/**
  * @file homing_interface_proprioceptive.cpp
  * @author Simone Comari
- * @date 18 Jul 2019
+ * @date 13 Jan 2020
  * @brief This file includes definitions of classes present in
  * homing_interface_proprioceptive.h.
  */
@@ -207,7 +207,6 @@ void HomingInterfaceProprioceptiveWidget::on_radioButton_internal_clicked()
   ui->radioButton_external->toggled(false);
   ui->lineEdit_extFile->setDisabled(true);
   ui->pushButton_extFile->setDisabled(true);
-  ui->pushButton_ok->setEnabled(true);
 }
 
 void HomingInterfaceProprioceptiveWidget::on_radioButton_external_clicked()
@@ -216,8 +215,6 @@ void HomingInterfaceProprioceptiveWidget::on_radioButton_external_clicked()
   ui->radioButton_internal->toggled(false);
   ui->lineEdit_extFile->setEnabled(true);
   ui->pushButton_extFile->setEnabled(true);
-  ui->pushButton_ok->setEnabled(acquisition_complete_ &&
-                                !ui->lineEdit_extFile->text().isEmpty());
 }
 
 void HomingInterfaceProprioceptiveWidget::on_pushButton_extFile_clicked()
@@ -301,7 +298,6 @@ void HomingInterfaceProprioceptiveWidget::updateOptimizationProgress(const int v
 void HomingInterfaceProprioceptiveWidget::handleAcquisitionComplete()
 {
   CLOG(INFO, "event") << "Acquisition complete";
-  ui->radioButton_internal->setEnabled(true);
   ui->pushButton_ok->setEnabled(true);
   acquisition_complete_ = true;
 

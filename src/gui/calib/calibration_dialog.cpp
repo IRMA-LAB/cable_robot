@@ -1,7 +1,7 @@
 /**
  * @file calibration_dialog.cpp
  * @author Simone Comari
- * @date 02 Jul 2019
+ * @date 10 Jan 2020
  * @brief This file includes definitions of class present in calibration_dialog.h.
  */
 

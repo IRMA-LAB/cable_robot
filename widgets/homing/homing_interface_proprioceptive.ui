@@ -535,6 +535,9 @@
    </item>
    <item>
     <widget class="QGroupBox" name="groupBox_optimization">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
      <property name="font">
       <font>
        <pointsize>16</pointsize>
@@ -552,7 +555,7 @@
         <item>
          <widget class="QRadioButton" name="radioButton_internal">
           <property name="enabled">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
           <property name="sizePolicy">
            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">

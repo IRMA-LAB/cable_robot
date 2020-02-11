@@ -43,6 +43,8 @@ class JointsPVTDialog;
  *
  * When pausing and resuming the robot will smoothly stop/start yet following the exact
  * same trajectory, from a setpoint point of view.
+ *
+ * @todo implementation of 3D trajectory display
  */
 class JointsPVTDialog: public QDialog
 {
@@ -97,6 +99,7 @@ class JointsPVTDialog: public QDialog
   QList<QSharedPointer<ChartView>> chart_views_;
   QVector<FileSelectionForm*> line_edits_;
   quint8 input_form_pos_;
+  int screen_width_;
 
   JointsPVTApp app_;
   int traj_counter_;

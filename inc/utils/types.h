@@ -1,7 +1,7 @@
 /**
  * @file utils/types.h
  * @author Simone Comari
- * @date 17 Jul 2019
+ * @date 11 Feb 2020
  * @brief File containing the implementation of a custom wrapper to log cable robot data
  * employing easylogging++ package.
  */
@@ -23,7 +23,7 @@
 #include "slaves/goldsolowhistledrive.h"
 
 /**
- * @brief StringBuf typedef.
+ * @brief StringBuf Convenient type for string buffer.
  */
 typedef std::basic_stringbuf<char16_t> StringBuf;
 

@@ -1,7 +1,7 @@
 /**
  * @file pulleys_system.h
  * @author Simone Comari, Edoardo Idà
- * @date 11 Mar 2019
+ * @date 10 Jan 2020
  * @brief File containing the virtualization of a single pulleys system of the cable
  * robot.
  */
