@@ -1,7 +1,7 @@
 /**
  * @file cablerobot.h
  * @author Simone Comari, Edoardo Idà
- * @date 13 Jan 2020
+ * @date 11 Feb 2020
  * @brief File containing the virtualization of the physical cable robot, in terms of
  * components, signalig and low level operations.
  */
@@ -77,7 +77,7 @@ class CableRobot: public QObject,
   /**
    * @brief CableRobot constructor.
    * @param[in] parent The parent Qt object.
-   * @param[in] config Configuration parameters of the cable robot.
+   * @param[in] params Configuration parameters of the cable robot.
    */
   CableRobot(QObject* parent, const grabcdpr::RobotParams& params);
   ~CableRobot() override;
@@ -115,7 +115,12 @@ class CableRobot: public QObject,
    */
   const ActuatorStatus GetActuatorStatus(const id_t motor_id);
 
+  /**
+   * @brief Get robot latest status in terms of positions, velocities and accelerations.
+   * @return A structure describing latest status of the robot.
+   */
   const grabcdpr::RobotVars& GetRobotVars() const { return cdpr_status_; }
+
   /**
    * @brief Update home configuration of all actuators at once.
    *
@@ -274,18 +279,22 @@ class CableRobot: public QObject,
    * @brief Wait until controller target is reached.
    * @return 0 if target was reached, a positive number otherwise, yielding the error
    * type.
+   * @see isWaiting()
    */
   RetVal WaitUntilTargetReached(const double max_wait_time_sec = kMaxWaitTimeSec);
 
   /**
-   * @brief WaitUntilPlatformSteady
-   * @return
+   * @brief Wait until platform is steady.
+   * @return 0 if platform' steadyness was reached, a positive number otherwise, yielding
+   * the error type.
+   * @see isWaiting()
    */
   RetVal WaitUntilPlatformSteady(const double max_wait_time_sec = kMaxWaitTimeSec);
 
   /**
-   * @brief isWaiting
-   * @return
+   * @brief Inquire if robot is waiting to reach some objective.
+   * @return _True_ if it is in fact waiting, _False_ otherwise.
+   * @see WaitUntilTargetReached() WaitUntilPlatformSteady()
    */
   bool isWaiting() const { return is_waiting_; }
 
@@ -299,10 +308,12 @@ class CableRobot: public QObject,
    * @brief Enter calibration mode trigger.
    */
   void enterCalibrationMode();
+
   /**
    * @brief Enter homing mode trigger.
    */
   void enterHomingMode();
+
   /**
    * @brief Trigger transitions in case of successful outcome of a generic operation.
    *
@@ -313,6 +324,7 @@ class CableRobot: public QObject,
    * - OPERATIONAL --> READY
    */
   void eventSuccess();
+
   /**
    * @brief Trigger transitions in case of failure of a generic operation.
    *
@@ -322,6 +334,7 @@ class CableRobot: public QObject,
    * - OPERATIONAL --> ERROR
    */
   void eventFailure();
+
   /**
    * @brief Stop command.
    *
@@ -342,6 +355,7 @@ class CableRobot: public QObject,
    * @see actuatorStatus
    */
   void motorStatus(const id_t&, const grabec::GSWDriveInPdos&) const;
+
   /**
    * @brief Signal including actuator status.
    *
@@ -364,6 +378,7 @@ class CableRobot: public QObject,
    * @brief Signal including the changed state of the EtherCAT network.
    */
   void ecStateChanged(const std::bitset<3>&) const;
+
   /**
    * @brief Signal including the changed state of the real-time thread.
    */

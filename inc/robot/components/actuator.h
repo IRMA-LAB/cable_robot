@@ -1,7 +1,7 @@
 /**
  * @file actuator.h
  * @author Simone Comari, Edoardo Idà
- * @date 13 Jan 2020
+ * @date 11 Feb 2020
  * @brief File containing the virtualization of a single actuator of the cable robot.
  */
 
@@ -250,9 +250,9 @@ class Actuator: public QObject, public StateMachine
   // State map to define state object order. Each state map entry defines a state object.
   BEGIN_STATE_MAP_EX
   // clang-format off
-    STATE_MAP_ENTRY_ALL_EX(&Idle, &GuardIdle, 0, 0)
-    STATE_MAP_ENTRY_ALL_EX(&Enabled, &GuardEnabled, 0, 0)
-    STATE_MAP_ENTRY_ALL_EX(&Fault, &GuardFault, 0, 0)
+    STATE_MAP_ENTRY_ALL_EX(&Idle, &GuardIdle, nullptr, nullptr)
+    STATE_MAP_ENTRY_ALL_EX(&Enabled, &GuardEnabled, nullptr, nullptr)
+    STATE_MAP_ENTRY_ALL_EX(&Fault, &GuardFault, nullptr, nullptr)
   // clang-format on
   END_STATE_MAP_EX
 

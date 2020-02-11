@@ -1,7 +1,7 @@
 /**
- * @file joints_pvt_app.h
+ * @file winch_torque_controller.h
  * @author Simone Comari
- * @date 10 Jan 2020
+ * @date 11 Feb 2020
  * @brief This file includes the implementation of winch controllers.
  */
 

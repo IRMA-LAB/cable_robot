@@ -1,7 +1,7 @@
 /**
  * @file file_selection_form.h
  * @author Simone Comari
- * @date 03 Jul 2019
+ * @date 11 Feb 2020
  * @brief This file includes the implementation of an input form to select a file within
  * the joints pvt interface.
  */
@@ -30,6 +30,7 @@ class FileSelectionForm: public QWidget
   /**
    * @brief Full constructor.
    * @param parent An optional parent widget.
+   * @param[in] num Progressive number of input form.
    */
   explicit FileSelectionForm(QWidget* parent = nullptr, const int num = 0);
   ~FileSelectionForm();

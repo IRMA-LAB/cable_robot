@@ -1,7 +1,7 @@
 /**
  * @file winch.cpp
  * @author Simone Comari, Edoardo Idà
- * @date 28 Nov 2019
+ * @date 11 Feb 2020
  * @brief This file includes definitions of class declared in winch.h.
  */
 
@@ -16,7 +16,7 @@ void Cable::UpdateCableLen(const double delta_length)
   length_ = home_length_ + delta_length;
 }
 
-double Cable::GetLength(const double delta_length)
+double Cable::GetUpdatedLength(const double delta_length)
 {
   UpdateCableLen(delta_length);
   return length_;
