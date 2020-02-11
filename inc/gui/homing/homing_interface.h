@@ -1,7 +1,7 @@
 /**
  * @file homing_interface.h
  * @author Simone Comari
- * @date 11 Mar 2019
+ * @date 02 Jul 2019
  * @brief This file includes the abstract class for any homing interface of cable robot
  * app.
  */
@@ -51,7 +51,7 @@ class HomingInterface: public QDialog
   void homingSuccess() const;
 
  protected:
-  CableRobot* robot_ptr_ = NULL; /**< Pointer to the cable robot instance. */
+  CableRobot* robot_ptr_ = nullptr; /**< Pointer to the cable robot instance. */
 };
 
 #endif // CABLE_ROBOT_HOMING_INTERFACE_H

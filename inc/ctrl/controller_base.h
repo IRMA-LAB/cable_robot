@@ -1,7 +1,7 @@
 /**
  * @file controller_base.h
  * @author Simone Comari
- * @date 11 Mar 2019
+ * @date 10 Jan 2020
  * @brief File containing the base class of cable robot controller.
  */
 
@@ -9,14 +9,12 @@
 #define CABLE_ROBOT_CONTROLLER_BASE_H
 
 #include <stdint.h>
-#include <vector>
 
-#include "libcdpr/inc/types.h"
+#include "libcdpr/inc/cdpr_types.h"
 #include "libgrabec/inc/slaves/goldsolowhistledrive.h"
 
 #include "utils/types.h"
 
-template <typename T> using vect = std::vector<T>;  /**< Shortcut for vector type. */
 
 /**
  * @brief The possible control modes of any controller derived from ControllerBase.
@@ -28,10 +26,10 @@ template <typename T> using vect = std::vector<T>;  /**< Shortcut for vector typ
  */
 enum ControlMode : uint8_t
 {
+  CABLE_LENGTH,
   MOTOR_POSITION,
   MOTOR_SPEED,
   MOTOR_TORQUE,
-  CABLE_LENGTH,
   NONE
 };
 
@@ -142,7 +140,7 @@ class ControllerBase
    * @return Control actions for each targeted motor.
    */
   virtual vect<ControlAction>
-  CalcCtrlActions(const grabcdpr::Vars& robot_status,
+  CalcCtrlActions(const grabcdpr::RobotVars& robot_status,
                   const vect<ActuatorStatus>& actuators_status) = 0;
 
   /**

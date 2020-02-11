@@ -1,7 +1,7 @@
 /**
  * @file init_torque_form.h
  * @author Simone Comari
- * @date 11 Mar 2019
+ * @date 11 Feb 2020
  * @brief This file includes the class interface to the widget used by the user to define
  * the torque targets to be applied during the homing procedure for a single motor.
  */
@@ -35,7 +35,7 @@ class InitTorqueForm: public QWidget
    * @param[in] motor_id The ID of the motor it represents.
    * @param[in] parent The parent QWidget, in this case the HomingInterfaceProprioceptive.
    */
-  InitTorqueForm(const id_t motor_id, QWidget* parent = NULL);
+  InitTorqueForm(const id_t motor_id, QWidget* parent = nullptr);
   ~InitTorqueForm();
 
   /**

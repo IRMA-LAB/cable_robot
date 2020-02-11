@@ -1,7 +1,7 @@
 /**
  * @file easylog_wrapper.h
  * @author Simone Comari
- * @date 11 Mar 2019
+ * @date 06 Feb 2020
  * @brief File containing the implementation of a custom wrapper to log cable robot data
  * employing easylogging++ package.
  */
@@ -56,7 +56,6 @@ void LogActuatorStatusMsg(el::Logger* data_logger, const ActuatorStatusMsg& msg)
  * option and for each message a new message-specific log function must be present, such
  * as LogActuatorStatusMsg. Moreover a new case to LogData private function must be add,
  * with the new message enum value.
- * @see
  */
 class LogBuffer: public QThread
 {
@@ -69,13 +68,18 @@ class LogBuffer: public QThread
    */
   LogBuffer(el::Logger* data_logger, const size_t buffer_size = 2000)
     : logger_(data_logger), stop_requested_(false),
-      buffer_(buffer_size, QByteArray(static_cast<int>(kMaxMsgSize), 0))
+      buffer_(buffer_size, QByteArray(static_cast<int>(kMaxMsgSize), 0)), circular_cnt_(0)
   {}
+
+  /**
+   * @brief Flush data log up to now.
+   */
+  void flush();
 
   /**
    * @brief Stop logging command.
    */
-  void Stop();
+  void stop();
 
  public slots:
   /**
@@ -85,7 +89,7 @@ class LogBuffer: public QThread
   void collectMsg(QByteArray msg);
 
  private:
-  el::Logger* logger_ = NULL;
+  el::Logger* logger_ = nullptr;
 
   QMutex mutex_;
   QWaitCondition buffer_not_empty;
@@ -104,7 +108,7 @@ class LogBuffer: public QThread
 
   void run() override;
 
-  void LogData(const quint16 index);
+  void logData(const quint16 index);
 };
 
 #endif // CABLE_ROBOT_EASYLOG_WRAPPER_H

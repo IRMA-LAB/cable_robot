@@ -1,7 +1,7 @@
 /**
  * @file cablerobot.cpp
  * @author Simone Comari, Edoardo Idà
- * @date 20 Feb 2019
+ * @date 10 Jan 2020
  * @brief File containing definitions of functions and class declared in cablerobot.h.
  */
 
@@ -9,16 +9,18 @@
 
 constexpr double CableRobot::kMaxWaitTimeSec;
 constexpr double CableRobot::kCycleWaitTimeSec;
-constexpr char* CableRobot::kStatesStr[];
+constexpr char* CableRobot::kStatesStr_[];
+constexpr double CableRobot::kCutoffFreq_;
 
-CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
+CableRobot::CableRobot(QObject* parent, const grabcdpr::RobotParams& params)
   : QObject(parent), StateMachine(ST_MAX_STATES), platform_(grabcdpr::TILT_TORSION),
-    log_buffer_(el::Loggers::getLogger("data")), prev_state_(ST_MAX_STATES)
+    params_(params), log_buffer_(el::Loggers::getLogger("data")),
+    stop_waiting_cmd_recv_(false), is_waiting_(false), prev_state_(ST_MAX_STATES)
 {
   PrintStateTransition(prev_state_, ST_IDLE);
   prev_state_ = ST_IDLE;
 
-  cdpr_status_.platform = &platform_;
+  cdpr_status_.platform = platform_;
 
   // Setup EtherCAT network
   max_shutdown_wait_time_sec_ = 3.0; // [sec]
@@ -29,13 +31,13 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
   easycat2_ptr_ = new grabec::TestEasyCAT2Slave(slave_pos++);
   slaves_ptrs_.push_back(easycat2_ptr_);
 #endif
-  for (uint i = 0; i < config.actuators.size(); i++)
+  for (uint i = 0; i < params.actuators.size(); i++)
   {
     grabcdpr::CableVars cable;
     cdpr_status_.cables.push_back(cable);
-    actuators_ptrs_.push_back(new Actuator(i, slave_pos++, config.actuators[i], this));
+    actuators_ptrs_.push_back(new Actuator(i, slave_pos++, params.actuators[i], this));
     slaves_ptrs_.push_back(actuators_ptrs_[i]->GetWinch().GetServo());
-    if (config.actuators[i].active)
+    if (params.actuators[i].active)
     {
       active_actuators_id_.push_back(i);
       active_actuators_ptrs_.push_back(actuators_ptrs_[i]);
@@ -48,8 +50,11 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
     num_domain_elements_ += slave_ptr->GetDomainEntriesNum();
 
   // Setup data logging
+  rt_logging_enabled_ = false;
+  rt_logging_mod_     = 1;
   meas_.resize(active_actuators_id_.size());
-  connect(this, SIGNAL(sendMsg(QByteArray)), &log_buffer_, SLOT(collectMsg(QByteArray)));
+  connect(this, SIGNAL(sendMsg(QByteArray)), &log_buffer_, SLOT(collectMsg(QByteArray)),
+          Qt::QueuedConnection);
   log_buffer_.start();
 
   // Setup timers for components' status update
@@ -63,7 +68,7 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::Params& config)
 CableRobot::~CableRobot()
 {
   // Close data logging
-  log_buffer_.Stop();
+  log_buffer_.stop();
   disconnect(this, SIGNAL(sendMsg(QByteArray)), &log_buffer_,
              SLOT(collectMsg(QByteArray)));
 
@@ -95,6 +100,11 @@ CableRobot::~CableRobot()
 
 //--------- Public Functions --------------------------------------------------------//
 
+const Actuator* CableRobot::GetActuator(const id_t motor_id)
+{
+  return actuators_ptrs_[motor_id];
+}
+
 const ActuatorStatus CableRobot::GetActuatorStatus(const id_t motor_id)
 {
   pthread_mutex_lock(&mutex_);
@@ -113,6 +123,15 @@ void CableRobot::UpdateHomeConfig(const id_t motor_id, const double cable_len,
                                   const double pulley_angle)
 {
   actuators_ptrs_[motor_id]->UpdateHomeConfig(cable_len, pulley_angle);
+}
+
+void CableRobot::UpdateHomeConfig(const grabnum::Vector6d& home_pose)
+{
+  grabcdpr::updateIK0(home_pose, params_, cdpr_status_);
+  std::vector<id_t> active_actuators_id = params_.activeActuatorsId();
+  for (uint8_t i = 0; i < active_actuators_id.size(); ++i)
+    UpdateHomeConfig(active_actuators_id[i], cdpr_status_.cables[i].length,
+                     cdpr_status_.cables[i].swivel_ang);
 }
 
 bool CableRobot::MotorEnabled(const id_t motor_id)
@@ -203,21 +222,77 @@ void CableRobot::ClearFaults()
       actuator_ptr->faultReset();
 }
 
-void CableRobot::CollectMeas()
+void CableRobot::CollectMeasRt()
 {
-  pthread_mutex_lock(&mutex_);
   for (size_t i = 0; i < active_actuators_ptrs_.size(); i++)
   {
     meas_[i].body             = active_actuators_ptrs_[i]->GetStatus();
     meas_[i].header.timestamp = clock_.Elapsed();
   }
+}
+
+void CableRobot::CollectMeas()
+{
+  pthread_mutex_lock(&mutex_);
+  CollectMeasRt();
   pthread_mutex_unlock(&mutex_);
 }
 
 void CableRobot::DumpMeas() const
 {
-  for (const ActuatorStatusMsg& msg : meas_)
+  for (size_t i = 0; i < active_actuators_ptrs_.size(); i++)
+    emit sendMsg(meas_[i].serialized());
+}
+
+void CableRobot::CollectAndDumpMeasRt()
+{
+  for (size_t i = 0; i < active_actuators_ptrs_.size(); i++)
+  {
+    meas_[i].body             = active_actuators_ptrs_[i]->GetStatus();
+    meas_[i].header.timestamp = clock_.Elapsed();
+    emit sendMsg(meas_[i].serialized());
+  }
+}
+
+void CableRobot::CollectAndDumpMeas()
+{
+  CollectMeas();
+  DumpMeas();
+}
+
+void CableRobot::CollectAndDumpMeas(const id_t actuator_id)
+{
+  for (size_t i = 0; i < active_actuators_id_.size(); i++)
+  {
+    if (actuator_id != active_actuators_id_[i])
+      continue;
+    pthread_mutex_lock(&mutex_);
+    ActuatorStatusMsg msg(clock_.Elapsed(), active_actuators_ptrs_[i]->GetStatus());
+    pthread_mutex_unlock(&mutex_);
     emit sendMsg(msg.serialized());
+    break;
+  }
+}
+
+void CableRobot::StartRtLogging(const uint rt_cycle_multiplier)
+{
+  pthread_mutex_lock(&mutex_);
+  rt_logging_enabled_ = true;
+  rt_logging_mod_     = rt_cycle_multiplier;
+  pthread_mutex_unlock(&mutex_);
+}
+
+void CableRobot::StopRtLogging()
+{
+  pthread_mutex_lock(&mutex_);
+  rt_logging_enabled_ = false;
+  pthread_mutex_unlock(&mutex_);
+}
+
+void CableRobot::FlushDataLogs()
+{
+  log_buffer_.flush();
+  CLOG(INFO, "event") << "Data logs flushed";
 }
 
 bool CableRobot::GoHome()
@@ -261,8 +336,11 @@ void CableRobot::SetController(ControllerBase* controller)
   pthread_mutex_unlock(&mutex_);
 }
 
-RetVal CableRobot::WaitUntilTargetReached()
+RetVal CableRobot::WaitUntilTargetReached(const double max_wait_time_sec)
 {
+  qmutex_.lock();
+  is_waiting_ = true;
+  qmutex_.unlock();
   grabrt::ThreadClock clock(grabrt::Sec2NanoSec(kCycleWaitTimeSec));
   while (1)
   {
@@ -271,6 +349,9 @@ RetVal CableRobot::WaitUntilTargetReached()
     if (controller_->TargetReached())
     {
       pthread_mutex_unlock(&mutex_);
+      qmutex_.lock();
+      is_waiting_ = false;
+      qmutex_.unlock();
       return RetVal::OK;
     }
     pthread_mutex_unlock(&mutex_);
@@ -279,20 +360,92 @@ RetVal CableRobot::WaitUntilTargetReached()
     qmutex_.lock();
     if (stop_waiting_cmd_recv_)
     {
+      is_waiting_            = false;
       stop_waiting_cmd_recv_ = false;
       qmutex_.unlock();
+      CLOG(INFO, "event") << "Stop waiting command received while target not yet reached";
       return RetVal::EINT;
     }
     qmutex_.unlock();
     // Check if timeout expired (safety feature to prevent hanging in forever)
-    if (clock.ElapsedFromStart() > kMaxWaitTimeSec)
+    if (max_wait_time_sec > 0 && clock.ElapsedFromStart() > max_wait_time_sec)
     {
+      qmutex_.lock();
+      is_waiting_ = false;
+      qmutex_.unlock();
       emit printToQConsole(
         "WARNING: Actuator is taking too long to reach target: operation aborted");
       return RetVal::ETIMEOUT;
     }
     clock.WaitUntilNext();
   }
+}
+
+RetVal CableRobot::WaitUntilPlatformSteady(const double max_wait_time_sec)
+{
+  // Compute these once for all
+  static constexpr size_t kBuffSize =
+    static_cast<size_t>(kBufferingTimeSec_ / kCycleWaitTimeSec);
+  // LP filters setup
+  static std::vector<grabnum::LowPassFilter> lp_filters(
+    active_actuators_id_.size(), grabnum::LowPassFilter(kCutoffFreq_, kCycleWaitTimeSec));
+  for (size_t i = 0; i < active_actuators_id_.size(); i++)
+    lp_filters[i].Reset();
+
+  // Init
+  qmutex_.lock();
+  is_waiting_ = true;
+  qmutex_.unlock();
+  bool swinging = true;
+  std::vector<RingBufferD> pulleys_angles(active_actuators_id_.size(),
+                                          RingBufferD(kBuffSize));
+  grabrt::ThreadClock clock(grabrt::Sec2NanoSec(kCycleWaitTimeSec));
+  // Start waiting
+  while (swinging)
+  {
+    for (size_t i = 0; i < active_actuators_id_.size(); i++)
+    {
+      // Check if external abort signal is received
+      QCoreApplication::processEvents();
+      qmutex_.lock();
+      if (stop_waiting_cmd_recv_)
+      {
+        is_waiting_            = false;
+        stop_waiting_cmd_recv_ = false;
+        qmutex_.unlock();
+        CLOG(INFO, "event") << "Stop waiting command received while platform not yet"
+                               " steady";
+        return RetVal::EINT;
+      }
+      qmutex_.unlock();
+      // Add filtered angle
+      pthread_mutex_lock(&mutex_);
+      double current_pulley_angle = active_actuators_ptrs_[i]->GetStatus().pulley_angle;
+      pthread_mutex_unlock(&mutex_);
+      pulleys_angles[i].Add(lp_filters[i].Filter(current_pulley_angle));
+      if (!pulleys_angles[i].IsFull()) // wait at least until buffer is full
+        continue;
+      // Condition to detect steadyness
+      swinging = grabnum::Std(pulleys_angles[i].Data()) > kMaxAngleDeviation_;
+      if (swinging)
+        break;
+    }
+    // Check if timeout expired (safety feature to prevent hanging in forever)
+    if (max_wait_time_sec > 0 && clock.ElapsedFromStart() > max_wait_time_sec)
+    {
+      qmutex_.lock();
+      is_waiting_ = false;
+      qmutex_.unlock();
+      emit printToQConsole(
+        "WARNING: Platform is taking too long to stabilize: operation aborted");
+      return RetVal::ETIMEOUT;
+    }
+    clock.WaitUntilNext();
+  }
+  qmutex_.lock();
+  is_waiting_ = false;
+  qmutex_.unlock();
+  return RetVal::OK;
 }
 
 //--------- External Events (Public slots) ------------------------------------------//
@@ -342,10 +495,10 @@ void CableRobot::eventSuccess()
   // clang-format off
   BEGIN_TRANSITION_MAP                              // - Current State -
       TRANSITION_MAP_ENTRY (ST_ENABLED)             // ST_IDLE
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)          // ST_ENABLED
+      TRANSITION_MAP_ENTRY (ST_OPERATIONAL)         // ST_ENABLED
       TRANSITION_MAP_ENTRY (ST_ENABLED)             // ST_CALIBRATION
       TRANSITION_MAP_ENTRY (ST_READY)               // ST_HOMING
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)          // ST_READY
+      TRANSITION_MAP_ENTRY (ST_OPERATIONAL)         // ST_READY
       TRANSITION_MAP_ENTRY (ST_READY)               // ST_OPERATIONAL
       TRANSITION_MAP_ENTRY (ST_ENABLED)             // ST_ERROR
   END_TRANSITION_MAP(NULL)
@@ -356,14 +509,14 @@ void CableRobot::eventFailure()
 {
   CLOG(TRACE, "event");
   // clang-format off
-  BEGIN_TRANSITION_MAP			              		// - Current State -
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)		// ST_IDLE
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)    // ST_ENABLED
-      TRANSITION_MAP_ENTRY (ST_ENABLED)				// ST_CALIBRATION
-      TRANSITION_MAP_ENTRY (ST_ENABLED)				// ST_HOMING
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)    // ST_READY
-      TRANSITION_MAP_ENTRY (ST_ERROR)         // ST_OPERATIONAL
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)		// ST_ERROR
+  BEGIN_TRANSITION_MAP			            // - Current State -
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)	    // ST_IDLE
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)          // ST_ENABLED
+      TRANSITION_MAP_ENTRY (ST_ENABLED)             // ST_CALIBRATION
+      TRANSITION_MAP_ENTRY (ST_ENABLED)             // ST_HOMING
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)          // ST_READY
+      TRANSITION_MAP_ENTRY (ST_ERROR)               // ST_OPERATIONAL
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)          // ST_ERROR
   END_TRANSITION_MAP(NULL)
   // clang-format on
 }
@@ -372,14 +525,14 @@ void CableRobot::stop()
 {
   CLOG(TRACE, "event");
   // clang-format off
-  BEGIN_TRANSITION_MAP                        // - Current State -
-      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)		// ST_IDLE
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)    // ST_ENABLED
-      TRANSITION_MAP_ENTRY (ST_ENABLED)       // ST_CALIBRATION
-      TRANSITION_MAP_ENTRY (ST_ENABLED)       // ST_HOMING
-      TRANSITION_MAP_ENTRY (ST_ENABLED)       // ST_READY
-      TRANSITION_MAP_ENTRY (ST_READY)         // ST_OPERATIONAL
-      TRANSITION_MAP_ENTRY (ST_ENABLED)   		// ST_ERROR
+  BEGIN_TRANSITION_MAP                              // - Current State -
+      TRANSITION_MAP_ENTRY (CANNOT_HAPPEN)          // ST_IDLE
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)          // ST_ENABLED
+      TRANSITION_MAP_ENTRY (ST_ENABLED)             // ST_CALIBRATION
+      TRANSITION_MAP_ENTRY (ST_ENABLED)             // ST_HOMING
+      TRANSITION_MAP_ENTRY (ST_ENABLED)             // ST_READY
+      TRANSITION_MAP_ENTRY (ST_READY)               // ST_OPERATIONAL
+      TRANSITION_MAP_ENTRY (ST_ENABLED)             // ST_ERROR
   END_TRANSITION_MAP(NULL)
   // clang-format on
 }
@@ -405,6 +558,8 @@ STATE_DEFINE(CableRobot, Calibration, NoEventData)
 {
   PrintStateTransition(prev_state_, ST_CALIBRATION);
   prev_state_ = ST_CALIBRATION;
+
+  StopTimers();
 }
 
 STATE_DEFINE(CableRobot, Homing, NoEventData)
@@ -429,12 +584,16 @@ STATE_DEFINE(CableRobot, Operational, NoEventData)
 {
   PrintStateTransition(prev_state_, ST_OPERATIONAL);
   prev_state_ = ST_OPERATIONAL;
+
+  StopTimers();
 }
 
 STATE_DEFINE(CableRobot, Error, NoEventData)
 {
   PrintStateTransition(prev_state_, ST_ERROR);
   prev_state_ = ST_ERROR;
+
+  StopTimers();
 }
 
 //--------- Private slots -----------------------------------------------------------//
@@ -491,9 +650,9 @@ void CableRobot::PrintStateTransition(const States current_state,
   QString msg;
   if (current_state != ST_MAX_STATES)
     msg = QString("CableRobot state transition: %1 --> %2")
-            .arg(kStatesStr[current_state], kStatesStr[new_state]);
+            .arg(kStatesStr_[current_state], kStatesStr_[new_state]);
   else
-    msg = QString("CableRobot initial state: %1").arg(kStatesStr[new_state]);
+    msg = QString("CableRobot initial state: %1").arg(kStatesStr_[new_state]);
   emit printToQConsole(msg);
 }
 
@@ -505,9 +664,9 @@ void CableRobot::StopTimers()
 
 //--------- Ethercat related private functions --------------------------------------//
 
-void CableRobot::EcStateChangedCb(const Bitfield8& new_state)
+void CableRobot::EcStateChangedCb(const std::bitset<3>& new_state)
 {
-  ec_network_valid_ = (new_state.Count() == 3);
+  ec_network_valid_ = new_state.all();
   emit ecStateChanged(new_state);
 }
 
@@ -544,8 +703,15 @@ void CableRobot::EcWorkFun()
   for (grabec::EthercatSlave* slave_ptr : slaves_ptrs_)
     slave_ptr->ReadInputs(); // read pdos
 
-  if (controller_ != NULL)
+  if (controller_ != nullptr)
     ControlStep();
+
+  static uint log_counter = 0;
+  if (rt_logging_enabled_ && (++log_counter % rt_logging_mod_ == 0))
+  {
+    CollectAndDumpMeasRt();
+    log_counter = 0;
+  }
 
   for (grabec::EthercatSlave* slave_ptr : slaves_ptrs_)
     slave_ptr->WriteOutputs(); // write all the necessary pdos

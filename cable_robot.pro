@@ -1,4 +1,3 @@
-
 HEADERS = \
     $$PWD/inc/robot/cablerobot.h \
     $$PWD/inc/robot/components/actuator.h \
@@ -7,22 +6,34 @@ HEADERS = \
     $$PWD/inc/gui/main_gui.h \
     $$PWD/inc/gui/login_window.h \
     $$PWD/inc/gui/calib/calibration_dialog.h \
+    $$PWD/inc/gui/calib/calib_interface_excitation.h \
     $$PWD/inc/gui/homing/homing_dialog.h \
     $$PWD/inc/gui/homing/homing_interface.h \
     $$PWD/inc/gui/homing/homing_interface_proprioceptive.h \
     $$PWD/inc/gui/homing/init_torque_form.h \
+    $$PWD/inc/gui/apps/joints_pvt_dialog.h \
+    $$PWD/inc/gui/apps/manual_control_dialog.h \
+    $$PWD/inc/gui/apps/scatter3d_widget.h \
+    $$PWD/inc/gui/apps/chartview.h \
+    $$PWD/inc/gui/apps/file_selection_form.h \
+    $$PWD/inc/calib/calib_excitation.h \
     $$PWD/inc/homing/homing_proprioceptive.h \
     $$PWD/inc/homing/matlab_thread.h \
+    $$PWD/inc/apps/joints_pvt_app.h \
+    $$PWD/inc/apps/manual_control_app.h \
     $$PWD/inc/ctrl/controller_base.h \
     $$PWD/inc/ctrl/controller_singledrive.h \
+    $$PWD/inc/ctrl/controller_joints_pvt.h \
+    $$PWD/inc/ctrl/winch_torque_controller.h \
+#    $$PWD/inc/state_estimation/ext_kalman_filter.h \
     $$PWD/inc/utils/types.h \
     $$PWD/inc/utils/macros.h \
     $$PWD/inc/utils/msgs.h \
     $$PWD/inc/utils/easylog_wrapper.h \
-    $$PWD/lib/easyloggingpp/src/easylogging++.h \
-    $$PWD/lib/grab_common/grabcommon.h \
-    $$PWD/lib/grab_common/bitfield.h \
-    $$PWD/lib/grab_common/pid/pid.h
+    $$PWD/inc/debug/debug_routine.h \
+    $$PWD/libs/easyloggingpp/src/easylogging++.h \
+    $$PWD/libs/grab_common/grabcommon.h \
+    $$PWD/libs/grab_common/pid/pid.h \
 
 SOURCES = \
     $$PWD/src/main.cpp \
@@ -33,40 +44,62 @@ SOURCES = \
     $$PWD/src/gui/main_gui.cpp \
     $$PWD/src/gui/login_window.cpp \
     $$PWD/src/gui/calib/calibration_dialog.cpp \
+    $$PWD/src/gui/calib/calib_interface_excitation.cpp \
     $$PWD/src/gui/homing/homing_dialog.cpp \
     $$PWD/src/gui/homing/homing_interface.cpp \
     $$PWD/src/gui/homing/homing_interface_proprioceptive.cpp \
     $$PWD/src/gui/homing/init_torque_form.cpp \
+    $$PWD/src/gui/apps/joints_pvt_dialog.cpp \
+    $$PWD/src/gui/apps/manual_control_dialog.cpp \
+    $$PWD/src/gui/apps/scatter3d_widget.cpp \
+    $$PWD/src/gui/apps/chartview.cpp \
+    $$PWD/src/gui/apps/file_selection_form.cpp \
+    $$PWD/src/calib/calib_excitation.cpp \
     $$PWD/src/homing/homing_proprioceptive.cpp \
     $$PWD/src/homing/matlab_thread.cpp \
+    $$PWD/src/apps/joints_pvt_app.cpp \
+    $$PWD/src/apps/manual_control_app.cpp \
     $$PWD/src/ctrl/controller_base.cpp \
     $$PWD/src/ctrl/controller_singledrive.cpp \
+    $$PWD/src/ctrl/controller_joints_pvt.cpp \
+    $$PWD/src/ctrl/winch_torque_controller.cpp \
+#    $$PWD/src/state_estimation/ext_kalman_filter.cpp \
     $$PWD/src/utils/msgs.cpp \
     $$PWD/src/utils/easylog_wrapper.cpp \
-    $$PWD/lib/easyloggingpp/src/easylogging++.cc \
-    $$PWD/lib/grab_common/grabcommon.cpp \
-    $$PWD/lib/grab_common/pid/pid.cpp
+    $$PWD/src/debug/debug_routine.cpp \
+    $$PWD/libs/easyloggingpp/src/easylogging++.cc \
+    $$PWD/libs/grab_common/grabcommon.cpp \
+    $$PWD/libs/grab_common/pid/pid.cpp \
+
+FORMS += \
+    $$PWD/widgets/main_gui.ui \
+    $$PWD/widgets/login_window.ui \
+    $$PWD/widgets/calib/calibration_dialog.ui \
+    $$PWD/widgets/calib/calib_interface_excitation.ui \
+    $$PWD/widgets/homing/homing_dialog.ui \
+    $$PWD/widgets/homing/homing_interface_proprioceptive.ui\
+    $$PWD/widgets/homing/init_torque_form.ui \
+    $$PWD/widgets/apps/joints_pvt_dialog.ui \
+    $$PWD/widgets/apps/manual_control_dialog.ui \
+    $$PWD/widgets/apps/scatter3d_widget.ui \
+    $$PWD/widgets/apps/file_selection_form.ui \
+
+RESOURCES += \
+    resources/resources.qrc
 
 INCLUDEPATH += \
     $$PWD/inc \
-    $$PWD/lib/grab_common \
-    $$PWD/lib/easyloggingpp/src
+    $$PWD/libs/grab_common \
+    $$PWD/libs/easyloggingpp/src
 
+QT += core gui widgets datavisualization charts
 
-QT += core gui widgets
-
-CONFIG += c++11 console static
+CONFIG += c++11 console
 CONFIG -= app_bundle
 
 TEMPLATE = app
 
 TARGET = CableRobotApp
-
-# The following define makes your compiler emit warnings if you use
-# any feature of Qt which as been marked deprecated (the exact warnings
-# depend on your compiler). Please consult the documentation of the
-# deprecated API in order to know how to port your code away from it.
-DEFINES += QT_DEPRECATED_WARNINGS
 
 DEFINES += ELPP_QT_LOGGING    \
           ELPP_STL_LOGGING   \
@@ -75,32 +108,22 @@ DEFINES += ELPP_QT_LOGGING    \
           ELPP_FRESH_LOG_FILE
 
 DEFINES += SRCDIR=\\\"$$PWD/\\\"
-
-# DEBUG
-#HEADERS += \
-#    $$PWD/lib/grab_common/libgrabec/inc/ethercatmaster.h \
-#    $$PWD/lib/grab_common/libgrabec/inc/ethercatslave.h \
-#    $$PWD/lib/grab_common/libgrabec/inc/types.h \
-#    $$PWD/lib/grab_common/libgrabec/inc/slaves/goldsolowhistledrive.h
-#SOURCES += \
-#    $$PWD/lib/grab_common/libgrabec/src/ethercatmaster.cpp \
-#    $$PWD/lib/grab_common/libgrabec/src/ethercatslave.cpp \
-#    $$PWD/lib/grab_common/libgrabec/src/slaves/goldsolowhistledrive.cpp
-#INCLUDEPATH += $$PWD/lib/grab_common/libgrabec/inc
+DEFINES += USE_QT=1
+DEFINES += DEBUG_GUI=0
 
 # GRAB Ethercat lib
-unix:!macx: LIBS += -L$$PWD/lib/grab_common/libgrabec/lib/ -lgrabec
-INCLUDEPATH += $$PWD/lib/grab_common/libgrabec \
-    lib/grab_common/libgrabec/inc
-DEPENDPATH += $$PWD/lib/grab_common/libgrabec
-unix:!macx: PRE_TARGETDEPS += $$PWD/lib/grab_common/libgrabec/lib/libgrabec.a
+unix:!macx: LIBS += -L$$PWD/libs/grab_common/libgrabec/lib/ -lgrabec
+INCLUDEPATH += $$PWD/libs/grab_common/libgrabec \
+    libs/grab_common/libgrabec/inc
+DEPENDPATH += $$PWD/libs/grab_common/libgrabec
+unix:!macx: PRE_TARGETDEPS += $$PWD/libs/grab_common/libgrabec/lib/libgrabec.a
 
 # GRAB Real-time lib
-unix:!macx: LIBS += -L$$PWD/lib/grab_common/libgrabrt/lib/ -lgrabrt
-INCLUDEPATH += $$PWD/lib/grab_common/libgrabrt \
-    lib/grab_common/libgrabrt/inc
-DEPENDPATH += $$PWD/lib/grab_common/libgrabrt
-unix:!macx: PRE_TARGETDEPS += $$PWD/lib/grab_common/libgrabrt/lib/libgrabrt.a
+unix:!macx: LIBS += -L$$PWD/libs/grab_common/libgrabrt/lib/ -lgrabrt
+INCLUDEPATH += $$PWD/libs/grab_common/libgrabrt \
+    libs/grab_common/libgrabrt/inc
+DEPENDPATH += $$PWD/libs/grab_common/libgrabrt
+unix:!macx: PRE_TARGETDEPS += $$PWD/libs/grab_common/libgrabrt/lib/libgrabrt.a
 
 # EtherCAT lib
 INCLUDEPATH += /opt/etherlab/include
@@ -108,39 +131,32 @@ DEPENDPATH  += /opt/etherlab/lib/
 LIBS        += /opt/etherlab/lib/libethercat.a
 
 # State machine lib
-unix:!macx: LIBS += -L$$PWD/lib/state_machine/lib/ -lstate_machine
-INCLUDEPATH += $$PWD/lib/state_machine $$PWD/lib/state_machine/inc
-DEPENDPATH += $$PWD/lib/state_machine
-unix:!macx: PRE_TARGETDEPS += $$PWD/lib/state_machine/lib/libstate_machine.a
+unix:!macx: LIBS += -L$$PWD/libs/state_machine/lib/ -lstate_machine
+INCLUDEPATH += $$PWD/libs/state_machine $$PWD/libs/state_machine/inc
+DEPENDPATH += $$PWD/libs/state_machine
+unix:!macx: PRE_TARGETDEPS += $$PWD/libs/state_machine/lib/libstate_machine.a
 
 # GRAB CDPR lib
-unix:!macx: LIBS += -L$$PWD/lib/grab_common/libcdpr/lib/ -lcdpr
-INCLUDEPATH += $$PWD/lib/grab_common/libcdpr \
-    $$PWD/lib/grab_common/libcdpr/inc \
-    $$PWD/lib/grab_common/libcdpr/tools
-DEPENDPATH += $$PWD/lib/grab_common/libcdpr
-unix:!macx: PRE_TARGETDEPS += $$PWD/lib/grab_common/libcdpr/lib/libcdpr.a
+unix:!macx: LIBS += -L$$PWD/libs/grab_common/libcdpr/lib/ -lcdpr
+INCLUDEPATH += $$PWD/libs/grab_common/libcdpr \
+    $$PWD/libs/grab_common/libcdpr/inc \
+    $$PWD/libs/grab_common/libcdpr/tools
+DEPENDPATH += $$PWD/libs/grab_common/libcdpr
+unix:!macx: PRE_TARGETDEPS += $$PWD/libs/grab_common/libcdpr/lib/libcdpr.a
 
 # Geometric lib
-unix:!macx: LIBS += -L$$PWD/lib/grab_common/libgeom/lib/ -lgeom
-INCLUDEPATH += $$PWD/lib/grab_common/libgeom $$PWD/lib/grab_common/libgeom/inc/
-DEPENDPATH += $$PWD/lib/grab_common/libgeom
-unix:!macx: PRE_TARGETDEPS += $$PWD/lib/grab_common/libgeom/lib/libgeom.a
+unix:!macx: LIBS += -L$$PWD/libs/grab_common/libgeom/lib/ -lgeom
+INCLUDEPATH += $$PWD/libs/grab_common/libgeom $$PWD/libs/grab_common/libgeom/inc/
+DEPENDPATH += $$PWD/libs/grab_common/libgeom
+unix:!macx: PRE_TARGETDEPS += $$PWD/libs/grab_common/libgeom/lib/libgeom.a
 
 # Numeric lib
-unix:!macx: LIBS += -L$$PWD/lib/grab_common/libnumeric/lib/ -lnumeric
-INCLUDEPATH += $$PWD/lib/grab_common/libnumeric \
-    $$PWD/lib/grab_common/libnumeric/inc/
-DEPENDPATH += $$PWD/lib/grab_common/libnumeric
-unix:!macx: PRE_TARGETDEPS += $$PWD/lib/grab_common/libnumeric/lib/libnumeric.a
+unix:!macx: LIBS += -L$$PWD/libs/grab_common/libnumeric/lib/ -lnumeric
+INCLUDEPATH += $$PWD/libs/grab_common/libnumeric \
+    $$PWD/libs/grab_common/libnumeric/inc/
+DEPENDPATH += $$PWD/libs/grab_common/libnumeric
+unix:!macx: PRE_TARGETDEPS += $$PWD/libs/grab_common/libnumeric/lib/libnumeric.a
 
-FORMS += \
-    $$PWD/widgets/main_gui.ui \
-    $$PWD/widgets/login_window.ui \
-    $$PWD/widgets/calib/calibration_dialog.ui \
-    $$PWD/widgets/homing/homing_dialog.ui \
-    $$PWD/widgets/homing/homing_interface_proprioceptive.ui\
-    $$PWD/widgets/homing/init_torque_form.ui
-
-RESOURCES += \
-    resources/resources.qrc
+# Armadillo lib
+DEFINES += ARMA_DONT_PRINT_ERRORS
+LIBS += -llapack -lblas -larmadillo

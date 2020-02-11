@@ -1,7 +1,7 @@
 /**
  * @file login_window.cpp
  * @author Simone Comari
- * @date 13 Mar 2019
+ * @date 08 Jul 2019
  * @brief This file includes definitions of window class present in login_window.h.
  */
 
@@ -14,6 +14,10 @@ LoginWindow::LoginWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::Logi
 {
   ui->setupUi(this);
   setFixedHeight(this->geometry().height());
+
+#if DEBUG_GUI == 1
+  ui->groupBox_config->setEnabled(true);
+#endif
 }
 
 LoginWindow::~LoginWindow()
@@ -88,8 +92,8 @@ void LoginWindow::on_pushButton_inputFile_clicked()
 {
   CLOG(TRACE, "event");
   QString config_filename =
-    QFileDialog::getOpenFileName(this, tr("Load Configuration File"), tr("../../config"),
-                                 tr("Configuration File (*.json)"));
+    QFileDialog::getOpenFileName(this, tr("Load Configuration File"),
+                                 tr(SRCDIR "/config"), tr("Configuration File (*.json)"));
   if (config_filename.isEmpty())
   {
     CLOG(WARNING, "event") << "Configuration filename is empty";

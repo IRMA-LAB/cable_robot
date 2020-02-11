@@ -250,7 +250,7 @@
              <number>20</number>
             </property>
             <property name="value">
-             <number>-300</number>
+             <number>-400</number>
             </property>
            </widget>
           </item>
@@ -391,7 +391,7 @@
              <number>30</number>
             </property>
             <property name="value">
-             <number>3</number>
+             <number>6</number>
             </property>
             <property name="displayIntegerBase">
              <number>10</number>
@@ -535,6 +535,9 @@
    </item>
    <item>
     <widget class="QGroupBox" name="groupBox_optimization">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
      <property name="font">
       <font>
        <pointsize>16</pointsize>
@@ -552,7 +555,7 @@
         <item>
          <widget class="QRadioButton" name="radioButton_internal">
           <property name="enabled">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
           <property name="sizePolicy">
            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">

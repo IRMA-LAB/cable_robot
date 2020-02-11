@@ -1,7 +1,7 @@
 /**
  * @file homing_dialog.cpp
  * @author Simone Comari
- * @date 07 Mar 2019
+ * @date 03 Jul 2019
  * @brief This file includes definitions of class present in homing_dialog.h.
  */
 
@@ -13,6 +13,10 @@ HomingDialog::HomingDialog(QWidget* parent, CableRobot* robot)
   : QDialog(parent), ui(new Ui::HomingDialog), robot_ptr_(robot), homing_method_(NONE)
 {
   ui->setupUi(this);
+  // TODO: remove this
+  ui->comboBox_homingMethod->removeItem(FUSION);
+  ui->comboBox_homingMethod->removeItem(VISION);
+  //
 }
 
 HomingDialog::~HomingDialog()
@@ -26,7 +30,8 @@ HomingDialog::~HomingDialog()
 
 void HomingDialog::on_buttonBox_accepted()
 {
-  if (homing_method_ != ui->comboBox_homingMethod->currentIndex())
+  if (homing_method_ != ui->comboBox_homingMethod->currentIndex() ||
+      interface_ == nullptr)
   {
     DeleteInterface();
     homing_method_ = ui->comboBox_homingMethod->currentIndex();
@@ -36,11 +41,11 @@ void HomingDialog::on_buttonBox_accepted()
         interface_ = new HomingInterfaceProprioceptive(parentWidget(), robot_ptr_);
         break;
       case VISION:
-        interface_ = NULL;
+        interface_ = nullptr;
         fwdHomingSuccess(); // TODO: replace with homing vision interface
         return;
       case FUSION:
-        interface_ = NULL;
+        interface_ = nullptr;
         fwdHomingSuccess(); // TODO: replace with homing fusion interface
         return;
     }
@@ -81,12 +86,12 @@ void HomingDialog::fwdHomingSuccess()
 
 void HomingDialog::DeleteInterface()
 {
-  if (interface_ != NULL)
+  if (interface_ != nullptr)
   {
     interface_->Close();
     disconnect(interface_, SIGNAL(homingSuccess()), this, SLOT(fwdHomingSuccess()));
     disconnect(interface_, SIGNAL(homingFailed()), this, SLOT(fwdHomingFailed()));
     delete interface_;
-    interface_ = NULL;
+    interface_ = nullptr;
   }
 }

@@ -1,7 +1,7 @@
 /**
  * @file homing_interface_proprioceptive.cpp
  * @author Simone Comari
- * @date 07 Mar 2019
+ * @date 13 Jan 2020
  * @brief This file includes definitions of classes present in
  * homing_interface_proprioceptive.h.
  */
@@ -21,8 +21,15 @@ HomingInterfaceProprioceptive::HomingInterfaceProprioceptive(QWidget* parent,
   for (id_t motor_id : robot->GetActiveMotorsID())
   {
     init_torque_forms_.append(new InitTorqueForm(motor_id, this));
+#if HOMING_ACK
+    init_torque_forms_.last()->EnableMaxTorque(false);
+#endif
     ui->verticalLayout_2->insertWidget(pos++, init_torque_forms_.last());
   }
+
+#if HOMING_ACK
+  ui->checkBox_maxTorque->setDisabled(true);
+#endif
 
   connect(robot_ptr_, SIGNAL(printToQConsole(QString)), this,
           SLOT(appendText2Browser(QString)), Qt::ConnectionType::QueuedConnection);
@@ -78,7 +85,7 @@ void HomingInterfaceProprioceptive::on_pushButton_enable_clicked()
 
   if (!robot_enabled)
   {
-    app_.Start(NULL); // IDLE --> ENABLED
+    app_.Start(nullptr); // IDLE --> ENABLED
     return;
   }
 
@@ -174,7 +181,6 @@ void HomingInterfaceProprioceptive::on_pushButton_start_clicked()
                             "you will have to start over the procedure before starting a "
                             "new application.\nAre you sure you want to continue?",
                             QMessageBox::Yes | QMessageBox::No);
-    QCoreApplication::processEvents(); // debug
     CLOG(TRACE, "event") << "(STOP?) --> " << (reply == QMessageBox::Yes);
     if (reply == QMessageBox::Yes)
     {
@@ -196,7 +202,6 @@ void HomingInterfaceProprioceptive::on_pushButton_start_clicked()
                                   : form->GetMaxTorque());
   }
   ui->progressBar_acquisition->setValue(0);
-  ui->radioButton_internal->setDisabled(true);
   ui->lineEdit_extFile->clear();
   ui->radioButton_external->toggled(true);
   ui->pushButton_ok->setDisabled(true);
@@ -212,7 +217,6 @@ void HomingInterfaceProprioceptive::on_radioButton_internal_clicked()
   ui->radioButton_external->toggled(false);
   ui->lineEdit_extFile->setDisabled(true);
   ui->pushButton_extFile->setDisabled(true);
-  ui->pushButton_ok->setEnabled(true);
 }
 
 void HomingInterfaceProprioceptive::on_radioButton_external_clicked()
@@ -221,8 +225,6 @@ void HomingInterfaceProprioceptive::on_radioButton_external_clicked()
   ui->radioButton_internal->toggled(false);
   ui->lineEdit_extFile->setEnabled(true);
   ui->pushButton_extFile->setEnabled(true);
-  ui->pushButton_ok->setEnabled(acquisition_complete_ &&
-                                !ui->lineEdit_extFile->text().isEmpty());
 }
 
 void HomingInterfaceProprioceptive::on_pushButton_extFile_clicked()
@@ -249,6 +251,9 @@ void HomingInterfaceProprioceptive::on_pushButton_ok_clicked()
   // "Internal" optimization (ext call to Matlab)
   if (ui->radioButton_internal->isChecked())
   {
+    if (QFile::exists(app_.kMatlabOptimizationResultsLoc))
+      if (QFile::remove(app_.kMatlabOptimizationResultsLoc))
+        CLOG(INFO, "event") << "Removed old matlab homing optimization results";
     ui->groupBox_dataCollection->setEnabled(false);
     app_.Optimize();
     return;
@@ -328,6 +333,7 @@ void HomingInterfaceProprioceptive::on_pushButton_done_clicked()
   CLOG(TRACE, "event");
   emit homingSuccess();
   hide();
+  CLOG(INFO, "event") << "Hide homing interface proprioceptive";
 }
 
 //--------- Private slots -----------------------------------------------------------//
@@ -367,7 +373,6 @@ void HomingInterfaceProprioceptive::updateOptimizationProgress(const int value)
 void HomingInterfaceProprioceptive::handleAcquisitionComplete()
 {
   CLOG(INFO, "event") << "Acquisition complete";
-  ui->radioButton_internal->setEnabled(true);
   ui->pushButton_ok->setEnabled(true);
   acquisition_complete_ = true;
 
@@ -404,16 +409,16 @@ void HomingInterfaceProprioceptive::handleStateChanged(const quint8& state)
     }
     case HomingProprioceptive::ST_START_UP:
       ui->pushButton_start->setText(tr("Stop"));
-      app_.Start(NULL);
+      app_.Start(nullptr);
       break;
     case HomingProprioceptive::ST_SWITCH_CABLE:
-      app_.Start(NULL);
+      app_.Start(nullptr);
       break;
     case HomingProprioceptive::ST_COILING:
-      app_.Start(NULL);
+      app_.Start(nullptr);
       break;
     case HomingProprioceptive::ST_UNCOILING:
-      app_.Start(NULL);
+      app_.Start(nullptr);
       break;
     case HomingProprioceptive::ST_FAULT:
       ui->pushButton_enable->setDisabled(true);

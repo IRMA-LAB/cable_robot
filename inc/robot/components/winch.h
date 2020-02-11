@@ -1,14 +1,14 @@
 /**
  * @file winch.h
  * @author Simone Comari, Edoardo Idà
- * @date 11 Mar 2019
+ * @date 11 Feb 2020
  * @brief File containing the virtualization of a winch system of the cable robot.
  */
 
 #ifndef CABLE_ROBOT_WINCH_H
 #define CABLE_ROBOT_WINCH_H
 
-#include "libcdpr/inc/types.h"
+#include "libcdpr/inc/cdpr_types.h"
 #include "libgrabec/inc/slaves/goldsolowhistledrive.h"
 
 #include "utils/types.h"
@@ -25,31 +25,35 @@ class Cable
   /**
    * @brief Set cable length at home position.
    * @param[in] length _[m]_ Cable length at home position.
+   * @see GetHomeLength()
    */
   void SetHomeLength(const double length) { home_length_ = length; }
 
   /**
    * @brief Get cable length at home position.
    * @return Cable length at home position in meters.
+   * @see SetHomeLength()
    */
   double GetHomeLength() const { return home_length_; }
   /**
    * @brief Get most recente cable length.
    * @return Most recente cable length in meters.
+   * @see GetUpdatedLength()
    */
   double GetLength() const { return length_; }
   /**
-   * @brief GetLength
-   * @param[in] delta_length
-   * @return
+   * @brief Update and get newly computed cable length.
+   * @param[in] delta_length Cable increment in meters wrt home reference value.
+   * @return Updated cable length in meters.
+   * @see GetLength() UpdateCableLen()
    */
-  double GetLength(const double delta_length);
+  double GetUpdatedLength(const double delta_length);
 
   /**
-   * @brief UpdateCableLen
-   * @param[in] delta_length
+   * @brief Update cable length by adding given value to home reference value.
+   * @param[in] delta_length Cable increment in meters wrt home reference value.
    */
-  void UpdateCableLen(const double delta_length);
+  inline void UpdateCableLen(const double delta_length);
 
  private:
   double home_length_ = 0.0;
@@ -161,15 +165,25 @@ class Winch
    */
   void UpdateConfig(const int32_t servo_pos);
 
+  /**
+   * @brief Convert motor counts to cable length.
+   * @param counts Motor (encoder) counts.
+   * @return Corresponding cable length in meters.
+   */
+  double CountsToLength(const int counts) const;
+  /**
+   * @brief Convert cable length to motor counts.
+   * @param length Cable length in meters.
+   * @return Corresponding motor (encoder) counts.
+   */
+  int LengthToCounts(const double length) const;
+
  private:
   grabcdpr::WinchParams params_;
   Cable cable_;
   grabec::GoldSoloWhistleDrive servo_;
   int32_t servo_home_pos_ = 0;
   id_t id_;
-
-  inline double CountsToLength(const int counts);
-  inline int LengthToCounts(const double length);
 };
 
 #endif // CABLE_ROBOT_WINCH_H
