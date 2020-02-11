@@ -45,8 +45,8 @@ std::ostream& operator<<(std::ostream& stream, const HomingProprioceptiveHomeDat
 //------------------------------------------------------------------------------------//
 
 // For static constexpr passed by reference we need a dummy definition no matter what
-constexpr char* HomingProprioceptive::kStatesStr[];
-const QString HomingProprioceptive::kMatlabOptimizationResultsLoc =
+constexpr char* HomingProprioceptiveApp::kStatesStr[];
+const QString HomingProprioceptiveApp::kMatlabOptimizationResultsLoc =
   QString(SRCDIR) + "libs/grab_common/libcdpr/cdpr_matlab/data/homing_results.json";
 
 HomingProprioceptiveApp::HomingProprioceptiveApp(QObject* parent, CableRobot* robot)

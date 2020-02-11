@@ -34,7 +34,7 @@ void HomingVisionApp::applyPoseEstimate()
   grabcdpr::RobotParams params = robot_ptr_->GetActiveComponentsParams();
   grabcdpr::RobotVars cdpr_vars; // empty container
   cdpr_vars.cables.resize(params.actuators.size());
-  grabcdpr::UpdateIK0(position, orientation, params, cdpr_vars);
+  grabcdpr::updateIK0(position, orientation, params, cdpr_vars);
   // Update homing configuration for each cable/pulley.
   vect<id_t> actuators_id = robot_ptr_->GetActiveMotorsID();
   for (uint i = 0; i < actuators_id.size(); i++)

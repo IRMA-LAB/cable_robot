@@ -456,6 +456,7 @@ class CableRobot: public QObject,
   bool is_waiting_            = false;
 
   // Control related
+  StateEstimatorBase* state_estimator_ = nullptr;
   ControllerBase* controller_ = nullptr;
 
   void StateEstimationStep(const bool active_actuators_status_updated);

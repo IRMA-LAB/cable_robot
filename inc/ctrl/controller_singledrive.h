@@ -1,7 +1,7 @@
 /**
  * @file controller_singledrive.h
  * @author Simone Comari
- * @date 10 Jan 2020
+ * @date 11 Feb 2020
  * @brief File containing a simple single drive controller class for cable robot.
  */
 
@@ -13,27 +13,6 @@
 #include "libs/grab_common/pid/pid.h"
 
 #include "ctrl/controller_base.h"
-
-/**
- * @brief A numerical sign enum
- */
-enum class Sign : int16_t
-{
-  POS = 1,
-  NEG = -1
-};
-
-template <typename T>
-/**
- * @brief operator * for Sign type.
- * @param sign Equivalent to 1 or -1.
- * @param value A scalar value.
- * @return A scalar value.
- */
-T operator*(const Sign& sign, const T value)
-{
-  return static_cast<T>(sign) * value;
-}
 
 /**
  * @brief A simple single drive control class for cable robot.

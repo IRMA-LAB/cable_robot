@@ -1,7 +1,7 @@
 /**
  * @file file_selection_form.h
  * @author Simone Comari
- * @date 03 Jul 2019
+ * @date 11 Feb 2020
  * @brief This file includes the implementation of an input form to select a file within
  * the joints pvt interface.
  */
@@ -30,8 +30,9 @@ class FileSelectionForm: public QWidget
   /**
    * @brief Full constructor.
    * @param parent An optional parent widget.
+   * @param[in] num Progressive number of input form.
    */
-  explicit FileSelectionForm(QWidget* parent = nullptr);
+  explicit FileSelectionForm(QWidget* parent = nullptr, const int num = 0);
   ~FileSelectionForm();
 
   /**
@@ -45,11 +46,27 @@ class FileSelectionForm: public QWidget
    */
   QString getFilepath() const;
 
+ signals:
+  /**
+   * @brief parentDirChanged
+   * @param parent_dir
+   */
+  void parentDirChanged(const QString& parent_dir) const;
+
+ public slots:
+  /**
+   * @brief setParentDirectory
+   * @param parent_dir
+   */
+  void setParentDirectory(const QString& parent_dir) { parent_dir_ = parent_dir; }
+
  private slots:
   void on_pushButton_fileSelection_clicked();
 
  private:
   Ui::FileSelectionForm* ui;
+
+  QString parent_dir_ = "../..";
 };
 
 #endif // CABLE_ROBOT_JOINTS_PVT_INPUT_FORM_H
