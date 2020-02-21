@@ -69,7 +69,7 @@ vect<ControlAction> ControllerAxes::calcCtrlActions(const grabcdpr::RobotVars& v
 
   // Calculate cables lenght targets from inverse kinematics
   grabcdpr::RobotVars updated_vars;
-  grabcdpr::UpdateIK0(position, orientation, params_, updated_vars);
+  grabcdpr::updateIK0(position, orientation, params_, updated_vars);
 
   if (isPoseReachable(updated_vars))
     // Assign new targets to drives
@@ -104,7 +104,7 @@ bool ControllerAxes::calcRealTargetPose(grabnum::Vector3d& position,
     case 3:
     {
       // Calculate feasible orientation for given position
-      const grabnum::VectorXi<POSE_DIM> kMask({1, 1, 1, 0, 0, 0});
+      const arma::uvec6 kMask({1, 1, 1, 0, 0, 0});
       position            = target_pose_.GetBlock<3, 1>(1, 1);
       arma::vec3 solution = nonLinsolveJacGeomStatic(target_pose_, kMask);
       orientation         = arma::conv_to<vectD>::from(solution);
@@ -113,23 +113,23 @@ bool ControllerAxes::calcRealTargetPose(grabnum::Vector3d& position,
     case 4:
     {
       // Calculate feasible orientation for given position
-      const grabnum::VectorXi<POSE_DIM> kMask({1, 1, 1, 1, 0, 0});
+      const arma::uvec6 kMask({1, 1, 1, 1, 0, 0});
       position            = target_pose_.GetBlock<3, 1>(1, 1);
       arma::vec2 solution = nonLinsolveJacGeomStatic(target_pose_, kMask);
       orientation(4)      = target_pose_(4); // index starts at 1
-      orientation(5)      = solution(4); // index starts at 0
-      orientation(6)      = solution(5); // index starts at 0
+      orientation(5)      = solution(0);     // index starts at 0
+      orientation(6)      = solution(1);     // index starts at 0
       break;
     }
     case 5:
     {
       // Calculate feasible orientation for given position
-      const grabnum::VectorXi<POSE_DIM> kMask({1, 1, 1, 1, 1, 0});
+      const arma::uvec6 kMask({1, 1, 1, 1, 1, 0});
       position           = target_pose_.GetBlock<3, 1>(1, 1);
       arma::vec solution = nonLinsolveJacGeomStatic(target_pose_, kMask); // "scalar"
       orientation(4)     = target_pose_(4); // index starts at 1
       orientation(5)     = target_pose_(5); // index starts at 1
-      orientation(6)     = solution(5); // index starts at 0
+      orientation(6)     = solution(0);     // index starts at 0
       break;
     }
     case 6:
@@ -147,31 +147,23 @@ bool ControllerAxes::calcRealTargetPose(grabnum::Vector3d& position,
   return true;
 }
 
-arma::vec
-ControllerAxes::nonLinsolveJacGeomStatic(const grabnum::VectorXd<POSE_DIM>& init_guess,
-                                         const grabnum::VectorXi<POSE_DIM>& mask,
-                                         const uint8_t nmax /*= 100*/) const
+arma::vec ControllerAxes::nonLinsolveJacGeomStatic(
+  const grabnum::VectorXd<POSE_DIM>& init_guess, const arma::uvec6& mask,
+  const uint8_t nmax /*= 100*/, uint8_t* iter_out /*= nullptr*/) const
 {
   static const double kFtol = 1e-4;
   static const double kXtol = 1e-3;
 
   // Distribute initial guess between fixed and variable coordinates (i.e. the solution of
   // the iterative process)
-  arma::vec fixed_coord(mask.NonZeros().size(), arma::fill::none);
-  arma::vec var_coord(POSE_DIM - fixed_coord.n_elem, arma::fill::none);
-  ulong fixed_idx = 0;
-  ulong var_idx   = 0;
-  for (uint i = 1; i <= POSE_DIM; i++)
-    if (mask(i) == 1)
-      fixed_coord(fixed_idx++) = init_guess(i);
-    else
-      var_coord(var_idx++) = init_guess(i);
+  arma::vec init_guess_arma = toArmaVec(init_guess);
+  arma::vec fixed_coord(init_guess_arma.elem(arma::find(mask == 1)));
+  arma::vec var_coord(init_guess_arma.elem(arma::find(mask == 0)));
 
   // First round to init function value and jacobian
   arma::vec func_val;
   arma::mat func_jacob;
-  grabcdpr::calcGeometricStatic(params_, fixed_coord, var_coord, mask, func_jacob,
-                                func_val);
+  grabcdpr::optFunGS(params_, fixed_coord, var_coord, func_jacob, func_val);
 
   // Init iteration variables
   arma::vec s;
@@ -184,11 +176,13 @@ ControllerAxes::nonLinsolveJacGeomStatic(const grabnum::VectorXd<POSE_DIM>& init
     iter++;
     s = arma::solve(func_jacob, func_val);
     var_coord -= s;
-    grabcdpr::calcGeometricStatic(params_, fixed_coord, var_coord, mask, func_jacob,
-                                  func_val);
+    grabcdpr::optFunGS(params_, fixed_coord, var_coord, func_jacob, func_val);
     err  = arma::norm(s);
     cond = kXtol * (1 + arma::norm(var_coord));
   }
+
+  if (iter_out != nullptr)
+    *iter_out = iter;
 
   return var_coord;
 }
@@ -196,8 +190,8 @@ ControllerAxes::nonLinsolveJacGeomStatic(const grabnum::VectorXd<POSE_DIM>& init
 bool ControllerAxes::isPoseReachable(grabcdpr::RobotVars& vars) const
 {
   // Calculate cables tensions
-  grabcdpr::UpdateExternalLoads(Matrix3d(1.0), params_.platform, vars.platform);
-  grabcdpr::CalCablesTensionStat(vars);
+  grabcdpr::updateExternalLoads(params_.platform, vars.platform);
+  grabcdpr::updateCablesStaticTension(vars);
   // Check tension is within feasible range for all cables
   return (vars.tension_vector.min() >= kMinCableTension_ &&
           vars.tension_vector.max() <= kMaxCableTension_);

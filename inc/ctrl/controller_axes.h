@@ -3,6 +3,7 @@
 
 #include "kinematics.h"
 #include "statics.h"
+#include "under_actuated_utils.h"
 
 #include "controller_base.h"
 
@@ -50,8 +51,8 @@ class ControllerAxes: public ControllerBase
                           grabnum::Vector3d& orientation) const;
 
   arma::vec nonLinsolveJacGeomStatic(const grabnum::VectorXd<POSE_DIM>& init_guess,
-                                     const grabnum::VectorXi<POSE_DIM>& mask,
-                                     const uint8_t nmax = 100) const;
+                                     const arma::uvec6& mask, const uint8_t nmax = 100,
+                                     uint8_t* iter_out = nullptr) const;
 
   bool isPoseReachable(grabcdpr::RobotVars& vars) const;
 };
