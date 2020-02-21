@@ -50,10 +50,6 @@ class ControllerAxes: public ControllerBase
   bool calcRealTargetPose(grabnum::Vector3d& position,
                           grabnum::Vector3d& orientation) const;
 
-  arma::vec nonLinsolveJacGeomStatic(const grabnum::VectorXd<POSE_DIM>& init_guess,
-                                     const arma::uvec6& mask, const uint8_t nmax = 100,
-                                     uint8_t* iter_out = nullptr) const;
-
   bool isPoseReachable(grabcdpr::RobotVars& vars) const;
 };
 
