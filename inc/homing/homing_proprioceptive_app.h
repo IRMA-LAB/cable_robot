@@ -1,7 +1,7 @@
 /**
  * @file homing_proprioceptive.h
  * @author Simone Comari
- * @date 13 Jan 2020
+ * @date 27 Feb 2020
  * @brief This file includes classes necessary to implement the homing proprioceptive
  * algorithm.
  */
@@ -282,7 +282,7 @@ class HomingProprioceptiveApp: public QObject, public StateMachine
   vect<id_t> active_actuators_id_;
   vect<ActuatorStatus> actuators_status_;
 
-  static constexpr int kOptProgressIntervalMsec_ = 150;
+  static constexpr int kOptProgressIntervalMsec_ = 650; // = (tot opt time / 95 steps)
   QTimer optimization_progess_timer_;
   int optimization_progress_counter_;
 
