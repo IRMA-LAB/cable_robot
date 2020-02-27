@@ -1,29 +1,37 @@
+/**
+ * @file controller_joints_pvt.cpp
+ * @author Simone Comari
+ * @date 27 Feb 2020
+ * @brief This file includes definitions of class present in controller_joints_pvt.h.
+ */
+
 #include "state_estimation/state_estimator_base.h"
 
-void StateEstimatorBase::EstimatePlatformPose(
-  const vect<ActuatorStatus>& active_actuators_status, grabcdpr::RobotVars& robot_vars)
+bool StateEstimatorBase::estimatePlatformPose(
+  const vect<ActuatorStatus>& actuators_status, grabcdpr::RobotVars& robot_vars)
 {
-  // Extract cable's variables from current actuators status
-  std::vector<double> cables_length(robot_vars.cables.size(), 0);
-  std::vector<double> swivel_angles(robot_vars.cables.size(), 0);
-  for (uint i = 0; i < robot_vars.cables.size(); ++i)
-  {
-    cables_length[i] = active_actuators_status[i].cable_length;
-    swivel_angles[i] = active_actuators_status[i].pulley_angle;
+  if (prev_actuators_status_.empty())
+    // No previous reference (first call after reset/instanciation) --> copy values
+    // straight from actuators status
+    for (uint i = 0; i < robot_vars.cables.size(); ++i)
+    {
+      robot_vars.cables[i].length     = actuators_status[i].cable_length;
+      robot_vars.cables[i].swivel_ang = actuators_status[i].pulley_angle;
+    }
+  else
+    // Extract cable's variables changes from current actuators status to update
+    // corresponding robot cable's variable
+    for (uint i = 0; i < robot_vars.cables.size(); ++i)
+    {
+      robot_vars.cables[i].length +=
+        (actuators_status[i].cable_length - prev_actuators_status_[i].cable_length);
+      robot_vars.cables[i].swivel_ang +=
+        (actuators_status[i].pulley_angle - prev_actuators_status_[i].pulley_angle);
+    }
+  // Update previous status for next call
+  prev_actuators_status_ = actuators_status;
 
-    //    std::cout << cables_length[i] << " " << swivel_angles[i] << std::endl;
-  }
-  // Take platform pose from latest known/computed value, possibly all zeros
-  grabnum::VectorXd<POSE_DIM> init_guess_pose = robot_vars.platform.pose;
-
-  //  std::cout << init_guess_pose << std::endl;
-
-  // Solve direct kinematics
-  static const uint8_t kNMax = 10;
-  grabnum::VectorXd<POSE_DIM> new_pose;
-  grabcdpr::solveDK0(cables_length, swivel_angles, init_guess_pose, params_, new_pose,
-                     kNMax);
-  // Update inverse kinematics
-  grabcdpr::updateIK0(new_pose.GetBlock<3, 1>(1, 1), new_pose.GetBlock<3, 1>(4, 1),
-                      params_, robot_vars);
+  return grabcdpr::updateDK0(params_, robot_vars);
 }
+
+void StateEstimatorBase::reset() { prev_actuators_status_.clear(); }

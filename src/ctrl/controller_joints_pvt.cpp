@@ -117,8 +117,8 @@ ControllerJointsPVT::calcCtrlActions(const grabcdpr::RobotVars&,
         break;
       case MOTOR_POSITION:
         if (target_flags_.test(POSITION))
-          actions[i].motor_position =
-            getTrajectoryPointValue(actions[i].motor_id, traj_motors_pos_, MOTOR_POSITION);
+          actions[i].motor_position = getTrajectoryPointValue(
+            actions[i].motor_id, traj_motors_pos_, MOTOR_POSITION);
         else
           actions[i].ctrl_mode = NONE;
         break;
@@ -134,7 +134,8 @@ ControllerJointsPVT::calcCtrlActions(const grabcdpr::RobotVars&,
           actions[i].motor_torque =
             winches_controller_[actions[i].motor_id].calcServoTorqueSetpoint(
               actuators_status[i],
-              getTrajectoryPointValue(actions[i].motor_id, traj_motors_torque_, MOTOR_TORQUE));
+              getTrajectoryPointValue(actions[i].motor_id, traj_motors_torque_,
+                                      MOTOR_TORQUE));
         else
           actions[i].ctrl_mode = NONE;
         break;
@@ -209,9 +210,9 @@ T ControllerJointsPVT::getTrajectoryPointValue(const id_t id,
                                         arrest_time_ * waypoint.value);
       if (mode == MOTOR_TORQUE)
         // On stop request, linearly move to a sufficient torque to stand still
-        waypoint.value = static_cast<T>(kTorqueStopValue_ +
-                                        (arrest_time_ - time_since_stop_request_) /
-                                        arrest_time_ * (waypoint.value - kTorqueStopValue_));
+        waypoint.value = static_cast<T>(
+          kTorqueStopValue_ + (arrest_time_ - time_since_stop_request_) / arrest_time_ *
+                                (waypoint.value - kTorqueStopValue_));
     }
     else
       waypoint = traj.waypointFromRelTime(traj_time_, cycle_time_);
@@ -234,12 +235,12 @@ T ControllerJointsPVT::getTrajectoryPointValue(const id_t id,
 void ControllerJointsPVT::reset()
 {
   target_flags_.reset();
-  stop_             = false;
-  stop_request_     = false;
-  resume_request_   = false;
-  new_trajectory_   = true;
-  progress_counter_ = 0;
-  arrest_time_ = -1.0;
+  stop_                    = false;
+  stop_request_            = false;
+  resume_request_          = false;
+  new_trajectory_          = true;
+  progress_counter_        = 0;
+  arrest_time_             = -1.0;
   time_since_stop_request_ = -1.0;
 }
 

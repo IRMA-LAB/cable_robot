@@ -459,8 +459,8 @@ class CableRobot: public QObject,
   StateEstimatorBase* state_estimator_ = nullptr;
   ControllerBase* controller_ = nullptr;
 
-  void StateEstimationStep(const bool active_actuators_status_updated);
-  void ControlStep(const bool active_actuators_status_updated);
+  void StateEstimationStep(bool& active_actuators_status_updated);
+  void ControlStep(bool& active_actuators_status_updated);
 
   // Tuning params for detecting platform steadyness
   static constexpr double kBufferingTimeSec_  = 3.0;     // [sec]

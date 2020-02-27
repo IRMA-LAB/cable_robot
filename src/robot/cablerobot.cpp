@@ -762,20 +762,27 @@ void CableRobot::EcEmergencyFun() {}
 
 //--------- RT cyclic steps related private functions -------------------------------//
 
-void CableRobot::StateEstimationStep(const bool active_actuators_status_updated)
+void CableRobot::StateEstimationStep(bool& active_actuators_status_updated)
 {
   if (!active_actuators_status_updated)
+  {
     for (size_t i = 0; i < active_actuators_status_.size(); i++)
       active_actuators_status_[i] = active_actuators_ptrs_[i]->GetStatus();
+    active_actuators_status_updated = true;
+  }
 
-  state_estimator_->EstimatePlatformPose(active_actuators_status_, cdpr_status_);
+  if (!state_estimator_->estimatePlatformPose(active_actuators_status_, cdpr_status_))
+    CLOG(WARNING, "event") << "State estimation step failed";
 }
 
-void CableRobot::ControlStep(const bool active_actuators_status_updated)
+void CableRobot::ControlStep(bool& active_actuators_status_updated)
 {
   if (!active_actuators_status_updated)
+  {
     for (size_t i = 0; i < active_actuators_status_.size(); i++)
       active_actuators_status_[i] = active_actuators_ptrs_[i]->GetStatus();
+    active_actuators_status_updated = true;
+  }
 
   vect<ControlAction> ctrl_actions =
     controller_->calcCtrlActions(cdpr_status_, active_actuators_status_);
