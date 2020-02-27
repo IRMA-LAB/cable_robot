@@ -1,7 +1,7 @@
 /**
  * @file homing_interface.cpp
  * @author Simone Comari
- * @date 23 Jul 2019
+ * @date 27 Feb 2020
  * @brief This file includes definitions of classes present in homing_interface.h.
  */
 
@@ -12,8 +12,6 @@ HomingInterface::HomingInterface(QWidget* parent, CableRobot* robot)
   : QDialog(parent), ui(new Ui::HomingInterface), robot_ptr_(robot), ext_close_cmd_(false)
 {
   ui->setupUi(this);
-  // debug
-  ext_close_cmd_ = true;
 }
 
 HomingInterface::~HomingInterface() { delete ui; }
@@ -53,6 +51,7 @@ void HomingInterface::closeEvent(QCloseEvent* event)
 
 void HomingInterface::on_buttonBox_accepted()
 {
+  // "OK" button
   CLOG(TRACE, "event");
   if (acceptedExitRoutine())
   {
@@ -63,6 +62,8 @@ void HomingInterface::on_buttonBox_accepted()
 
 void HomingInterface::on_buttonBox_rejected()
 {
+  // "Cancel" button
+  show(); // on "Cancel" clicked widget hides automaticaly otherwise
   CLOG(TRACE, "event");
   if (rejectedExitRoutine())
   {

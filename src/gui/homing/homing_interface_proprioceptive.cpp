@@ -191,7 +191,6 @@ void HomingInterfaceProprioceptiveWidget::on_pushButton_start_clicked()
                                   : form->GetMaxTorque());
   }
   ui->progressBar_acquisition->setValue(0);
-  ui->radioButton_internal->setDisabled(true);
   ui->lineEdit_extFile->clear();
   ui->radioButton_external->toggled(true);
   ui->pushButton_ok->setDisabled(true);
