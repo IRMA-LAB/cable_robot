@@ -106,7 +106,7 @@ class CableRobot: public QObject,
    * @brief Get all robot parameters.
    * @return All robot parameters.
    */
-  const grabcdpr::RobotParams& GetParams() const { return params_; }
+  const grabcdpr::RobotParams& getParams() const { return params_; }
   /**
    * @brief Get the parameters of active robot components.
    *
@@ -114,31 +114,31 @@ class CableRobot: public QObject,
    * the parameters of each active actuator.
    * @return The parameters of active robot components
    */
-  const grabcdpr::RobotParams& GetActiveComponentsParams() const;
+  const grabcdpr::RobotParams& getActiveComponentsParams() const;
   /**
    * @brief GetCdprStatus
    * @return
    */
-  const grabcdpr::RobotVars& GetCdprStatus() const { return cdpr_status_; }
+  const grabcdpr::RobotVars& getCdprStatus() const { return cdpr_status_; }
   /**
    * @brief Get a pointer to inquired actuator.
    * @param[in] motor_id The ID of the inquired actuator.
    * @return A pointer to inquired actuator.
    */
-  const Actuator* GetActuator(const id_t motor_id);
+  const Actuator* getActuator(const id_t motor_id);
 
   /**
    * @brief Get inquired actuator status.
    * @param[in] motor_id The ID of the inquired actuator.
    * @return The status of the inquired actuator.
    */
-  const ActuatorStatus GetActuatorStatus(const id_t motor_id);
+  const ActuatorStatus getActuatorStatus(const id_t motor_id);
 
   /**
    * @brief Get robot latest status in terms of positions, velocities and accelerations.
    * @return A structure describing latest status of the robot.
    */
-  const grabcdpr::RobotVars& GetRobotVars() const { return cdpr_status_; }
+  const grabcdpr::RobotVars& getRobotVars() const { return cdpr_status_; }
 
   /**
    * @brief Update home configuration of all actuators at once.
@@ -148,7 +148,7 @@ class CableRobot: public QObject,
    * @param[in] cable_len Cable lengths at homing position.
    * @param[in] pulley_angle Swivel pulleys angles at homing position.
    */
-  void UpdateHomeConfig(const double cable_len, const double pulley_angle);
+  void updateHomeConfig(const double cable_len, const double pulley_angle);
   /**
    * @brief Update home configuration of a single actuator.
    * @param[in] motor_id The ID of the actuator to update.
@@ -156,13 +156,13 @@ class CableRobot: public QObject,
    * @param[in] pulley_angle Swivel pulley angle at homing position for specified
    * actuator.
    */
-  void UpdateHomeConfig(const id_t motor_id, const double cable_len,
+  void updateHomeConfig(const id_t motor_id, const double cable_len,
                         const double pulley_angle);
   /**
    * @brief Update home configuration of all actuators at once.
    * @param[in] home_pose Platform pose at homing position.
    */
-  void UpdateHomeConfig(const grabnum::Vector6d& home_pose);
+  void updateHomeConfig(const grabnum::Vector6d& home_pose);
 
   /**
    * @brief Update active actuators status by reading latest actuators PDOs.
@@ -176,120 +176,120 @@ class CableRobot: public QObject,
    * @param[in] motor_id The ID of the inquired motor.
    * @return _True_ if motor is enabled, _false_ otherwise.
    */
-  bool MotorEnabled(const id_t motor_id);
+  bool motorEnabled(const id_t motor_id);
   /**
    * @brief Check if any motor is enabled.
    * @return _True_ if at least one motor is enabled, _false_ otherwise.
    */
-  bool AnyMotorEnabled();
+  bool anyMotorEnabled();
   /**
    * @brief Check if all motors are enabled.
    * @return _True_ if all motors are enabled, _false_ otherwise.
    */
-  bool MotorsEnabled();
+  bool motorsEnabled();
   /**
    * @brief Enable a single motor.
    * @param[in] motor_id The ID of the motor to enable.
    */
-  void EnableMotor(const id_t motor_id);
+  void enableMotor(const id_t motor_id);
   /**
    * @brief Enable all motors at once.
    */
-  void EnableMotors();
+  void enableMotors();
   /**
    * @brief Enable a set of motors.
    * @param[in] motors_id The IDs of the motor to enable.
    */
-  void EnableMotors(const vect<id_t>& motors_id);
+  void enableMotors(const vect<id_t>& motors_id);
   /**
    * @brief Disable a single motor.
    * @param[in] motor_id The ID of the motor to disable.
    */
-  void DisableMotor(const id_t motor_id);
+  void disableMotor(const id_t motor_id);
   /**
    * @brief Disable all motors at once.
    */
-  void DisableMotors();
+  void disableMotors();
   /**
    * @brief Disable a set of motors.
    * @param[in] motors_id The IDs of the motor to disable.
    */
-  void DisableMotors(const vect<id_t>& motors_id);
+  void disableMotors(const vect<id_t>& motors_id);
   /**
    * @brief Set a single motor operational mode.
    * @param[in] motor_id The ID of the motor whose operational mode is to be set.
    * @param[in] op_mode See grabec::GoldSoloWhistleOperationModes
    */
-  void SetMotorOpMode(const id_t motor_id, const qint8 op_mode);
+  void setMotorOpMode(const id_t motor_id, const qint8 op_mode);
   /**
    * @brief Set all motors operational mode at once.
    * @param[in] op_mode See grabec::GoldSoloWhistleOperationModes
    */
-  void SetMotorsOpMode(const qint8 op_mode);
+  void setMotorsOpMode(const qint8 op_mode);
   /**
    * @brief Set a set of motors operational mode at once.
    * @param[in] motors_id The IDs of the motors whose operational mode is to be set.
    * @param[in] op_mode See grabec::GoldSoloWhistleOperationModes
    */
-  void SetMotorsOpMode(const vect<id_t>& motors_id, const qint8 op_mode);
+  void setMotorsOpMode(const vect<id_t>& motors_id, const qint8 op_mode);
   /**
    * @brief Get active motors ID.
    * @return IDs of active motors.
    */
-  vect<id_t> GetActiveMotorsID() const { return active_actuators_id_; }
+  vect<id_t> getActiveMotorsID() const { return active_actuators_id_; }
   /**
    * @brief Clear any motor's fault.
    */
-  void ClearFaults();
+  void clearFaults();
 
   /**
    * @brief Collect current cable robot measurents without locking the RT-thread mutex.
    */
-  void CollectMeasRt();
+  void collectMeasRt();
   /**
    * @brief Collect current cable robot measurents locking the RT-thread mutex.
    */
-  void CollectMeas();
+  void collectMeas();
   /**
    * @brief Dump latest collected cable robot measurements onto data.log file.
    */
-  void DumpMeas() const;
+  void dumpMeas() const;
   /**
    * @brief Collect and dump current cable robot measurements onto data.log file without
    * locking the RT-thread mutex.
    */
-  void CollectAndDumpMeasRt();
+  void collectAndDumpMeasRt();
   /**
    * @brief Collect and dump current cable robot measurements onto data.log file locking
    * the RT-thread mutex.
    */
-  void CollectAndDumpMeas();
+  void collectAndDumpMeas();
   /**
    * @brief Collect and dump current cable robot measurements of a single actuator onto
    * data.log file.
    * @param[in] actuator_id ID of inquired actuator.
    */
-  void CollectAndDumpMeas(const id_t actuator_id);
+  void collectAndDumpMeas(const id_t actuator_id);
   /**
    * @brief Start data logging inside real-time thread cycle.
    * @param[in] rt_cycle_multiplier Factor definining the number of cycles between one log
    * sample and the next one.
    */
-  void StartRtLogging(const uint rt_cycle_multiplier);
+  void startRtLogging(const uint rt_cycle_multiplier);
   /**
    * @brief Stop data logging inside real-time thread cycle.
    */
-  void StopRtLogging();
+  void stopRtLogging();
   /**
    * @brief Flush data logs up to now.
    */
-  void FlushDataLogs();
+  void flushDataLogs();
 
   /**
    * @brief Go to home position.
    * @return _True_ if operation was successful, _false_ otherwise.
    */
-  bool GoHome();
+  bool goHome();
 
   /**
    * @brief Set motors controller.
@@ -300,14 +300,14 @@ class CableRobot: public QObject,
    * is typically used asynchronously to inquire robot control status in waiting
    * condition.
    */
-  void SetController(ControllerBase* controller);
+  void setController(ControllerBase* controller);
   /**
    * @brief Wait until controller target is reached.
    * @return 0 if target was reached, a positive number otherwise, yielding the error
    * type.
    * @see isWaiting()
    */
-  RetVal WaitUntilTargetReached(const double max_wait_time_sec = kMaxWaitTimeSec);
+  RetVal waitUntilTargetReached(const double max_wait_time_sec = kMaxWaitTimeSec);
 
   /**
    * @brief Wait until platform is steady.
@@ -315,12 +315,12 @@ class CableRobot: public QObject,
    * the error type.
    * @see isWaiting()
    */
-  RetVal WaitUntilPlatformSteady(const double max_wait_time_sec = kMaxWaitTimeSec);
+  RetVal waitUntilPlatformSteady(const double max_wait_time_sec = kMaxWaitTimeSec);
 
   /**
    * @brief Inquire if robot is waiting to reach some objective.
    * @return _True_ if it is in fact waiting, _False_ otherwise.
-   * @see WaitUntilTargetReached() WaitUntilPlatformSteady()
+   * @see WaitUntilTargetReached() waitUntilPlatformSteady()
    */
   bool isWaiting() const { return is_waiting_; }
 
@@ -434,7 +434,7 @@ class CableRobot: public QObject,
   QTimer* motor_status_timer_                       = nullptr;
   QTimer* actuator_status_timer_                    = nullptr;
 
-  void StopTimers();
+  void stopTimers();
 
   // Data logging
   vect<ActuatorStatusMsg> meas_;
@@ -468,8 +468,8 @@ class CableRobot: public QObject,
   StateEstimatorBase* state_estimator_ = nullptr;
   ControllerBase* controller_          = nullptr;
 
-  void StateEstimationStep();
-  void ControlStep();
+  void stateEstimationStep();
+  void controlStep();
 
   // Tuning params for detecting platform steadyness
   static constexpr double kBufferingTimeSec_  = 3.0;     // [sec]
@@ -514,7 +514,7 @@ class CableRobot: public QObject,
   // clang-format on
   END_STATE_MAP
 
-  void PrintStateTransition(const States current_state, const States new_state) const;
+  void printStateTransition(const States current_state, const States new_state) const;
 };
 
 #endif // CABLE_ROBOT_CABLEROBOT_H

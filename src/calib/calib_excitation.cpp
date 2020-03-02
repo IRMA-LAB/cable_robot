@@ -1,7 +1,7 @@
 /**
  * @file calib_excitation.cpp
  * @author Simone Comari
- * @date 03 Jul 2019
+ * @date 02 Mar 2020
  * @brief This file includes definitions of classes present in calib_excitation.h.
  */
 
@@ -38,7 +38,7 @@ CalibExcitation::CalibExcitation(QObject* parent, CableRobot* robot, const vect<
   ExternalEvent(ST_IDLE);
 
   controller_single_drive_.SetMotorTorqueSsErrTol(kTorqueSsErrTol_);
-  active_actuators_id_ = robot_ptr_->GetActiveMotorsID();
+  active_actuators_id_ = robot_ptr_->getActiveMotorsID();
   connect(this, SIGNAL(stopWaitingCmd()), robot_ptr_, SLOT(stopWaiting()));
 
   traj_cables_len_.clear();
@@ -48,7 +48,7 @@ CalibExcitation::CalibExcitation(QObject* parent, CableRobot* robot, const vect<
   connect(controller_joints_ptv_, SIGNAL(trajectoryCompleted()), this,
           SLOT(stopLogging()), Qt::ConnectionType::QueuedConnection);
 
-  robot_ptr_->FlushDataLogs();
+  robot_ptr_->flushDataLogs();
 }
 
 CalibExcitation::~CalibExcitation()
@@ -167,9 +167,9 @@ STATE_DEFINE(CalibExcitation, Idle, NoEventData)
   prev_state_ = ST_IDLE;
   emit stateChanged(ST_IDLE);
 
-  robot_ptr_->SetController(nullptr);
-  if (robot_ptr_->AnyMotorEnabled())
-    robot_ptr_->DisableMotors();
+  robot_ptr_->setController(nullptr);
+  if (robot_ptr_->anyMotorEnabled())
+    robot_ptr_->disableMotors();
 
   qmutex_.lock();
   disable_cmd_recv_ = false; // reset
@@ -178,12 +178,12 @@ STATE_DEFINE(CalibExcitation, Idle, NoEventData)
 
 GUARD_DEFINE(CalibExcitation, GuardEnabled, NoEventData)
 {
-  robot_ptr_->EnableMotors();
+  robot_ptr_->enableMotors();
 
   grabrt::ThreadClock clock(grabrt::Sec2NanoSec(CableRobot::kCycleWaitTimeSec));
   while (1)
   {
-    if (robot_ptr_->MotorsEnabled())
+    if (robot_ptr_->motorsEnabled())
       return true;
     if (clock.ElapsedFromStart() > CableRobot::kMaxWaitTimeSec)
       break;
@@ -204,7 +204,7 @@ STATE_DEFINE(CalibExcitation, Enabled, NoEventData)
     InternalEvent(ST_IDLE);
   qmutex_.unlock();
 
-  robot_ptr_->SetController(&controller_single_drive_);
+  robot_ptr_->setController(&controller_single_drive_);
   emit stateChanged(ST_ENABLED);
 }
 
@@ -216,14 +216,14 @@ STATE_DEFINE(CalibExcitation, PosControl, NoEventData)
   RetVal ret = RetVal::OK;
   for (const id_t id : active_actuators_id_)
   {
-    int motor_pos = robot_ptr_->GetActuatorStatus(id).motor_position;
+    int motor_pos = robot_ptr_->getActuatorStatus(id).motor_position;
     pthread_mutex_lock(&robot_ptr_->Mutex());
     controller_single_drive_.SetMotorID(id);
     controller_single_drive_.SetMode(ControlMode::MOTOR_POSITION);
     controller_single_drive_.SetMotorPosTarget(motor_pos, false);
     pthread_mutex_unlock(&robot_ptr_->Mutex());
     // Wait until each motor reached user-given initial torque setpoint
-    ret = robot_ptr_->WaitUntilTargetReached();
+    ret = robot_ptr_->waitUntilTargetReached();
     if (ret != RetVal::OK)
     {
       emit printToQConsole(
@@ -249,7 +249,7 @@ STATE_DEFINE(CalibExcitation, TorqueControl, CalibExcitationData)
     controller_single_drive_.SetMotorTorqueTarget(data->torque);
     pthread_mutex_unlock(&robot_ptr_->Mutex());
     // Wait until each motor reached user-given initial torque setpoint
-    ret = robot_ptr_->WaitUntilTargetReached();
+    ret = robot_ptr_->waitUntilTargetReached();
     if (ret != RetVal::OK)
     {
       emit printToQConsole(
@@ -276,15 +276,15 @@ STATE_DEFINE(CalibExcitation, Logging, NoEventData)
   }
 
   controller_joints_ptv_->setCablesLenTrajectories(traj_cables_len_);
-  robot_ptr_->StartRtLogging(kRtCycleMultiplier_);
-  robot_ptr_->SetController(controller_joints_ptv_);
+  robot_ptr_->startRtLogging(kRtCycleMultiplier_);
+  robot_ptr_->setController(controller_joints_ptv_);
   emit printToQConsole("Start logging...");
 }
 
 EXIT_DEFINE(CalibExcitation, ExitLogging)
 {
-  robot_ptr_->StopRtLogging();
-  robot_ptr_->SetController(&controller_single_drive_);
+  robot_ptr_->stopRtLogging();
+  robot_ptr_->setController(&controller_single_drive_);
   emit printToQConsole("Logging stopped");
 }
 
@@ -324,7 +324,7 @@ void CalibExcitation::setCablesLenTraj(const bool relative, const vect<id_t>& mo
   for (size_t i = 0; i < motors_id.size(); i++)
   {
     traj_cables_len_[i].id = motors_id[i];
-    current_cables_len[i]  = robot_ptr_->GetActuatorStatus(motors_id[i]).cable_length;
+    current_cables_len[i]  = robot_ptr_->getActuatorStatus(motors_id[i]).cable_length;
   }
   while (!s.atEnd())
   {

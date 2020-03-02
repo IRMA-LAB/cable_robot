@@ -1,7 +1,7 @@
 /**
  * @file winch.cpp
  * @author Simone Comari, Edoardo Idà
- * @date 11 Feb 2020
+ * @date 02 Mar 2020
  * @brief This file includes definitions of class declared in winch.h.
  */
 
@@ -11,14 +11,14 @@
 //--------- Cable class --------------------------------------------------------------//
 //------------------------------------------------------------------------------------//
 
-void Cable::UpdateCableLen(const double delta_length)
+void Cable::updateCableLen(const double delta_length)
 {
   length_ = home_length_ + delta_length;
 }
 
-double Cable::GetUpdatedLength(const double delta_length)
+double Cable::getUpdatedLength(const double delta_length)
 {
-  UpdateCableLen(delta_length);
+  updateCableLen(delta_length);
   return length_;
 }
 
@@ -33,7 +33,7 @@ Winch::Winch(const id_t id, const uint8_t slave_position,
 
 //--------- Public functions --------------------------------------------------------//
 
-WinchStatus Winch::GetStatus()
+WinchStatus Winch::getStatus()
 {
   WinchStatus status;
   status.id             = id_;
@@ -41,46 +41,46 @@ WinchStatus Winch::GetStatus()
   status.motor_position = servo_.GetPosition();
   status.motor_speed    = servo_.GetVelocity();
   status.motor_torque   = servo_.GetTorque();
-  UpdateConfig(status.motor_position);
-  status.cable_length = cable_.GetLength();
+  updateConfig(status.motor_position);
+  status.cable_length = cable_.getLength();
   status.aux_position = servo_.GetAuxPosition();
   return status;
 }
 
-void Winch::SetServoPosByCableLen(const double target_length)
+void Winch::setServoPosByCableLen(const double target_length)
 {
-  SetServoPos(servo_home_pos_ + LengthToCounts(target_length - cable_.GetHomeLength()));
+  setServoPos(servo_home_pos_ + lengthToCounts(target_length - cable_.getHomeLength()));
 }
 
-void Winch::SetServoSpeed(const int32_t target_speed)
+void Winch::setServoSpeed(const int32_t target_speed)
 {
   servo_.ChangeVelocity(target_speed);
 }
 
-void Winch::SetServoTorque(const int16_t target_torque)
+void Winch::setServoTorque(const int16_t target_torque)
 {
   servo_.ChangeTorque(target_torque);
 }
 
-void Winch::SetServoOpMode(const int8_t op_mode) { servo_.ChangeOpMode(op_mode); }
+void Winch::setServoOpMode(const int8_t op_mode) { servo_.ChangeOpMode(op_mode); }
 
-void Winch::UpdateHomeConfig(const double cable_len)
+void Winch::updateHomeConfig(const double cable_len)
 {
-  cable_.SetHomeLength(cable_len);
+  cable_.setHomeLength(cable_len);
   servo_home_pos_ = servo_.GetPosition();
 }
 
-void Winch::UpdateConfig(const int32_t servo_pos)
+void Winch::updateConfig(const int32_t servo_pos)
 {
-  cable_.UpdateCableLen(CountsToLength(servo_pos - servo_home_pos_));
+  cable_.updateCableLen(countsToLength(servo_pos - servo_home_pos_));
 }
 
-double Winch::CountsToLength(const int counts) const
+double Winch::countsToLength(const int counts) const
 {
   return counts * params_.transmission_ratio;
 }
 
-int Winch::LengthToCounts(const double length) const
+int Winch::lengthToCounts(const double length) const
 {
   return static_cast<int>(length / params_.transmission_ratio);
 }

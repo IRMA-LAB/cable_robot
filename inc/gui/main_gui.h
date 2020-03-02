@@ -1,7 +1,7 @@
 /**
  * @file main_gui.h
  * @author Simone Comari
- * @date 10 Jan 2020
+ * @date 02 Mar 2020
  * @brief This file takes care of the functionalities of the main GUI of cable robot app.
  *
  * The functionalities of the main GUI include buttons management, signaling with children
@@ -134,10 +134,10 @@ class MainGUI: public QDialog
   SensorsParams sensors_params_;
   CableRobot* robot_ptr_ = nullptr;
 
-  void StartRobot();
-  void DeleteRobot();
-  bool ExitReadyStateRequest();
-  void CloseAllApps();
+  void startRobot();
+  void deleteRobot();
+  bool exitReadyStateRequest();
+  void closeAllApps();
 
 #if DEBUG_GUI == 1
   QPushButton* pushButton_debug;
@@ -159,16 +159,16 @@ class MainGUI: public QDialog
   id_t motor_id_;
   ControllerSingleDrive* man_ctrl_ptr_;
 
-  void DisablePosCtrlButtons(const bool value);
-  void DisableVelCtrlButtons(const bool value);
-  void DisableTorqueCtrlButtons(const bool value);
+  void disablePosCtrlButtons(const bool value);
+  void disableVelCtrlButtons(const bool value);
+  void disableTorqueCtrlButtons(const bool value);
 
-  void UpdateDriveStatusTable(const grabec::GSWDriveInPdos& status);
-  void UpdateDriveCtrlPanel(const Actuator::States state);
-  void UpdateDriveCtrlButtons(const ControlMode ctrl_mode);
+  void updateDriveStatusTable(const grabec::GSWDriveInPdos& status);
+  void updateDriveCtrlPanel(const Actuator::States state);
+  void updateDriveCtrlButtons(const ControlMode ctrl_mode);
 
-  void SetupDirectMotorCtrl(const bool enable);
-  static ControlMode DriveOpMode2CtrlMode(const int8_t drive_op_mode);
+  void setupDirectMotorCtrl(const bool enable);
+  static ControlMode driveOpMode2CtrlMode(const int8_t drive_op_mode);
 };
 
 #endif // MAIN_GUI_H

@@ -1,7 +1,7 @@
 /**
  * @file homing_interface_vision.cpp
  * @author Simone Comari
- * @date 18 Jul 2019
+ * @date 02 Mar 2020
  * @brief This file includes definitions of classes present in homing_interface_vision.h.
  */
 
@@ -21,8 +21,8 @@ HomingInterfaceVisionWidget::HomingInterfaceVisionWidget(QWidget* parent,
   : QWidget(parent), camera_widget(vision_config.camera),
     proprioceptive_widget(this, robot), ui(new Ui::HomingInterfaceVisionWidget),
     robot_ptr_(robot),
-    controller_(robot->GetActiveMotorsID(), robot->GetRtCycleTimeNsec(),
-                robot->GetActiveComponentsParams()),
+    controller_(robot->getActiveMotorsID(), robot->GetRtCycleTimeNsec(),
+                robot->getActiveComponentsParams()),
     app_(this, robot, vision_config)
 {
   ui->setupUi(this);
@@ -83,7 +83,7 @@ void HomingInterfaceVisionWidget::on_pushButton_move_clicked()
   CLOG(TRACE, "event");
   appendText2Browser("Moving to observation point...");
   controller_.setTargetPosition(kObservationPos_);
-  robot_ptr_->SetController(&controller_);
+  robot_ptr_->setController(&controller_);
   ui->pushButton_find->setEnabled(true);
 }
 
@@ -117,7 +117,7 @@ void HomingInterfaceVisionWidget::on_pushButton_find_clicked()
     camera_widget.changeStreamType(VideoStreamType::AUGMENTED);
     camera_widget.enableStreamType(false);
     appendText2Browser("Waiting for platform to be steady...");
-    robot_ptr_->WaitUntilPlatformSteady(-1.0);
+    robot_ptr_->waitUntilPlatformSteady(-1.0);
     appendText2Browser("Looking for chessboard pose...");
     app_.start();
     ui->pushButton_find->setText("Stop");

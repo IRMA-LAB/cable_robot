@@ -1,7 +1,7 @@
 /**
  * @file winch.h
  * @author Simone Comari, Edoardo Idà
- * @date 11 Feb 2020
+ * @date 02 Mar 2020
  * @brief File containing the virtualization of a winch system of the cable robot.
  */
 
@@ -27,33 +27,33 @@ class Cable
    * @param[in] length _[m]_ Cable length at home position.
    * @see GetHomeLength()
    */
-  void SetHomeLength(const double length) { home_length_ = length; }
+  void setHomeLength(const double length) { home_length_ = length; }
 
   /**
    * @brief Get cable length at home position.
    * @return Cable length at home position in meters.
    * @see SetHomeLength()
    */
-  double GetHomeLength() const { return home_length_; }
+  double getHomeLength() const { return home_length_; }
   /**
    * @brief Get most recente cable length.
    * @return Most recente cable length in meters.
    * @see GetUpdatedLength()
    */
-  double GetLength() const { return length_; }
+  double getLength() const { return length_; }
   /**
    * @brief Update and get newly computed cable length.
    * @param[in] delta_length Cable increment in meters wrt home reference value.
    * @return Updated cable length in meters.
    * @see GetLength() UpdateCableLen()
    */
-  double GetUpdatedLength(const double delta_length);
+  double getUpdatedLength(const double delta_length);
 
   /**
    * @brief Update cable length by adding given value to home reference value.
    * @param[in] delta_length Cable increment in meters wrt home reference value.
    */
-  inline void UpdateCableLen(const double delta_length);
+  inline void updateCableLen(const double delta_length);
 
  private:
   double home_length_ = 0.0;
@@ -89,55 +89,55 @@ class Winch
    * @brief Get a constant pointer to the servo motor object.
    * @return A constant pointer to the servo motor object.
    */
-  const grabec::GoldSoloWhistleDrive* GetServo() const { return &servo_; }
+  const grabec::GoldSoloWhistleDrive* getServo() const { return &servo_; }
   /**
    * @brief Get a pointer to the servo motor object.
    * @return A pointer to the servo motor object.
    */
-  grabec::GoldSoloWhistleDrive* GetServo() { return &servo_; }
+  grabec::GoldSoloWhistleDrive* getServo() { return &servo_; }
   /**
    * @brief Get a constant pointer to the cable object.
    * @return A constant pointer to the cable object.
    */
-  const Cable* GetCable() const { return &cable_; }
+  const Cable* getCable() const { return &cable_; }
   /**
    * @brief Get winch most recent status.
    * @return Winch most recent status.
    */
-  WinchStatus GetStatus();
+  WinchStatus getStatus();
   /**
    * @brief Get servo motor home position.
    * @return servo motor home position in encoder counts.
    */
-  int32_t GetServoHomePos() const { return servo_home_pos_; }
+  int32_t getServoHomePos() const { return servo_home_pos_; }
 
   /**
    * @brief Set motor position target and change operational mode to CYCLIC_POSITION.
    * @param[in] target_pos Servo motor position target in encoder counts.
    */
-  void SetServoPos(const int32_t target_pos) { servo_.ChangePosition(target_pos); }
+  void setServoPos(const int32_t target_pos) { servo_.ChangePosition(target_pos); }
   /**
    * @brief Set motor position target by desired cable length and change operational mode
    * to CYCLIC_POSITION.
    * @param[in] target_length Desired cable length in meters.
    */
-  void SetServoPosByCableLen(const double target_length);
+  void setServoPosByCableLen(const double target_length);
   /**
    * @brief Set motor velocity target and change operational mode to CYCLIC_VELOCITY.
    * @param[in] target_speed Motor velocity target in counts/seconds.
    */
-  void SetServoSpeed(const int32_t target_speed);
+  void setServoSpeed(const int32_t target_speed);
   /**
    * @brief Set motor torque target and change operational mode to CYCLIC_TORQUE.
    * @param[in] target_torque Motor torque target in per thousand nominal points.
    * @note A negative value corresponds to a _pulling_ torque.
    */
-  void SetServoTorque(const int16_t target_torque);
+  void setServoTorque(const int16_t target_torque);
   /**
    * @brief Set motor operational mode.
    * @param[in] op_mode Desired motor operational mode.
    */
-  void SetServoOpMode(const int8_t op_mode);
+  void setServoOpMode(const int8_t op_mode);
 
   /**
    * @brief Update winch configuration at home position.
@@ -150,33 +150,33 @@ class Winch
    * @param[in] cable_len _[m]_ Cable length corresponding to the recorded home position
    * in motor counts.
    */
-  void UpdateHomeConfig(const double cable_len);
+  void updateHomeConfig(const double cable_len);
   /**
    * @brief Update winch configuration using internal most recent measurements.
    *
    * Actuator configuration consists in particular of cable length.
    */
-  void UpdateConfig() { UpdateConfig(servo_.GetPosition()); }
+  void updateConfig() { updateConfig(servo_.GetPosition()); }
   /**
    * @brief Update winch configuration using given servo motor position.
    *
    * Actuator configuration consists in particular of cable length.
    * @param[in] servo_pos Servo motor position in encoder counts.
    */
-  void UpdateConfig(const int32_t servo_pos);
+  void updateConfig(const int32_t servo_pos);
 
   /**
    * @brief Convert motor counts to cable length.
    * @param counts Motor (encoder) counts.
    * @return Corresponding cable length in meters.
    */
-  double CountsToLength(const int counts) const;
+  double countsToLength(const int counts) const;
   /**
    * @brief Convert cable length to motor counts.
    * @param length Cable length in meters.
    * @return Corresponding motor (encoder) counts.
    */
-  int LengthToCounts(const double length) const;
+  int lengthToCounts(const double length) const;
 
  private:
   grabcdpr::WinchParams params_;

@@ -1,7 +1,7 @@
 /**
  * @file homing_interface_proprioceptive.h
  * @author Simone Comari
- * @date 09 Jul 2019
+ * @date 02 Mar 2020
  * @brief This file takes care of the functionalities of the proprioceptive homing
  * interface of cable robot app.
  *
@@ -79,7 +79,7 @@ class HomingInterfaceProprioceptiveWidget: public QWidget
   bool acquisition_complete_;
   bool ext_close_cmd_;
 
-  void UpdateTorquesLimits();
+  void updateTorquesLimits();
 };
 
 class HomingInterfaceProprioceptive: public HomingInterface

@@ -1,7 +1,7 @@
 /**
  * @file main_gui.cpp
  * @author Simone Comari
- * @date 10 Jan 2020
+ * @date 02 Mar 2020
  * @brief This file includes definitions of classes present in main_gui.h.
  */
 
@@ -22,7 +22,7 @@ MainGUI::MainGUI(QWidget* parent, const grabcdpr::RobotParams& robot_config)
     if (robot_config.actuators[i].active)
       ui->comboBox_motorAxis->addItem(QString::number(i));
 
-  StartRobot(); // instantiate cable robot object
+  startRobot(); // instantiate cable robot object
 
 #if DEBUG_GUI == 1
   pushButton_debug = new QPushButton("Debug", this);
@@ -48,7 +48,7 @@ MainGUI::MainGUI(QWidget* parent, const grabcdpr::RobotParams& robot_config,
 
 MainGUI::~MainGUI()
 {
-  DeleteRobot();
+  deleteRobot();
 #if DEBUG_GUI == 1
   disconnect(pushButton_debug, SIGNAL(clicked()), this,
              SLOT(on_pushButton_debug_clicked()));
@@ -66,7 +66,7 @@ MainGUI::~MainGUI()
 
 void MainGUI::closeEvent(QCloseEvent* event)
 {
-  CloseAllApps();
+  closeAllApps();
   event->accept();
 }
 
@@ -84,7 +84,7 @@ void MainGUI::on_pushButton_calib_clicked()
     return;
 
   if (robot_ptr_->GetCurrentState() == CableRobot::ST_READY)
-    if (!ExitReadyStateRequest())
+    if (!exitReadyStateRequest())
       return;
 
   ui->pushButton_homing->setDisabled(true);
@@ -193,7 +193,7 @@ void MainGUI::on_pushButton_enable_clicked()
 
   bool manual_ctrl_enabled = !manual_ctrl_enabled_;
 
-  SetupDirectMotorCtrl(manual_ctrl_enabled);
+  setupDirectMotorCtrl(manual_ctrl_enabled);
   waiting_for_response_.set(manual_ctrl_enabled ? Actuator::ST_ENABLED
                                                 : Actuator::ST_IDLE);
 }
@@ -206,10 +206,10 @@ void MainGUI::on_pushButton_freedrive_pressed()
 
   if (freedrive_)
   {
-    robot_ptr_->SetController(nullptr);
+    robot_ptr_->setController(nullptr);
     delete man_ctrl_ptr_;
     if (robot_ptr_->GetCurrentState() != CableRobot::ST_READY)
-      robot_ptr_->DisableMotors();
+      robot_ptr_->disableMotors();
     freedrive_ = false;
     return;
   }
@@ -218,11 +218,11 @@ void MainGUI::on_pushButton_freedrive_pressed()
   if (robot_ptr_->GetCurrentState() != CableRobot::ST_READY)
   {
     // Attempt to enable all motors
-    robot_ptr_->EnableMotors();
+    robot_ptr_->enableMotors();
     grabrt::ThreadClock clock(grabrt::Sec2NanoSec(CableRobot::kCycleWaitTimeSec));
     while (1)
     {
-      if (robot_ptr_->MotorsEnabled())
+      if (robot_ptr_->motorsEnabled())
         break;
       if (clock.ElapsedFromStart() > CableRobot::kMaxWaitTimeSec)
       {
@@ -236,8 +236,8 @@ void MainGUI::on_pushButton_freedrive_pressed()
   // Set all motors in torque control mode
   man_ctrl_ptr_ = new ControllerSingleDrive(motor_id_, robot_ptr_->GetRtCycleTimeNsec());
   man_ctrl_ptr_->SetMotorTorqueSsErrTol(kTorqueSsErrTol_);
-  robot_ptr_->SetController(man_ctrl_ptr_);
-  for (const id_t id : robot_ptr_->GetActiveMotorsID())
+  robot_ptr_->setController(man_ctrl_ptr_);
+  for (const id_t id : robot_ptr_->getActiveMotorsID())
   {
     pthread_mutex_lock(&robot_ptr_->Mutex());
     man_ctrl_ptr_->SetMotorID(id);
@@ -245,7 +245,7 @@ void MainGUI::on_pushButton_freedrive_pressed()
     man_ctrl_ptr_->SetMotorTorqueTarget(kFreedriveTorque_);
     pthread_mutex_unlock(&robot_ptr_->Mutex());
     // Wait until each motor reached user-given initial torque setpoint
-    if (robot_ptr_->WaitUntilTargetReached() != RetVal::OK)
+    if (robot_ptr_->waitUntilTargetReached() != RetVal::OK)
     {
       appendText2Browser(
         QString("WARNING: Could not switch motor %1 to torque control mode").arg(id));
@@ -259,7 +259,7 @@ void MainGUI::on_pushButton_freedrive_pressed()
 void MainGUI::on_pushButton_faultReset_clicked()
 {
   CLOG(TRACE, "event");
-  robot_ptr_->ClearFaults();
+  robot_ptr_->clearFaults();
 }
 
 void MainGUI::on_pushButton_exitReady_clicked()
@@ -267,9 +267,9 @@ void MainGUI::on_pushButton_exitReady_clicked()
   CLOG(TRACE, "event");
   if (robot_ptr_->GetCurrentState() != CableRobot::ST_READY)
     return;
-  if (!ExitReadyStateRequest())
+  if (!exitReadyStateRequest())
     return;
-  robot_ptr_->DisableMotors();
+  robot_ptr_->disableMotors();
   robot_ptr_->stop();
   ui->pushButton_exitReady->setDisabled(true);
   enableInterface(false);
@@ -290,7 +290,7 @@ void MainGUI::on_radioButton_posMode_clicked()
   if (manual_ctrl_enabled_)
   {
     man_ctrl_ptr_->SetCableLenTarget(
-      robot_ptr_->GetActuatorStatus(motor_id_).cable_length);
+      robot_ptr_->getActuatorStatus(motor_id_).cable_length);
     pthread_mutex_lock(&robot_ptr_->Mutex());
     man_ctrl_ptr_->SetMode(ControlMode::CABLE_LENGTH);
     pthread_mutex_unlock(&robot_ptr_->Mutex());
@@ -335,7 +335,7 @@ void MainGUI::on_radioButton_torqueMode_clicked()
   if (manual_ctrl_enabled_)
   {
     man_ctrl_ptr_->SetMotorTorqueTarget(
-      robot_ptr_->GetActuatorStatus(motor_id_).motor_torque);
+      robot_ptr_->getActuatorStatus(motor_id_).motor_torque);
     pthread_mutex_lock(&robot_ptr_->Mutex());
     man_ctrl_ptr_->SetMode(ControlMode::MOTOR_TORQUE);
     pthread_mutex_unlock(&robot_ptr_->Mutex());
@@ -527,12 +527,12 @@ void MainGUI::updateRtThreadStatusLED(const bool active)
     QMessageBox::warning(this, "Thread Error",
                          "Real-Time thread missed its dealine and "
                          "automatically shut down!\nPlease reset the robot.");
-    CloseAllApps();
+    closeAllApps();
 
     // Simulate a motor disabled event
     waiting_for_response_.reset();
     waiting_for_response_.set(Actuator::ST_IDLE);
-    UpdateDriveCtrlPanel(Actuator::ST_IDLE);
+    updateDriveCtrlPanel(Actuator::ST_IDLE);
   }
 }
 
@@ -543,9 +543,9 @@ void MainGUI::handleMotorStatusUpdate(const id_t& id,
   if (id != ui->comboBox_motorAxis->currentText().toULong())
     return;
 
-  UpdateDriveStatusTable(motor_status);
+  updateDriveStatusTable(motor_status);
 
-  Actuator::States actuator_state = Actuator::DriveState2ActuatorState(
+  Actuator::States actuator_state = Actuator::driveState2ActuatorState(
     grabec::GoldSoloWhistleDrive::GetDriveState(motor_status.status_word));
 
   // Check if motor is in fault and set panel accordingly
@@ -558,21 +558,21 @@ void MainGUI::handleMotorStatusUpdate(const id_t& id,
     ui->pushButton_homing->setDisabled(true);
     ui->pushButton_calib->setDisabled(true);
     ui->groupBox_app->setDisabled(true);
-    DisablePosCtrlButtons(true);
-    DisableVelCtrlButtons(true);
-    DisableTorqueCtrlButtons(true);
+    disablePosCtrlButtons(true);
+    disableVelCtrlButtons(true);
+    disableTorqueCtrlButtons(true);
     waiting_for_response_.reset();
     waiting_for_response_.set(Actuator::ST_IDLE);
     return;
   }
 
-  UpdateDriveCtrlPanel(actuator_state);
-  UpdateDriveCtrlButtons(DriveOpMode2CtrlMode(motor_status.display_op_mode));
+  updateDriveCtrlPanel(actuator_state);
+  updateDriveCtrlButtons(driveOpMode2CtrlMode(motor_status.display_op_mode));
 }
 
 //--------- Private GUI methods ------------------------------------------------------//
 
-void MainGUI::DisablePosCtrlButtons(const bool value)
+void MainGUI::disablePosCtrlButtons(const bool value)
 {
   ui->pushButton_posMicroMinus->setDisabled(value);
   ui->pushButton_posMicroPlus->setDisabled(value);
@@ -582,14 +582,14 @@ void MainGUI::DisablePosCtrlButtons(const bool value)
                     << (value ? "enabled" : "disabled");
 }
 
-void MainGUI::DisableVelCtrlButtons(const bool value)
+void MainGUI::disableVelCtrlButtons(const bool value)
 {
   ui->horizontalSlider_speed_ctrl->setDisabled(value);
   CVLOG(2, "event") << "Motor velocity direct control buttons "
                     << (value ? "enabled" : "disabled");
 }
 
-void MainGUI::DisableTorqueCtrlButtons(const bool value)
+void MainGUI::disableTorqueCtrlButtons(const bool value)
 {
   ui->pushButton_torqueMinus->setDisabled(value);
   ui->pushButton_torquePlus->setDisabled(value);
@@ -597,7 +597,7 @@ void MainGUI::DisableTorqueCtrlButtons(const bool value)
                     << (value ? "enabled" : "disabled");
 }
 
-void MainGUI::UpdateDriveStatusTable(const grabec::GSWDriveInPdos& status)
+void MainGUI::updateDriveStatusTable(const grabec::GSWDriveInPdos& status)
 {
   std::string status_word =
     grabec::GoldSoloWhistleDrive::GetDriveStateStr(status.status_word);
@@ -648,7 +648,7 @@ void MainGUI::UpdateDriveStatusTable(const grabec::GSWDriveInPdos& status)
   CVLOG(2, "event") << "Drive status table updated";
 }
 
-void MainGUI::UpdateDriveCtrlPanel(const Actuator::States state)
+void MainGUI::updateDriveCtrlPanel(const Actuator::States state)
 {
   if (waiting_for_response_.test(Actuator::ST_ENABLED) && state != Actuator::ST_ENABLED)
     return;
@@ -672,34 +672,34 @@ void MainGUI::UpdateDriveCtrlPanel(const Actuator::States state)
 
   if (!manual_ctrl_enabled_)
   {
-    DisablePosCtrlButtons(true);
-    DisableVelCtrlButtons(true);
-    DisableTorqueCtrlButtons(true);
+    disablePosCtrlButtons(true);
+    disableVelCtrlButtons(true);
+    disableTorqueCtrlButtons(true);
     waiting_for_response_.reset();
   }
 }
 
-void MainGUI::UpdateDriveCtrlButtons(const ControlMode ctrl_mode)
+void MainGUI::updateDriveCtrlButtons(const ControlMode ctrl_mode)
 {
   if (!waiting_for_response_.any())
     return;
 
   if (desired_ctrl_mode_.test(ctrl_mode))
   {
-    DisablePosCtrlButtons(ctrl_mode != ControlMode::CABLE_LENGTH);
-    DisableVelCtrlButtons(ctrl_mode != ControlMode::MOTOR_SPEED);
-    DisableTorqueCtrlButtons(ctrl_mode != ControlMode::MOTOR_TORQUE);
+    disablePosCtrlButtons(ctrl_mode != ControlMode::CABLE_LENGTH);
+    disableVelCtrlButtons(ctrl_mode != ControlMode::MOTOR_SPEED);
+    disableTorqueCtrlButtons(ctrl_mode != ControlMode::MOTOR_TORQUE);
     waiting_for_response_.reset();
   }
   else
   {
-    DisablePosCtrlButtons(true);
-    DisableVelCtrlButtons(true);
-    DisableTorqueCtrlButtons(true);
+    disablePosCtrlButtons(true);
+    disableVelCtrlButtons(true);
+    disableTorqueCtrlButtons(true);
   }
 }
 
-bool MainGUI::ExitReadyStateRequest()
+bool MainGUI::exitReadyStateRequest()
 {
   QMessageBox::StandardButton reply = QMessageBox::question(
     this, "Robot ready",
@@ -713,19 +713,19 @@ bool MainGUI::ExitReadyStateRequest()
 
 //--------- Private methods ----------------------------------------------------------//
 
-void MainGUI::SetupDirectMotorCtrl(const bool enable)
+void MainGUI::setupDirectMotorCtrl(const bool enable)
 {
   robot_ptr_->stop(); // robot: READY | ENABLED --> ENABLED
 
   if (enable)
   {
     motor_id_ = ui->comboBox_motorAxis->currentText().toUInt();
-    robot_ptr_->UpdateHomeConfig(motor_id_, 0.0, 0.0); // (re-)initialize reference values
+    robot_ptr_->updateHomeConfig(motor_id_, 0.0, 0.0); // (re-)initialize reference values
     // Setup controller before enabling the motor
     man_ctrl_ptr_ =
       new ControllerSingleDrive(motor_id_, robot_ptr_->GetRtCycleTimeNsec());
     man_ctrl_ptr_->SetMotorTorqueSsErrTol(kTorqueSsErrTol_);
-    ActuatorStatus current_status = robot_ptr_->GetActuatorStatus(motor_id_);
+    ActuatorStatus current_status = robot_ptr_->getActuatorStatus(motor_id_);
     if (ui->radioButton_posMode->isChecked())
     {
       man_ctrl_ptr_->SetMode(ControlMode::CABLE_LENGTH);
@@ -741,20 +741,20 @@ void MainGUI::SetupDirectMotorCtrl(const bool enable)
       man_ctrl_ptr_->SetMode(ControlMode::MOTOR_TORQUE);
       man_ctrl_ptr_->SetMotorTorqueTarget(current_status.motor_torque);
     }
-    robot_ptr_->SetController(man_ctrl_ptr_);
+    robot_ptr_->setController(man_ctrl_ptr_);
 
-    robot_ptr_->EnableMotor(motor_id_);
+    robot_ptr_->enableMotor(motor_id_);
   }
   else
   {
-    robot_ptr_->SetController(nullptr);
+    robot_ptr_->setController(nullptr);
     delete man_ctrl_ptr_;
 
-    robot_ptr_->DisableMotor(motor_id_);
+    robot_ptr_->disableMotor(motor_id_);
   }
 }
 
-ControlMode MainGUI::DriveOpMode2CtrlMode(const int8_t drive_op_mode)
+ControlMode MainGUI::driveOpMode2CtrlMode(const int8_t drive_op_mode)
 {
   switch (drive_op_mode)
   {
@@ -769,7 +769,7 @@ ControlMode MainGUI::DriveOpMode2CtrlMode(const int8_t drive_op_mode)
   }
 }
 
-void MainGUI::StartRobot()
+void MainGUI::startRobot()
 {
   robot_ptr_ = new CableRobot(this, robot_params_);
 
@@ -787,7 +787,7 @@ void MainGUI::StartRobot()
     robot_ptr_->Start(); // start rt thread (ec master)
 }
 
-void MainGUI::DeleteRobot()
+void MainGUI::deleteRobot()
 {
   if (robot_ptr_ == nullptr)
     return;
@@ -806,7 +806,7 @@ void MainGUI::DeleteRobot()
   CLOG(INFO, "event") << "Cable robot object deleted";
 }
 
-void MainGUI::CloseAllApps()
+void MainGUI::closeAllApps()
 {
   if (calib_dialog_ != nullptr)
   {

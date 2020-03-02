@@ -1,7 +1,7 @@
 /**
  * @file actuator.h
  * @author Simone Comari, Edoardo Idà
- * @date 11 Feb 2020
+ * @date 02 Mar 2020
  * @brief File containing the virtualization of a single actuator of the cable robot.
  */
 
@@ -71,22 +71,22 @@ class Actuator: public QObject, public StateMachine
    * @brief Get a constant reference to the winch component of the actuator.
    * @return A constant reference to the winch component of the actuator.
    */
-  const Winch& GetWinch() const { return winch_; }
+  const Winch& getWinch() const { return winch_; }
   /**
    * @brief Get a reference to the winch component of the actuator.
    * @return A reference to the winch component of the actuator.
    */
-  Winch& GetWinch() { return winch_; }
+  Winch& getWinch() { return winch_; }
   /**
    * @brief Get a constant reference to the pulleys system component of the actuator.
    * @return A constant reference to the pulleys system component of the actuator.
    */
-  const PulleysSystem& GetPulley() const { return pulley_; }
+  const PulleysSystem& getPulley() const { return pulley_; }
   /**
    * @brief Get actuator status.
    * @return Most recent actuator status.
    */
-  const ActuatorStatus GetStatus();
+  const ActuatorStatus getStatus();
 
   /**
    * @brief Set cable length target and change its operational mode to CYCLIC_POSITION.
@@ -95,28 +95,28 @@ class Actuator: public QObject, public StateMachine
    * parameters and homing position record.
    * @param[in] target_length Cable length target in meters.
    */
-  void SetCableLength(const double target_length);
+  void setCableLength(const double target_length);
   /**
    * @brief Set motor position and change its operational mode to CYCLIC_POSITION.
    * @param[in] target_pos Target motor position in motor encoder counts.
    */
-  void SetMotorPos(const int32_t target_pos);
+  void setMotorPos(const int32_t target_pos);
   /**
    * @brief Set motor speed and change its operational mode to CYCLIC_VELOCITY.
    * @param[in] target_speed Target motor speed in motor encoder counts/seconds.
    */
-  void SetMotorSpeed(const int32_t target_speed);
+  void setMotorSpeed(const int32_t target_speed);
   /**
    * @brief Set motor torque and change its operational mode to CYCLIC_TORQUE.
    * @param[in] target_torque Target motor torque in per thousand nominal points.
    * @note A negative value corresponds to a _pulling_ torque.
    */
-  void SetMotorTorque(const int16_t target_torque);
+  void setMotorTorque(const int16_t target_torque);
   /**
    * @brief Set motor operational mode.
    * @param[in] op_mode Desired motor operational mode.
    */
-  void SetMotorOpMode(const int8_t op_mode);
+  void setMotorOpMode(const int8_t op_mode);
 
   /**
    * @brief Update actuator configuration at home position.
@@ -131,41 +131,41 @@ class Actuator: public QObject, public StateMachine
    * @param[in] pulley_angle _[rad]_ Swivel pulley angle corresponding to the recorded
    * home position in encoder counts.
    */
-  void UpdateHomeConfig(const double cable_len, const double pulley_angle);
+  void updateHomeConfig(const double cable_len, const double pulley_angle);
   /**
    * @brief Update actuator configuration using internal most recent measurements.
    *
    * Actuator configuration consists in particular of cable length and swivel angle.
    */
-  void UpdateConfig();
+  void updateConfig();
 
   /**
    * @brief Inquire if actuator is active.
    * @return _True_ if actuator is active, _false_ otherwise.
    */
-  bool IsActive() const { return active_; }
+  bool isActive() const { return active_; }
   /**
    * @brief Inquire if actuator is idle.
    * @return _True_ if actuator is idle, _false_ otherwise.
    */
-  bool IsIdle() { return GetCurrentState() == ST_IDLE; }
+  bool isIdle() { return GetCurrentState() == ST_IDLE; }
   /**
    * @brief Inquire if actuator is enabled.
    * @return _True_ if actuator is enabled, _false_ otherwise.
    */
-  bool IsEnabled() { return GetCurrentState() == ST_ENABLED; }
+  bool isEnabled() { return GetCurrentState() == ST_ENABLED; }
   /**
    * @brief Inquire if actuator is in fault.
    * @return _True_ if actuator is in fault, _false_ otherwise.
    */
-  bool IsInFault() { return GetCurrentState() == ST_FAULT; }
+  bool isInFault() { return GetCurrentState() == ST_FAULT; }
 
   /**
    * @brief Map DriveState to ActuatorState.
    * @param[in] drive_state
    * @return Corresponding ActuatorState of drive_state.
    */
-  static Actuator::States DriveState2ActuatorState(const GSWDStates drive_state);
+  static Actuator::States driveState2ActuatorState(const GSWDStates drive_state);
 
  public slots:
   //--------- External Events Public --------------------------------------------------//
@@ -256,7 +256,7 @@ class Actuator: public QObject, public StateMachine
   // clang-format on
   END_STATE_MAP_EX
 
-  void PrintStateTransition(const States current_state) const;
+  void printStateTransition(const States current_state) const;
 };
 
 #endif // CABLE_ROBOT_ACTUATOR_H

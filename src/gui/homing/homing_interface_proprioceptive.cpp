@@ -1,7 +1,7 @@
 /**
  * @file homing_interface_proprioceptive.cpp
  * @author Simone Comari
- * @date 13 Jan 2020
+ * @date 02 Mar 2020
  * @brief This file includes definitions of classes present in
  * homing_interface_proprioceptive.h.
  */
@@ -22,7 +22,7 @@ HomingInterfaceProprioceptiveWidget::HomingInterfaceProprioceptiveWidget(
   ui->setupUi(this);
 
   quint8 pos = 5; // insert position in vertical layout
-  for (id_t motor_id : robot->GetActiveMotorsID())
+  for (id_t motor_id : robot->getActiveMotorsID())
   {
     init_torque_forms_.append(new InitTorqueForm(motor_id, this));
 #if HOMING_ACK
@@ -74,11 +74,11 @@ void HomingInterfaceProprioceptiveWidget::on_pushButton_enable_clicked()
 
   if (!robot_enabled)
   {
-    app.Start(nullptr); // IDLE --> ENABLED
+    app.start(nullptr); // IDLE --> ENABLED
     return;
   }
 
-  if (app.IsCollectingData())
+  if (app.isCollectingData())
   {
     QMessageBox::StandardButton reply =
       QMessageBox::question(this, "Acquisition in progress",
@@ -103,14 +103,14 @@ void HomingInterfaceProprioceptiveWidget::on_pushButton_enable_clicked()
     if (reply == QMessageBox::No)
       return;
   }
-  app.Disable(); // any --> ENABLED --> IDLE
+  app.disable(); // any --> ENABLED --> IDLE
 }
 
 void HomingInterfaceProprioceptiveWidget::on_pushButton_clearFaults_clicked()
 {
   CLOG(TRACE, "event");
   ui->pushButton_start->setChecked(false);
-  app.FaultReset();
+  app.faultReset();
 }
 
 void HomingInterfaceProprioceptiveWidget::on_checkBox_useCurrentTorque_stateChanged(int)
@@ -120,7 +120,7 @@ void HomingInterfaceProprioceptiveWidget::on_checkBox_useCurrentTorque_stateChan
     ui->checkBox_initTorque->setChecked(false);
   for (auto* form : init_torque_forms_)
     form->EnableInitTorque(!ui->checkBox_useCurrentTorque->isChecked());
-  UpdateTorquesLimits();
+  updateTorquesLimits();
 }
 
 void HomingInterfaceProprioceptiveWidget::on_checkBox_initTorque_stateChanged(int)
@@ -135,7 +135,7 @@ void HomingInterfaceProprioceptiveWidget::on_checkBox_initTorque_stateChanged(in
   for (auto* init_torque_form : init_torque_forms_)
     init_torque_form->EnableInitTorque(!ui->checkBox_initTorque->isChecked());
   ui->spinBox_initTorque->setEnabled(ui->checkBox_initTorque->isChecked());
-  UpdateTorquesLimits();
+  updateTorquesLimits();
 }
 
 void HomingInterfaceProprioceptiveWidget::on_spinBox_initTorque_valueChanged(int value)
@@ -150,7 +150,7 @@ void HomingInterfaceProprioceptiveWidget::on_checkBox_maxTorque_stateChanged(int
   for (auto* init_torque_form : init_torque_forms_)
     init_torque_form->EnableMaxTorque(!ui->checkBox_maxTorque->isChecked());
   ui->spinBox_maxTorque->setEnabled(ui->checkBox_maxTorque->isChecked());
-  UpdateTorquesLimits();
+  updateTorquesLimits();
 }
 
 void HomingInterfaceProprioceptiveWidget::on_spinBox_maxTorque_valueChanged(int value)
@@ -162,7 +162,7 @@ void HomingInterfaceProprioceptiveWidget::on_spinBox_maxTorque_valueChanged(int 
 void HomingInterfaceProprioceptiveWidget::on_pushButton_start_clicked()
 {
   ui->pushButton_start->setChecked(false);
-  if (app.IsCollectingData())
+  if (app.isCollectingData())
   {
     QMessageBox::StandardButton reply =
       QMessageBox::question(this, "Homing in progress",
@@ -173,7 +173,7 @@ void HomingInterfaceProprioceptiveWidget::on_pushButton_start_clicked()
     CLOG(TRACE, "event") << "(STOP?) --> " << (reply == QMessageBox::Yes);
     if (reply == QMessageBox::Yes)
     {
-      app.Stop(); // any --> ENABLED
+      app.stop(); // any --> ENABLED
       disconnect(&app, SIGNAL(progressValue(int)), this,
                  SLOT(updateAcquisitionProgress(int)));
     }
@@ -197,7 +197,7 @@ void HomingInterfaceProprioceptiveWidget::on_pushButton_start_clicked()
   acquisition_complete_ = false;
   connect(&app, SIGNAL(progressValue(int)), this, SLOT(updateAcquisitionProgress(int)),
           Qt::ConnectionType::DirectConnection);
-  app.Start(data);
+  app.start(data);
 }
 
 void HomingInterfaceProprioceptiveWidget::on_radioButton_internal_clicked()
@@ -244,12 +244,12 @@ void HomingInterfaceProprioceptiveWidget::on_pushButton_ok_clicked()
       if (QFile::remove(app.kMatlabOptimizationResultsLoc))
         CLOG(INFO, "event") << "Removed old matlab homing optimization results";
     ui->groupBox_dataCollection->setEnabled(false);
-    app.Optimize();
+    app.optimize();
     return;
   }
   // "External" optimization = load results obtained somehow externally
   HomingProprioceptiveHomeData* home_data = new HomingProprioceptiveHomeData;
-  if (!app.ParseExtFile(ui->lineEdit_extFile->text(), home_data))
+  if (!app.parseExtFile(ui->lineEdit_extFile->text(), home_data))
   {
     QMessageBox::warning(this, "File Error",
                          "File content is not valid!\nPlease load a different file.");
@@ -257,7 +257,7 @@ void HomingInterfaceProprioceptiveWidget::on_pushButton_ok_clicked()
   }
   ui->progressBar_optimization->setValue(100);
   ui->groupBox_dataCollection->setEnabled(false);
-  app.GoHome(home_data);
+  app.goHome(home_data);
 }
 
 //--------- Private slots -----------------------------------------------------------//
@@ -321,21 +321,21 @@ void HomingInterfaceProprioceptiveWidget::handleStateChanged(const quint8& state
       ui->pushButton_start->setText(tr("Start"));
       ui->pushButton_clearFaults->setDisabled(true);
       // Update initial torques now because unless enabled values are unknown
-      UpdateTorquesLimits();
+      updateTorquesLimits();
       break;
     }
     case HomingProprioceptiveApp::ST_START_UP:
       ui->pushButton_start->setText(tr("Stop"));
-      app.Start(nullptr);
+      app.start(nullptr);
       break;
     case HomingProprioceptiveApp::ST_SWITCH_CABLE:
-      app.Start(nullptr);
+      app.start(nullptr);
       break;
     case HomingProprioceptiveApp::ST_COILING:
-      app.Start(nullptr);
+      app.start(nullptr);
       break;
     case HomingProprioceptiveApp::ST_UNCOILING:
-      app.Start(nullptr);
+      app.start(nullptr);
       break;
     case HomingProprioceptiveApp::ST_FAULT:
       ui->pushButton_enable->setDisabled(true);
@@ -360,15 +360,15 @@ void HomingInterfaceProprioceptiveWidget::handleHomingComplete()
 
 //--------- Private functions -------------------------------------------------------//
 
-void HomingInterfaceProprioceptiveWidget::UpdateTorquesLimits()
+void HomingInterfaceProprioceptiveWidget::updateTorquesLimits()
 {
   if (app.GetCurrentState() == HomingProprioceptiveApp::ST_ENABLED &&
       ui->checkBox_useCurrentTorque->isChecked())
   {
-    std::vector<id_t> motors_id = app.GetActuatorsID();
+    std::vector<id_t> motors_id = app.getActuatorsID();
     for (size_t i = 0; i < motors_id.size(); i++)
       init_torque_forms_[static_cast<int>(i)]->SetInitTorque(
-        app.GetActuatorStatus(motors_id[i]).motor_torque);
+        app.getActuatorStatus(motors_id[i]).motor_torque);
   }
   if (ui->checkBox_maxTorque->isChecked())
   {
@@ -463,6 +463,6 @@ bool HomingInterfaceProprioceptive::rejectedExitRoutine(const bool force_exit /*
       CLOG(INFO, "event") << "Homing interrupted by user during data acquisition";
     }
   }
-  widget_.app.Disable(); // any --> IDLE
+  widget_.app.disable(); // any --> IDLE
   return true;
 }

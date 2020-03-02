@@ -1,7 +1,7 @@
 /**
  * @file homing_proprioceptive.h
  * @author Simone Comari
- * @date 27 Feb 2020
+ * @date 02 Mar 2020
  * @brief This file includes classes necessary to implement the homing proprioceptive
  * algorithm.
  */
@@ -152,20 +152,20 @@ class HomingProprioceptiveApp: public QObject, public StateMachine
    * @brief Check if robot is in acquisition phase.
    * @return _True_ if robot is collecting data, _false_ otherwise.
    */
-  bool IsCollectingData();
+  bool isCollectingData();
 
   /**
    * @brief Get the active actuators IDs.
    * @return The active actuators IDs.
    */
-  vect<id_t> GetActuatorsID() const { return active_actuators_id_; }
+  vect<id_t> getActuatorsID() const { return active_actuators_id_; }
 
   /**
    * @brief Get status of active actuator corresponding to given ID.
    * @param[in] id The ID of the inquired actuator.
    * @return The status of the inquired actuator.
    */
-  ActuatorStatus GetActuatorStatus(const id_t id);
+  ActuatorStatus getActuatorStatus(const id_t id);
 
   /**
    * @brief Parse an external file with homing data and fill the relative structure.
@@ -174,7 +174,7 @@ class HomingProprioceptiveApp: public QObject, public StateMachine
    * @param[out] home_data
    * @return _True_ if parsing was successful, _false_ otherwise
    */
-  bool ParseExtFile(const QString& filepath, HomingProprioceptiveHomeData* home_data);
+  bool parseExtFile(const QString& filepath, HomingProprioceptiveHomeData* home_data);
 
  public:
   //--------- External events -------------------------------------------------------//
@@ -192,38 +192,38 @@ class HomingProprioceptiveApp: public QObject, public StateMachine
    * @param[in] data Data needed for starting the acquisition phase. This is only
    * necessary for 2nd transition (ENABLED --> START_UP), ignored otherwise (set to NULL).
    */
-  void Start(HomingProprioceptiveStartData* data);
+  void start(HomingProprioceptiveStartData* data);
   /**
    * @brief Stop command, stop on going phase, if stoppable (like acquisition one).
    *
    * This command triggers a transition to ENABLED.
    */
-  void Stop();
+  void stop();
   /**
    * @brief Stop on going phase and disable motors.
    *
    * This command triggers a transition to IDLE.
    */
-  void Disable();
+  void disable();
   /**
    * @brief Optimize command, triggers a transition from ENABLED to OPTIMIZING, starting
    * this phase.
    */
-  void Optimize();
+  void optimize();
   /**
    * @brief Go home command, moves the robot to home position and assign newly computed
    * homing values (cable lengths and swivel angles values at homing position).
    * @param[in] data
    */
-  void GoHome(HomingProprioceptiveHomeData* data);
+  void goHome(HomingProprioceptiveHomeData* data);
   /**
    * @brief Fault trigger.
    */
-  void FaultTrigger();
+  void faultTrigger();
   /**
    * @brief Fault reset command.
    */
-  void FaultReset();
+  void faultReset();
 
  signals:
   /**
@@ -286,7 +286,7 @@ class HomingProprioceptiveApp: public QObject, public StateMachine
   QTimer optimization_progess_timer_;
   int optimization_progress_counter_;
 
-  void DumpMeasAndMoveNext();
+  void dumpMeasAndMoveNext();
 
  private:
   //--------- State machine ---------------------------------------------------------//
@@ -336,7 +336,7 @@ class HomingProprioceptiveApp: public QObject, public StateMachine
   // clang-format on
   END_STATE_MAP_EX
 
-  void PrintStateTransition(const States current_state, const States new_state) const;
+  void printStateTransition(const States current_state, const States new_state) const;
 };
 
 #endif // CABLE_ROBOT_HOMING_PROPRIOCEPTIVE_H

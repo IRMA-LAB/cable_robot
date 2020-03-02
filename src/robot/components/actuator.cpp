@@ -1,7 +1,7 @@
 /**
  * @file actuator.cpp
  * @author Simone Comari, Edoardo Idà
- * @date 11 Mar 2019
+ * @date 02 Mar 2020
  * @brief This file includes definitions of class declared in actuator.h.
  */
 
@@ -20,20 +20,20 @@ Actuator::Actuator(const id_t id, const uint8_t slave_position,
   clock_.SetCycleTime(kWaitCycleTimeNsec_);
   prev_state_ = ST_IDLE;
 
-  winch_.GetServo()->setParent(this);
-  connect(winch_.GetServo(), SIGNAL(driveFaulted()), this, SLOT(faultTrigger()));
-  connect(winch_.GetServo(), SIGNAL(logMessage(QString)), this,
+  winch_.getServo()->setParent(this);
+  connect(winch_.getServo(), SIGNAL(driveFaulted()), this, SLOT(faultTrigger()));
+  connect(winch_.getServo(), SIGNAL(logMessage(QString)), this,
           SLOT(logServoMsg(QString)));
-  connect(winch_.GetServo(), SIGNAL(printMessage(QString)), this,
+  connect(winch_.getServo(), SIGNAL(printMessage(QString)), this,
           SLOT(forwardServoPrintMsg(QString)));
 }
 
 Actuator::~Actuator()
 {
-  disconnect(winch_.GetServo(), SIGNAL(driveFaulted()), this, SLOT(faultTrigger()));
-  disconnect(winch_.GetServo(), SIGNAL(logMessage(QString)), this,
+  disconnect(winch_.getServo(), SIGNAL(driveFaulted()), this, SLOT(faultTrigger()));
+  disconnect(winch_.getServo(), SIGNAL(logMessage(QString)), this,
              SLOT(logServoMsg(QString)));
-  disconnect(winch_.GetServo(), SIGNAL(printMessage(QString)), this,
+  disconnect(winch_.getServo(), SIGNAL(printMessage(QString)), this,
              SLOT(forwardServoPrintMsg(QString)));
 }
 
@@ -97,9 +97,9 @@ void Actuator::faultReset()
 
 //--------- Public Functions --------------------------------------------------//
 
-const ActuatorStatus Actuator::GetStatus()
+const ActuatorStatus Actuator::getStatus()
 {
-  WinchStatus winch_status = winch_.GetStatus();
+  WinchStatus winch_status = winch_.getStatus();
   ActuatorStatus status;
   status.op_mode        = winch_status.op_mode;
   status.motor_position = winch_status.motor_position;
@@ -108,59 +108,59 @@ const ActuatorStatus Actuator::GetStatus()
   status.cable_length   = winch_status.cable_length;
   status.aux_position   = winch_status.aux_position;
   status.id             = id_;
-  status.state          = DriveState2ActuatorState(
-    static_cast<GSWDStates>(winch_.GetServo()->GetCurrentState()));
+  status.state          = driveState2ActuatorState(
+    static_cast<GSWDStates>(winch_.getServo()->GetCurrentState()));
   status.pulley_angle = pulley_.GetAngleRad(status.aux_position);
   return status;
 }
 
-void Actuator::SetCableLength(const double target_length)
+void Actuator::setCableLength(const double target_length)
 {
   if (active_)
-    winch_.SetServoPosByCableLen(target_length);
+    winch_.setServoPosByCableLen(target_length);
 }
 
-void Actuator::SetMotorPos(const int32_t target_pos)
+void Actuator::setMotorPos(const int32_t target_pos)
 {
   if (active_)
-    winch_.SetServoPos(target_pos);
+    winch_.setServoPos(target_pos);
 }
 
-void Actuator::SetMotorSpeed(const int32_t target_speed)
+void Actuator::setMotorSpeed(const int32_t target_speed)
 {
   if (active_)
-    winch_.SetServoSpeed(target_speed);
+    winch_.setServoSpeed(target_speed);
 }
 
-void Actuator::SetMotorTorque(const int16_t target_torque)
+void Actuator::setMotorTorque(const int16_t target_torque)
 {
   if (active_)
-    winch_.SetServoTorque(target_torque);
+    winch_.setServoTorque(target_torque);
 }
 
-void Actuator::SetMotorOpMode(const int8_t op_mode)
+void Actuator::setMotorOpMode(const int8_t op_mode)
 {
   if (active_)
-    winch_.SetServoOpMode(op_mode);
+    winch_.setServoOpMode(op_mode);
 }
 
-void Actuator::UpdateHomeConfig(const double cable_len, const double pulley_angle)
+void Actuator::updateHomeConfig(const double cable_len, const double pulley_angle)
 {
   if (!active_)
     return;
-  pulley_.UpdateHomeConfig(winch_.GetServo()->GetAuxPosition(), pulley_angle);
-  winch_.UpdateHomeConfig(cable_len);
+  pulley_.UpdateHomeConfig(winch_.getServo()->GetAuxPosition(), pulley_angle);
+  winch_.updateHomeConfig(cable_len);
 }
 
-void Actuator::UpdateConfig()
+void Actuator::updateConfig()
 {
   if (!active_)
     return;
-  winch_.UpdateConfig();
-  pulley_.UpdateConfig(winch_.GetServo()->GetAuxPosition());
+  winch_.updateConfig();
+  pulley_.UpdateConfig(winch_.getServo()->GetAuxPosition());
 }
 
-Actuator::States Actuator::DriveState2ActuatorState(const GSWDStates drive_state)
+Actuator::States Actuator::driveState2ActuatorState(const GSWDStates drive_state)
 {
   switch (drive_state)
   {
@@ -179,15 +179,15 @@ Actuator::States Actuator::DriveState2ActuatorState(const GSWDStates drive_state
 GUARD_DEFINE(Actuator, GuardIdle, NoEventData)
 {
   if (prev_state_ == ST_FAULT)
-    winch_.GetServo()->FaultReset(); // clear fault and disable drive completely
+    winch_.getServo()->FaultReset(); // clear fault and disable drive completely
   else
-    winch_.GetServo()->DisableVoltage(); // disable drive completely
+    winch_.getServo()->DisableVoltage(); // disable drive completely
 
   clock_.Reset();
   timespec t0 = clock_.GetCurrentTime();
   while (1)
   {
-    if (winch_.GetServo()->GetCurrentState() == GSWDStates::ST_SWITCH_ON_DISABLED)
+    if (winch_.getServo()->GetCurrentState() == GSWDStates::ST_SWITCH_ON_DISABLED)
       return true; // drive is disabled
     if (clock_.Elapsed(t0) > kMaxTransitionTimeSec_)
     {
@@ -203,19 +203,19 @@ GUARD_DEFINE(Actuator, GuardIdle, NoEventData)
 
 STATE_DEFINE(Actuator, Idle, NoEventData)
 {
-  PrintStateTransition(ST_IDLE);
+  printStateTransition(ST_IDLE);
   prev_state_ = ST_IDLE;
 }
 
 // Guard condition to detemine whether Enable state is executed.
 GUARD_DEFINE(Actuator, GuardEnabled, NoEventData)
 {
-  winch_.GetServo()->Shutdown(); // prepare to switch on
+  winch_.getServo()->Shutdown(); // prepare to switch on
   clock_.Reset();
   timespec t0 = clock_.GetCurrentTime();
   while (1)
   {
-    if (winch_.GetServo()->GetCurrentState() == GSWDStates::ST_READY_TO_SWITCH_ON)
+    if (winch_.getServo()->GetCurrentState() == GSWDStates::ST_READY_TO_SWITCH_ON)
       break;
     if (clock_.Elapsed(t0) > kMaxTransitionTimeSec_)
     {
@@ -227,12 +227,12 @@ GUARD_DEFINE(Actuator, GuardEnabled, NoEventData)
     clock_.WaitUntilNext();
   }
 
-  winch_.GetServo()->SwitchOn(); // switch on voltage
+  winch_.getServo()->SwitchOn(); // switch on voltage
   clock_.Reset();
   t0 = clock_.GetCurrentTime();
   while (1)
   {
-    if (winch_.GetServo()->GetCurrentState() == GSWDStates::ST_SWITCHED_ON)
+    if (winch_.getServo()->GetCurrentState() == GSWDStates::ST_SWITCHED_ON)
       break;
     if (clock_.Elapsed(t0) > kMaxTransitionTimeSec_)
     {
@@ -244,12 +244,12 @@ GUARD_DEFINE(Actuator, GuardEnabled, NoEventData)
     clock_.WaitUntilNext();
   }
 
-  winch_.GetServo()->EnableOperation(); // enable drive
+  winch_.getServo()->EnableOperation(); // enable drive
   clock_.Reset();
   t0 = clock_.GetCurrentTime();
   while (1)
   {
-    if (winch_.GetServo()->GetCurrentState() == GSWDStates::ST_OPERATION_ENABLED)
+    if (winch_.getServo()->GetCurrentState() == GSWDStates::ST_OPERATION_ENABLED)
       return true; // drive is enabled
     if (clock_.Elapsed(t0) > kMaxTransitionTimeSec_)
     {
@@ -265,20 +265,20 @@ GUARD_DEFINE(Actuator, GuardEnabled, NoEventData)
 
 STATE_DEFINE(Actuator, Enabled, NoEventData)
 {
-  PrintStateTransition(ST_ENABLED);
+  printStateTransition(ST_ENABLED);
   prev_state_ = ST_ENABLED;
 }
 
 // Guard condition to detemine whether Fault state is executed.
 GUARD_DEFINE(Actuator, GuardFault, NoEventData)
 {
-  winch_.GetServo()->FaultReset(); // clear fault and disable drive completely
+  winch_.getServo()->FaultReset(); // clear fault and disable drive completely
   clock_.Reset();
   timespec t0 = clock_.GetCurrentTime();
   while (1)
   {
     // Try to clear faults automatically
-    if (winch_.GetServo()->GetCurrentState() == GSWDStates::ST_SWITCH_ON_DISABLED)
+    if (winch_.getServo()->GetCurrentState() == GSWDStates::ST_SWITCH_ON_DISABLED)
     {
       InternalEvent(ST_IDLE);
       return false;
@@ -296,13 +296,13 @@ GUARD_DEFINE(Actuator, GuardFault, NoEventData)
 
 STATE_DEFINE(Actuator, Fault, NoEventData)
 {
-  PrintStateTransition(ST_FAULT);
+  printStateTransition(ST_FAULT);
   prev_state_ = ST_FAULT;
 }
 
 //--------- Miscellaneous private --------------------------------------------------//
 
-void Actuator::PrintStateTransition(const States current_state) const
+void Actuator::printStateTransition(const States current_state) const
 {
   if (current_state == prev_state_)
     return;
