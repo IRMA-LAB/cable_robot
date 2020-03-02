@@ -1,7 +1,7 @@
 /**
  * @file homing_interface.h
  * @author Simone Comari
- * @date 23 Jul 2019
+ * @date 02 Mar 2020
  * @brief This file includes the base class for any homing interface of cable robot app.
  */
 
@@ -62,7 +62,7 @@ class HomingInterface: public QDialog
   bool ext_close_cmd_;
 
   virtual bool acceptedExitRoutine() { return true; }
-  virtual bool rejectedExitRoutine(const bool force_exit = false) { return true; }
+  virtual bool rejectedExitRoutine(const bool force_exit = false);
 
  private slots:
   void closeEvent(QCloseEvent* event) override final;
