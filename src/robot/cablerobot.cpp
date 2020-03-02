@@ -1,7 +1,7 @@
 /**
  * @file cablerobot.cpp
  * @author Simone Comari, Edoardo Idà
- * @date 10 Jan 2020
+ * @date 02 Mar 2020
  * @brief File containing definitions of functions and class declared in cablerobot.h.
  */
 
@@ -20,7 +20,10 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::RobotParams& params)
   PrintStateTransition(prev_state_, ST_IDLE);
   prev_state_ = ST_IDLE;
 
+  // Setup robot model
+  params_active_        = params_.getOnlyActiveComponents();
   cdpr_status_.platform = platform_;
+  cdpr_status_.cables.resize(params_.activeActuatorsNum());
 
   // Setup EtherCAT network
   max_shutdown_wait_time_sec_ = 3.0; // [sec]
@@ -33,8 +36,6 @@ CableRobot::CableRobot(QObject* parent, const grabcdpr::RobotParams& params)
 #endif
   for (uint i = 0; i < params.actuators.size(); i++)
   {
-    grabcdpr::CableVars cable;
-    cdpr_status_.cables.push_back(cable);
     actuators_ptrs_.push_back(new Actuator(i, slave_pos++, params.actuators[i], this));
     slaves_ptrs_.push_back(actuators_ptrs_[i]->GetWinch().GetServo());
     if (params.actuators[i].active)
@@ -98,14 +99,9 @@ CableRobot::~CableRobot()
 
 //--------- Public Functions --------------------------------------------------------//
 
-grabcdpr::RobotParams CableRobot::GetActiveComponentsParams() const
+const grabcdpr::RobotParams& CableRobot::GetActiveComponentsParams() const
 {
-  grabcdpr::RobotParams params;
-  params.platform = params_.platform;
-  for (const auto& actuator_params : params_.actuators)
-    if (actuator_params.active)
-      params.actuators.push_back(actuator_params);
-  return params;
+  return params_active_;
 }
 
 const Actuator* CableRobot::GetActuator(const id_t motor_id)
@@ -135,11 +131,21 @@ void CableRobot::UpdateHomeConfig(const id_t motor_id, const double cable_len,
 
 void CableRobot::UpdateHomeConfig(const grabnum::Vector6d& home_pose)
 {
-  grabcdpr::updateIK0(home_pose, params_, cdpr_status_);
+  grabcdpr::updateIK0(home_pose, params_active_, cdpr_status_);
   std::vector<id_t> active_actuators_id = params_.activeActuatorsId();
   for (uint8_t i = 0; i < active_actuators_id.size(); ++i)
     UpdateHomeConfig(active_actuators_id[i], cdpr_status_.cables[i].length,
                      cdpr_status_.cables[i].swivel_ang);
+}
+
+void CableRobot::updateActiveActuatorsStatus()
+{
+  if (!active_actuators_status_updated_)
+  {
+    for (size_t i = 0; i < active_actuators_status_.size(); i++)
+      active_actuators_status_[i] = active_actuators_ptrs_[i]->GetStatus();
+    active_actuators_status_updated_ = true;
+  }
 }
 
 bool CableRobot::MotorEnabled(const id_t motor_id)
@@ -252,9 +258,9 @@ void CableRobot::DumpMeas() const
     emit sendMsg(meas_[i].serialized());
 }
 
-void CableRobot::CollectAndDumpMeasRt(const bool active_actuators_status_updated)
+void CableRobot::CollectAndDumpMeasRt()
 {
-  if (active_actuators_status_updated)
+  if (active_actuators_status_updated_)
     for (size_t i = 0; i < active_actuators_status_.size(); i++)
     {
       meas_[i].body             = active_actuators_status_[i];
@@ -610,7 +616,7 @@ STATE_DEFINE(CableRobot, Ready, NoEventData)
 
   pthread_mutex_lock(&mutex_);
   if (state_estimator_ == nullptr)
-    state_estimator_ = new StateEstimatorBase(params_);
+    state_estimator_ = new StateEstimatorBase(params_active_);
   pthread_mutex_unlock(&mutex_);
 
   StopTimers();
@@ -738,19 +744,19 @@ void CableRobot::EcRtThreadStatusChanged(const bool active)
 void CableRobot::EcWorkFun()
 {
   for (grabec::EthercatSlave* slave_ptr : slaves_ptrs_)
-    slave_ptr->ReadInputs();                    // read pdos
-  bool active_actuators_status_updated = false; // reset
+    slave_ptr->ReadInputs();                // read pdos
+  active_actuators_status_updated_ = false; // reset
 
   if (state_estimator_ != nullptr)
-    StateEstimationStep(active_actuators_status_updated);
+    StateEstimationStep();
 
   if (controller_ != nullptr)
-    ControlStep(active_actuators_status_updated);
+    ControlStep();
 
   static uint log_counter = 0;
   if (rt_logging_enabled_ && (++log_counter % rt_logging_mod_ == 0))
   {
-    CollectAndDumpMeasRt(active_actuators_status_updated);
+    CollectAndDumpMeasRt();
     log_counter = 0;
   }
 
@@ -762,27 +768,17 @@ void CableRobot::EcEmergencyFun() {}
 
 //--------- RT cyclic steps related private functions -------------------------------//
 
-void CableRobot::StateEstimationStep(bool& active_actuators_status_updated)
+void CableRobot::StateEstimationStep()
 {
-  if (!active_actuators_status_updated)
-  {
-    for (size_t i = 0; i < active_actuators_status_.size(); i++)
-      active_actuators_status_[i] = active_actuators_ptrs_[i]->GetStatus();
-    active_actuators_status_updated = true;
-  }
+  updateActiveActuatorsStatus();
 
   if (!state_estimator_->estimatePlatformPose(active_actuators_status_, cdpr_status_))
     CLOG(WARNING, "event") << "State estimation step failed";
 }
 
-void CableRobot::ControlStep(bool& active_actuators_status_updated)
+void CableRobot::ControlStep()
 {
-  if (!active_actuators_status_updated)
-  {
-    for (size_t i = 0; i < active_actuators_status_.size(); i++)
-      active_actuators_status_[i] = active_actuators_ptrs_[i]->GetStatus();
-    active_actuators_status_updated = true;
-  }
+  updateActiveActuatorsStatus();
 
   vect<ControlAction> ctrl_actions =
     controller_->calcCtrlActions(cdpr_status_, active_actuators_status_);

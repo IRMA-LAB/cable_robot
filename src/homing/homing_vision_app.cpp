@@ -31,7 +31,7 @@ void HomingVisionApp::applyPoseEstimate()
   grabnum::Vector3d orientation;
   calcPlatformGlobalPose(position, orientation);
   // Calculate inverse kinematics to get cables lenght and swivel angles from given pose.
-  grabcdpr::RobotParams params = robot_ptr_->GetActiveComponentsParams();
+  const grabcdpr::RobotParams params = robot_ptr_->GetActiveComponentsParams();
   grabcdpr::RobotVars cdpr_vars; // empty container
   cdpr_vars.cables.resize(params.actuators.size());
   grabcdpr::updateIK0(position, orientation, params, cdpr_vars);

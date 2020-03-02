@@ -1,7 +1,7 @@
 /**
  * @file cablerobot.h
  * @author Simone Comari, Edoardo Idà
- * @date 11 Feb 2020
+ * @date 02 Mar 2020
  * @brief File containing the virtualization of the physical cable robot, in terms of
  * components, signalig and low level operations.
  */
@@ -114,7 +114,7 @@ class CableRobot: public QObject,
    * the parameters of each active actuator.
    * @return The parameters of active robot components
    */
-  grabcdpr::RobotParams GetActiveComponentsParams() const;
+  const grabcdpr::RobotParams& GetActiveComponentsParams() const;
   /**
    * @brief GetCdprStatus
    * @return
@@ -163,6 +163,13 @@ class CableRobot: public QObject,
    * @param[in] home_pose Platform pose at homing position.
    */
   void UpdateHomeConfig(const grabnum::Vector6d& home_pose);
+
+  /**
+   * @brief Update active actuators status by reading latest actuators PDOs.
+   * @warning This operation accesses variables involved in RT cycle, so it should always be
+   * incapsulated in RT mutex or called within the RT cycle itself.
+   */
+  void updateActiveActuatorsStatus();
 
   /**
    * @brief Check if inquired motor is enabled.
@@ -251,7 +258,7 @@ class CableRobot: public QObject,
    * @brief Collect and dump current cable robot measurements onto data.log file without
    * locking the RT-thread mutex.
    */
-  void CollectAndDumpMeasRt(const bool active_actuators_status_updated = false);
+  void CollectAndDumpMeasRt();
   /**
    * @brief Collect and dump current cable robot measurements onto data.log file locking
    * the RT-thread mutex.
@@ -419,6 +426,7 @@ class CableRobot: public QObject,
   grabcdpr::PlatformVars platform_;
   grabcdpr::RobotVars cdpr_status_;
   grabcdpr::RobotParams params_;
+  grabcdpr::RobotParams params_active_;
 
   // Timers for status updates
   static constexpr int kMotorStatusIntervalMsec_    = 100;
@@ -446,6 +454,7 @@ class CableRobot: public QObject,
   vect<id_t> active_actuators_id_;
   bool ec_network_valid_ = false;
   bool rt_thread_active_ = false;
+  bool active_actuators_status_updated_ = false;
 
   void EcWorkFun() override final;      // lives in the RT thread
   void EcEmergencyFun() override final; // lives in the RT thread
@@ -457,10 +466,10 @@ class CableRobot: public QObject,
 
   // Control related
   StateEstimatorBase* state_estimator_ = nullptr;
-  ControllerBase* controller_ = nullptr;
+  ControllerBase* controller_          = nullptr;
 
-  void StateEstimationStep(bool& active_actuators_status_updated);
-  void ControlStep(bool& active_actuators_status_updated);
+  void StateEstimationStep();
+  void ControlStep();
 
   // Tuning params for detecting platform steadyness
   static constexpr double kBufferingTimeSec_  = 3.0;     // [sec]
