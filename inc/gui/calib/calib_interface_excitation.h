@@ -1,7 +1,7 @@
 /**
  * @file calib_interface_excitation.h
  * @author Simone Comari
- * @date 02 Jul 2019
+ * @date 14 May 2020
  * @brief This file include the interface of CalibExcitation app.
  */
 
@@ -9,6 +9,8 @@
 #define CABLE_ROBOT_CALIB_INTERFACE_EXCITATION_H
 
 #include <QDialog>
+#include <QFileDialog>
+#include <QMessageBox>
 
 #include "calib/calib_excitation.h"
 
@@ -24,8 +26,9 @@ class CalibInterfaceExcitation;
  * - Enable/disable all motors at once;
  * - Switch between position and torque control, being the former used to fix the cables
  * length and the latter to manually move the platform (freedrive mode);
- * - Once in position control, start the logging phase, while a trajectory is excecuted to
- * excite most platform dynamics.
+ * - Load a text file containing the desired excitation trajectory.
+ * - Once in position control, start the logging phase, while the desired trajectory is
+ * excecuted to excite most platform dynamics.
  */
 class CalibInterfaceExcitation: public QDialog
 {
@@ -51,15 +54,18 @@ class CalibInterfaceExcitation: public QDialog
   void on_pushButton_enable_clicked();
   void on_radioButton_torque_clicked();
   void on_radioButton_position_clicked();
+  void on_pushButton_fileSelection_clicked();
+  void on_pushButton_logging_clicked();
   void on_pushButton_return_clicked();
 
-  void on_pushButton_logging_clicked();
-
  private:
+  static const QString kDefaultExcitationTrajDir_;
+
   Ui::CalibInterfaceExcitation* ui;
 
   CableRobot* robot_ptr_ = nullptr;
   CalibExcitation app_;
+  QString parent_dir_;
 };
 
 #endif // CABLE_ROBOT_CALIB_INTERFACE_EXCITATION_H

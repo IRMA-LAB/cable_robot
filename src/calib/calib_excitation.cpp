@@ -1,7 +1,7 @@
 /**
  * @file calib_excitation.cpp
  * @author Simone Comari
- * @date 02 Mar 2020
+ * @date 14 May 2020
  * @brief This file includes definitions of classes present in calib_excitation.h.
  */
 
@@ -15,9 +15,15 @@ CalibExcitationData::CalibExcitationData() {}
 
 CalibExcitationData::CalibExcitationData(const qint16 _torque) { torque = _torque; }
 
+CalibExcitationData::CalibExcitationData(const QString& filepath)
+{
+  traj_filepath = filepath;
+}
+
 std::ostream& operator<<(std::ostream& stream, const CalibExcitationData& data)
 {
-  stream << "torque = " << data.torque;
+  stream << "torque = " << data.torque << "\ntrajectory filepath = '"
+         << data.traj_filepath.toStdString() << "'";
   return stream;
 }
 
@@ -27,10 +33,9 @@ std::ostream& operator<<(std::ostream& stream, const CalibExcitationData& data)
 
 // For static constexpr passed by reference we need a dummy definition no matter what
 constexpr char* CalibExcitation::kStatesStr[];
-const QString CalibExcitation::kExcitationTrajFilepath_ =
-  SRCDIR "resources/trajectories/excitation_traj.txt";
 
-CalibExcitation::CalibExcitation(QObject* parent, CableRobot* robot, const vect<grabcdpr::ActuatorParams>& params)
+CalibExcitation::CalibExcitation(QObject* parent, CableRobot* robot,
+                                 const vect<grabcdpr::ActuatorParams>& params)
   : QObject(parent), StateMachine(ST_MAX_STATES), robot_ptr_(robot),
     controller_single_drive_(robot->GetRtCycleTimeNsec())
 {
@@ -108,7 +113,7 @@ void CalibExcitation::changeControlMode(CalibExcitationData* data)
   // clang-format on
 }
 
-void CalibExcitation::exciteAndLog()
+void CalibExcitation::exciteAndLog(CalibExcitationData* data)
 {
   CLOG(TRACE, "event");
 
@@ -119,7 +124,7 @@ void CalibExcitation::exciteAndLog()
       TRANSITION_MAP_ENTRY (ST_LOGGING)         // ST_POS_CONTROL
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_TORQUE_CONTROL
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_LOGGING
-  END_TRANSITION_MAP(nullptr)
+  END_TRANSITION_MAP(data)
   // clang-format on
 }
 
@@ -261,21 +266,31 @@ STATE_DEFINE(CalibExcitation, TorqueControl, CalibExcitationData)
   emit stateChanged(ST_TORQUE_CONTROL);
 }
 
-STATE_DEFINE(CalibExcitation, Logging, NoEventData)
+GUARD_DEFINE(CalibExcitation, GuardLogging, CalibExcitationData)
+{
+  if (!readTrajectories(data->traj_filepath))
+  {
+    printToQConsole("WARNING: Could not read trajectories file");
+    return false;
+  }
+
+  traj_cables_len_.clear();
+  if (!controller_joints_ptv_->setCablesLenTrajectories(traj_cables_len_))
+  {
+    printToQConsole("WARNING: detected mismatch between given trajectories and active "
+                    "drives. Please check the trajectory file and try again.");
+    return false;
+  }
+
+  return true;
+}
+
+STATE_DEFINE(CalibExcitation, Logging, CalibExcitationData)
 {
   printStateTransition(prev_state_, ST_LOGGING);
   prev_state_ = ST_LOGGING;
   emit stateChanged(ST_LOGGING);
 
-  traj_cables_len_.clear();
-  if (!readTrajectories(kExcitationTrajFilepath_))
-  {
-    printToQConsole("WARNING: Could not read trjectories file");
-    InternalEvent(ST_POS_CONTROL);
-    return;
-  }
-
-  controller_joints_ptv_->setCablesLenTrajectories(traj_cables_len_);
   robot_ptr_->startRtLogging(kRtCycleMultiplier_);
   robot_ptr_->setController(controller_joints_ptv_);
   emit printToQConsole("Start logging...");

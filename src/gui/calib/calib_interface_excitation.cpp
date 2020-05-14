@@ -1,17 +1,20 @@
 ﻿/**
  * @file calib_interface_excitation.cpp
  * @author Simone Comari
- * @date 02 Jul 2019
+ * @date 14 May 2020
  * @brief This file includes definitions of class present in calib_interface_excitation.h.
  */
 
 #include "gui/calib/calib_interface_excitation.h"
 #include "ui_calib_interface_excitation.h"
 
+const QString CalibInterfaceExcitation::kDefaultExcitationTrajDir_ =
+  SRCDIR "resources/trajectories";
+
 CalibInterfaceExcitation::CalibInterfaceExcitation(
   QWidget* parent, CableRobot* robot, const vect<grabcdpr::ActuatorParams>& params)
   : QDialog(parent), ui(new Ui::CalibInterfaceExcitation), robot_ptr_(robot),
-    app_(this, robot, params)
+    app_(this, robot, params), parent_dir_(kDefaultExcitationTrajDir_)
 {
   ui->setupUi(this);
   setAttribute(Qt::WA_DeleteOnClose);
@@ -130,4 +133,29 @@ void CalibInterfaceExcitation::on_pushButton_return_clicked()
   close();
 }
 
-void CalibInterfaceExcitation::on_pushButton_logging_clicked() { app_.exciteAndLog(); }
+void CalibInterfaceExcitation::on_pushButton_logging_clicked()
+{
+  if (ui->lineEdit_inputFile->text().isEmpty())
+    appendText2Browser("WARNING: missing trajectory file!");
+  else
+  {
+    CalibExcitationData* data = new CalibExcitationData(ui->lineEdit_inputFile->text());
+    app_.exciteAndLog(data);
+  }
+}
+
+void CalibInterfaceExcitation::on_pushButton_fileSelection_clicked()
+{
+  CLOG(TRACE, "event");
+  QString config_filename = QFileDialog::getOpenFileName(
+    this, tr("Load Excitation Trajectory"), parent_dir_, tr("Trajectory file (*.txt)"));
+  if (config_filename.isEmpty())
+  {
+    QMessageBox::warning(this, "File Error", "File name is empty!");
+    return;
+  }
+  ui->lineEdit_inputFile->setText(config_filename);
+  // Update parent directory
+  QDir dir    = QFileInfo(config_filename).absoluteDir();
+  parent_dir_ = dir.absolutePath();
+}
