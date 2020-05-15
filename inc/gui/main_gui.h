@@ -1,7 +1,7 @@
 /**
  * @file main_gui.h
  * @author Simone Comari
- * @date 02 Mar 2020
+ * @date 15 May 2020
  * @brief This file takes care of the functionalities of the main GUI of cable robot app.
  *
  * The functionalities of the main GUI include buttons management, signaling with children
@@ -78,7 +78,7 @@ class MainGUI: public QDialog
   void on_pushButton_startApp_clicked();
 
 #if DEBUG_GUI == 1
-  void on_pushButton_debug_clicked();
+  void pushButton_debug_clicked();
   void handleDebugCompleted();
 #endif
 
