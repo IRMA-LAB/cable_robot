@@ -1,7 +1,7 @@
 /**
  * @file easylog_wrapper.cpp
  * @author Simone Comari
- * @date 11 Mar 2019
+ * @date 20 May 2020
  * @brief This file includes definitions of class and functinos declared in
  * easylog_wrapper.h.
  */
@@ -68,6 +68,14 @@ void LogBuffer::flush()
 {
   std::string path = "/tmp/cable-robot-logs/" + logger_->id() + ".log";
   QFile::resize(path.c_str(), 0);
+}
+
+void LogBuffer::copyTo(const QString& destination)
+{
+  std::string logs_path = "/tmp/cable-robot-logs/" + logger_->id() + ".log";
+  if (QFile::exists(destination))
+    QFile::remove(destination);
+  QFile::copy(logs_path.c_str(), destination);
 }
 
 void LogBuffer::stop()

@@ -1,7 +1,7 @@
 /**
  * @file calib_interface_excitation.h
  * @author Simone Comari
- * @date 14 May 2020
+ * @date 20 May 2020
  * @brief This file include the interface of CalibExcitation app.
  */
 
@@ -10,6 +10,7 @@
 
 #include <QDialog>
 #include <QFileDialog>
+#include <QStandardPaths>
 #include <QMessageBox>
 
 #include "calib/calib_excitation.h"
@@ -56,6 +57,7 @@ class CalibInterfaceExcitation: public QDialog
   void on_radioButton_position_clicked();
   void on_pushButton_fileSelection_clicked();
   void on_pushButton_logging_clicked();
+  void on_pushButton_save_clicked();
   void on_pushButton_return_clicked();
 
  private:
@@ -65,7 +67,8 @@ class CalibInterfaceExcitation: public QDialog
 
   CableRobot* robot_ptr_ = nullptr;
   CalibExcitation app_;
-  QString parent_dir_;
+  QString traj_parent_dir_;
+  QString log_parent_dir_;
 };
 
 #endif // CABLE_ROBOT_CALIB_INTERFACE_EXCITATION_H

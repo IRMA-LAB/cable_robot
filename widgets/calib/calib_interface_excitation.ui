@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>566</width>
-    <height>499</height>
+    <height>535</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -206,7 +206,28 @@
       </font>
      </property>
      <property name="text">
-      <string>Start logging</string>
+      <string>Start Logging</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="pushButton_save">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>30</height>
+      </size>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>Save and Clear Logs</string>
      </property>
     </widget>
    </item>

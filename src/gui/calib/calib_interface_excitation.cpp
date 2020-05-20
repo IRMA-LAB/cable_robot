@@ -1,7 +1,7 @@
 ﻿/**
  * @file calib_interface_excitation.cpp
  * @author Simone Comari
- * @date 14 May 2020
+ * @date 20 May 2020
  * @brief This file includes definitions of class present in calib_interface_excitation.h.
  */
 
@@ -14,7 +14,8 @@ const QString CalibInterfaceExcitation::kDefaultExcitationTrajDir_ =
 CalibInterfaceExcitation::CalibInterfaceExcitation(
   QWidget* parent, CableRobot* robot, const vect<grabcdpr::ActuatorParams>& params)
   : QDialog(parent), ui(new Ui::CalibInterfaceExcitation), robot_ptr_(robot),
-    app_(this, robot, params), parent_dir_(kDefaultExcitationTrajDir_)
+    app_(this, robot, params), traj_parent_dir_(kDefaultExcitationTrajDir_),
+    log_parent_dir_(QStandardPaths::writableLocation(QStandardPaths::DesktopLocation))
 {
   ui->setupUi(this);
   setAttribute(Qt::WA_DeleteOnClose);
@@ -86,6 +87,7 @@ void CalibInterfaceExcitation::handleStateChanged(const quint8& state)
       ui->pushButton_enable->setDisabled(true);
       ui->pushButton_return->setDisabled(true);
       ui->pushButton_logging->setDisabled(true);
+      ui->pushButton_save->setEnabled(true);
       ui->radioButton_torque->setDisabled(true);
       ui->radioButton_position->setDisabled(true);
       break;
@@ -127,10 +129,20 @@ void CalibInterfaceExcitation::on_radioButton_position_clicked()
   app_.changeControlMode();
 }
 
-void CalibInterfaceExcitation::on_pushButton_return_clicked()
+void CalibInterfaceExcitation::on_pushButton_fileSelection_clicked()
 {
   CLOG(TRACE, "event");
-  close();
+  QString filename = QFileDialog::getOpenFileName(
+    this, tr("Load Excitation Trajectory"), traj_parent_dir_, tr("Trajectory file (*.txt)"));
+  if (filename.isEmpty())
+  {
+    QMessageBox::warning(this, "File Error", "File name is empty!");
+    return;
+  }
+  ui->lineEdit_inputFile->setText(filename);
+  // Update parent directory
+  QDir dir    = QFileInfo(filename).absoluteDir();
+  traj_parent_dir_ = dir.absolutePath();
 }
 
 void CalibInterfaceExcitation::on_pushButton_logging_clicked()
@@ -144,18 +156,36 @@ void CalibInterfaceExcitation::on_pushButton_logging_clicked()
   }
 }
 
-void CalibInterfaceExcitation::on_pushButton_fileSelection_clicked()
+void CalibInterfaceExcitation::on_pushButton_save_clicked()
 {
+  // Make sure we are not still logging
+  if (app_.GetCurrentState() == CalibExcitation::ST_LOGGING)
+    return;
+
   CLOG(TRACE, "event");
-  QString config_filename = QFileDialog::getOpenFileName(
-    this, tr("Load Excitation Trajectory"), parent_dir_, tr("Trajectory file (*.txt)"));
-  if (config_filename.isEmpty())
+  QString filename = QFileDialog::getSaveFileName(
+    this, tr("Save Excitation Log Data"), log_parent_dir_, tr("Log Data (*.log)"));
+  if (filename.isEmpty())
   {
     QMessageBox::warning(this, "File Error", "File name is empty!");
     return;
   }
-  ui->lineEdit_inputFile->setText(config_filename);
   // Update parent directory
-  QDir dir    = QFileInfo(config_filename).absoluteDir();
-  parent_dir_ = dir.absolutePath();
+  QFileInfo file_info(filename);
+  QDir dir        = file_info.absoluteDir();
+  log_parent_dir_ = dir.absolutePath();
+  // Make sure filenamehas correct extension
+  filename = log_parent_dir_ + "/" + file_info.completeBaseName() + ".log";
+
+  // Copy log file in given position and clear it before new acquisition
+  robot_ptr_->copyDataLogs(filename);
+  robot_ptr_->flushDataLogs();
+
+  ui->pushButton_save->setDisabled(true);
+}
+
+void CalibInterfaceExcitation::on_pushButton_return_clicked()
+{
+  CLOG(TRACE, "event");
+  close();
 }

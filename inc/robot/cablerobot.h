@@ -284,6 +284,11 @@ class CableRobot: public QObject,
    * @brief Flush data logs up to now.
    */
   void flushDataLogs();
+  /**
+   * @brief Copy current data logs in a given location.
+   * @param[in] filepath File location where to copy data logs.
+   */
+  void copyDataLogs(const QString& filepath);
 
   /**
    * @brief Go to home position.

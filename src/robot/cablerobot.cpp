@@ -317,6 +317,12 @@ void CableRobot::flushDataLogs()
   CLOG(INFO, "event") << "Data logs flushed";
 }
 
+void CableRobot::copyDataLogs(const QString& filepath)
+{
+  log_buffer_.copyTo(filepath);
+  CLOG(INFO, "event") << "Data logs copied in '" << filepath.toStdString() << "'";
+}
+
 bool CableRobot::goHome()
 {
   if (!motorsEnabled())

@@ -1,7 +1,7 @@
 /**
  * @file easylog_wrapper.h
  * @author Simone Comari
- * @date 06 Feb 2020
+ * @date 20 May 2020
  * @brief File containing the implementation of a custom wrapper to log cable robot data
  * employing easylogging++ package.
  */
@@ -75,6 +75,12 @@ class LogBuffer: public QThread
    * @brief Flush data log up to now.
    */
   void flush();
+
+  /**
+   * @brief Copy data logs into given file.
+   * @param[in] filepath File location where to copy data logs.
+   */
+  void copyTo(const QString& destination);
 
   /**
    * @brief Stop logging command.
