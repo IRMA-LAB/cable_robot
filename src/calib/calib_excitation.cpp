@@ -274,7 +274,6 @@ GUARD_DEFINE(CalibExcitation, GuardLogging, CalibExcitationData)
     return false;
   }
 
-  traj_cables_len_.clear();
   if (!controller_joints_ptv_->setCablesLenTrajectories(traj_cables_len_))
   {
     printToQConsole("WARNING: detected mismatch between given trajectories and active "
@@ -314,6 +313,8 @@ bool CalibExcitation::readTrajectories(const QString& ifilepath)
     CLOG(ERROR, "event") << "Could not open trajectory file";
     return false;
   }
+  // Reset trajectories
+  traj_cables_len_.clear();
 
   // Read header yielding information about trajectory type and involved motors
   QTextStream s(&ifile);
