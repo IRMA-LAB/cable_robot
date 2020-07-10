@@ -190,6 +190,18 @@ void LoginWindow::loadConfigFiles(const QString& robot_config_filename,
   CLOG(INFO, "event") << "Loaded robot configuration file '" << robot_config_filename
                       << "'";
 
+  // Generate file with temporary information that can be useful during the app execution
+  QString tmp_info = QStandardPaths::writableLocation(QStandardPaths::TempLocation) +
+                     "/cable_robot_app_tmp.txt";
+  if (QFile::exists(tmp_info))
+    QFile::remove(tmp_info);
+  QFile file(tmp_info);
+  if (file.open(QIODevice::WriteOnly | QIODevice::Text))
+  {
+    QTextStream out(&file);
+    out << robot_config_filename << "\n";
+  }
+
   if (sensors_config_filename.isEmpty())
     main_gui = new MainGUI(this, robot_config_);
   else

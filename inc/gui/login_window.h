@@ -14,6 +14,7 @@
 #include <QMessageBox>
 #include <QResource>
 #include <QStorageInfo>
+#include <QString>
 
 #include <fstream>
 #include <iostream>
