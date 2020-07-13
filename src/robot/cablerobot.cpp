@@ -620,10 +620,10 @@ STATE_DEFINE(CableRobot, Ready, NoEventData)
   printStateTransition(prev_state_, ST_READY);
   prev_state_ = ST_READY;
 
-  pthread_mutex_lock(&mutex_);
-  if (state_estimator_ == nullptr)
-    state_estimator_ = new StateEstimatorBase(params_active_);
-  pthread_mutex_unlock(&mutex_);
+//  pthread_mutex_lock(&mutex_);
+//  if (state_estimator_ == nullptr)
+//    state_estimator_ = new StateEstimatorBase(params_active_);
+//  pthread_mutex_unlock(&mutex_);
 
   stopTimers();
   motor_status_timer_->start(kMotorStatusIntervalMsec_);
