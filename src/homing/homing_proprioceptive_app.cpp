@@ -1,7 +1,7 @@
 /**
  * @file homing_proprioceptive.cpp
  * @author Simone Comari
- * @date 02 Mar 2020
+ * @date 13 Jul 2020
  * @brief This file includes definitions of classes present in homing_proprioceptive.h.
  */
 
@@ -147,7 +147,7 @@ void HomingProprioceptiveApp::stop()
   CLOG(TRACE, "event");
 
   if (robot_ptr_->isWaiting())
-      emit stopWaitingCmd();
+    emit stopWaitingCmd();
 }
 
 void HomingProprioceptiveApp::disable()
@@ -158,7 +158,7 @@ void HomingProprioceptiveApp::disable()
   disable_cmd_recv_ = true;
   qmutex_.unlock();
   if (robot_ptr_->isWaiting())
-      emit stopWaitingCmd();
+    emit stopWaitingCmd();
 
   // clang-format off
   BEGIN_TRANSITION_MAP                          // - Current State -
@@ -417,14 +417,9 @@ GUARD_DEFINE(HomingProprioceptiveApp, GuardSwitch, NoEventData)
   if (prev_state_ == ST_START_UP)
     return true;
 
-  pthread_mutex_lock(&robot_ptr_->Mutex());
   if (working_actuator_idx_ < active_actuators_id_.size())
-  {
     // We are not done ==> move to next cable
-    pthread_mutex_unlock(&robot_ptr_->Mutex());
     return true;
-  }
-  pthread_mutex_unlock(&robot_ptr_->Mutex());
 
   InternalEvent(ST_ENABLED);
   emit acquisitionComplete();
@@ -552,17 +547,24 @@ STATE_DEFINE(HomingProprioceptiveApp, Uncoiling, NoEventData)
 
   if (meas_step_ == (2 * num_meas_ - 1))
   {
-    // At the end of uncoiling phase, restore torque control before moving to next cable
-    pthread_mutex_lock(&robot_ptr_->Mutex());
-    controller_.SetMode(ControlMode::MOTOR_TORQUE);
-#if HOMING_ACK
-    controller_.SetMotorTorqueTarget(init_torques_[working_actuator_idx_]);
-#else
-    controller_.SetMotorTorqueTarget(torques_.front());
-#endif
-    pthread_mutex_unlock(&robot_ptr_->Mutex());
-    if (robot_ptr_->waitUntilTargetReached() == RetVal::OK &&
-        robot_ptr_->waitUntilPlatformSteady(-1.) == RetVal::OK)
+    // At the end of uncoiling phase, move back to initial position...
+    robot_ptr_->goHome();
+    // ...and restore torque control for all cables before moving to next one
+    RetVal ret = RetVal::OK;
+    for (size_t i = 0; i < active_actuators_id_.size(); ++i)
+    {
+      // Setup initial target torque for each motor
+      pthread_mutex_lock(&robot_ptr_->Mutex());
+      controller_.SetMotorID(active_actuators_id_[i]);
+      controller_.SetMode(ControlMode::MOTOR_TORQUE);
+      controller_.SetMotorTorqueTarget(init_torques_[i]);
+      pthread_mutex_unlock(&robot_ptr_->Mutex());
+      // Wait until each motor reached user-given initial torque setpoint
+      ret = robot_ptr_->waitUntilTargetReached();
+      if (ret != RetVal::OK)
+        break;
+    }
+    if (ret == RetVal::OK && robot_ptr_->waitUntilPlatformSteady(-1.) == RetVal::OK)
     {
       working_actuator_idx_++;
       InternalEvent(ST_SWITCH_CABLE);
@@ -680,7 +682,7 @@ void HomingProprioceptiveApp::dumpMeasAndMoveNext()
 }
 
 bool HomingProprioceptiveApp::parseExtFile(const QString& filepath,
-                                        HomingProprioceptiveHomeData* home_data)
+                                           HomingProprioceptiveHomeData* home_data)
 {
   // Open file
   emit printToQConsole("Parsing file '" + filepath + "'...");
@@ -713,7 +715,7 @@ bool HomingProprioceptiveApp::parseExtFile(const QString& filepath,
 }
 
 void HomingProprioceptiveApp::printStateTransition(const States current_state,
-                                                const States new_state) const
+                                                   const States new_state) const
 {
   if (current_state == new_state)
     return;
