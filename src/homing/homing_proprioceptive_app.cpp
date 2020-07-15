@@ -432,16 +432,17 @@ STATE_DEFINE(HomingProprioceptiveApp, SwitchCable, NoEventData)
   prev_state_ = ST_SWITCH_CABLE;
 
 #if HOMING_ACK
-  static constexpr double kDeltaLen = -0.1; // [m]
-  qint32 delta_pos = robot_ptr_->getActuator(active_actuators_id_[working_actuator_idx_])
-                       ->getWinch()
-                       .lengthToCounts(kDeltaLen);
-  qint32 init_pos =
+  static constexpr double kCableStroke = -0.6; // [m] cable stroke starting from init pos
+  const double kDeltaLen = kCableStroke / (num_meas_ - 1); // [m]
+  const qint32 kDeltaPos =
+    robot_ptr_->getActuator(active_actuators_id_[working_actuator_idx_])->getWinch()
+      .lengthToCounts(kDeltaLen);
+  const qint32 init_pos =
     robot_ptr_->getActuatorStatus(active_actuators_id_[working_actuator_idx_])
       .motor_position;
   // Compute sequence of position setpoints for i-th actuator, given the fact that cable
   for (quint8 i = 0; i < num_meas_; ++i)
-    positions_[i] = init_pos + i * delta_pos;
+    positions_[i] = init_pos + i * kDeltaPos;
 
   // Setup first setpoint of the sequence
   pthread_mutex_lock(&robot_ptr_->Mutex());
