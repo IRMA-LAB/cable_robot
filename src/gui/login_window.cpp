@@ -15,8 +15,9 @@ LoginWindow::LoginWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::Logi
   ui->setupUi(this);
   setFixedHeight(this->geometry().height());
 
-#if DEBUG_GUI == 1
+#if AUTH == 0
   ui->groupBox_config->setEnabled(true);
+  ui->groupBox_signIn->setDisabled(true);
 #endif
 }
 
