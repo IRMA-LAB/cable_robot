@@ -432,7 +432,7 @@ STATE_DEFINE(HomingProprioceptiveApp, SwitchCable, NoEventData)
   prev_state_ = ST_SWITCH_CABLE;
 
 #if HOMING_ACK
-  static constexpr double kCableStroke = -0.6; // [m] cable stroke starting from init pos
+  static constexpr double kCableStroke = -0.4; // [m] cable stroke starting from init pos
   const double kDeltaLen = kCableStroke / (num_meas_ - 1); // [m]
   const qint32 kDeltaPos =
     robot_ptr_->getActuator(active_actuators_id_[working_actuator_idx_])->getWinch()
