@@ -95,6 +95,7 @@ class CalibExcitation: public QObject, public StateMachine
     ST_ENABLED,
     ST_POS_CONTROL,
     ST_TORQUE_CONTROL,
+    ST_EXCITE,
     ST_LOGGING,
     ST_MAX_STATES
   };
@@ -116,10 +117,10 @@ class CalibExcitation: public QObject, public StateMachine
   void changeControlMode(CalibExcitationData* data);
   /**
    * @brief Start logging while following an excitation trajectory.
-   * @param data Filepath containg the excitation trajectories for each drive.
+   * @param data Filepath containg the excitation trajectories for each drive. If nullptr (default) no excitation trajectory will be executed and only logging will start.
    * @note The operation starts as soon as the platform is considered to be steady.
    */
-  void exciteAndLog(CalibExcitationData* data);
+  void exciteAndLog(CalibExcitationData* data = nullptr);
   /**
    * @brief Disable all active motors.
    */
@@ -139,7 +140,7 @@ class CalibExcitation: public QObject, public StateMachine
    */
   void stopWaitingCmd() const;
 
- private slots:
+ public slots:
   void stopLogging();
 
  private:
@@ -154,8 +155,9 @@ class CalibExcitation: public QObject, public StateMachine
 
   vect<id_t> active_actuators_id_;
 
-  static constexpr uint kRtCycleMultiplier_ = 10; // logging T = cycle_time * multiplier
+  static constexpr uint kRtCycleMultiplier_ = 1; // logging T = cycle_time * multiplier
   vect<TrajectoryD> traj_cables_len_;
+  bool excitation_traj_enabled_;
   bool readTrajectories(const QString& ifilepath);
   void setCablesLenTraj(const bool relative, const vect<id_t>& motors_id, QTextStream& s);
 
@@ -168,6 +170,7 @@ class CalibExcitation: public QObject, public StateMachine
     const_cast<char*>("ENABLED"),
     const_cast<char*>("POS_CONTROL"),
     const_cast<char*>("TORQUE_CONTROL"),
+    const_cast<char*>("EXCITE"),
     const_cast<char*>("LOGGING")};
   // clang-format on
 
@@ -178,8 +181,8 @@ class CalibExcitation: public QObject, public StateMachine
   STATE_DECLARE(CalibExcitation, Enabled, NoEventData)
   STATE_DECLARE(CalibExcitation, PosControl, NoEventData)
   STATE_DECLARE(CalibExcitation, TorqueControl, CalibExcitationData)
-  GUARD_DECLARE(CalibExcitation, GuardLogging, CalibExcitationData)
-  STATE_DECLARE(CalibExcitation, Logging, CalibExcitationData)
+  STATE_DECLARE(CalibExcitation, Excite, CalibExcitationData)
+  STATE_DECLARE(CalibExcitation, Logging, NoEventData)
   EXIT_DECLARE(CalibExcitation, ExitLogging)
 
   // State map to define state object order
@@ -189,7 +192,8 @@ class CalibExcitation: public QObject, public StateMachine
     STATE_MAP_ENTRY_ALL_EX(&Enabled, &GuardEnabled, nullptr, nullptr)
     STATE_MAP_ENTRY_EX(&PosControl)
     STATE_MAP_ENTRY_EX(&TorqueControl)
-    STATE_MAP_ENTRY_ALL_EX(&Logging, &GuardLogging, nullptr, &ExitLogging)
+    STATE_MAP_ENTRY_EX(&Excite)
+    STATE_MAP_ENTRY_ALL_EX(&Logging, nullptr, nullptr, &ExitLogging)
   // clang-format on
   END_STATE_MAP_EX
 

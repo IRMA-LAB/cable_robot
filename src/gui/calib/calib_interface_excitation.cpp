@@ -148,7 +148,10 @@ void CalibInterfaceExcitation::on_pushButton_fileSelection_clicked()
 void CalibInterfaceExcitation::on_pushButton_logging_clicked()
 {
   if (ui->lineEdit_inputFile->text().isEmpty())
+  {
     appendText2Browser("WARNING: missing trajectory file!");
+    app_.exciteAndLog();
+  }
   else
   {
     CalibExcitationData* data = new CalibExcitationData(ui->lineEdit_inputFile->text());
@@ -158,9 +161,7 @@ void CalibInterfaceExcitation::on_pushButton_logging_clicked()
 
 void CalibInterfaceExcitation::on_pushButton_save_clicked()
 {
-  // Make sure we are not still logging
-  if (app_.GetCurrentState() == CalibExcitation::ST_LOGGING)
-    return;
+  app_.stopLogging();
 
   CLOG(TRACE, "event");
   QString filename = QFileDialog::getSaveFileName(

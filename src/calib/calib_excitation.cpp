@@ -37,7 +37,7 @@ constexpr char* CalibExcitation::kStatesStr[];
 CalibExcitation::CalibExcitation(QObject* parent, CableRobot* robot,
                                  const vect<grabcdpr::ActuatorParams>& params)
   : QObject(parent), StateMachine(ST_MAX_STATES), robot_ptr_(robot),
-    controller_single_drive_(robot->GetRtCycleTimeNsec())
+    controller_single_drive_(robot->GetRtCycleTimeNsec()), excitation_traj_enabled_(false)
 {
   prev_state_ = ST_MAX_STATES;
   ExternalEvent(ST_IDLE);
@@ -78,6 +78,7 @@ void CalibExcitation::enable(CalibExcitationData* data /*= nullptr*/)
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)  // ST_ENABLED
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)  // ST_POS_CONTROL
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)  // ST_TORQUE_CONTROL
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)  // ST_EXCITE
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)  // ST_LOGGING
   END_TRANSITION_MAP(data)
   // clang-format on
@@ -93,6 +94,7 @@ void CalibExcitation::changeControlMode()
       TRANSITION_MAP_ENTRY (ST_POS_CONTROL)     // ST_ENABLED
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_POS_CONTROL
       TRANSITION_MAP_ENTRY (ST_POS_CONTROL)     // ST_TORQUE_CONTROL
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_EXCITE
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_LOGGING
   END_TRANSITION_MAP(nullptr)
   // clang-format on
@@ -108,24 +110,44 @@ void CalibExcitation::changeControlMode(CalibExcitationData* data)
       TRANSITION_MAP_ENTRY (ST_TORQUE_CONTROL)  // ST_ENABLED
       TRANSITION_MAP_ENTRY (ST_TORQUE_CONTROL)  // ST_POS_CONTROL
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_TORQUE_CONTROL
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_EXCITE
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_LOGGING
   END_TRANSITION_MAP(data)
   // clang-format on
 }
 
-void CalibExcitation::exciteAndLog(CalibExcitationData* data)
+void CalibExcitation::exciteAndLog(CalibExcitationData* data /*= nullptr*/)
 {
   CLOG(TRACE, "event");
 
-  // clang-format off
-  BEGIN_TRANSITION_MAP                          // - Current State -
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_IDLE
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_ENABLED
-      TRANSITION_MAP_ENTRY (ST_LOGGING)         // ST_POS_CONTROL
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_TORQUE_CONTROL
-      TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_LOGGING
-  END_TRANSITION_MAP(data)
-  // clang-format on
+  if (data == nullptr)
+  {
+    excitation_traj_enabled_ = false;
+    // clang-format off
+    BEGIN_TRANSITION_MAP                          // - Current State -
+        TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_IDLE
+        TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_ENABLED
+        TRANSITION_MAP_ENTRY (ST_LOGGING)         // ST_POS_CONTROL
+        TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_TORQUE_CONTROL
+        TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_EXCITE
+        TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_LOGGING
+    END_TRANSITION_MAP(data)
+    // clang-format on
+  }
+  else
+  {
+    excitation_traj_enabled_ = true;
+    // clang-format off
+    BEGIN_TRANSITION_MAP                          // - Current State -
+        TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_IDLE
+        TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_ENABLED
+        TRANSITION_MAP_ENTRY (ST_EXCITE)          // ST_POS_CONTROL
+        TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_TORQUE_CONTROL
+        TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_EXCITE
+        TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_LOGGING
+    END_TRANSITION_MAP(data)
+    // clang-format on
+  }
 }
 
 void CalibExcitation::stopLogging()
@@ -138,6 +160,7 @@ void CalibExcitation::stopLogging()
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_ENABLED
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_POS_CONTROL
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)      // ST_TORQUE_CONTROL
+      TRANSITION_MAP_ENTRY (ST_POS_CONTROL)     // ST_EXCITE
       TRANSITION_MAP_ENTRY (ST_POS_CONTROL)     // ST_LOGGING
   END_TRANSITION_MAP(nullptr)
   // clang-format on
@@ -159,6 +182,7 @@ void CalibExcitation::disable()
       TRANSITION_MAP_ENTRY (ST_IDLE)        // ST_ENABLED
       TRANSITION_MAP_ENTRY (ST_IDLE)        // ST_POS_CONTROL
       TRANSITION_MAP_ENTRY (ST_IDLE)        // ST_TORQUE_CONTROL
+      TRANSITION_MAP_ENTRY (EVENT_IGNORED)  // ST_EXCITE
       TRANSITION_MAP_ENTRY (EVENT_IGNORED)  // ST_LOGGING
   END_TRANSITION_MAP(nullptr)
   // clang-format on
@@ -266,40 +290,50 @@ STATE_DEFINE(CalibExcitation, TorqueControl, CalibExcitationData)
   emit stateChanged(ST_TORQUE_CONTROL);
 }
 
-GUARD_DEFINE(CalibExcitation, GuardLogging, CalibExcitationData)
+STATE_DEFINE(CalibExcitation, Excite, CalibExcitationData)
 {
+  printStateTransition(prev_state_, ST_EXCITE);
+  prev_state_ = ST_EXCITE;
+  emit stateChanged(ST_EXCITE);
+
   if (!readTrajectories(data->traj_filepath))
   {
-    printToQConsole("WARNING: Could not read trajectories file");
-    return false;
+    printToQConsole("WARNING: Could not read trajectories file.");
+    InternalEvent(ST_POS_CONTROL);
   }
 
   if (!controller_joints_ptv_->setCablesLenTrajectories(traj_cables_len_))
   {
     printToQConsole("WARNING: detected mismatch between given trajectories and active "
                     "drives. Please check the trajectory file and try again.");
-    return false;
+    InternalEvent(ST_POS_CONTROL);
   }
 
-  return true;
+  InternalEvent(ST_LOGGING);
 }
 
-STATE_DEFINE(CalibExcitation, Logging, CalibExcitationData)
+STATE_DEFINE(CalibExcitation, Logging, NoEventData)
 {
   printStateTransition(prev_state_, ST_LOGGING);
   prev_state_ = ST_LOGGING;
   emit stateChanged(ST_LOGGING);
 
   robot_ptr_->startRtLogging(kRtCycleMultiplier_);
-  robot_ptr_->setController(controller_joints_ptv_);
+  if (excitation_traj_enabled_)
+    robot_ptr_->setController(controller_joints_ptv_);
   emit printToQConsole("Start logging...");
 }
 
 EXIT_DEFINE(CalibExcitation, ExitLogging)
 {
   robot_ptr_->stopRtLogging();
-  robot_ptr_->setController(&controller_single_drive_);
   emit printToQConsole("Logging stopped");
+  if (excitation_traj_enabled_)
+  {
+    controller_joints_ptv_->stopTrajectoryFollowing();
+    robot_ptr_->waitUntilTargetReached();
+  }
+  robot_ptr_->setController(&controller_single_drive_);
 }
 
 //--------- Private functions --------------------------------------------------------//
